@@ -10,7 +10,6 @@
 </p>
 
 [![Live Hosted App](https://img.shields.io/badge/Live%20Demo-huntlyst.vercel.app-FF6B35?style=for-the-badge&logo=vercel&logoColor=white)](https://huntlyst.vercel.app)
-[![GitHub Repository](https://img.shields.io/badge/GitHub-mohitsah08%2Fhuntlyst-1E1B18?style=for-the-badge&logo=github&logoColor=white)](https://github.com/mohitsah08/huntlyst)
 [![License: MIT](https://img.shields.io/badge/License-MIT-2E7D32?style=for-the-badge)](LICENSE)
 [![Next.js 14](https://img.shields.io/badge/Next.js-14.2-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org)
 
@@ -32,7 +31,7 @@ Unlike traditional commercial databases that rely on static aggregations, stale 
 ## 🚀 Live Product & Links
 
 - **🌐 Live Hosted Application**: [https://huntlyst.vercel.app](https://huntlyst.vercel.app)
-  
+
 ---
 
 ## ✨ Core Product Capabilities
@@ -131,8 +130,8 @@ Every company is ranked across 5 rigorous pillars:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/mohitsah08/huntlyst.git
-cd huntlyst
+git clone https://github.com/TheVentureBuild/tvb_huntylst.git
+cd tvb_huntylst
 ```
 
 ### 2. Install Dependencies
