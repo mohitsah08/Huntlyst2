@@ -32,8 +32,7 @@ Unlike traditional commercial databases that rely on static aggregations, stale 
 ## 🚀 Live Product & Links
 
 - **🌐 Live Hosted Application**: [https://huntlyst.vercel.app](https://huntlyst.vercel.app)
-- **📂 Public GitHub Repository**: [https://github.com/mohitsah08/huntlyst](https://github.com/mohitsah08/huntlyst)
-
+  
 ---
 
 ## ✨ Core Product Capabilities
