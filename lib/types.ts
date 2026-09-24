@@ -122,10 +122,34 @@ export type CompanyRecord = {
     emailVerificationDetail?: string;
     sources?: string[];
   };
+  // Freshness & Activity Tracking (Section 24)
+  firstDiscoveredAt?: string;
+  lastSeenAt?: string;
+  lastVerifiedAt?: string;
+  lastUpdatedAt?: string;
+  statusTag?: 'NEW' | 'UPDATED' | 'UNCHANGED';
 };
+
+export interface RejectedCompanyRecord {
+  name: string;
+  website?: string;
+  industry?: string;
+  fundingOrRevenue?: string;
+  location?: string;
+  founderOrCeoName?: string;
+  rejectionReasons: string[];
+  matchedRules: string[];
+  failedRules: string[];
+  sourceEvidence?: string;
+  firstDiscoveredAt?: string;
+  lastSeenAt?: string;
+  lastVerifiedAt?: string;
+  lastUpdatedAt?: string;
+}
 
 export interface RunAgentResult {
   companies: CompanyRecord[];
+  rejectedCompanies?: RejectedCompanyRecord[];
   totalDiscovered: number;
   totalQualified: number;
   stats?: {
@@ -245,6 +269,10 @@ export interface HuntFundingConfig {
   preset?: string;
 }
 
+import type { TargetProfile } from './targetProfileData';
+export type { TargetProfile };
+export { DEFAULT_TVB_TARGET_PROFILE } from './targetProfileData';
+
 export interface HuntConfig {
   id?: string;
   name?: string;
@@ -260,6 +288,7 @@ export interface HuntConfig {
   depth: 'quick' | 'balanced' | 'deep' | 'exhaustive';
   targetLeads: number;
   naturalLanguageQuery?: string;
+  targetProfile?: TargetProfile;
 }
 
 export interface SavedHuntPreset {

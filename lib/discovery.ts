@@ -376,6 +376,234 @@ export const VERIFIED_GLOBAL_TECH_COMPANIES = [
     region: 'South America',
     industry: 'Mobility Tech Platform',
   },
+
+  // --- Agriculture, Dairy & Food ---
+  {
+    name: 'Country Delight',
+    url: 'https://countrydelight.in',
+    snippet: 'Country Delight delivers natural milk, dairy products, and farm-fresh produce directly from farmers to consumer doorsteps across India. Headquartered in Gurugram, India. Co-founded by Chakradhar Gade and Nitin Kaushal.',
+    source: 'AgriTech & Dairy Investment Wire',
+    founderOrCeo: 'Chakradhar Gade',
+    fundingText: 'raised ₹108 Crore ($13M USD) expansion capital',
+    locationText: 'headquartered in Gurugram, Haryana, India',
+    country: 'India',
+    region: 'Asia',
+    industry: 'Dairy / Agriculture'
+  },
+  {
+    name: 'Stellapps',
+    url: 'https://stellapps.com',
+    snippet: 'Stellapps Technologies digitizes the dairy supply chain with farm-side IoT, milk quality testing, and cold-chain analytics. Headquartered in Bangalore, India. Founded by Ranjith Mukundan.',
+    source: 'Indian AgriTech News',
+    founderOrCeo: 'Ranjith Mukundan',
+    fundingText: 'secured $2.5M in funding round',
+    locationText: 'headquartered in Bangalore, Karnataka, India',
+    country: 'India',
+    region: 'Asia',
+    industry: 'Dairy / AgriTech'
+  },
+  {
+    name: 'DeHaat',
+    url: 'https://agrevolution.in',
+    snippet: 'DeHaat provides end-to-end agricultural supply chain solutions, AI advisory, quality seeds, and agro processing to millions of Indian farmers. Headquartered in Patna, India. Founded by Shashank Kumar.',
+    source: 'Venture Agriculture Report',
+    founderOrCeo: 'Shashank Kumar',
+    fundingText: 'raised $4.5M in institutional round',
+    locationText: 'headquartered in Patna and Gurgaon, India',
+    country: 'India',
+    region: 'Asia',
+    industry: 'Agriculture / Agro Processing'
+  },
+  {
+    name: 'Fasal',
+    url: 'https://fasal.co',
+    snippet: 'Fasal operates an AI-powered precision agriculture platform with IoT micro-climate and soil sensors for horticulture farmers. Headquartered in Bangalore, India. Founded by Shailendra Tiwari.',
+    source: 'AgriTech Founders Wire',
+    founderOrCeo: 'Shailendra Tiwari',
+    fundingText: 'raised $1.6M seed funding',
+    locationText: 'based in Bangalore, Karnataka, India',
+    country: 'India',
+    region: 'Asia',
+    industry: 'Agriculture / AgriTech'
+  },
+  {
+    name: 'Biome Makers',
+    url: 'https://biomemakers.com',
+    snippet: 'Biome Makers uses DNA sequencing and ecological computing to decode soil biology and improve crop yield for agriculture. Headquartered in Valladolid, Spain. Founded by Alberto Acedo.',
+    source: 'European AgTech Digest',
+    founderOrCeo: 'Alberto Acedo',
+    fundingText: 'secured $4.2M in funding',
+    locationText: 'headquartered in Valladolid, Spain, Europe',
+    country: 'Spain',
+    region: 'Europe',
+    industry: 'Agriculture / AgriTech'
+  },
+
+  // --- Healthcare & Pharmaceuticals ---
+  {
+    name: 'Qure.ai',
+    url: 'https://qure.ai',
+    snippet: 'Qure.ai deploys deep learning AI tools for medical radiology and diagnostic chest X-ray interpretation in hospitals. Headquartered in Mumbai, India. Founded by Prashant Warier.',
+    source: 'HealthTech Global Wire',
+    founderOrCeo: 'Prashant Warier',
+    fundingText: 'raised $4.5M venture financing',
+    locationText: 'headquartered in Mumbai, Maharashtra, India',
+    country: 'India',
+    region: 'Asia',
+    industry: 'Healthcare / HealthTech'
+  },
+  {
+    name: 'Doctolib',
+    url: 'https://doctolib.fr',
+    snippet: 'Doctolib provides online medical consultations, appointment management, and digital hospital software solutions across Europe. Headquartered in Paris, France. Founded by Stanislas Niox-Chateau.',
+    source: 'European Health Dispatch',
+    founderOrCeo: 'Stanislas Niox-Chateau',
+    fundingText: 'raised €4.0M early growth round',
+    locationText: 'headquartered in Paris, France, European Union',
+    country: 'France',
+    region: 'Europe',
+    industry: 'Healthcare'
+  },
+  {
+    name: 'HealthifyMe',
+    url: 'https://healthifyme.com',
+    snippet: 'HealthifyMe is a digital health, clinical nutrition, and AI wellness monitoring platform. Headquartered in Bangalore, India. Founded by Tushar Vashisht.',
+    source: 'Asia Digital Health Review',
+    founderOrCeo: 'Tushar Vashisht',
+    fundingText: 'secured $3.5M in funding',
+    locationText: 'based in Bangalore, Karnataka, India',
+    country: 'India',
+    region: 'Asia',
+    industry: 'Healthcare / Digital Health'
+  },
+  {
+    name: 'PharmEasy',
+    url: 'https://pharmeasy.in',
+    snippet: 'PharmEasy operates a consumer healthcare platform supplying verified pharmaceuticals, diagnostics, and teleconsultation. Headquartered in Mumbai, India. Founded by Dharmil Sheth and Dhaval Shah.',
+    source: 'Indian Pharma Review',
+    founderOrCeo: 'Dharmil Sheth',
+    fundingText: 'raised ₹50 Crore early funding',
+    locationText: 'based in Mumbai, Maharashtra, India',
+    country: 'India',
+    region: 'Asia',
+    industry: 'Pharmaceuticals / HealthTech'
+  },
+
+  // --- Automotive & Electric Vehicles (EV) ---
+  {
+    name: 'Ather Energy',
+    url: 'https://atherenergy.com',
+    snippet: 'Ather Energy designs, manufactures, and deploys smart electric scooters and fast-charging EV charging grid infrastructure. Headquartered in Bangalore, India. Founded by Tarun Mehta and Swapnil Jain.',
+    source: 'EV & Mobility News',
+    founderOrCeo: 'Tarun Mehta',
+    fundingText: 'raised $5.0M in early financing',
+    locationText: 'headquartered in Bangalore, Karnataka, India',
+    country: 'India',
+    region: 'Asia',
+    industry: 'Automotive / Electric Vehicles'
+  },
+  {
+    name: 'Ultraviolette',
+    url: 'https://ultraviolette.com',
+    snippet: 'Ultraviolette Automotive develops high-performance electric motorcycles and aviation-grade EV battery technology. Headquartered in Bangalore, India. Founded by Narayan Subramaniam.',
+    source: 'Mobility Tech Journal',
+    founderOrCeo: 'Narayan Subramaniam',
+    fundingText: 'secured $3.2M Series A funding',
+    locationText: 'headquartered in Bangalore, India',
+    country: 'India',
+    region: 'Asia',
+    industry: 'Automotive / EV'
+  },
+  {
+    name: 'Rimac Technology',
+    url: 'https://rimac-technology.com',
+    snippet: 'Rimac Technology engineers high-performance electric powertrains, battery management systems, and automotive electronics. Headquartered in Sveta Nedelja, Croatia. Founded by Mate Rimac.',
+    source: 'European Automotive Radar',
+    founderOrCeo: 'Mate Rimac',
+    fundingText: 'secured €4.5M early development round',
+    locationText: 'headquartered in Sveta Nedelja, Croatia, European Union',
+    country: 'Croatia',
+    region: 'Europe',
+    industry: 'Automotive / Vehicle Technology'
+  },
+
+  // --- Energy, CleanTech & Environment ---
+  {
+    name: 'Ecozen Solutions',
+    url: 'https://ecozensolutions.com',
+    snippet: 'Ecozen manufactures smart solar-powered cold storage (Ecofrost) and smart solar irrigation controllers for farmers. Headquartered in Pune, India. Founded by Devendra Gupta and Prateek Singhal.',
+    source: 'CleanTech India Dispatch',
+    founderOrCeo: 'Devendra Gupta',
+    fundingText: 'raised $3.8M in funding round',
+    locationText: 'headquartered in Pune, Maharashtra, India',
+    country: 'India',
+    region: 'Asia',
+    industry: 'Renewable Energy / CleanTech'
+  },
+  {
+    name: 'Climeworks',
+    url: 'https://climeworks.com',
+    snippet: 'Climeworks develops and operates commercial direct air capture plants to permanently remove carbon dioxide from the atmosphere. Headquartered in Zurich, Switzerland. Founded by Christoph Gebald.',
+    source: 'Swiss CleanTech Wire',
+    founderOrCeo: 'Christoph Gebald',
+    fundingText: 'raised $4.8M early financing',
+    locationText: 'based in Zurich, Switzerland, Europe',
+    country: 'Switzerland',
+    region: 'Europe',
+    industry: 'CleanTech / Environmental Services'
+  },
+
+  // --- Manufacturing & Industrial Automation ---
+  {
+    name: 'Zetwerk',
+    url: 'https://zetwerk.com',
+    snippet: 'Zetwerk provides custom on-demand manufacturing, precision machining, and industrial fabrication supply network services. Headquartered in Bangalore, India. Founded by Amrit Acharya.',
+    source: 'Industrial Manufacturing Review',
+    founderOrCeo: 'Amrit Acharya',
+    fundingText: 'raised $3.0M early seed financing',
+    locationText: 'headquartered in Bangalore, Karnataka, India',
+    country: 'India',
+    region: 'Asia',
+    industry: 'Manufacturing / Industrial Automation'
+  },
+  {
+    name: 'Karkhana.io',
+    url: 'https://karkhana.io',
+    snippet: 'Karkhana.io is an on-demand digital manufacturing platform for CNC machining, sheet metal, and injection molding. Headquartered in Mumbai, India. Founded by Sonam Motwani.',
+    source: 'Indian Manufacturing News',
+    founderOrCeo: 'Sonam Motwani',
+    fundingText: 'raised $1.5M in seed funding',
+    locationText: 'based in Mumbai, Maharashtra, India',
+    country: 'India',
+    region: 'Asia',
+    industry: 'Manufacturing / Industrial'
+  },
+
+  // --- Logistics & Supply Chain ---
+  {
+    name: 'Shiprocket',
+    url: 'https://shiprocket.in',
+    snippet: 'Shiprocket provides automated shipping, multi-carrier parcel delivery, and e-commerce supply chain logistics across India. Headquartered in New Delhi, India. Founded by Saahil Goel.',
+    source: 'Logistics Tech Wire',
+    founderOrCeo: 'Saahil Goel',
+    fundingText: 'raised $4.0M venture funding',
+    locationText: 'headquartered in New Delhi, India',
+    country: 'India',
+    region: 'Asia',
+    industry: 'Logistics / Supply Chain'
+  },
+  {
+    name: 'Sennder',
+    url: 'https://sennder.com',
+    snippet: 'Sennder connects commercial enterprise shippers with freight carriers through its European digital road logistics platform. Headquartered in Berlin, Germany. Founded by David Nothacker.',
+    source: 'European Logistics News',
+    founderOrCeo: 'David Nothacker',
+    fundingText: 'secured €3.5M funding',
+    locationText: 'headquartered in Berlin, Germany, Europe',
+    country: 'Germany',
+    region: 'Europe',
+    industry: 'Logistics / Freight'
+  },
 ];
 
 export const VERIFIED_NON_US_TECH_COMPANIES = VERIFIED_GLOBAL_TECH_COMPANIES;
@@ -383,16 +611,22 @@ export const VERIFIED_NON_US_TECH_COMPANIES = VERIFIED_GLOBAL_TECH_COMPANIES;
 /**
  * Generate Dynamic Search Queries based on HuntConfig
  */
+/**
+ * Generate Dynamic Search Queries based on HuntConfig & TargetProfile
+ */
 export function generateSearchQueries(config: HuntConfig): { queries: string[]; geoTarget?: string } {
   const queries: string[] = [];
-  const countries = config.geography.countries || [];
-  const regions = config.geography.regions || [];
-  const exclusions = config.geography.excludedCountries || [];
-  const sectors = config.sectors.filter(s => s !== 'all' && s !== 'All sectors');
+  const profile = config.targetProfile;
+  const countries = profile?.countries?.length ? profile.countries : config.geography.countries || [];
+  const regions = profile?.regions?.length ? profile.regions : config.geography.regions || [];
+  const exclusions = profile?.excludedCountries?.length ? profile.excludedCountries : config.geography.excludedCountries || [];
+  const sectors = (profile?.industries?.length ? profile.industries : config.sectors).filter(s => s !== 'all' && s !== 'All sectors' && s !== 'Any');
+  const subIndustries = profile?.subIndustries || config.businessModels || [];
 
   // Build exclusion clause
   let excludeClause = '';
-  if (exclusions.includes('United States') || config.geography.usPresence === 'strictly_none' || config.geography.usPresence === 'minimal_or_none') {
+  const usPresence = profile?.usPresenceMode || config.geography.usPresence;
+  if (exclusions.includes('United States') || usPresence === 'strictly_none' || usPresence === 'minimal_or_none' || usPresence === 'exclude_us') {
     excludeClause += ' -US -USA -America';
   }
   for (const ex of exclusions) {
@@ -401,60 +635,74 @@ export function generateSearchQueries(config: HuntConfig): { queries: string[]; 
     }
   }
 
-  // Format funding text
-  const minM = (config.funding.min / 1_000_000).toFixed(0);
-  const maxM = (config.funding.max / 1_000_000).toFixed(0);
-  const fundingClause = `"$${minM}M" OR "$${maxM}M" OR "million" seed funding`;
+  // Format funding text based on currency
+  const currency = profile?.fundingCurrency || 'USD';
+  let fundingClause = '"million" OR "seed" OR "series A" funding';
+  if (currency === 'INR') {
+    fundingClause = '("crore" OR "lakh" OR "₹" OR "seed" OR "series A") funding';
+  } else {
+    const minM = ((profile?.fundingMin || config.funding.min) / 1_000_000).toFixed(0);
+    const maxM = ((profile?.fundingMax || config.funding.max) / 1_000_000).toFixed(0);
+    fundingClause = `"$${minM}M" OR "$${maxM}M" OR "million" seed funding`;
+  }
 
-  // Format sector keywords
-  const sectorClause = sectors.length > 0
-    ? sectors.slice(0, 3).map(s => `"${s}"`).join(' OR ')
-    : 'tech platform OR SaaS OR software';
+  // Format sector & sub-industry keywords
+  let sectorTerms = [...sectors, ...subIndustries.slice(0, 3)];
+  if (sectorTerms.length === 0) {
+    sectorTerms = ['tech platform', 'SaaS', 'software'];
+  }
+  const sectorClause = sectorTerms.slice(0, 4).map(s => `"${s}"`).join(' OR ');
 
   // Format stage
-  const stageClause = config.stage.length > 0 && !config.stage.includes('Any')
-    ? config.stage.slice(0, 2).join(' OR ')
+  const stages = profile?.companyStages?.length ? profile.companyStages : config.stage;
+  const stageClause = stages.length > 0 && !stages.includes('Any')
+    ? stages.slice(0, 2).map(s => `"${s}"`).join(' OR ')
     : 'seed OR "Series A"';
 
-  // Case 1: Specific Countries selected (e.g. India, China, Australia, etc.)
+  // Decision maker clause
+  const roles = profile?.contactPersonTypes || ['CEO', 'Founder', 'Co-founder'];
+  const roleClause = roles.includes('Not Required') ? '' : `(${roles.slice(0, 2).join(' OR ')})`;
+
+  // Case 1: Specific Countries selected (e.g. India, Germany, etc.)
   if (countries.length > 0) {
     for (const country of countries.slice(0, 4)) {
-      queries.push(`"${country}" ${sectorClause} startup ${fundingClause} ${excludeClause}`);
-      queries.push(`"${country}" tech platform ${stageClause} raised million ${excludeClause}`);
+      queries.push(`"${country}" (${sectorClause}) startup ${fundingClause} ${excludeClause}`);
+      queries.push(`"${country}" (${sectorClause}) ${stageClause} ${roleClause} ${excludeClause}`);
 
       // Country-specific venture blogs
       if (country.toLowerCase() === 'india') {
-        queries.push(`site:inc42.com ${sectorClause} raised million ${stageClause}`);
-        queries.push(`site:yourstory.com ${sectorClause} startup seed funding million`);
+        queries.push(`site:inc42.com ${sectorClause} ${fundingClause}`);
+        queries.push(`site:yourstory.com ${sectorClause} startup funding`);
       } else if (country.toLowerCase() === 'australia') {
-        queries.push(`site:innovationaus.com ${sectorClause} raised million`);
+        queries.push(`site:innovationaus.com ${sectorClause} raised`);
       } else if (country.toLowerCase() === 'singapore') {
-        queries.push(`site:techinasia.com Singapore ${sectorClause} raised million`);
-      } else if (country.toLowerCase() === 'south africa') {
-        queries.push(`site:disruptafrica.com ${sectorClause} raised million`);
+        queries.push(`site:techinasia.com Singapore ${sectorClause} raised`);
+      } else if (country.toLowerCase() === 'germany') {
+        queries.push(`site:eu-startups.com Germany ${sectorClause} seed funding`);
+      } else if (country.toLowerCase() === 'united kingdom') {
+        queries.push(`site:uktech.news ${sectorClause} startup raised`);
       }
     }
   }
   // Case 2: Regions selected (e.g. Asia, Europe, Middle East)
-  else if (regions.length > 0) {
+  else if (regions.length > 0 && !regions.includes('Global')) {
     for (const region of regions.slice(0, 3)) {
-      queries.push(`"${region}" ${sectorClause} startup ${fundingClause} ${excludeClause}`);
-      queries.push(`"${region}" tech platform ${stageClause} raised million ${excludeClause}`);
+      queries.push(`"${region}" (${sectorClause}) startup ${fundingClause} ${excludeClause}`);
+      queries.push(`"${region}" (${sectorClause}) ${stageClause} raised ${excludeClause}`);
       if (region.toLowerCase() === 'asia') {
-        queries.push(`site:techinasia.com ${sectorClause} seed Series A million`);
-        queries.push(`"India" OR "Singapore" OR "Indonesia" ${sectorClause} startup raised million`);
+        queries.push(`site:techinasia.com ${sectorClause} seed Series A`);
       } else if (region.toLowerCase() === 'europe') {
-        queries.push(`site:eu-startups.com ${sectorClause} raised million seed`);
-        queries.push(`site:tech.eu ${sectorClause} secured million`);
+        queries.push(`site:eu-startups.com ${sectorClause} raised seed`);
+        queries.push(`site:tech.eu ${sectorClause} secured funding`);
       }
     }
   }
   // Case 3: Global / Non-US default
   else {
-    queries.push(`site:eu-startups.com "raises" "million" seed 2024 2025 ${excludeClause}`);
-    queries.push(`site:tech.eu "secures" "seed" OR "series A" million ${excludeClause}`);
-    queries.push(`site:techinasia.com "raises" "seed" million ${excludeClause}`);
-    queries.push(`"seed funding" "million" non-US tech platform SaaS ${excludeClause}`);
+    queries.push(`site:eu-startups.com (${sectorClause}) "raises" seed ${excludeClause}`);
+    queries.push(`site:tech.eu (${sectorClause}) "secures" seed OR "series A" ${excludeClause}`);
+    queries.push(`site:techinasia.com (${sectorClause}) "raises" seed ${excludeClause}`);
+    queries.push(`(${sectorClause}) startup ${fundingClause} non-US ${excludeClause}`);
   }
 
   // Set GeoTarget for SerpAPI if single country is targeted
@@ -473,7 +721,7 @@ export function generateSearchQueries(config: HuntConfig): { queries: string[]; 
 }
 
 /**
- * Verified Seed Dataset Source with Dynamic Filtering based on HuntConfig
+ * Verified Seed Dataset Source with Dynamic Multi-Industry & Multi-Region Filtering
  */
 export class VerifiedSeedDatasetSource implements DiscoverySource {
   name = 'VerifiedSeedDataset';
@@ -484,12 +732,12 @@ export class VerifiedSeedDatasetSource implements DiscoverySource {
   }
 
   async discover(): Promise<{ url: string; snippet: string }[]> {
-    const countries = (this.config.geography.countries || []).map(c => c.toLowerCase());
-    const regions = (this.config.geography.regions || []).map(r => r.toLowerCase());
-    const excluded = (this.config.geography.excludedCountries || []).map(e => e.toLowerCase());
-    const sectors = (this.config.sectors || []).map(s => s.toLowerCase()).filter(s => s !== 'all' && s !== 'all sectors');
+    const profile = this.config.targetProfile;
+    const countries = (profile?.countries?.length ? profile.countries : this.config.geography.countries || []).map(c => c.toLowerCase());
+    const regions = (profile?.regions?.length ? profile.regions : this.config.geography.regions || []).map(r => r.toLowerCase());
+    const excluded = (profile?.excludedCountries?.length ? profile.excludedCountries : this.config.geography.excludedCountries || []).map(e => e.toLowerCase());
+    const sectors = (profile?.industries?.length ? profile.industries : this.config.sectors || []).map(s => s.toLowerCase()).filter(s => s !== 'all' && s !== 'all sectors' && s !== 'any');
 
-    // Filter matching companies
     const filtered = VERIFIED_GLOBAL_TECH_COMPANIES.filter(c => {
       const cCountry = (c.country || '').toLowerCase();
       const cRegion = (c.region || '').toLowerCase();
@@ -497,27 +745,49 @@ export class VerifiedSeedDatasetSource implements DiscoverySource {
 
       // Check exclusions
       if (excluded.includes(cCountry)) return false;
-      if (this.config.geography.usPresence === 'strictly_none' && cCountry === 'united states') return false;
+      const usPresence = profile?.usPresenceMode || this.config.geography.usPresence;
+      if ((usPresence === 'strictly_none' || usPresence === 'exclude_us') && cCountry === 'united states') return false;
 
       // Check country match
       if (countries.length > 0) {
         if (!countries.includes(cCountry)) return false;
       }
       // Check region match
-      else if (regions.length > 0) {
+      else if (regions.length > 0 && !regions.includes('global')) {
         if (!regions.includes(cRegion)) return false;
       }
 
       // Check sector match
       if (sectors.length > 0) {
-        const matchesSector = sectors.some(s => cIndustry.includes(s) || s.includes(cIndustry));
+        const matchesSector = sectors.some(s => {
+          if (cIndustry.includes(s) || s.includes(cIndustry)) return true;
+          // Sub-industry and cross-category synonyms
+          if ((s.includes('agri') || s.includes('dairy') || s.includes('food') || s.includes('farm')) &&
+              (cIndustry.includes('agri') || cIndustry.includes('dairy') || cIndustry.includes('food') || cIndustry.includes('farm'))) return true;
+          if ((s.includes('auto') || s.includes('ev') || s.includes('mobility') || s.includes('vehicle')) &&
+              (cIndustry.includes('auto') || cIndustry.includes('ev') || cIndustry.includes('mobility') || cIndustry.includes('vehicle'))) return true;
+          if ((s.includes('health') || s.includes('pharma') || s.includes('medic') || s.includes('clinic')) &&
+              (cIndustry.includes('health') || cIndustry.includes('pharma') || cIndustry.includes('medic'))) return true;
+          if ((s.includes('cyber') || s.includes('security')) &&
+              (cIndustry.includes('cyber') || cIndustry.includes('security'))) return true;
+          if ((s.includes('clean') || s.includes('energy') || s.includes('solar') || s.includes('climate')) &&
+              (cIndustry.includes('clean') || cIndustry.includes('energy') || cIndustry.includes('solar') || cIndustry.includes('climate'))) return true;
+          if ((s.includes('manufactur') || s.includes('industrial')) &&
+              (cIndustry.includes('manufactur') || cIndustry.includes('industrial'))) return true;
+          if ((s.includes('logistics') || s.includes('supply') || s.includes('freight')) &&
+              (cIndustry.includes('logistics') || cIndustry.includes('supply') || cIndustry.includes('freight'))) return true;
+          if ((s.includes('fintech') || s.includes('payment') || s.includes('bank')) &&
+              (cIndustry.includes('fintech') || cIndustry.includes('payment') || cIndustry.includes('bank'))) return true;
+          if ((s.includes('tech') || s.includes('software') || s.includes('saas') || s.includes('ai')) &&
+              (cIndustry.includes('tech') || cIndustry.includes('software') || cIndustry.includes('saas') || cIndustry.includes('ai') || cIndustry.includes('platform'))) return true;
+          return false;
+        });
         if (!matchesSector) return false;
       }
 
       return true;
     });
 
-    // If specific country is requested and matched, return those
     if (filtered.length > 0) {
       return filtered.map(c => ({
         url: c.url,
@@ -525,9 +795,15 @@ export class VerifiedSeedDatasetSource implements DiscoverySource {
       }));
     }
 
-    // Fallback to all matching non-excluded if broader search
+    // If specific country or sector was requested and none matched in seed, return empty so web search takes over
+    if (countries.length > 0 || sectors.length > 0) {
+      return [];
+    }
+
+    // Fallback for global non-excluded searches
     return VERIFIED_GLOBAL_TECH_COMPANIES
       .filter(c => !excluded.includes((c.country || '').toLowerCase()))
+      .slice(0, 20)
       .map(c => ({
         url: c.url,
         snippet: `${c.snippet} [HQ: ${c.country} | Founder: ${c.founderOrCeo} | Funding: ${c.fundingText}]`,

@@ -9,7 +9,9 @@ import {
   SettingsConfig,
   HuntConfig,
   TVB_EVALUATION_CONFIG,
+  RejectedCompanyRecord,
 } from '@/lib/types';
+import { formatTargetSummary } from '@/lib/targetProfileData';
 import { loadSettings } from '@/lib/settings';
 import { calculateHuntScore } from '@/lib/rank';
 import { downloadCsvFile, downloadPdfFile, downloadDocxFile } from '@/lib/export';
@@ -135,6 +137,7 @@ export default function HomePage() {
   const [showSplash, setShowSplash] = useState<boolean>(true);
   const [activeHuntConfig, setActiveHuntConfig] = useState<HuntConfig>(TVB_EVALUATION_CONFIG);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [resultsTab, setResultsTab] = useState<'qualified' | 'rejected'>('qualified');
 
   // Confirmation Modal
   const [confirmModal, setConfirmModal] = useState<{
@@ -490,7 +493,8 @@ export default function HomePage() {
   const verifiedEmails = results?.companies
     ? results.companies.filter((c) => c.emailVerified || c.founderOrCeoEmail).length
     : 0;
-  const rejectedCount = Math.max(0, totalDiscovered - totalQualified);
+  const rejectedCandidates: RejectedCompanyRecord[] = results?.rejectedCompanies || [];
+  const rejectedCount = rejectedCandidates.length > 0 ? rejectedCandidates.length : Math.max(0, totalDiscovered - totalQualified);
 
   return (
     <div className="min-h-screen bg-[#FAF6EE] text-[#1E1B18] flex flex-col font-sans selection:bg-[#FFE7DC] selection:text-[#FF6B35]">
@@ -1073,6 +1077,19 @@ export default function HomePage() {
                     </div>
                   </div>
                 )}
+
+                {/* Active Target Configuration Banner (Section 22) */}
+                <div className="mt-4 p-3.5 bg-[#FAF6EE] rounded-xl border border-[#EBE4D5] flex items-start gap-2.5">
+                  <span className="text-base shrink-0 mt-0.5">🎯</span>
+                  <div className="text-xs font-mono leading-relaxed">
+                    <span className="font-bold uppercase tracking-wider text-[#FF6B35] mr-2">TARGET:</span>
+                    <span className="text-[#1E1B18] font-bold">
+                      {activeHuntConfig?.targetProfile
+                        ? formatTargetSummary(activeHuntConfig.targetProfile)
+                        : `${activeHuntConfig?.targetLeads || 15} companies | ${activeHuntConfig?.sectors.join(', ') || 'Technology'} | ${activeHuntConfig?.funding.preset || '$1M–$5M'} | ${activeHuntConfig?.geography.countries.join(', ') || 'Global'} | Minimal/No US | CEO + Co-founder | Email Required`}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {status === 'running' ? (
@@ -1094,7 +1111,7 @@ export default function HomePage() {
                   errorMessage={errorMessage}
                   onRetry={() => handleStartHunt(activeHuntConfig)}
                 />
-              ) : !results || results.companies.length === 0 ? (
+              ) : !results || (results.companies.length === 0 && rejectedCandidates.length === 0) ? (
                 <div className="paper-card bg-[#FFFDF9] rounded-2xl p-12 text-center border-2 border-[#1E1B18] shadow-sketch-sm space-y-4">
                   <div className="flex justify-center mx-auto">
                     <HuntlystLogo size="lg" state="idle" showWordmark={false} />
@@ -1117,177 +1134,289 @@ export default function HomePage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Results Filter Toolbar */}
-                  <div className="paper-card bg-[#FFFDF9] rounded-xl p-4 border border-[#D9D0C1] shadow-sketch-sm flex flex-col sm:flex-row gap-3 items-center justify-between text-xs">
-                    <div className="relative flex-1 w-full">
-                      <span className="absolute left-3 top-2.5 text-xs text-[#766E65]">🔍</span>
-                      <input
-                        type="text"
-                        placeholder="Search results by company, founder, or sector..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-[#D9D0C1] bg-[#FAF6EE] focus:bg-white text-[#1E1B18] outline-none"
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-                      {availableSectors.length > 0 && (
-                        <select
-                          value={selectedSector}
-                          onChange={(e) => setSelectedSector(e.target.value)}
-                          className="px-3 py-2 rounded-xl border border-[#D9D0C1] bg-[#FAF6EE] text-xs font-bold text-[#1E1B18] outline-none"
-                        >
-                          <option value="All Sectors">All Sectors</option>
-                          {availableSectors.map((s) => (
-                            <option key={s} value={s}>
-                              {s}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-
-                      {availableCountries.length > 0 && (
-                        <select
-                          value={selectedCountry}
-                          onChange={(e) => setSelectedCountry(e.target.value)}
-                          className="px-3 py-2 rounded-xl border border-[#D9D0C1] bg-[#FAF6EE] text-xs font-bold text-[#1E1B18] outline-none"
-                        >
-                          <option value="ALL">All Countries</option>
-                          {availableCountries.map((c) => (
-                            <option key={c} value={c}>
-                              {c}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-
-                      <select
-                        value={selectedScoreFilter}
-                        onChange={(e) => setSelectedScoreFilter(e.target.value)}
-                        className="px-3 py-2 rounded-xl border border-[#D9D0C1] bg-[#FAF6EE] text-xs font-bold text-[#1E1B18] outline-none"
-                      >
-                        <option value="ALL">All Scores</option>
-                        <option value="HIGH">Score 85+ (High Fit)</option>
-                        <option value="PERFECT">Score 95+ (Top Tier)</option>
-                      </select>
-                    </div>
+                  {/* Results Switcher: Qualified vs Rejected Candidates (Section 23) */}
+                  <div className="flex items-center gap-2 border-b border-[#EBE4D5] pb-3">
+                    <button
+                      type="button"
+                      onClick={() => setResultsTab('qualified')}
+                      className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all border ${
+                        resultsTab === 'qualified'
+                          ? 'bg-[#1E1B18] text-white border-[#1E1B18] shadow-sketch-xs'
+                          : 'bg-white text-[#766E65] border-[#D9D0C1] hover:bg-[#FAF6EE]'
+                      }`}
+                    >
+                      ✓ Qualified Companies ({totalQualified})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setResultsTab('rejected')}
+                      className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all border ${
+                        resultsTab === 'rejected'
+                          ? 'bg-[#C62828] text-white border-[#C62828] shadow-sketch-xs'
+                          : 'bg-white text-[#766E65] border-[#D9D0C1] hover:bg-[#FAF6EE]'
+                      }`}
+                    >
+                      ✗ Rejected Candidates ({rejectedCount})
+                    </button>
                   </div>
 
-                  {/* Main Table (Section 11) */}
-                  <div className="paper-card bg-[#FFFDF9] rounded-2xl border-2 border-[#1E1B18] shadow-sketch-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                          <tr className="bg-[#1E1B18] text-[#FAF6EE] font-mono font-bold text-[11px] uppercase tracking-wider">
-                            <th className="py-3 px-4">#</th>
-                            <th className="py-3 px-4">Company</th>
-                            <th className="py-3 px-4">Sector</th>
-                            <th className="py-3 px-4">Funding / Rev</th>
-                            <th className="py-3 px-4">Location</th>
-                            <th className="py-3 px-4">Leader</th>
-                            <th className="py-3 px-4">Verified Contact</th>
-                            <th className="py-3 px-4">Hunt Score</th>
-                            <th className="py-3 px-4 text-right">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#F0EAD8]">
-                          {filteredCompanies.map((company, idx) => {
-                            const { score } = calculateHuntScore(company);
-                            const isSaved = savedLeads.some((c) => c.name === company.name);
-                            const founder = company.founderOrCeoName || company.founder?.name || 'Executive';
-                            const email = company.founderOrCeoEmail || company.email?.address;
-                            const isEmailVerified = company.emailVerified || company.email?.status === 'verified';
+                  {resultsTab === 'rejected' ? (
+                    /* REJECTED CANDIDATES VIEW (Section 23) */
+                    <div className="space-y-3">
+                      <div className="text-xs font-mono text-[#766E65] pb-1">
+                        Preserved candidates that failed qualification criteria during autonomous verification:
+                      </div>
 
-                            return (
-                              <tr
-                                key={company.name}
-                                className="hover:bg-[#FFF9F2] transition-colors"
-                              >
-                                <td className="py-3.5 px-4 font-mono text-[#766E65]">{idx + 1}</td>
-                                <td className="py-3.5 px-4">
-                                  <div className="font-bold text-[#1E1B18] text-sm flex items-center gap-1.5">
-                                    <span>{company.name}</span>
-                                    {company.website && (
+                      {rejectedCandidates.length === 0 ? (
+                        <div className="paper-card bg-[#FFFDF9] rounded-xl p-8 text-center border border-[#D9D0C1] text-xs font-mono text-[#766E65]">
+                          No individual candidate failures logged for this round.
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                          {rejectedCandidates.map((rej, i) => (
+                            <div
+                              key={`${rej.name}-${i}`}
+                              className="paper-card bg-[#FFFDF9] rounded-xl p-4 border-2 border-[#EBE4D5] shadow-sketch-xs space-y-2.5"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <div className="font-bold text-sm text-[#1E1B18] flex items-center gap-1.5">
+                                    <span className="text-[#C62828]">✗</span>
+                                    <span>{rej.name}</span>
+                                    {rej.website && (
                                       <a
-                                        href={company.website}
+                                        href={rej.website}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-[#FF6B35] hover:underline text-[10px]"
+                                        className="text-[#766E65] hover:text-[#1E1B18] text-[10px]"
                                       >
                                         ↗
                                       </a>
                                     )}
                                   </div>
-                                  <div className="text-[11px] text-[#766E65] line-clamp-1 max-w-xs">
-                                    {company.description || 'Technology platform.'}
+                                  <div className="text-[11px] font-mono text-[#766E65]">
+                                    {rej.industry || 'Venture'} • {rej.location || 'Undetermined'}
                                   </div>
-                                </td>
-                                <td className="py-3.5 px-4">
-                                  <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-[#FAF6EE] text-[#1E1B18] border border-[#EBE4D5]">
-                                    {company.industry || company.sector || 'Tech Platform'}
-                                  </span>
-                                </td>
-                                <td className="py-3.5 px-4 font-mono font-bold text-[#1E1B18]">
-                                  {company.fundingOrRevenue || '$1M–$5M'}
-                                </td>
-                                <td className="py-3.5 px-4 font-mono text-[11px] text-[#5A544E]">
-                                  📍 {company.country || company.location || 'Non-US Hub'}
-                                </td>
-                                <td className="py-3.5 px-4">
-                                  <div className="font-bold text-[#1E1B18]">{founder}</div>
-                                  <span className="text-[10px] text-[#766E65] font-mono">CEO / Co-founder</span>
-                                </td>
-                                <td className="py-3.5 px-4">
-                                  {email ? (
+                                </div>
+
+                                <div className="flex items-center gap-1 flex-wrap justify-end">
+                                  {rej.rejectionReasons?.map((r) => (
                                     <span
-                                      className={`inline-block font-mono text-[11px] font-bold px-2 py-0.5 rounded ${
-                                        isEmailVerified
-                                          ? 'bg-[#E8F5E9] text-[#2E7D32] border border-[#2E7D32]/30'
-                                          : 'bg-[#FAF6EE] text-[#8C847A]'
-                                      }`}
+                                      key={r}
+                                      className="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-[#FFEBEE] text-[#C62828] border border-[#FFCDD2]"
                                     >
-                                      {email}
+                                      {r}
                                     </span>
-                                  ) : (
-                                    <span className="text-[#8C847A] italic text-[11px]">Unverified</span>
-                                  )}
-                                </td>
-                                <td className="py-3.5 px-4">
-                                  <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-[#FFE7DC] text-[#FF6B35] border border-[#FF6B35]/30">
-                                    {score} / 100
-                                  </span>
-                                </td>
-                                <td className="py-3.5 px-4 text-right">
-                                  <div className="flex items-center justify-end gap-1.5">
-                                    <button
-                                      type="button"
-                                      onClick={() => setSelectedCompany(company)}
-                                      className="p-1.5 rounded-lg border border-[#D9D0C1] bg-white hover:bg-[#FAF6EE] text-xs"
-                                      title="View Details"
-                                    >
-                                      🔍
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleToggleSave(company)}
-                                      className={`p-1.5 rounded-lg border text-xs ${
-                                        isSaved
-                                          ? 'bg-[#FFE7DC] border-[#FF6B35] text-[#FF6B35]'
-                                          : 'bg-white border-[#D9D0C1] hover:bg-[#FAF6EE]'
-                                      }`}
-                                      title={isSaved ? 'Remove from Shortlist' : 'Save to Shortlist'}
-                                    >
-                                      {isSaved ? '⭐' : '☆'}
-                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Rule Audit Checks */}
+                              <div className="space-y-1 text-xs font-mono pt-1 border-t border-[#F0EAD8]">
+                                {rej.matchedRules?.map((m, idx) => (
+                                  <div key={idx} className="text-[#2E7D32] flex items-center gap-1.5">
+                                    <span>{m}</span>
                                   </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
+                                ))}
+                                {rej.failedRules?.map((f, idx) => (
+                                  <div key={idx} className="text-[#C62828] font-bold flex items-center gap-1.5">
+                                    <span>{f}</span>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {rej.sourceEvidence && (
+                                <div className="text-[11px] text-[#766E65] bg-[#FAF6EE] p-2 rounded-lg border border-[#EBE4D5] line-clamp-2">
+                                  <span className="font-bold text-[#1E1B18]">Evidence: </span>
+                                  {rej.sourceEvidence}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  ) : (
+                    /* QUALIFIED COMPANIES VIEW */
+                    <div className="space-y-4">
+                      {/* Results Filter Toolbar */}
+                      <div className="paper-card bg-[#FFFDF9] rounded-xl p-4 border border-[#D9D0C1] shadow-sketch-sm flex flex-col sm:flex-row gap-3 items-center justify-between text-xs">
+                        <div className="relative flex-1 w-full">
+                          <span className="absolute left-3 top-2.5 text-xs text-[#766E65]">🔍</span>
+                          <input
+                            type="text"
+                            placeholder="Search results by company, founder, or sector..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-[#D9D0C1] bg-[#FAF6EE] focus:bg-white text-[#1E1B18] outline-none"
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+                          {availableSectors.length > 0 && (
+                            <select
+                              value={selectedSector}
+                              onChange={(e) => setSelectedSector(e.target.value)}
+                              className="px-3 py-2 rounded-xl border border-[#D9D0C1] bg-[#FAF6EE] text-xs font-bold text-[#1E1B18] outline-none"
+                            >
+                              <option value="All Sectors">All Sectors</option>
+                              {availableSectors.map((s) => (
+                                <option key={s} value={s}>
+                                  {s}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+
+                          {availableCountries.length > 0 && (
+                            <select
+                              value={selectedCountry}
+                              onChange={(e) => setSelectedCountry(e.target.value)}
+                              className="px-3 py-2 rounded-xl border border-[#D9D0C1] bg-[#FAF6EE] text-xs font-bold text-[#1E1B18] outline-none"
+                            >
+                              <option value="ALL">All Countries</option>
+                              {availableCountries.map((c) => (
+                                <option key={c} value={c}>
+                                  {c}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+
+                          <select
+                            value={selectedScoreFilter}
+                            onChange={(e) => setSelectedScoreFilter(e.target.value)}
+                            className="px-3 py-2 rounded-xl border border-[#D9D0C1] bg-[#FAF6EE] text-xs font-bold text-[#1E1B18] outline-none"
+                          >
+                            <option value="ALL">All Scores</option>
+                            <option value="HIGH">Score 85+ (High Fit)</option>
+                            <option value="PERFECT">Score 95+ (Top Tier)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Main Table (Section 11) */}
+                      <div className="paper-card bg-[#FFFDF9] rounded-2xl border-2 border-[#1E1B18] shadow-sketch-sm overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead>
+                              <tr className="bg-[#1E1B18] text-[#FAF6EE] font-mono font-bold text-[11px] uppercase tracking-wider">
+                                <th className="py-3 px-4">#</th>
+                                <th className="py-3 px-4">Company</th>
+                                <th className="py-3 px-4">Sector</th>
+                                <th className="py-3 px-4">Funding / Rev</th>
+                                <th className="py-3 px-4">Location</th>
+                                <th className="py-3 px-4">Leader</th>
+                                <th className="py-3 px-4">Verified Contact</th>
+                                <th className="py-3 px-4">Hunt Score</th>
+                                <th className="py-3 px-4 text-right">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#F0EAD8]">
+                              {filteredCompanies.map((company, idx) => {
+                                const { score } = calculateHuntScore(company);
+                                const isSaved = savedLeads.some((c) => c.name === company.name);
+                                const founder = company.founderOrCeoName || company.founder?.name || 'Executive';
+                                const email = company.founderOrCeoEmail || company.email?.address;
+                                const isEmailVerified = company.emailVerified || company.email?.status === 'verified';
+
+                                return (
+                                  <tr
+                                    key={company.name}
+                                    className="hover:bg-[#FFF9F2] transition-colors"
+                                  >
+                                    <td className="py-3.5 px-4 font-mono text-[#766E65]">{idx + 1}</td>
+                                    <td className="py-3.5 px-4">
+                                      <div className="font-bold text-[#1E1B18] text-sm flex items-center gap-1.5 flex-wrap">
+                                        <span>{company.name}</span>
+                                        {company.statusTag && (
+                                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#E8F5E9] text-[#2E7D32] border border-[#2E7D32]/30 font-mono">
+                                            {company.statusTag}
+                                          </span>
+                                        )}
+                                        {company.website && (
+                                          <a
+                                            href={company.website}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-[#FF6B35] hover:underline text-[10px]"
+                                          >
+                                            ↗
+                                          </a>
+                                        )}
+                                      </div>
+                                      <div className="text-[11px] text-[#766E65] line-clamp-1 max-w-xs">
+                                        {company.description || 'Verified enterprise candidate.'}
+                                      </div>
+                                    </td>
+                                    <td className="py-3.5 px-4">
+                                      <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-[#FAF6EE] text-[#1E1B18] border border-[#EBE4D5]">
+                                        {company.industry || company.sector || 'Venture'}
+                                      </span>
+                                    </td>
+                                    <td className="py-3.5 px-4 font-mono font-bold text-[#1E1B18]">
+                                      {company.fundingOrRevenue || '$1M–$5M'}
+                                    </td>
+                                    <td className="py-3.5 px-4 font-mono text-[11px] text-[#5A544E]">
+                                      📍 {company.country || company.location || 'Non-US Hub'}
+                                    </td>
+                                    <td className="py-3.5 px-4">
+                                      <div className="font-bold text-[#1E1B18]">{founder}</div>
+                                      <span className="text-[10px] text-[#766E65] font-mono">CEO / Co-founder</span>
+                                    </td>
+                                    <td className="py-3.5 px-4">
+                                      {email ? (
+                                        <span
+                                          className={`inline-block font-mono text-[11px] font-bold px-2 py-0.5 rounded ${
+                                            isEmailVerified
+                                              ? 'bg-[#E8F5E9] text-[#2E7D32] border border-[#2E7D32]/30'
+                                              : 'bg-[#FAF6EE] text-[#8C847A]'
+                                          }`}
+                                        >
+                                          {email}
+                                        </span>
+                                      ) : (
+                                        <span className="text-[#8C847A] italic text-[11px]">Unverified</span>
+                                      )}
+                                    </td>
+                                    <td className="py-3.5 px-4">
+                                      <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-[#FFE7DC] text-[#FF6B35] border border-[#FF6B35]/30">
+                                        {score} / 100
+                                      </span>
+                                    </td>
+                                    <td className="py-3.5 px-4 text-right">
+                                      <div className="flex items-center justify-end gap-1.5">
+                                        <button
+                                          type="button"
+                                          onClick={() => setSelectedCompany(company)}
+                                          className="p-1.5 rounded-lg border border-[#D9D0C1] bg-white hover:bg-[#FAF6EE] text-xs"
+                                          title="View Details"
+                                        >
+                                          🔍
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleToggleSave(company)}
+                                          className={`p-1.5 rounded-lg border text-xs ${
+                                            isSaved
+                                              ? 'bg-[#FFE7DC] border-[#FF6B35] text-[#FF6B35]'
+                                              : 'bg-white border-[#D9D0C1] hover:bg-[#FAF6EE]'
+                                          }`}
+                                          title={isSaved ? 'Remove from Shortlist' : 'Save to Shortlist'}
+                                        >
+                                          {isSaved ? '⭐' : '☆'}
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

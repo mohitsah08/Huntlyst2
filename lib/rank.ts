@@ -54,7 +54,17 @@ export function calculateHuntScore(
 
   // 1. Funding fit (max 20)
   const fundingText = (record.fundingOrRevenue || record.funding?.totalRaised || '').toLowerCase();
-  if (fundingText.includes('$') || fundingText.includes('€') || fundingText.includes('£') || fundingText.includes('m')) {
+  if (
+    fundingText.includes('$') ||
+    fundingText.includes('€') ||
+    fundingText.includes('£') ||
+    fundingText.includes('₹') ||
+    fundingText.includes('inr') ||
+    fundingText.includes('crore') ||
+    fundingText.includes('lakh') ||
+    fundingText.includes(' cr') ||
+    fundingText.includes('m')
+  ) {
     breakdown.funding = 20;
   } else if (fundingText.length > 3) {
     breakdown.funding = 16;
@@ -62,18 +72,26 @@ export function calculateHuntScore(
     breakdown.funding = 8;
   }
 
-  // 2. Technology fit (max 20)
+  // 2. Technology & Industry fit (max 20)
   const industry = (record.industry || record.sector || '').toLowerCase();
   const desc = (record.description || '').toLowerCase();
-  if (
-    industry.includes('saas') ||
-    industry.includes('software') ||
-    industry.includes('ai') ||
-    industry.includes('platform') ||
-    industry.includes('developer') ||
-    desc.includes('api') ||
-    desc.includes('cloud')
-  ) {
+  const targetedSectors = (config.targetProfile?.industries || config.sectors || []).map(s => s.toLowerCase()).filter(s => s !== 'all');
+
+  let matchesIndustry = false;
+  if (targetedSectors.length > 0) {
+    matchesIndustry = targetedSectors.some(s => industry.includes(s) || desc.includes(s));
+  } else {
+    matchesIndustry =
+      industry.includes('saas') ||
+      industry.includes('software') ||
+      industry.includes('ai') ||
+      industry.includes('platform') ||
+      industry.includes('developer') ||
+      desc.includes('api') ||
+      desc.includes('cloud');
+  }
+
+  if (matchesIndustry) {
     breakdown.technology = 20;
   } else {
     breakdown.technology = 16;
@@ -159,6 +177,8 @@ export function buildCompanyRecord(
   emailResult: EmailVerificationResult,
   config: HuntConfig = TVB_EVALUATION_CONFIG
 ): CompanyRecord {
+  const nowIso = new Date().toISOString();
+
   const record: CompanyRecord = {
     name: validated.name,
     website: validated.website,
@@ -173,6 +193,11 @@ export function buildCompanyRecord(
     sourceType: validated.sourceType,
     country: validated.country,
     headquarters: validated.headquarters,
+    firstDiscoveredAt: nowIso,
+    lastSeenAt: nowIso,
+    lastVerifiedAt: nowIso,
+    lastUpdatedAt: nowIso,
+    statusTag: 'NEW',
     auditDetails: {
       fundingStatus: `Verified: ${validated.fundingOrRevenueText || 'In Range'}`,
       locationStatus: `Geography: ${validated.country || 'Verified'}`,

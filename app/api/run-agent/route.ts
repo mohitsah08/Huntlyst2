@@ -7,12 +7,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { discoverCompanies } from '@/lib/discovery';
+import { discoverCompanies, extractDomain } from '@/lib/discovery';
 import { extractAllCandidates } from '@/lib/extraction';
-import { validateCompany } from '@/lib/validation';
+import { validateCompany, auditCompany } from '@/lib/validation';
 import { findVerifiedEmail } from '@/lib/email';
 import { rankCompanies, needsMoreDiscovery, MAX_DISCOVERY_ROUNDS } from '@/lib/rank';
-import { RunAgentResult, ValidatedCompany, CompanyRecord, HuntConfig, TVB_EVALUATION_CONFIG } from '@/lib/types';
+import { RunAgentResult, ValidatedCompany, CompanyRecord, HuntConfig, TVB_EVALUATION_CONFIG, RejectedCompanyRecord } from '@/lib/types';
+import { targetProfileToHuntConfig, TargetProfile } from '@/lib/targetProfileData';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -39,6 +40,7 @@ async function executePipeline(
   const startTime = Date.now();
   const allValidated: ValidatedCompany[] = [];
   const allRankedCompanies: CompanyRecord[] = [];
+  const allRejectedMap = new Map<string, RejectedCompanyRecord>();
 
   const stats: PipelineStats = {
     discovered: 0,
@@ -58,7 +60,7 @@ async function executePipeline(
     }
   };
 
-  const targetLeads = config.targetLeads || 15;
+  const targetLeads = config.targetLeads || config.targetProfile?.targetCount === 'Custom' ? (config.targetProfile?.customTargetCount || 15) : (config.targetProfile?.targetCount || 15);
   const targetGeo = config.geography.countries.length > 0
     ? config.geography.countries.join(', ')
     : config.geography.regions.length > 0
@@ -95,14 +97,19 @@ async function executePipeline(
 
     for (const [url, data] of extractedMap.entries()) {
       const candidate = candidates.find(c => c.url === url);
-      const validated = validateCompany(data, url, candidate?.source || 'Discovery', config);
+      const audit = auditCompany(data, url, candidate?.source || 'Discovery', config);
 
-      if (validated) {
+      if (audit.qualified && audit.validatedCompany) {
         stats.nonUsPassed++;
         stats.fundingQualified++;
         stats.founderFound++;
-        roundValidated.push(validated);
-        log(`✓ Qualified: ${validated.name} [HQ: ${validated.country || 'Verified'} | ${validated.industry}]`, 3, 'Validation');
+        roundValidated.push(audit.validatedCompany);
+        log(`✓ Qualified: ${audit.validatedCompany.name} [HQ: ${audit.validatedCompany.country || 'Verified'} | ${audit.validatedCompany.industry}]`, 3, 'Validation');
+      } else if (audit.rejectedRecord) {
+        const domain = extractDomain(url);
+        if (!allRejectedMap.has(domain)) {
+          allRejectedMap.set(domain, audit.rejectedRecord);
+        }
       }
     }
 
@@ -125,6 +132,32 @@ async function executePipeline(
       if (emailRes.verified && emailRes.email) {
         stats.emailVerified++;
         log(`✓ Mailbox routable: ${emailRes.email} for ${comp.name} [MX: ${emailRes.mxHost || 'Verified'}]`, 4, 'Email Verification');
+      } else if (config.emailVerification === 'required' || config.targetProfile?.emailRequirement === 'Required') {
+        const domain = extractDomain(comp.website);
+        if (!allRejectedMap.has(domain)) {
+          const nowIso = new Date().toISOString();
+          allRejectedMap.set(domain, {
+            name: comp.name,
+            website: comp.website,
+            industry: comp.industry || 'Tech Platform',
+            fundingOrRevenue: comp.fundingOrRevenueText || 'In Range',
+            location: comp.country || 'Non-US',
+            founderOrCeoName: comp.founderOrCeoName ?? undefined,
+            rejectionReasons: ['EMAIL_NOT_VERIFIED'],
+            matchedRules: [
+              `✓ Industry: ${comp.industry}`,
+              `✓ Location: ${comp.country}`,
+              `✓ Executive: ${comp.founderOrCeoName}`,
+              `✓ Funding range`,
+            ],
+            failedRules: ['✗ Professional email deliverability unverified on live MX'],
+            sourceEvidence: `DNS MX check could not establish deliverable mailbox for ${comp.founderOrCeoName}`,
+            firstDiscoveredAt: nowIso,
+            lastSeenAt: nowIso,
+            lastVerifiedAt: nowIso,
+            lastUpdatedAt: nowIso,
+          });
+        }
       }
     }
 
@@ -170,6 +203,7 @@ async function executePipeline(
 
   return {
     companies: finalCompanies,
+    rejectedCompanies: Array.from(allRejectedMap.values()),
     totalDiscovered: stats.discovered,
     totalQualified: finalCompanies.length,
     stats,
@@ -183,8 +217,15 @@ export async function POST(request: NextRequest) {
   let config: HuntConfig = TVB_EVALUATION_CONFIG;
   try {
     const body = await request.json().catch(() => null);
-    if (body && body.geography) {
-      config = body as HuntConfig;
+    if (body) {
+      if (body.targetProfile) {
+        config = body as HuntConfig;
+      } else if (body.targetCount !== undefined || body.industries) {
+        // Direct TargetProfile sent
+        config = targetProfileToHuntConfig(body as TargetProfile);
+      } else if (body.geography) {
+        config = body as HuntConfig;
+      }
     }
   } catch {}
 

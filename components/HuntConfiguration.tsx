@@ -1,9 +1,37 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { HuntConfig, TVB_EVALUATION_CONFIG, SavedHuntPreset } from '@/lib/types';
-import { COUNTRIES, REGION_PRESETS, searchCountries, CountryItem, findCountry } from '@/lib/geography';
-import { parseNaturalLanguageHunt, ParsedHuntResult } from '@/lib/nlParser';
+import React, { useState, useMemo, useEffect } from 'react';
+import { HuntConfig, TVB_EVALUATION_CONFIG } from '@/lib/types';
+import {
+  TargetProfile,
+  DEFAULT_TVB_TARGET_PROFILE,
+  BUILTIN_SAVED_PROFILES,
+  INDUSTRY_TAXONOMY,
+  SUB_INDUSTRY_MAP,
+  TARGET_COUNT_OPTIONS,
+  FINANCIAL_METRICS,
+  CURRENCY_OPTIONS,
+  getFinancialValuesForCurrency,
+  COMPANY_AGE_OPTIONS,
+  getAvailableYears,
+  DATA_FRESHNESS_OPTIONS,
+  ACTIVITY_TYPES,
+  COMPANY_STAGE_OPTIONS,
+  COMPANY_TYPE_OPTIONS,
+  REGION_OPTIONS,
+  US_PRESENCE_OPTIONS,
+  DECISION_MAKER_OPTIONS,
+  EMAIL_REQUIREMENT_OPTIONS,
+  EMAIL_VERIFICATION_LEVELS,
+  COMPANY_SOCIAL_OPTIONS,
+  PERSON_SOCIAL_OPTIONS,
+  EMPLOYEE_COUNT_OPTIONS,
+  RESEARCH_SOURCES_OPTIONS,
+  formatTargetSummary,
+  targetProfileToHuntConfig,
+  huntConfigToTargetProfile,
+} from '@/lib/targetProfileData';
+import { COUNTRIES, searchCountries, CountryItem } from '@/lib/geography';
 
 interface HuntConfigurationProps {
   initialConfig?: HuntConfig;
@@ -11,1300 +39,1128 @@ interface HuntConfigurationProps {
   onLaunchHunt: (config: HuntConfig) => void;
 }
 
-const ALL_SECTORS = [
-  'All sectors',
-  'AI',
-  'SaaS',
-  'Cybersecurity',
-  'Fintech',
-  'HealthTech',
-  'EdTech',
-  'TravelTech',
-  'Digital Twin',
-  'Automation',
-  'Developer Tools',
-  'Cloud Infrastructure',
-  'Enterprise Software',
-  'ClimateTech',
-  'PropTech',
-  'InsurTech',
-  'HRTech',
-  'MarTech',
-  'RetailTech',
-  'LogisticsTech',
-  'DeepTech',
-  'Robotics',
-  'Other Technology',
-];
-
-const BUSINESS_MODELS = [
-  'B2B',
-  'B2B2C',
-  'B2C',
-  'SaaS',
-  'Marketplace',
-  'Platform',
-  'API',
-  'Enterprise',
-  'Subscription',
-  'Other',
-];
-
-const STAGES = [
-  'Pre-seed',
-  'Seed',
-  'Series A',
-  'Series B',
-  'Series C+',
-  'Growth',
-  'Scale-up',
-  'Any',
-];
-
-const FUNDING_PRESETS = [
-  { label: '$0–$1M', min: 0, max: 1_000_000 },
-  { label: '$1M–$5M', min: 1_000_000, max: 5_000_000, isDefault: true },
-  { label: '$5M–$10M', min: 5_000_000, max: 10_000_000 },
-  { label: '$10M–$25M', min: 10_000_000, max: 25_000_000 },
-  { label: '$25M+', min: 25_000_000, max: 100_000_000 },
-];
-
-const COMPANY_SIZES = ['1–10', '11–50', '51–200', '201–500', '500+'];
-
-const BUILTIN_PRESETS: SavedHuntPreset[] = [
-  {
-    id: 'tvb_eval_default',
-    name: 'TVB Evaluation Profile',
-    description: 'Original assignment profile: $1M–$5M, Non-US, Tech Platform, CEO/Founder, Verified Email.',
-    isDefault: true,
-    createdAt: '2025-01-01',
-    config: TVB_EVALUATION_CONFIG,
-  },
-  {
-    id: 'preset_indian_ai',
-    name: 'Indian AI Hunt',
-    description: 'High-growth AI, Machine Learning, and LLM startups headquartered in India.',
-    createdAt: '2025-01-02',
-    config: {
-      ...TVB_EVALUATION_CONFIG,
-      id: 'preset_indian_ai',
-      name: 'Indian AI Hunt',
-      geography: {
-        mode: 'countries',
-        regions: [],
-        countries: ['India'],
-        excludedCountries: ['United States'],
-        usPresence: 'minimal_or_none',
-      },
-      sectors: ['AI'],
-      stage: ['Seed', 'Series A'],
-      funding: { min: 1_000_000, max: 5_000_000, mode: 'funding_or_revenue', preset: '$1M–$5M' },
-      targetLeads: 15,
-    },
-  },
-  {
-    id: 'preset_asian_fintech',
-    name: 'Asian Fintech Hunt',
-    description: 'Payments, banking API, and cross-border fintech across Singapore, India, and Indonesia.',
-    createdAt: '2025-01-03',
-    config: {
-      ...TVB_EVALUATION_CONFIG,
-      id: 'preset_asian_fintech',
-      name: 'Asian Fintech Hunt',
-      geography: {
-        mode: 'regions',
-        regions: ['Asia'],
-        countries: ['Singapore', 'India', 'Indonesia'],
-        excludedCountries: ['United States'],
-        usPresence: 'minimal_or_none',
-      },
-      sectors: ['Fintech'],
-      stage: ['Seed', 'Series A'],
-      funding: { min: 1_000_000, max: 5_000_000, mode: 'funding_or_revenue', preset: '$1M–$5M' },
-      targetLeads: 15,
-    },
-  },
-  {
-    id: 'preset_european_saas',
-    name: 'European SaaS Hunt',
-    description: 'B2B Enterprise software and developer tools across UK, Germany, France, and Nordics.',
-    createdAt: '2025-01-04',
-    config: {
-      ...TVB_EVALUATION_CONFIG,
-      id: 'preset_european_saas',
-      name: 'European SaaS Hunt',
-      geography: {
-        mode: 'regions',
-        regions: ['Europe'],
-        countries: ['Germany', 'United Kingdom', 'France', 'Switzerland'],
-        excludedCountries: ['United States'],
-        usPresence: 'strictly_none',
-      },
-      sectors: ['SaaS', 'Enterprise Software'],
-      stage: ['Seed', 'Series A'],
-      funding: { min: 1_000_000, max: 5_000_000, mode: 'funding_or_revenue', preset: '$1M–$5M' },
-      targetLeads: 15,
-    },
-  },
-  {
-    id: 'preset_global_cybersecurity',
-    name: 'Global Cybersecurity Hunt',
-    description: 'Cloud security, identity, and zero-trust platforms worldwide (excluding US headquarters).',
-    createdAt: '2025-01-05',
-    config: {
-      ...TVB_EVALUATION_CONFIG,
-      id: 'preset_global_cybersecurity',
-      name: 'Global Cybersecurity Hunt',
-      geography: {
-        mode: 'global',
-        regions: [],
-        countries: [],
-        excludedCountries: ['United States'],
-        usPresence: 'minimal_or_none',
-      },
-      sectors: ['Cybersecurity'],
-      stage: ['Seed', 'Series A'],
-      funding: { min: 1_000_000, max: 5_000_000, mode: 'funding_or_revenue', preset: '$1M–$5M' },
-      targetLeads: 15,
-    },
-  },
-];
-
-type TabId = 'where' | 'what' | 'profile' | 'contact' | 'depth' | 'advanced';
-
 export default function HuntConfiguration({
-  initialConfig = TVB_EVALUATION_CONFIG,
+  initialConfig,
   isRunning,
   onLaunchHunt,
 }: HuntConfigurationProps) {
-  const [config, setConfig] = useState<HuntConfig>(initialConfig);
-  const [activeTab, setActiveTab] = useState<TabId>('where');
+  // Initialize target profile from initialConfig
+  const [profile, setProfile] = useState<TargetProfile>(() => {
+    if (initialConfig) {
+      return huntConfigToTargetProfile(initialConfig);
+    }
+    return DEFAULT_TVB_TARGET_PROFILE;
+  });
 
-  // Country Search State
-  const [countrySearchQuery, setCountrySearchQuery] = useState('');
-  const [excludeSearchQuery, setExcludeSearchQuery] = useState('');
+  // Saved presets state
+  const [savedProfiles, setSavedProfiles] = useState<TargetProfile[]>(BUILTIN_SAVED_PROFILES);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>(
+    initialConfig?.targetProfile?.id || initialConfig?.id || 'tvb_eval_default'
+  );
 
-  // Natural Language State
-  const [nlInput, setNlInput] = useState('');
-  const [nlResult, setNlResult] = useState<ParsedHuntResult | null>(null);
+  // Search & filter states
+  const [industrySearch, setIndustrySearch] = useState('');
+  const [countrySearch, setCountrySearch] = useState('');
+  const [customIndustryInput, setCustomIndustryInput] = useState('');
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+    'TECHNOLOGY & SOFTWARE': true,
+    'AGRICULTURE & FOOD': true,
+  });
 
-  // Saved Presets State
-  const [savedPresets, setSavedPresets] = useState<SavedHuntPreset[]>(BUILTIN_PRESETS);
-  const [selectedPresetId, setSelectedPresetId] = useState<string>('tvb_eval_default');
-
-  // Load custom saved presets from localStorage
+  // Load custom presets from localStorage
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('huntlyst_saved_hunts');
+      const stored = localStorage.getItem('huntlyst_saved_target_profiles');
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setSavedPresets([...BUILTIN_PRESETS, ...parsed.filter((p: any) => !BUILTIN_PRESETS.some(b => b.id === p.id))]);
+          setSavedProfiles([
+            ...BUILTIN_SAVED_PROFILES,
+            ...parsed.filter((p: any) => !BUILTIN_SAVED_PROFILES.some(b => b.id === p.id)),
+          ]);
         }
       }
     } catch {}
   }, []);
 
-  // Filtered countries for instant search
-  const countrySearchResults = useMemo(() => {
-    return searchCountries(countrySearchQuery).slice(0, 14);
-  }, [countrySearchQuery]);
-
-  const excludeSearchResults = useMemo(() => {
-    return searchCountries(excludeSearchQuery).slice(0, 14);
-  }, [excludeSearchQuery]);
-
-  // Contradiction Detection
-  const contradictionWarning = useMemo(() => {
-    const included = new Set(config.geography.countries.map(c => c.toLowerCase()));
-    for (const ex of config.geography.excludedCountries) {
-      if (included.has(ex.toLowerCase())) {
-        return `Your geography both includes and excludes "${ex}". Please resolve this conflict before starting.`;
-      }
+  // Update when initialConfig changes externally
+  useEffect(() => {
+    if (initialConfig) {
+      setProfile(huntConfigToTargetProfile(initialConfig));
     }
-    if (config.geography.countries.length === 0 && config.geography.regions.length === 0 && config.geography.mode !== 'global') {
-      return 'Please specify at least one country, region, or select "Global".';
+  }, [initialConfig]);
+
+  // Current financial options based on currency
+  const financialOptions = useMemo(() => {
+    return getFinancialValuesForCurrency(profile.fundingCurrency);
+  }, [profile.fundingCurrency]);
+
+  // Dynamically exposed sub-industries for selected industries
+  const availableSubIndustries = useMemo(() => {
+    const subs = new Set<string>();
+    for (const ind of profile.industries) {
+      const mapped = SUB_INDUSTRY_MAP[ind] || [];
+      for (const m of mapped) subs.add(m);
     }
-    return null;
-  }, [config.geography]);
+    return Array.from(subs);
+  }, [profile.industries]);
 
-  // Dynamic Search Strategy Narrative
-  const searchStrategyText = useMemo(() => {
-    const geoDesc = config.geography.countries.length > 0
-      ? `headquartered in ${config.geography.countries.join(', ')}`
-      : config.geography.regions.length > 0
-      ? `across ${config.geography.regions.join(', ')}`
-      : 'internationally (Global)';
+  // Filtered countries
+  const filteredCountries = useMemo(() => {
+    if (!countrySearch.trim()) return COUNTRIES.slice(0, 16);
+    return searchCountries(countrySearch).slice(0, 16);
+  }, [countrySearch]);
 
-    const sectorDesc = config.sectors.includes('all') || config.sectors.length === 0
-      ? 'technology platform companies'
-      : `${config.sectors.join(', ')} startups`;
+  // Filtered industries taxonomy
+  const filteredTaxonomy = useMemo(() => {
+    if (!industrySearch.trim()) return INDUSTRY_TAXONOMY;
+    const q = industrySearch.toLowerCase();
+    return INDUSTRY_TAXONOMY.map(cat => ({
+      category: cat.category,
+      industries: cat.industries.filter(ind => ind.toLowerCase().includes(q)),
+    })).filter(cat => cat.industries.length > 0);
+  }, [industrySearch]);
 
-    const fundingDesc = `$${(config.funding.min / 1_000_000).toFixed(1)}M–$${(config.funding.max / 1_000_000).toFixed(1)}M ${config.funding.mode.replace('_', ' ')}`;
-
-    const usDesc = config.geography.usPresence === 'strictly_none'
-      ? 'strictly zero US presence'
-      : config.geography.usPresence === 'minimal_or_none'
-      ? 'minimal or no US presence'
-      : config.geography.usPresence === 'limited'
-      ? 'allowing limited US customer presence'
-      : 'any US presence';
-
-    const contactDesc = config.contactRequirement === 'ceo_only'
-      ? 'verified CEO'
-      : config.contactRequirement === 'cofounder_only'
-      ? 'verified Co-founder'
-      : 'verifiable CEO or Co-founder';
-
-    const emailDesc = config.emailVerification === 'required'
-      ? 'with live DNS MX deliverable email'
-      : 'with leadership email';
-
-    return `Searching for ${sectorDesc} ${geoDesc}, with ${fundingDesc}, ${usDesc}, targeting ${contactDesc} ${emailDesc}. Candidate search depth set to ${config.depth.toUpperCase()} with a target of ${config.targetLeads} qualified companies.`;
-  }, [config]);
-
-  // Region Toggle
-  const toggleRegion = (regionId: string) => {
-    const preset = REGION_PRESETS.find(p => p.id === regionId);
-    if (!preset) return;
-
-    setConfig(prev => {
-      const isAlreadySelected = prev.geography.regions.includes(preset.name);
-      let nextRegions = isAlreadySelected
-        ? prev.geography.regions.filter(r => r !== preset.name)
-        : [...prev.geography.regions, preset.name];
-
-      // Automatically populate countries when selecting a region preset
-      let nextCountries = [...prev.geography.countries];
-      if (!isAlreadySelected) {
-        for (const c of preset.countryNames) {
-          if (!nextCountries.includes(c)) nextCountries.push(c);
-        }
-      }
-
-      return {
-        ...prev,
-        geography: {
-          ...prev.geography,
-          mode: nextRegions.length > 0 ? 'regions' : nextCountries.length > 0 ? 'countries' : 'global',
-          regions: nextRegions,
-          countries: nextCountries,
-        },
-      };
-    });
-  };
-
-  // Country Toggle (Add/Remove)
-  const toggleCountry = (countryName: string) => {
-    setConfig(prev => {
-      const exists = prev.geography.countries.includes(countryName);
-      const nextCountries = exists
-        ? prev.geography.countries.filter(c => c !== countryName)
-        : [...prev.geography.countries, countryName];
-
-      return {
-        ...prev,
-        geography: {
-          ...prev.geography,
-          mode: nextCountries.length > 0 ? 'countries' : 'global',
-          countries: nextCountries,
-        },
-      };
-    });
-  };
-
-  // Excluded Country Toggle
-  const toggleExcludedCountry = (countryName: string) => {
-    setConfig(prev => {
-      const exists = prev.geography.excludedCountries.includes(countryName);
-      const nextExcluded = exists
-        ? prev.geography.excludedCountries.filter(c => c !== countryName)
-        : [...prev.geography.excludedCountries, countryName];
-
-      return {
-        ...prev,
-        geography: {
-          ...prev.geography,
-          excludedCountries: nextExcluded,
-        },
-      };
-    });
-  };
-
-  // Sector Toggle
-  const toggleSector = (sector: string) => {
-    setConfig(prev => {
-      if (sector === 'All sectors') {
-        return { ...prev, sectors: ['all'] };
-      }
-      let current = prev.sectors.filter(s => s !== 'all');
-      if (current.includes(sector)) {
-        current = current.filter(s => s !== sector);
-      } else {
-        current.push(sector);
-      }
-      return { ...prev, sectors: current.length === 0 ? ['all'] : current };
-    });
-  };
-
-  // Business Model Toggle
-  const toggleBusinessModel = (model: string) => {
-    setConfig(prev => {
-      const exists = prev.businessModels.includes(model);
-      const next = exists ? prev.businessModels.filter(m => m !== model) : [...prev.businessModels, model];
-      return { ...prev, businessModels: next.length === 0 ? ['Platform'] : next };
-    });
-  };
-
-  // Stage Toggle
-  const toggleStage = (stage: string) => {
-    setConfig(prev => {
-      if (stage === 'Any') return { ...prev, stage: ['Any'] };
-      let current = prev.stage.filter(s => s !== 'Any');
-      if (current.includes(stage)) {
-        current = current.filter(s => s !== stage);
-      } else {
-        current.push(stage);
-      }
-      return { ...prev, stage: current.length === 0 ? ['Any'] : current };
-    });
-  };
-
-  // Handle Natural Language Parse
-  const handleParseNl = () => {
-    if (!nlInput.trim()) return;
-    const parsed = parseNaturalLanguageHunt(nlInput);
-    setNlResult(parsed);
-  };
-
-  const handleApplyNl = () => {
-    if (nlResult) {
-      setConfig(nlResult.config);
-      setActiveTab('where');
-    }
-  };
-
-  // Handle Preset Load
+  // Handle Preset Loading
   const handleLoadPreset = (presetId: string) => {
-    const preset = savedPresets.find(p => p.id === presetId);
-    if (preset) {
-      setConfig(preset.config);
-      setSelectedPresetId(preset.id);
+    const found = savedProfiles.find(p => p.id === presetId);
+    if (found) {
+      setProfile({ ...found });
+      setSelectedPresetId(found.id || 'custom');
     }
   };
 
-  // Handle Save Current Preset
-  const handleSaveCurrentAsPreset = () => {
-    const name = prompt('Enter a name for this custom hunt preset:', config.name || 'Custom Hunt');
+  // Handle Save Current Profile
+  const handleSaveProfile = () => {
+    const name = prompt('Enter a name for this Target Profile:', profile.name || 'Custom Target Profile');
     if (!name) return;
 
-    const newPreset: SavedHuntPreset = {
-      id: `custom_${Date.now()}`,
+    const newProfile: TargetProfile = {
+      ...profile,
+      id: `profile_${Date.now()}`,
       name,
-      description: `Custom search in ${config.geography.countries.join(', ') || 'Global'} with ${config.sectors.join(', ')}`,
-      createdAt: new Date().toISOString().slice(0, 10),
-      config: { ...config, name },
     };
 
-    const updated = [...savedPresets, newPreset];
-    setSavedPresets(updated);
-    setSelectedPresetId(newPreset.id);
+    const updated = [...savedProfiles, newProfile];
+    setSavedProfiles(updated);
+    setSelectedPresetId(newProfile.id!);
 
-    // Persist custom ones to localStorage
     try {
-      const customOnly = updated.filter(p => !p.isDefault && !BUILTIN_PRESETS.some(b => b.id === p.id));
-      localStorage.setItem('huntlyst_saved_hunts', JSON.stringify(customOnly));
+      const customOnly = updated.filter(p => !BUILTIN_SAVED_PROFILES.some(b => b.id === p.id));
+      localStorage.setItem('huntlyst_saved_target_profiles', JSON.stringify(customOnly));
     } catch {}
   };
 
+  // Handle Duplicate Profile
+  const handleDuplicateProfile = () => {
+    const copyName = `${profile.name || 'Profile'} (Copy)`;
+    const duplicated: TargetProfile = {
+      ...profile,
+      id: `profile_${Date.now()}`,
+      name: copyName,
+    };
+    const updated = [...savedProfiles, duplicated];
+    setSavedProfiles(updated);
+    setSelectedPresetId(duplicated.id!);
+  };
+
+  // Handle Delete Profile
+  const handleDeleteProfile = () => {
+    if (BUILTIN_SAVED_PROFILES.some(b => b.id === selectedPresetId)) {
+      alert('Default built-in profiles cannot be deleted.');
+      return;
+    }
+    if (!confirm('Are you sure you want to delete this custom profile?')) return;
+
+    const updated = savedProfiles.filter(p => p.id !== selectedPresetId);
+    setSavedProfiles(updated);
+    setSelectedPresetId('tvb_eval_default');
+    setProfile(DEFAULT_TVB_TARGET_PROFILE);
+
+    try {
+      const customOnly = updated.filter(p => !BUILTIN_SAVED_PROFILES.some(b => b.id === p.id));
+      localStorage.setItem('huntlyst_saved_target_profiles', JSON.stringify(customOnly));
+    } catch {}
+  };
+
+  // Handle Reset to TVB Evaluation Profile
+  const handleReset = () => {
+    setProfile({ ...DEFAULT_TVB_TARGET_PROFILE });
+    setSelectedPresetId('tvb_eval_default');
+  };
+
+  // Launch Hunt with complete configuration
+  const handleLaunch = () => {
+    const finalHuntConfig = targetProfileToHuntConfig(profile);
+    onLaunchHunt(finalHuntConfig);
+  };
+
+  // Industry Toggles
+  const toggleIndustry = (ind: string) => {
+    setProfile(prev => {
+      const exists = prev.industries.includes(ind);
+      const next = exists ? prev.industries.filter(i => i !== ind) : [...prev.industries, ind];
+      return { ...prev, industries: next };
+    });
+  };
+
+  const removeIndustry = (ind: string) => {
+    setProfile(prev => ({
+      ...prev,
+      industries: prev.industries.filter(i => i !== ind),
+    }));
+  };
+
+  const addCustomIndustry = () => {
+    const trimmed = customIndustryInput.trim();
+    if (!trimmed) return;
+    if (!profile.industries.includes(trimmed)) {
+      setProfile(prev => ({
+        ...prev,
+        industries: [...prev.industries, trimmed],
+      }));
+    }
+    setCustomIndustryInput('');
+  };
+
+  // Sub-industry Toggles
+  const toggleSubIndustry = (sub: string) => {
+    setProfile(prev => {
+      const exists = prev.subIndustries.includes(sub);
+      const next = exists ? prev.subIndustries.filter(s => s !== sub) : [...prev.subIndustries, sub];
+      return { ...prev, subIndustries: next };
+    });
+  };
+
+  // Multi-select helper for string arrays
+  const toggleArrayItem = <K extends keyof TargetProfile>(key: K, item: string) => {
+    setProfile(prev => {
+      const current = Array.isArray(prev[key]) ? (prev[key] as unknown as string[]) : [];
+      if (item === 'Any' || item === 'Not Required') {
+        return { ...prev, [key]: [item] };
+      }
+      let filtered = current.filter(i => i !== 'Any' && i !== 'Not Required');
+      if (filtered.includes(item)) {
+        filtered = filtered.filter(i => i !== item);
+      } else {
+        filtered.push(item);
+      }
+      return { ...prev, [key]: filtered.length === 0 ? ['Any'] : filtered };
+    });
+  };
+
+  // Country Toggles
+  const toggleCountry = (countryName: string) => {
+    setProfile(prev => {
+      const exists = prev.countries.includes(countryName);
+      const next = exists ? prev.countries.filter(c => c !== countryName) : [...prev.countries, countryName];
+      return { ...prev, countries: next };
+    });
+  };
+
+  const years = useMemo(() => getAvailableYears(), []);
+
   return (
-    <div className="space-y-6">
-      {/* Top Banner Card: Research Desk */}
+    <div className="space-y-6 max-w-5xl mx-auto pb-16">
+      {/* Top Banner & Profile Preset Selector */}
       <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 sm:p-7 border-2 border-[#1E1B18] shadow-sketch-sm relative">
         <div className="tape-strip" />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#F0EAD8]">
           <div>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <span className="text-2xl">🎯</span>
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#1E1B18]">
-                Customize Your Hunt
+                Customize Target Profile
               </h1>
               {selectedPresetId === 'tvb_eval_default' && (
-                <span className="badge-tag bg-[#FFE7DC] text-[#FF6B35] border border-[#FF6B35] text-[10px] font-bold px-2 py-0.5 rounded-md ml-2">
+                <span className="badge-tag bg-[#FFE7DC] text-[#FF6B35] border border-[#FF6B35] text-[10px] font-bold px-2 py-0.5 rounded-md ml-1">
                   Assignment default
                 </span>
               )}
             </div>
             <p className="text-xs font-mono text-[#766E65] mt-1">
-              Tell Huntlyst where and what to look for. Every parameter directly influences autonomous search and qualification.
+              Select predefined targeting controls. Every setting directly instructs autonomous discovery and deterministic qualification.
             </p>
           </div>
 
-          {/* Preset Selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-[#766E65]">Preset:</span>
+          {/* Preset Controls */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-mono text-[#766E65]">Profile Preset:</span>
             <select
               value={selectedPresetId}
-              onChange={(e) => handleLoadPreset(e.target.value)}
+              onChange={e => handleLoadPreset(e.target.value)}
               className="bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-3 py-2 rounded-xl border-2 border-[#1E1B18] shadow-sketch-xs focus:outline-none focus:border-[#FF6B35]"
             >
-              {savedPresets.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} {p.isDefault ? '(Default)' : ''}
-                </option>
-              ))}
+              <optgroup label="Standard Presets">
+                {savedProfiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </optgroup>
             </select>
+
             <button
               type="button"
-              onClick={handleSaveCurrentAsPreset}
-              className="sketch-btn px-2.5 py-2 text-xs font-bold bg-[#FAF6EE] hover:bg-[#FFE7DC] text-[#1E1B18] rounded-xl border-2 border-[#1E1B18] shadow-sketch-xs"
-              title="Save current configuration as a new preset"
+              onClick={handleDuplicateProfile}
+              className="px-2.5 py-1.5 text-xs font-bold rounded-lg border border-[#D9D0C1] bg-white hover:bg-[#FAF6EE]"
+              title="Duplicate Preset"
             >
-              💾 Save
+              📑 Copy
             </button>
+            {!BUILTIN_SAVED_PROFILES.some(b => b.id === selectedPresetId) && (
+              <button
+                type="button"
+                onClick={handleDeleteProfile}
+                className="px-2.5 py-1.5 text-xs font-bold rounded-lg border border-[#FFCDD2] bg-white text-[#C62828] hover:bg-[#FFEBEE]"
+                title="Delete Custom Preset"
+              >
+                🗑
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Tab Navigation (Interactive Research Desk) */}
-        <div className="flex items-center gap-1.5 overflow-x-auto py-3 border-b border-[#F0EAD8] scrollbar-none">
-          {[
-            { id: 'where', label: '1. WHERE', icon: '📍', desc: 'Geography' },
-            { id: 'what', label: '2. WHAT', icon: '🏢', desc: 'Sectors & Model' },
-            { id: 'profile', label: '3. PROFILE', icon: '📊', desc: 'Stage & Funding' },
-            { id: 'contact', label: '4. CONTACT', icon: '👤', desc: 'Founder & Verification' },
-            { id: 'depth', label: '5. DEPTH', icon: '⚡', desc: 'Depth & Leads' },
-            { id: 'advanced', label: '6. ADVANCED', icon: '✨', desc: 'Natural Language' },
-          ].map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id as TabId)}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold font-mono transition-all whitespace-nowrap border-2 ${
-                  isActive
-                    ? 'bg-[#FF6B35] text-white border-[#1E1B18] shadow-sketch-xs'
-                    : 'bg-[#FAF6EE] text-[#1E1B18] border-[#1E1B18]/30 hover:border-[#1E1B18]'
-                }`}
+        {/* Live Active Target Configuration Banner (Section 22) */}
+        <div className="mt-4 p-3.5 bg-[#FAF6EE] rounded-xl border border-[#EBE4D5] flex items-start gap-2.5">
+          <span className="text-sm shrink-0 mt-0.5">📌</span>
+          <div className="text-xs font-mono leading-relaxed">
+            <span className="font-bold uppercase tracking-wider text-[#FF6B35] mr-2">Target Profile:</span>
+            <span className="text-[#1E1B18] font-semibold">{formatTargetSummary(profile)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* CENTRALIZED TARGET CUSTOMIZATION DESK (Section 17) */}
+      <div className="space-y-6">
+
+        {/* 1. TARGET COUNT & FINANCIAL RANGE */}
+        <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch-sm space-y-6">
+          <div className="flex items-center gap-2 border-b border-[#F0EAD8] pb-3">
+            <span className="text-lg">💰</span>
+            <h2 className="font-display text-lg font-bold text-[#1E1B18]">Target Count & Financial Range</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+            {/* Target Count */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65] mb-1.5">
+                Target Companies
+              </label>
+              <select
+                value={profile.targetCount}
+                onChange={e => {
+                  const val = e.target.value === 'Custom' ? 'Custom' : parseInt(e.target.value, 10);
+                  setProfile(prev => ({ ...prev, targetCount: val }));
+                }}
+                className="w-full bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-3 py-2.5 rounded-xl border border-[#D9D0C1] focus:outline-none focus:border-[#FF6B35]"
               >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+                {TARGET_COUNT_OPTIONS.map(cnt => (
+                  <option key={cnt} value={cnt}>
+                    {cnt} companies
+                  </option>
+                ))}
+                <option value="Custom">Custom...</option>
+              </select>
+
+              {profile.targetCount === 'Custom' && (
+                <div className="mt-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={5000}
+                    placeholder="Enter custom count"
+                    value={profile.customTargetCount || 15}
+                    onChange={e => setProfile(prev => ({ ...prev, customTargetCount: parseInt(e.target.value, 10) || 15 }))}
+                    className="w-full bg-white text-xs font-bold font-mono px-3 py-1.5 rounded-lg border border-[#D9D0C1]"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Financial Metric */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65] mb-1.5">
+                Financial Metric
+              </label>
+              <select
+                value={profile.financialMetric}
+                onChange={e => setProfile(prev => ({ ...prev, financialMetric: e.target.value as any }))}
+                className="w-full bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-3 py-2.5 rounded-xl border border-[#D9D0C1] focus:outline-none focus:border-[#FF6B35]"
+              >
+                {FINANCIAL_METRICS.map(m => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Currency Selector */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65] mb-1.5">
+                Currency
+              </label>
+              <select
+                value={profile.fundingCurrency}
+                onChange={e => {
+                  const newCur = e.target.value;
+                  const newVals = getFinancialValuesForCurrency(newCur);
+                  setProfile(prev => ({
+                    ...prev,
+                    fundingCurrency: newCur,
+                    fundingMin: newVals[3]?.value || newVals[0].value,
+                    fundingMax: newVals[5]?.value || newVals[newVals.length - 1].value,
+                  }));
+                }}
+                className="w-full bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-3 py-2.5 rounded-xl border border-[#D9D0C1] focus:outline-none focus:border-[#FF6B35]"
+              >
+                {CURRENCY_OPTIONS.map(c => (
+                  <option key={c.code} value={c.code}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Minimum & Maximum Selectors */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65] mb-1.5">
+                Range (Min → Max)
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={profile.fundingMin}
+                  onChange={e => setProfile(prev => ({ ...prev, fundingMin: parseInt(e.target.value, 10) }))}
+                  className="bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-2 py-2 rounded-xl border border-[#D9D0C1]"
+                >
+                  {financialOptions.map(opt => (
+                    <option key={`min-${opt.value}`} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={profile.fundingMax}
+                  onChange={e => setProfile(prev => ({ ...prev, fundingMax: parseInt(e.target.value, 10) }))}
+                  className="bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-2 py-2 rounded-xl border border-[#D9D0C1]"
+                >
+                  {financialOptions.map(opt => (
+                    <option key={`max-${opt.value}`} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* TAB 1: WHERE (Geography) */}
-        {activeTab === 'where' && (
-          <div className="py-6 space-y-6 animate-in fade-in duration-150">
-            <div>
-              <div className="flex items-center justify-between">
-                <h3 className="font-display text-lg font-bold text-[#1E1B18]">
-                  Where should we hunt?
-                </h3>
-                <span className="handwritten text-sm text-[#FF6B35]">
-                  Start broad or get specific ✍️
+        {/* 2. INDUSTRY / SECTOR (Section 3, 4, 5) */}
+        <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch-sm space-y-5">
+          <div className="flex items-center justify-between border-b border-[#F0EAD8] pb-3 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🏭</span>
+              <h2 className="font-display text-lg font-bold text-[#1E1B18]">Industry & Sub-Industry Selection</h2>
+              <span className="badge-tag bg-[#E8F5E9] text-[#2E7D32] border border-[#2E7D32] text-[10px] font-bold px-2 py-0.5 rounded-md ml-1">
+                Multi-Sector Ready
+              </span>
+            </div>
+
+            <div className="text-xs font-mono text-[#766E65]">
+              {profile.industries.length === 0 ? 'All Industries' : `${profile.industries.length} Selected`}
+            </div>
+          </div>
+
+          {/* Selected Industries Chips */}
+          <div className="space-y-2">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#766E65]">
+              Active Industry Filters:
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap min-h-[32px] p-2 bg-[#FAF6EE] rounded-xl border border-[#EBE4D5]">
+              {profile.industries.length === 0 ? (
+                <span className="text-xs italic text-[#8C847A] font-mono">
+                  None selected (Hunting all sectors)
                 </span>
-              </div>
-              <p className="text-xs font-mono text-[#766E65] mt-1">
-                Select region presets or search for individual countries. Huntlyst will automatically target local venture registries and sources.
-              </p>
-            </div>
-
-            {/* Region Presets Cards */}
-            <div>
-              <label className="block text-xs font-mono font-bold text-[#1E1B18] uppercase tracking-wider mb-2">
-                Region Presets
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                {REGION_PRESETS.filter(p => p.id !== 'global').map((preset) => {
-                  const isSelected = config.geography.regions.includes(preset.name);
-                  return (
+              ) : (
+                profile.industries.map(ind => (
+                  <span
+                    key={ind}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold font-mono bg-[#1E1B18] text-[#FAF6EE]"
+                  >
+                    <span>{ind}</span>
                     <button
-                      key={preset.id}
                       type="button"
-                      onClick={() => toggleRegion(preset.id)}
-                      className={`p-3 rounded-xl border-2 text-left transition-all ${
-                        isSelected
-                          ? 'bg-[#FFE7DC] border-[#FF6B35] shadow-sketch-xs'
-                          : 'bg-[#FAF6EE] border-[#1E1B18] hover:bg-white'
-                      }`}
+                      onClick={() => removeIndustry(ind)}
+                      className="text-[#FF6B35] hover:text-white font-bold ml-1 text-sm leading-none"
                     >
-                      <div className="text-xl mb-1">{preset.icon}</div>
-                      <div className="font-display text-xs font-bold text-[#1E1B18]">{preset.name}</div>
-                      <div className="text-[10px] font-mono text-[#766E65] truncate mt-0.5">
-                        {preset.countryNames.length} countries
-                      </div>
+                      ×
                     </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Search Country Multi-Select */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-              {/* Include Countries */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-mono font-bold text-[#1E1B18] uppercase tracking-wider">
-                    Target Countries (Include)
-                  </label>
-                  <span className="text-xs font-mono text-[#FF6B35]">
-                    {config.geography.countries.length} selected
                   </span>
-                </div>
+                ))
+              )}
+            </div>
+          </div>
 
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={countrySearchQuery}
-                    onChange={(e) => setCountrySearchQuery(e.target.value)}
-                    placeholder="Search country (e.g. India, Aus, South)..."
-                    className="w-full bg-[#FAF6EE] text-xs font-mono text-[#1E1B18] px-3.5 py-2.5 rounded-xl border-2 border-[#1E1B18] focus:outline-none focus:border-[#FF6B35]"
-                  />
-                  {countrySearchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setCountrySearchQuery('')}
-                      className="absolute right-3 top-2.5 text-xs text-[#766E65]"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
+          {/* Search Bar + Custom Industry Input */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="md:col-span-2 relative">
+              <span className="absolute left-3 top-2.5 text-xs text-[#766E65]">🔍</span>
+              <input
+                type="text"
+                placeholder="Type to search predefined industries (e.g. Agriculture, Dairy, EV, Pharma)..."
+                value={industrySearch}
+                onChange={e => setIndustrySearch(e.target.value)}
+                className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-[#D9D0C1] bg-[#FAF6EE] focus:bg-white text-[#1E1B18] outline-none"
+              />
+            </div>
 
-                {/* Country Search Results */}
-                <div className="max-h-36 overflow-y-auto border-2 border-[#1E1B18] rounded-xl p-2 bg-[#FAF6EE] space-y-1">
-                  {countrySearchResults.map((c) => {
-                    const isSelected = config.geography.countries.includes(c.name);
-                    return (
-                      <button
-                        key={c.code}
-                        type="button"
-                        onClick={() => toggleCountry(c.name)}
-                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-mono text-left transition-all ${
-                          isSelected ? 'bg-[#FF6B35] text-white font-bold' : 'hover:bg-white text-[#1E1B18]'
-                        }`}
-                      >
-                        <span className="flex items-center gap-2">
-                          <span>{c.flag}</span>
-                          <span>{c.name}</span>
+            {/* Custom Industry Option */}
+            <div className="flex gap-1.5">
+              <input
+                type="text"
+                placeholder="Custom Industry..."
+                value={customIndustryInput}
+                onChange={e => setCustomIndustryInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCustomIndustry())}
+                className="flex-1 px-3 py-2 text-xs rounded-xl border border-[#D9D0C1] bg-[#FAF6EE] focus:bg-white text-[#1E1B18] outline-none"
+              />
+              <button
+                type="button"
+                onClick={addCustomIndustry}
+                className="px-3 py-2 bg-[#1E1B18] text-white text-xs font-bold rounded-xl hover:bg-[#3E3832]"
+              >
+                + Add
+              </button>
+            </div>
+          </div>
+
+          {/* 16 Predefined Industry Categories Accordion / Grid */}
+          <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+            {filteredTaxonomy.map(cat => {
+              const isExpanded = expandedCategories[cat.category] || !!industrySearch.trim();
+              const categorySelectedCount = cat.industries.filter(i => profile.industries.includes(i)).length;
+
+              return (
+                <div key={cat.category} className="border border-[#EBE4D5] rounded-xl bg-white overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedCategories(prev => ({
+                        ...prev,
+                        [cat.category]: !prev[cat.category],
+                      }))
+                    }
+                    className="w-full flex items-center justify-between px-3.5 py-2.5 bg-[#FAF6EE] hover:bg-[#F5EEDD] text-left text-xs font-bold text-[#1E1B18] transition-colors"
+                  >
+                    <span className="font-mono">{cat.category}</span>
+                    <div className="flex items-center gap-2">
+                      {categorySelectedCount > 0 && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FF6B35] text-white">
+                          {categorySelectedCount}
                         </span>
-                        <span className="text-[10px] opacity-75">{c.region}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+                      )}
+                      <span className="text-xs text-[#766E65]">{isExpanded ? '▲' : '▼'}</span>
+                    </div>
+                  </button>
 
-                {/* Selected Country Chips */}
-                {config.geography.countries.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {config.geography.countries.map((c) => {
-                      const item = findCountry(c);
-                      return (
-                        <span
-                          key={c}
-                          className="badge-tag bg-[#FFE7DC] text-[#1E1B18] border border-[#FF6B35] text-[11px] font-mono px-2 py-0.5 rounded-md flex items-center gap-1.5"
-                        >
-                          <span>{item?.flag || '🌐'}</span>
-                          <span>{c}</span>
-                          <button
-                            type="button"
-                            onClick={() => toggleCountry(c)}
-                            className="hover:text-[#FF6B35] font-bold"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Exclude Countries & US Presence */}
-              <div className="space-y-4">
-                {/* Exclude Geography */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-mono font-bold text-[#1E1B18] uppercase tracking-wider">
-                      Exclude Geography
-                    </label>
-                    <span className="text-xs font-mono text-[#D64045]">
-                      {config.geography.excludedCountries.length} excluded
-                    </span>
-                  </div>
-
-                  <input
-                    type="text"
-                    value={excludeSearchQuery}
-                    onChange={(e) => setExcludeSearchQuery(e.target.value)}
-                    placeholder="Exclude country (e.g. United States, China)..."
-                    className="w-full bg-[#FAF6EE] text-xs font-mono text-[#1E1B18] px-3.5 py-2 rounded-xl border-2 border-[#1E1B18] focus:outline-none focus:border-[#D64045]"
-                  />
-
-                  {excludeSearchQuery && (
-                    <div className="max-h-28 overflow-y-auto border-2 border-[#1E1B18] rounded-xl p-2 bg-[#FAF6EE] space-y-1">
-                      {excludeSearchResults.map((c) => {
-                        const isExcluded = config.geography.excludedCountries.includes(c.name);
+                  {isExpanded && (
+                    <div className="p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                      {cat.industries.map(ind => {
+                        const isChecked = profile.industries.includes(ind);
                         return (
-                          <button
-                            key={c.code}
-                            type="button"
-                            onClick={() => toggleExcludedCountry(c.name)}
-                            className={`w-full flex items-center justify-between px-2.5 py-1 rounded-lg text-xs font-mono text-left transition-all ${
-                              isExcluded ? 'bg-[#D64045] text-white font-bold' : 'hover:bg-white text-[#1E1B18]'
+                          <label
+                            key={ind}
+                            className={`flex items-center gap-2 text-xs p-1.5 rounded-lg border cursor-pointer transition-colors ${
+                              isChecked
+                                ? 'bg-[#FFE7DC] border-[#FF6B35] text-[#1E1B18] font-bold'
+                                : 'bg-[#FAF6EE] border-[#EBE4D5] text-[#5A544E] hover:bg-[#F5EEDD]'
                             }`}
                           >
-                            <span>{c.flag} {c.name}</span>
-                            <span>{isExcluded ? 'Excluded' : '+ Exclude'}</span>
-                          </button>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => toggleIndustry(ind)}
+                              className="accent-[#FF6B35] rounded"
+                            />
+                            <span className="truncate">{ind}</span>
+                          </label>
                         );
                       })}
                     </div>
                   )}
-
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {config.geography.excludedCountries.map((c) => (
-                      <span
-                        key={c}
-                        className="badge-tag bg-[#FFE8E8] text-[#D64045] border border-[#D64045] text-[11px] font-mono px-2 py-0.5 rounded-md flex items-center gap-1.5"
-                      >
-                        <span>🚫 {c}</span>
-                        <button
-                          type="button"
-                          onClick={() => toggleExcludedCountry(c)}
-                          className="hover:text-[#1E1B18] font-bold"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
                 </div>
+              );
+            })}
+          </div>
 
-                {/* US Presence Selector */}
-                <div className="pt-2 border-t border-[#F0EAD8]">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-mono font-bold text-[#1E1B18] uppercase tracking-wider">
-                      US Presence Policy
+          {/* DYNAMICALLY EXPOSED SUB-INDUSTRIES (Section 5) */}
+          {availableSubIndustries.length > 0 && (
+            <div className="p-4 bg-[#FAF6EE] rounded-xl border border-[#EBE4D5] space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#FF6B35]">
+                  🌿 Dynamically Exposed Sub-Industries:
+                </span>
+                <span className="text-[10px] font-mono text-[#766E65]">
+                  {profile.subIndustries.length} Sub-sectors active
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                {availableSubIndustries.map(sub => {
+                  const isChecked = profile.subIndustries.includes(sub);
+                  return (
+                    <label
+                      key={sub}
+                      className={`flex items-center gap-2 text-xs p-1.5 rounded-lg border cursor-pointer transition-colors ${
+                        isChecked
+                          ? 'bg-white border-[#1E1B18] text-[#1E1B18] font-bold shadow-sketch-xs'
+                          : 'bg-[#F2ECE0] border-transparent text-[#766E65] hover:bg-white'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => toggleSubIndustry(sub)}
+                        className="accent-[#FF6B35] rounded"
+                      />
+                      <span className="truncate">{sub}</span>
                     </label>
-                    {config.geography.usPresence === 'minimal_or_none' && (
-                      <span className="text-[10px] font-bold text-[#FF6B35] font-mono">Assignment default</span>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { id: 'strictly_none', label: 'Strictly no US presence' },
-                      { id: 'minimal_or_none', label: 'Minimal / None (Default)' },
-                      { id: 'limited', label: 'Allow limited US presence' },
-                      { id: 'any', label: 'Any US presence' },
-                    ].map((opt) => (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => setConfig(prev => ({
-                          ...prev,
-                          geography: { ...prev.geography, usPresence: opt.id as any },
-                        }))}
-                        className={`p-2 rounded-xl text-xs font-mono text-left border-2 transition-all ${
-                          config.geography.usPresence === opt.id
-                            ? 'bg-[#FFE7DC] border-[#FF6B35] font-bold text-[#1E1B18]'
-                            : 'bg-[#FAF6EE] border-[#1E1B18] hover:bg-white text-[#766E65]'
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                  );
+                })}
               </div>
             </div>
+          )}
+        </div>
+
+        {/* 3. COMPANY AGE & DATA FRESHNESS (Section 6 & 7) */}
+        <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch-sm space-y-5">
+          <div className="flex items-center gap-2 border-b border-[#F0EAD8] pb-3">
+            <span className="text-lg">⏱️</span>
+            <h2 className="font-display text-lg font-bold text-[#1E1B18]">Company Age, Founded Year & Freshness</h2>
           </div>
-        )}
 
-        {/* TAB 2: WHAT (Sectors & Business Models) */}
-        {activeTab === 'what' && (
-          <div className="py-6 space-y-6 animate-in fade-in duration-150">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Predefined Age */}
             <div>
-              <h3 className="font-display text-lg font-bold text-[#1E1B18]">
-                What should we hunt for?
-              </h3>
-              <p className="text-xs font-mono text-[#766E65] mt-1">
-                Select industries, technology sectors, and operating business models.
-              </p>
-            </div>
-
-            {/* Multi-Select Sectors */}
-            <div>
-              <label className="block text-xs font-mono font-bold text-[#1E1B18] uppercase tracking-wider mb-2.5">
-                Industry & Technology Sectors
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65] mb-1.5">
+                Company Age
               </label>
-              <div className="flex flex-wrap gap-2">
-                {ALL_SECTORS.map((sector) => {
-                  const isSelected = sector === 'All sectors'
-                    ? config.sectors.includes('all')
-                    : config.sectors.includes(sector);
-
-                  return (
-                    <button
-                      key={sector}
-                      type="button"
-                      onClick={() => toggleSector(sector)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-mono border-2 transition-all ${
-                        isSelected
-                          ? 'bg-[#FF6B35] text-white border-[#1E1B18] shadow-sketch-xs font-bold'
-                          : 'bg-[#FAF6EE] text-[#1E1B18] border-[#1E1B18] hover:bg-white'
-                      }`}
-                    >
-                      {sector}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Business Models */}
-            <div className="pt-4 border-t border-[#F0EAD8]">
-              <label className="block text-xs font-mono font-bold text-[#1E1B18] uppercase tracking-wider mb-2.5">
-                Target Business Models
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {BUSINESS_MODELS.map((model) => {
-                  const isSelected = config.businessModels.includes(model);
-                  return (
-                    <button
-                      key={model}
-                      type="button"
-                      onClick={() => toggleBusinessModel(model)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-mono border-2 transition-all ${
-                        isSelected
-                          ? 'bg-[#FFE7DC] text-[#1E1B18] border-[#FF6B35] font-bold shadow-sketch-xs'
-                          : 'bg-[#FAF6EE] text-[#766E65] border-[#1E1B18] hover:bg-white'
-                      }`}
-                    >
-                      {model}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Technology Profile Strictness */}
-            <div className="pt-4 border-t border-[#F0EAD8]">
-              <label className="block text-xs font-mono font-bold text-[#1E1B18] uppercase tracking-wider mb-2.5">
-                Technology Profile Requirement
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {[
-                  { id: 'platform_required', label: 'Platform required (Default)', desc: 'Must operate proprietary tech platform/SaaS' },
-                  { id: 'ai_first', label: 'AI-First only', desc: 'Must leverage deep machine learning / LLMs' },
-                  { id: 'software_only', label: 'Software / SaaS only', desc: 'Pure software applications and cloud services' },
-                  { id: 'tech_enabled', label: 'Tech-enabled business', desc: 'Includes tech-driven marketplaces & services' },
-                  { id: 'any_tech', label: 'Any technology company', desc: 'Broad technology companies' },
-                ].map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setConfig(prev => ({ ...prev, techProfile: p.id as any }))}
-                    className={`p-3 rounded-xl border-2 text-left transition-all ${
-                      config.techProfile === p.id
-                        ? 'bg-[#FFE7DC] border-[#FF6B35] shadow-sketch-xs'
-                        : 'bg-[#FAF6EE] border-[#1E1B18] hover:bg-white'
-                    }`}
-                  >
-                    <div className="font-display text-xs font-bold text-[#1E1B18]">{p.label}</div>
-                    <div className="text-[10px] font-mono text-[#766E65] mt-0.5">{p.desc}</div>
-                  </button>
+              <select
+                value={profile.companyAge}
+                onChange={e => setProfile(prev => ({ ...prev, companyAge: e.target.value }))}
+                className="w-full bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-3 py-2.5 rounded-xl border border-[#D9D0C1]"
+              >
+                {COMPANY_AGE_OPTIONS.map(opt => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
                 ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: PROFILE (Stage, Funding & Size) */}
-        {activeTab === 'profile' && (
-          <div className="py-6 space-y-6 animate-in fade-in duration-150">
-            <div>
-              <h3 className="font-display text-lg font-bold text-[#1E1B18]">
-                Company Stage, Funding & Size
-              </h3>
-              <p className="text-xs font-mono text-[#766E65] mt-1">
-                Configure capital thresholds and target development milestones.
-              </p>
+              </select>
             </div>
 
-            {/* Funding Range Presets & Mode */}
+            {/* Founded Year Range (From -> To) */}
             <div>
-              <div className="flex items-center justify-between mb-2.5">
-                <label className="text-xs font-mono font-bold text-[#1E1B18] uppercase tracking-wider">
-                  Funding / Revenue Range
-                </label>
-                <div className="flex items-center gap-1">
-                  {(['funding_or_revenue', 'funding', 'revenue'] as const).map((mode) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      onClick={() => setConfig(prev => ({
-                        ...prev,
-                        funding: { ...prev.funding, mode },
-                      }))}
-                      className={`text-[10px] font-mono px-2 py-0.5 rounded-md border ${
-                        config.funding.mode === mode
-                          ? 'bg-[#FF6B35] text-white border-[#1E1B18] font-bold'
-                          : 'bg-[#FAF6EE] text-[#766E65] border-[#1E1B18]/30'
-                      }`}
-                    >
-                      {mode.replace(/_/g, ' ')}
-                    </button>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65] mb-1.5">
+                Founded Year Range
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={profile.foundedFrom || 2020}
+                  onChange={e => setProfile(prev => ({ ...prev, foundedFrom: parseInt(e.target.value, 10) }))}
+                  className="bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-2 py-2 rounded-xl border border-[#D9D0C1]"
+                >
+                  {years.map(y => (
+                    <option key={`from-${y}`} value={y}>
+                      From: {y}
+                    </option>
                   ))}
-                </div>
-              </div>
+                </select>
 
-              {/* Quick Presets */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3">
-                {FUNDING_PRESETS.map((p) => {
-                  const isSelected = config.funding.min === p.min && config.funding.max === p.max;
-                  return (
-                    <button
-                      key={p.label}
-                      type="button"
-                      onClick={() => setConfig(prev => ({
-                        ...prev,
-                        funding: { ...prev.funding, min: p.min, max: p.max, preset: p.label },
-                      }))}
-                      className={`p-2.5 rounded-xl border-2 text-center transition-all ${
-                        isSelected
-                          ? 'bg-[#FF6B35] text-white border-[#1E1B18] shadow-sketch-xs font-bold'
-                          : 'bg-[#FAF6EE] text-[#1E1B18] border-[#1E1B18] hover:bg-white'
-                      }`}
-                    >
-                      <div className="font-display text-xs">{p.label}</div>
-                      {p.isDefault && <div className="text-[9px] opacity-80">Assignment</div>}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Custom Min / Max Inputs */}
-              <div className="grid grid-cols-2 gap-4 bg-[#FAF6EE] p-3 rounded-xl border-2 border-[#1E1B18]">
-                <div>
-                  <label className="block text-[10px] font-mono text-[#766E65] uppercase mb-1">
-                    Minimum USD ($)
-                  </label>
-                  <input
-                    type="number"
-                    value={config.funding.min}
-                    step={500000}
-                    onChange={(e) => setConfig(prev => ({
-                      ...prev,
-                      funding: { ...prev.funding, min: Number(e.target.value), preset: 'Custom' },
-                    }))}
-                    className="w-full bg-white text-xs font-mono font-bold text-[#1E1B18] px-3 py-2 rounded-lg border border-[#1E1B18]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-mono text-[#766E65] uppercase mb-1">
-                    Maximum USD ($)
-                  </label>
-                  <input
-                    type="number"
-                    value={config.funding.max}
-                    step={500000}
-                    onChange={(e) => setConfig(prev => ({
-                      ...prev,
-                      funding: { ...prev.funding, max: Number(e.target.value), preset: 'Custom' },
-                    }))}
-                    className="w-full bg-white text-xs font-mono font-bold text-[#1E1B18] px-3 py-2 rounded-lg border border-[#1E1B18]"
-                  />
-                </div>
+                <select
+                  value={profile.foundedTo || new Date().getFullYear()}
+                  onChange={e => setProfile(prev => ({ ...prev, foundedTo: parseInt(e.target.value, 10) }))}
+                  className="bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-2 py-2 rounded-xl border border-[#D9D0C1]"
+                >
+                  {years.map(y => (
+                    <option key={`to-${y}`} value={y}>
+                      To: {y}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
-            {/* Company Stage */}
-            <div className="pt-4 border-t border-[#F0EAD8]">
-              <label className="block text-xs font-mono font-bold text-[#1E1B18] uppercase tracking-wider mb-2.5">
-                Target Company Stage
+            {/* Data Freshness */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65] mb-1.5">
+                Data Freshness Window
               </label>
-              <div className="flex flex-wrap gap-2">
-                {STAGES.map((st) => {
-                  const isSelected = config.stage.includes(st);
+              <select
+                value={profile.freshnessWindow}
+                onChange={e => setProfile(prev => ({ ...prev, freshnessWindow: e.target.value }))}
+                className="w-full bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-3 py-2.5 rounded-xl border border-[#D9D0C1]"
+              >
+                {DATA_FRESHNESS_OPTIONS.map(opt => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Activity Types (Selectable Options) */}
+          <div className="space-y-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#766E65]">
+              Target Recent Activity Signals:
+            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              {ACTIVITY_TYPES.map(act => {
+                const isSelected = profile.activityTypes.includes(act);
+                return (
+                  <button
+                    key={act}
+                    type="button"
+                    onClick={() => toggleArrayItem('activityTypes', act)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all border ${
+                      isSelected
+                        ? 'bg-[#1E1B18] text-white border-[#1E1B18] shadow-sketch-xs'
+                        : 'bg-[#FAF6EE] text-[#5A544E] border-[#EBE4D5] hover:bg-white'
+                    }`}
+                  >
+                    {isSelected ? '✓ ' : '+ '}
+                    {act}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* 4. COMPANY STAGE & COMPANY TYPE (Section 8 & 9) */}
+        <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch-sm space-y-5">
+          <div className="flex items-center gap-2 border-b border-[#F0EAD8] pb-3">
+            <span className="text-lg">📊</span>
+            <h2 className="font-display text-lg font-bold text-[#1E1B18]">Company Stage & Organization Type</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Stages */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65]">
+                Company Stage (Multi-select)
+              </label>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {COMPANY_STAGE_OPTIONS.map(stg => {
+                  const isChecked = profile.companyStages.includes(stg);
                   return (
                     <button
-                      key={st}
+                      key={stg}
                       type="button"
-                      onClick={() => toggleStage(st)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-mono border-2 transition-all ${
-                        isSelected
-                          ? 'bg-[#FFE7DC] text-[#1E1B18] border-[#FF6B35] font-bold shadow-sketch-xs'
-                          : 'bg-[#FAF6EE] text-[#766E65] border-[#1E1B18] hover:bg-white'
+                      onClick={() => toggleArrayItem('companyStages', stg)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition-colors ${
+                        isChecked
+                          ? 'bg-[#FFE7DC] border-[#FF6B35] text-[#FF6B35]'
+                          : 'bg-[#FAF6EE] border-[#EBE4D5] text-[#766E65] hover:bg-white'
                       }`}
                     >
-                      {st}
+                      {isChecked ? '✓ ' : ''}{stg}
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Company Size */}
-            <div className="pt-4 border-t border-[#F0EAD8]">
-              <div className="flex items-center justify-between mb-2.5">
-                <label className="text-xs font-mono font-bold text-[#1E1B18] uppercase tracking-wider">
-                  Company Size (Employees)
-                </label>
-                <span className="text-[10px] font-mono text-[#766E65]">Optional (soft filter)</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {COMPANY_SIZES.map((sz) => {
-                  const isSelected = (config.companySize || []).includes(sz);
+            {/* Types */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65]">
+                Company Type (Multi-select)
+              </label>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {COMPANY_TYPE_OPTIONS.map(typ => {
+                  const isChecked = profile.companyTypes.includes(typ);
                   return (
                     <button
-                      key={sz}
+                      key={typ}
                       type="button"
-                      onClick={() => setConfig(prev => {
-                        const current = prev.companySize || [];
-                        const next = current.includes(sz) ? current.filter(s => s !== sz) : [...current, sz];
-                        return { ...prev, companySize: next };
-                      })}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-mono border-2 transition-all ${
-                        isSelected
-                          ? 'bg-[#FFE7DC] text-[#1E1B18] border-[#FF6B35] font-bold shadow-sketch-xs'
-                          : 'bg-[#FAF6EE] text-[#766E65] border-[#1E1B18] hover:bg-white'
+                      onClick={() => toggleArrayItem('companyTypes', typ)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition-colors ${
+                        isChecked
+                          ? 'bg-[#1E1B18] border-[#1E1B18] text-[#FAF6EE]'
+                          : 'bg-[#FAF6EE] border-[#EBE4D5] text-[#766E65] hover:bg-white'
                       }`}
                     >
-                      {sz} people
+                      {isChecked ? '✓ ' : ''}{typ}
                     </button>
                   );
                 })}
               </div>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* TAB 4: CONTACT (Founder & Verification) */}
-        {activeTab === 'contact' && (
-          <div className="py-6 space-y-6 animate-in fade-in duration-150">
+        {/* 5. GEOGRAPHY & US PRESENCE (Section 10 & 11) */}
+        <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch-sm space-y-5">
+          <div className="flex items-center gap-2 border-b border-[#F0EAD8] pb-3">
+            <span className="text-lg">🌍</span>
+            <h2 className="font-display text-lg font-bold text-[#1E1B18]">Geography & US Presence Policy</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Region */}
             <div>
-              <h3 className="font-display text-lg font-bold text-[#1E1B18]">
-                Leadership & Contact Verification
-              </h3>
-              <p className="text-xs font-mono text-[#766E65] mt-1">
-                Enforce verifiable executive leadership and live mail server deliverability.
-              </p>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65] mb-1.5">
+                Target Region
+              </label>
+              <select
+                value={profile.regions[0] || 'Global'}
+                onChange={e => setProfile(prev => ({ ...prev, regions: [e.target.value] }))}
+                className="w-full bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-3 py-2.5 rounded-xl border border-[#D9D0C1]"
+              >
+                {REGION_OPTIONS.map(r => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* Founder Role */}
+            {/* US Presence */}
             <div>
-              <label className="block text-xs font-mono font-bold text-[#1E1B18] uppercase tracking-wider mb-2.5">
-                Required Leadership Role
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65] mb-1.5">
+                US Presence Rule
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {[
-                  { id: 'ceo_or_cofounder', label: 'CEO or Co-founder', desc: 'Assignment default' },
-                  { id: 'ceo_only', label: 'CEO required', desc: 'Chief Executive' },
-                  { id: 'cofounder_only', label: 'Co-founder required', desc: 'Founding member' },
-                  { id: 'any_executive', label: 'Any executive', desc: 'CTO, COO, VP' },
-                ].map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setConfig(prev => ({ ...prev, contactRequirement: opt.id as any }))}
-                    className={`p-3 rounded-xl border-2 text-left transition-all ${
-                      config.contactRequirement === opt.id
-                        ? 'bg-[#FFE7DC] border-[#FF6B35] shadow-sketch-xs'
-                        : 'bg-[#FAF6EE] border-[#1E1B18] hover:bg-white'
-                    }`}
+              <select
+                value={profile.usPresenceMode}
+                onChange={e => setProfile(prev => ({ ...prev, usPresenceMode: e.target.value as any }))}
+                className="w-full bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-3 py-2.5 rounded-xl border border-[#D9D0C1]"
+              >
+                {US_PRESENCE_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <span className="text-[10px] text-[#8C847A] font-mono mt-1 block">
+                {profile.usPresenceMode === 'unknown'
+                  ? '⚠️ Unknown requires confirmed evidence; unverified will NOT pass.'
+                  : 'Deterministically evaluated against evidence and headquarters.'}
+              </span>
+            </div>
+          </div>
+
+          {/* Searchable Multi-Select Countries */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65]">
+              Target Countries (Searchable Multi-Select)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-2.5 text-xs text-[#766E65]">🔍</span>
+              <input
+                type="text"
+                placeholder="Search countries (e.g. India, Germany, United Kingdom, Singapore)..."
+                value={countrySearch}
+                onChange={e => setCountrySearch(e.target.value)}
+                className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-[#D9D0C1] bg-[#FAF6EE] focus:bg-white text-[#1E1B18] outline-none"
+              />
+            </div>
+
+            {/* Selected Country Chips */}
+            {profile.countries.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap p-2 bg-[#FAF6EE] rounded-xl border border-[#EBE4D5]">
+                {profile.countries.map(c => (
+                  <span
+                    key={c}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold font-mono bg-[#1E1B18] text-[#FAF6EE]"
                   >
-                    <div className="font-display text-xs font-bold text-[#1E1B18]">{opt.label}</div>
-                    <div className="text-[10px] font-mono text-[#766E65] mt-0.5">{opt.desc}</div>
-                  </button>
+                    <span>{c}</span>
+                    <button
+                      type="button"
+                      onClick={() => toggleCountry(c)}
+                      className="text-[#FF6B35] hover:text-white font-bold ml-1 text-sm leading-none"
+                    >
+                      ×
+                    </button>
+                  </span>
                 ))}
               </div>
+            )}
+
+            {/* Quick Country Choices */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-1.5 pt-1">
+              {filteredCountries.map(c => {
+                const isSelected = profile.countries.includes(c.name);
+                return (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => toggleCountry(c.name)}
+                    className={`p-1.5 rounded-lg text-xs font-mono truncate border text-left flex items-center gap-1 ${
+                      isSelected
+                        ? 'bg-[#FFE7DC] border-[#FF6B35] text-[#1E1B18] font-bold'
+                        : 'bg-white border-[#EBE4D5] text-[#5A544E] hover:bg-[#FAF6EE]'
+                    }`}
+                  >
+                    <span>{c.flag}</span>
+                    <span className="truncate">{c.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* 6. PEOPLE, EMAIL & SOCIAL (Section 12, 13, 14) */}
+        <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch-sm space-y-5">
+          <div className="flex items-center gap-2 border-b border-[#F0EAD8] pb-3">
+            <span className="text-lg">👥</span>
+            <h2 className="font-display text-lg font-bold text-[#1E1B18]">Decision Makers, Email & Social Verification</h2>
+          </div>
+
+          {/* Decision Maker Roles */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65]">
+              Decision Maker Roles (Multi-select)
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+              {DECISION_MAKER_OPTIONS.map(role => {
+                const isChecked = profile.contactPersonTypes.includes(role);
+                return (
+                  <label
+                    key={role}
+                    className={`flex items-center gap-2 text-xs p-2 rounded-lg border cursor-pointer ${
+                      isChecked
+                        ? 'bg-[#FFE7DC] border-[#FF6B35] text-[#1E1B18] font-bold'
+                        : 'bg-[#FAF6EE] border-[#EBE4D5] text-[#5A544E] hover:bg-white'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => toggleArrayItem('contactPersonTypes', role)}
+                      className="accent-[#FF6B35] rounded"
+                    />
+                    <span className="truncate">{role}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
+            {/* Professional Email */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65] mb-1.5">
+                Professional Email
+              </label>
+              <select
+                value={profile.emailRequirement}
+                onChange={e => setProfile(prev => ({ ...prev, emailRequirement: e.target.value as any }))}
+                className="w-full bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-3 py-2.5 rounded-xl border border-[#D9D0C1]"
+              >
+                {EMAIL_REQUIREMENT_OPTIONS.map(opt => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Email Verification Level */}
-            <div className="pt-4 border-t border-[#F0EAD8]">
-              <label className="block text-xs font-mono font-bold text-[#1E1B18] uppercase tracking-wider mb-2.5">
-                Contact Verification Strictness
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65] mb-1.5">
+                Verification Tier
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {[
-                  { id: 'required', label: 'Verified email required', desc: 'Candidate rejected if MX lookup fails (Default)' },
-                  { id: 'preferred', label: 'Professional email preferred', desc: 'Prioritize verified emails, keep unverified' },
-                  { id: 'none', label: 'Email not required', desc: 'Discover companies without contact constraint' },
-                ].map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setConfig(prev => ({ ...prev, emailVerification: opt.id as any }))}
-                    className={`p-3 rounded-xl border-2 text-left transition-all ${
-                      config.emailVerification === opt.id
-                        ? 'bg-[#FFE7DC] border-[#FF6B35] shadow-sketch-xs'
-                        : 'bg-[#FAF6EE] border-[#1E1B18] hover:bg-white'
-                    }`}
-                  >
-                    <div className="font-display text-xs font-bold text-[#1E1B18]">{opt.label}</div>
-                    <div className="text-[10px] font-mono text-[#766E65] mt-0.5">{opt.desc}</div>
-                  </button>
+              <select
+                value={profile.emailVerificationLevel}
+                onChange={e => setProfile(prev => ({ ...prev, emailVerificationLevel: e.target.value as any }))}
+                className="w-full bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-3 py-2.5 rounded-xl border border-[#D9D0C1]"
+              >
+                {EMAIL_VERIFICATION_LEVELS.map(lvl => (
+                  <option key={lvl.value} value={lvl.value}>
+                    {lvl.label}
+                  </option>
                 ))}
-              </div>
+              </select>
+            </div>
+
+            {/* Social Requirement Mode */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65] mb-1.5">
+                Social Profile Requirement
+              </label>
+              <select
+                value={profile.socialProfileMode}
+                onChange={e => setProfile(prev => ({ ...prev, socialProfileMode: e.target.value as any }))}
+                className="w-full bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-3 py-2.5 rounded-xl border border-[#D9D0C1]"
+              >
+                <option value="Required">Required</option>
+                <option value="Preferred">Preferred</option>
+                <option value="Not Required">Not Required</option>
+              </select>
             </div>
           </div>
-        )}
 
-        {/* TAB 5: DEPTH (Search Depth & Target Leads) */}
-        {activeTab === 'depth' && (
-          <div className="py-6 space-y-6 animate-in fade-in duration-150">
+          {/* Social Platforms checkboxes */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
             <div>
-              <h3 className="font-display text-lg font-bold text-[#1E1B18]">
-                Search Depth & Target Leads
-              </h3>
-              <p className="text-xs font-mono text-[#766E65] mt-1">
-                Control the speed, breath of candidate discovery, and target quota.
-              </p>
-            </div>
-
-            {/* Depth Options */}
-            <div>
-              <label className="block text-xs font-mono font-bold text-[#1E1B18] uppercase tracking-wider mb-2.5">
-                Discovery Depth Strategy
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {[
-                  { id: 'quick', label: 'Quick', desc: 'Faster, 1 round, fewer queries' },
-                  { id: 'balanced', label: 'Balanced', desc: 'Recommended, multi-round discovery' },
-                  { id: 'deep', label: 'Deep', desc: 'Deep research across 10+ query variants' },
-                  { id: 'exhaustive', label: 'Exhaustive', desc: 'Maximum depth across all registries' },
-                ].map((d) => (
-                  <button
-                    key={d.id}
-                    type="button"
-                    onClick={() => setConfig(prev => ({ ...prev, depth: d.id as any }))}
-                    className={`p-3 rounded-xl border-2 text-left transition-all ${
-                      config.depth === d.id
-                        ? 'bg-[#FFE7DC] border-[#FF6B35] shadow-sketch-xs'
-                        : 'bg-[#FAF6EE] border-[#1E1B18] hover:bg-white'
-                    }`}
-                  >
-                    <div className="font-display text-xs font-bold text-[#1E1B18]">{d.label}</div>
-                    <div className="text-[10px] font-mono text-[#766E65] mt-0.5">{d.desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Target Leads Stepper */}
-            <div className="pt-4 border-t border-[#F0EAD8]">
-              <div className="flex items-center justify-between mb-2.5">
-                <label className="text-xs font-mono font-bold text-[#1E1B18] uppercase tracking-wider">
-                  Target Qualified Leads
-                </label>
-                <span className="font-mono text-xs font-bold text-[#FF6B35]">
-                  Target: {config.targetLeads} qualified companies
-                </span>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 bg-[#FAF6EE] px-3 py-1.5 rounded-xl border-2 border-[#1E1B18]">
-                  <button
-                    type="button"
-                    onClick={() => setConfig(prev => ({ ...prev, targetLeads: Math.max(5, prev.targetLeads - 5) }))}
-                    className="w-8 h-8 rounded-lg bg-white border border-[#1E1B18] text-sm font-bold hover:bg-[#FFE7DC]"
-                  >
-                    -
-                  </button>
-                  <span className="font-display text-xl font-bold px-3 min-w-[2.5rem] text-center">
-                    {config.targetLeads}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setConfig(prev => ({ ...prev, targetLeads: Math.min(100, prev.targetLeads + 5) }))}
-                    className="w-8 h-8 rounded-lg bg-white border border-[#1E1B18] text-sm font-bold hover:bg-[#FFE7DC]"
-                  >
-                    +
-                  </button>
-                </div>
-
-                {/* Preset Pills */}
-                <div className="flex items-center gap-1.5">
-                  {[5, 10, 15, 25, 50, 100].map((num) => (
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#766E65] block mb-1.5">
+                Company Social Profiles:
+              </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                {COMPANY_SOCIAL_OPTIONS.map(s => {
+                  const isChecked = profile.companySocialRequirements.includes(s);
+                  return (
                     <button
-                      key={num}
+                      key={s}
                       type="button"
-                      onClick={() => setConfig(prev => ({ ...prev, targetLeads: num }))}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs font-mono border ${
-                        config.targetLeads === num
-                          ? 'bg-[#FF6B35] text-white border-[#1E1B18] font-bold'
-                          : 'bg-[#FAF6EE] text-[#1E1B18] border-[#1E1B18]/30 hover:border-[#1E1B18]'
+                      onClick={() => toggleArrayItem('companySocialRequirements', s)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono border ${
+                        isChecked
+                          ? 'bg-[#1E1B18] border-[#1E1B18] text-white font-bold'
+                          : 'bg-[#FAF6EE] border-[#EBE4D5] text-[#766E65] hover:bg-white'
                       }`}
                     >
-                      {num}
+                      {isChecked ? '✓ ' : ''}{s}
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#766E65] block mb-1.5">
+                Person Social Profiles:
+              </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                {PERSON_SOCIAL_OPTIONS.map(s => {
+                  const isChecked = profile.personSocialRequirements.includes(s);
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleArrayItem('personSocialRequirements', s)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono border ${
+                        isChecked
+                          ? 'bg-[#1E1B18] border-[#1E1B18] text-white font-bold'
+                          : 'bg-[#FAF6EE] border-[#EBE4D5] text-[#766E65] hover:bg-white'
+                      }`}
+                    >
+                      {isChecked ? '✓ ' : ''}{s}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* TAB 6: ADVANCED (Natural Language Hunt) */}
-        {activeTab === 'advanced' && (
-          <div className="py-6 space-y-6 animate-in fade-in duration-150">
+        {/* 7. EMPLOYEES & SOURCES (Section 15 & 16) */}
+        <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch-sm space-y-5">
+          <div className="flex items-center gap-2 border-b border-[#F0EAD8] pb-3">
+            <span className="text-lg">🔎</span>
+            <h2 className="font-display text-lg font-bold text-[#1E1B18]">Employee Size & Research Sources</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Employee Count */}
             <div>
-              <h3 className="font-display text-lg font-bold text-[#1E1B18]">
-                Natural Language Hunt
-              </h3>
-              <p className="text-xs font-mono text-[#766E65] mt-1">
-                Describe your target criteria in plain English. Huntlyst will parse it into structured configuration filters.
-              </p>
-            </div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65] mb-1.5">
+                Employee Count
+              </label>
+              <select
+                value={profile.employeeCountPreset}
+                onChange={e => setProfile(prev => ({ ...prev, employeeCountPreset: e.target.value }))}
+                className="w-full bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-3 py-2.5 rounded-xl border border-[#D9D0C1]"
+              >
+                {EMPLOYEE_COUNT_OPTIONS.map(cnt => (
+                  <option key={cnt} value={cnt}>
+                    {cnt} employees
+                  </option>
+                ))}
+              </select>
 
-            <div className="space-y-3">
-              <textarea
-                value={nlInput}
-                onChange={(e) => setNlInput(e.target.value)}
-                placeholder="e.g. Find Indian AI startups with $1M–$5M funding and no significant US presence."
-                rows={3}
-                className="w-full bg-[#FAF6EE] text-xs font-mono text-[#1E1B18] p-3.5 rounded-xl border-2 border-[#1E1B18] focus:outline-none focus:border-[#FF6B35]"
-              />
-
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={handleParseNl}
-                  className="sketch-btn px-4 py-2 text-xs font-bold bg-[#FAF6EE] hover:bg-[#FFE7DC] text-[#1E1B18] rounded-xl border-2 border-[#1E1B18] shadow-sketch-xs"
-                >
-                  ⚡ Parse Hunt Parameters
-                </button>
-
-                <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#766E65]">
-                  <span>Examples:</span>
-                  <button
-                    type="button"
-                    onClick={() => setNlInput('Find fintech companies in Singapore and India with 20-200 employees.')}
-                    className="underline hover:text-[#FF6B35]"
-                  >
-                    Singapore & India Fintech
-                  </button>
-                  <span>•</span>
-                  <button
-                    type="button"
-                    onClick={() => setNlInput('Find Australian cybersecurity SaaS with $1M-$5M funding.')}
-                    className="underline hover:text-[#FF6B35]"
-                  >
-                    Australian Cyber
-                  </button>
-                </div>
-              </div>
-
-              {/* Parsed Result Preview Card */}
-              {nlResult && (
-                <div className="paper-card bg-white p-4 rounded-xl border-2 border-[#1E1B18] shadow-sketch-xs mt-3 space-y-3">
-                  <div className="flex items-center justify-between border-b border-[#F0EAD8] pb-2">
-                    <span className="font-display text-xs font-bold text-[#1E1B18]">
-                      Parsed Search Parameters
-                    </span>
-                    <span className="text-[10px] font-mono text-[#2D5A27] font-bold">
-                      Confidence: {(nlResult.confidence * 100).toFixed(0)}%
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
-                    <div>
-                      <span className="text-[#766E65] block text-[10px]">Countries:</span>
-                      <span className="font-bold text-[#1E1B18]">
-                        {nlResult.detectedSummary.countries.join(', ') || 'Global'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[#766E65] block text-[10px]">Sectors:</span>
-                      <span className="font-bold text-[#1E1B18]">
-                        {nlResult.detectedSummary.sectors.join(', ') || 'All Tech'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[#766E65] block text-[10px]">Funding:</span>
-                      <span className="font-bold text-[#1E1B18]">
-                        {nlResult.detectedSummary.fundingText || '$1M–$5M'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[#766E65] block text-[10px]">US Presence:</span>
-                      <span className="font-bold text-[#1E1B18]">
-                        {nlResult.detectedSummary.usPresence}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end pt-1">
-                    <button
-                      type="button"
-                      onClick={handleApplyNl}
-                      className="sketch-btn px-3 py-1.5 text-xs font-bold bg-[#FF6B35] text-white rounded-lg border-2 border-[#1E1B18] shadow-sketch-xs"
-                    >
-                      ✓ Apply to Hunt Configuration
-                    </button>
-                  </div>
+              {profile.employeeCountPreset === 'Custom' && (
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <input
+                    type="number"
+                    placeholder="Min employees"
+                    value={profile.employeeMin || 10}
+                    onChange={e => setProfile(prev => ({ ...prev, employeeMin: parseInt(e.target.value, 10) }))}
+                    className="bg-white text-xs font-bold font-mono px-3 py-1.5 rounded-lg border border-[#D9D0C1]"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Max employees"
+                    value={profile.employeeMax || 500}
+                    onChange={e => setProfile(prev => ({ ...prev, employeeMax: parseInt(e.target.value, 10) }))}
+                    className="bg-white text-xs font-bold font-mono px-3 py-1.5 rounded-lg border border-[#D9D0C1]"
+                  />
                 </div>
               )}
             </div>
-          </div>
-        )}
 
-        {/* BOTTOM SECTION: Search Strategy Preview & Launch */}
-        <div className="pt-6 border-t-2 border-[#1E1B18] mt-4 space-y-4">
-          {/* Paper Card: Your Hunt */}
-          <div className="paper-card bg-[#FAF6EE] p-4 sm:p-5 rounded-xl border-2 border-[#1E1B18] shadow-sketch-xs relative">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#F0EAD8] pb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">📋</span>
-                <span className="font-display text-sm font-bold text-[#1E1B18]">
-                  Your Hunt Strategy
-                </span>
+            {/* Sources selection */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#766E65] mb-1.5">
+                Research Sources (Multi-select)
+              </label>
+              <div className="max-h-36 overflow-y-auto pr-1 space-y-1 bg-[#FAF6EE] p-2 rounded-xl border border-[#EBE4D5]">
+                {RESEARCH_SOURCES_OPTIONS.map(src => {
+                  const isChecked = profile.selectedSources.includes(src);
+                  return (
+                    <label
+                      key={src}
+                      className="flex items-center gap-2 text-xs p-1 rounded hover:bg-white cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => toggleArrayItem('selectedSources', src)}
+                        className="accent-[#FF6B35] rounded"
+                      />
+                      <span className="truncate text-[#5A544E]">{src}</span>
+                    </label>
+                  );
+                })}
               </div>
-              <span className="font-mono text-xs text-[#766E65]">
-                {config.geography.countries.length > 0 ? `${config.geography.countries.length} countries` : 'Global Non-US'} • {config.sectors.join(', ')} • {config.funding.preset || '$1M–$5M'}
-              </span>
             </div>
-
-            <p className="text-xs font-mono text-[#1E1B18] leading-relaxed pt-3">
-              {searchStrategyText}
-            </p>
           </div>
+        </div>
 
-          {/* Contradiction Warning (if any) */}
-          {contradictionWarning && (
-            <div className="bg-[#FFE8E8] border-2 border-[#D64045] p-3.5 rounded-xl text-xs font-mono text-[#D64045] flex items-center gap-2">
-              <span className="text-base">⚠️</span>
-              <span>{contradictionWarning}</span>
-            </div>
-          )}
+        {/* BOTTOM ACTION BAR (Section 17) */}
+        <div className="paper-card bg-[#FFFDF9] rounded-2xl p-5 border-2 border-[#1E1B18] shadow-sketch flex flex-col sm:flex-row items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={handleReset}
+            className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-[#766E65] bg-[#FAF6EE] hover:bg-[#EBE4D5] rounded-xl border border-[#D9D0C1] transition-colors"
+          >
+            ↺ Reset to TVB Default
+          </button>
 
-          {/* Launch Controls */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-mono text-[#766E65]">
-                Ready to dispatch autonomous discovery pipeline:
-              </span>
-            </div>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={handleSaveProfile}
+              className="flex-1 sm:flex-initial px-5 py-2.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] rounded-xl border-2 border-[#1E1B18] shadow-sketch-xs transition-transform active:translate-y-0.5"
+            >
+              💾 Save Profile
+            </button>
 
             <button
               type="button"
-              disabled={isRunning || !!contradictionWarning}
-              onClick={() => onLaunchHunt(config)}
-              className={`sketch-btn px-6 py-3 rounded-xl font-display text-sm sm:text-base font-bold flex items-center justify-center gap-2 border-2 border-[#1E1B18] transition-all ${
-                isRunning || !!contradictionWarning
-                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed border-gray-400'
-                  : 'bg-[#FF6B35] hover:bg-[#e85a27] text-white shadow-sketch'
-              }`}
+              onClick={handleLaunch}
+              disabled={isRunning}
+              className="flex-1 sm:flex-initial px-7 py-2.5 text-xs font-bold text-white bg-[#FF6B35] hover:bg-[#F05820] disabled:bg-[#8C847A] rounded-xl border-2 border-[#1E1B18] shadow-sketch-sm transition-transform active:translate-y-0.5 flex items-center justify-center gap-2"
             >
               <span>🚀</span>
-              <span>{isRunning ? 'Hunting in progress...' : 'Start Hunt'}</span>
+              <span>{isRunning ? 'Hunting Active...' : 'Run Hunt'}</span>
             </button>
           </div>
         </div>
+
       </div>
     </div>
   );
