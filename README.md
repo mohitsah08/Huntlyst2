@@ -130,8 +130,8 @@ Every company is ranked across 5 rigorous pillars:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/TheVentureBuild/tvb_huntylst.git
-cd tvb_huntylst
+git clone https://github.com/mohitsah08/huntlyst.git
+cd huntlyst
 ```
 
 ### 2. Install Dependencies
