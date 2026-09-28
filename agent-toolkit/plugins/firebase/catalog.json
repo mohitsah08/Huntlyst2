@@ -1,0 +1,19 @@
+{
+  "name": "firebase",
+  "version": "1.0.0",
+  "description": "Plugin bundle for firebase",
+  "skills_count": 11,
+  "skills": [
+    "firebase_ai_logic_basics",
+    "firebase_app_hosting_basics",
+    "firebase_auth_basics",
+    "firebase_basics",
+    "firebase_crashlytics",
+    "firebase_data_connect_basics",
+    "firebase_firestore",
+    "firebase_hosting_basics",
+    "firebase_remote_config_basics",
+    "firebase_security_rules_auditor",
+    "xcode_project_setup"
+  ]
+}

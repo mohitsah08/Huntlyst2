@@ -1,0 +1,10 @@
+{
+  "name": "modern-web-guidance-plugin",
+  "version": "1.0.4",
+  "description": "Curated collection of agent skills for modern web development.",
+  "skills_count": 2,
+  "skills": [
+    "chrome-extensions",
+    "modern-web-guidance"
+  ]
+}

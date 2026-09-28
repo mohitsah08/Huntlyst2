@@ -1,0 +1,30 @@
+{
+  "name": "flutter",
+  "version": "1.0.0",
+  "description": "Plugin bundle for flutter",
+  "skills_count": 22,
+  "skills": [
+    "dart-add-unit-test",
+    "dart-build-cli-app",
+    "dart-collect-coverage",
+    "dart-fix-runtime-errors",
+    "dart-generate-test-mocks",
+    "dart-migrate-to-checks-package",
+    "dart-resolve-package-conflicts",
+    "dart-run-static-analysis",
+    "dart-setup-ffi-assets",
+    "dart-use-ffigen",
+    "dart-use-pattern-matching",
+    "dart-use-primary-constructors",
+    "flutter-add-integration-test",
+    "flutter-add-widget-preview",
+    "flutter-add-widget-test",
+    "flutter-apply-architecture-best-practices",
+    "flutter-build-responsive-layout",
+    "flutter-fix-layout-issues",
+    "flutter-implement-json-serialization",
+    "flutter-setup-declarative-routing",
+    "flutter-setup-localization",
+    "flutter-use-http-package"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "chrome-devtools-plugin",
+  "version": "0.21.0",
+  "description": "Reliable automation, in-depth debugging, and performance analysis in Chrome using Chrome DevTools and Puppeteer",
+  "skills_count": 5,
+  "skills": [
+    "a11y-debugging",
+    "chrome-devtools",
+    "debug-optimize-lcp",
+    "memory-leak-debugging",
+    "troubleshooting"
+  ]
+}

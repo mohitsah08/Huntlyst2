@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 180" fill="none">
+  <!-- Brand Mark at x=10 y=10 (size 160x160) -->
+  <g transform="translate(10, 10) scale(0.8)">
+    <!-- Radiating Directional Ticks -->
+    <g stroke="#FF6B35" stroke-width="3.5" stroke-linecap="round" opacity="0.9">
+      <line x1="100" y1="12" x2="100" y2="24" />
+      <line x1="148" y1="28" x2="140" y2="38" />
+      <line x1="178" y1="62" x2="166" y2="70" />
+      <line x1="178" y1="138" x2="166" y2="130" />
+      <line x1="148" y1="172" x2="140" y2="162" />
+      <line x1="52" y1="172" x2="60" y2="162" />
+      <line x1="22" y1="138" x2="34" y2="130" />
+      <line x1="22" y1="62" x2="34" y2="70" />
+      <line x1="52" y1="28" x2="60" y2="38" />
+    </g>
+
+    <!-- Orange Sketched Outer Compass Ring -->
+    <circle cx="100" cy="100" r="68" stroke="#FF6B35" stroke-width="4.5" stroke-dasharray="14 4 28 6" stroke-linecap="round" fill="none" opacity="0.95" />
+    <circle cx="100" cy="100" r="64" stroke="#FFE7DC" stroke-width="1.5" stroke-dasharray="4 4" fill="none" opacity="0.6" />
+
+    <!-- Charcoal Cardinal Diamond Spikes -->
+    <polygon points="100,16 94,62 100,56 106,62" fill="#1E1B18" />
+    <polygon points="100,184 105,142 100,147 95,142" fill="#1E1B18" />
+    <polygon points="16,100 58,95 53,100 58,105" fill="#1E1B18" />
+    <polygon points="184,100 142,95 147,100 142,105" fill="#1E1B18" />
+
+    <!-- Central Serif H in Charcoal -->
+    <path d="M 68 64 L 84 64 L 84 72 L 80 72 L 80 128 L 84 128 L 84 136 L 68 136 L 68 128 L 72 128 L 72 72 L 68 72 Z" fill="#1E1B18" />
+    <path d="M 116 64 L 132 64 L 132 72 L 128 72 L 128 128 L 132 128 L 132 136 L 116 136 L 116 128 L 120 128 L 120 72 L 116 72 Z" fill="#1E1B18" />
+    <rect x="76" y="96" width="48" height="9" fill="#1E1B18" />
+
+    <!-- Diagonal Orange Directional Compass Needle -->
+    <polygon points="100,100 94,92 142,42 108,100" fill="#FF6B35" stroke="#1E1B18" stroke-width="2" stroke-linejoin="round" />
+    <polygon points="100,100 106,108 58,158 92,100" fill="#E85A28" stroke="#1E1B18" stroke-width="2" stroke-linejoin="round" />
+    <polygon points="100,100 97,95 142,42" fill="#FF8D60" />
+    <polygon points="100,100 103,105 58,158" fill="#D04B1D" />
+
+    <!-- Center Pivot Rivet -->
+    <circle cx="100" cy="100" r="7" fill="#FFFDF9" stroke="#1E1B18" stroke-width="2.5" />
+    <circle cx="100" cy="100" r="3.2" fill="#FF6B35" />
+  </g>
+
+  <!-- Wordmark Text -->
+  <text x="184" y="98" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="68" fill="#1E1B18" letter-spacing="-1.5">Huntlyst</text>
+  <circle cx="468" cy="94" r="5" fill="#FF6B35" />
+
+  <!-- Hand-drawn Orange Brush Underline -->
+  <path d="M 186 112 C 240 115, 360 110, 470 114" stroke="#FF6B35" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.9" />
+
+  <!-- Subtitle -->
+  <text x="186" y="138" font-family="Georgia, serif" font-style="italic" font-size="16" fill="#766E65" letter-spacing="0.2">Autonomous company discovery &amp; lead intelligence</text>
+</svg>

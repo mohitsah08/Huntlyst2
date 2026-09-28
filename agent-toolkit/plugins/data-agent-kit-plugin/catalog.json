@@ -1,0 +1,33 @@
+{
+  "name": "data-agent-kit-plugin",
+  "version": "0.6.1",
+  "description": "Specialized suite of skills for data engineers and database practitioners working on Google Cloud",
+  "skills_count": 25,
+  "skills": [
+    "accidental_data_loss_prevention",
+    "bigquery_ai_ml",
+    "bigquery_bigframes",
+    "bigquery_data_transfer_service",
+    "bigquery_graph",
+    "bigquery_sql",
+    "building_data_apps",
+    "data_autocleaning",
+    "dataform_bigquery",
+    "dbt_bigquery",
+    "discovering_gcp_data_assets",
+    "enforcing_resource_attribution",
+    "federate_lakehouse_catalog",
+    "gcloud_auth_verification",
+    "gcp_composer_troubleshooting",
+    "gcp_data_pipelines",
+    "gcp_dataflow",
+    "gcp_managed_airflow_migrations",
+    "gcp_pipeline_orchestration",
+    "gcp_pipeline_resource_provisioning",
+    "gcp_spark",
+    "gcs_security_assessment",
+    "managing_python_dependencies",
+    "ml_best_practices",
+    "notebook_guidance"
+  ]
+}
