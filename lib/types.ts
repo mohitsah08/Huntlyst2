@@ -146,7 +146,7 @@ export type CompanyRecord = {
   lastSeenAt?: string;
   lastVerifiedAt?: string;
   lastUpdatedAt?: string;
-  statusTag?: 'NEW' | 'UPDATED' | 'UNCHANGED';
+  statusTag?: 'NEW' | 'UPDATED' | 'UNCHANGED' | 'PREVIOUSLY_DISCOVERED';
 };
 
 export interface RejectedCompanyRecord {
@@ -183,6 +183,9 @@ export interface RunAgentResult {
     emailsUnverified?: number;
     finalRanked: number;
     durationMs: number;
+    totalNew?: number;
+    totalPreviouslySeen?: number;
+    duplicatesRemoved?: number;
   };
 }
 

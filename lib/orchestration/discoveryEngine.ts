@@ -40,6 +40,8 @@ export interface DiscoveryEngineResult {
   totalQualified: number;
   totalRejected: number;
   totalDuplicatesRemoved: number;
+  totalNew: number;
+  totalPreviouslySeen: number;
   stagnationOccurred: boolean;
   durationMs: number;
   sourcesSearched: string[];
@@ -117,9 +119,11 @@ export class DiscoveryEngine {
     let consecutiveStagnantRounds = 0;
     let stagnationOccurred = false;
     let iteration = 0;
-    const maxIterations = options.maxIterations || 10;
+    const maxIterations = options.maxIterations || Math.max(12, Math.ceil(targetLeads * 1.2));
     let totalDiscoveredGlobal = 0;
     let totalDuplicatesGlobal = 0;
+    let totalNewGlobal = 0;
+    let totalPreviouslySeenGlobal = 0;
 
     // =========================================================================
     // ITERATIVE MULTI-STRATEGY DISCOVERY LOOP
@@ -190,6 +194,13 @@ export class DiscoveryEngine {
           sessionSeenFingerprints.add(dupeCheck.fingerprint);
           dbStore.markDomainSeen(dupeCheck.canonicalDomain, dupeCheck.fingerprint);
 
+          const isNewCandidate = !dupeCheck.isPreviouslySeen;
+          if (isNewCandidate) {
+            totalNewGlobal++;
+          } else {
+            totalPreviouslySeenGlobal++;
+          }
+
           dbStore.recordResult({
             id: `res_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
             sessionId,
@@ -200,19 +211,38 @@ export class DiscoveryEngine {
             title: cand.name,
             snippet: cand.snippet,
             source: cand.source,
-            isNew: true,
+            isNew: isNewCandidate,
             discoveredAt: new Date().toISOString(),
           });
 
-          freshCandidates.push(cand);
+          freshCandidates.push({
+            ...cand,
+            statusTag: isNewCandidate ? 'NEW' : 'PREVIOUSLY_DISCOVERED',
+            canonicalDomain: dupeCheck.canonicalDomain,
+            normalizedName: dupeCheck.normalizedName,
+            isPreviouslySeen: dupeCheck.isPreviouslySeen,
+          });
         }
       }
 
       emit({
         type: 'candidate_found',
-        message: `Found ${candidateBatch.length} candidates (${freshCandidates.length} fresh, ${roundDuplicates} duplicates filtered).`,
+        message: `Found ${candidateBatch.length} candidates (${freshCandidates.length} eligible, ${roundDuplicates} duplicates/invalid filtered).`,
         stage: 1,
         stageName: 'Discovering',
+        stats: {
+          discovered: totalDiscoveredGlobal,
+          extracted: freshCandidates.length,
+          nonUsPassed: 0,
+          fundingQualified: 0,
+          founderFound: 0,
+          emailVerified: 0,
+          finalRanked: allQualified.length,
+          durationMs: Date.now() - startMs,
+          totalNew: totalNewGlobal,
+          totalPreviouslySeen: totalPreviouslySeenGlobal,
+          duplicatesRemoved: totalDuplicatesGlobal,
+        },
       });
 
       // 4. Stagnation Detection & Automatic Mutation
@@ -375,7 +405,7 @@ export class DiscoveryEngine {
           country: cand.detectedCountry || 'Europe',
           headquarters: cand.detectedCountry || 'Europe',
           sourceUrls: [cand.url],
-          statusTag: 'NEW',
+          statusTag: (cand.statusTag as 'NEW' | 'PREVIOUSLY_DISCOVERED') || 'NEW',
           firstDiscoveredAt: now,
           lastSeenAt: now,
           lastVerifiedAt: now,
@@ -397,7 +427,7 @@ export class DiscoveryEngine {
 
         emit({
           type: 'company_qualified',
-          message: `Qualified lead #${allQualified.length}: ${record.name} (Score: ${record.huntScore}/100)`,
+          message: `Qualified lead #${allQualified.length}: ${record.name} (Score: ${record.huntScore}/100) [${record.statusTag}]`,
           stage: 6,
           stageName: 'Qualifying',
           company: record,
@@ -405,8 +435,12 @@ export class DiscoveryEngine {
       }
     }
 
-    // Sort qualified companies by huntScore descending
-    allQualified.sort((a, b) => (b.huntScore || 0) - (a.huntScore || 0));
+    // Sort qualified companies: prioritize fresh NEW leads first, then by huntScore descending
+    allQualified.sort((a, b) => {
+      if (a.statusTag === 'NEW' && b.statusTag !== 'NEW') return -1;
+      if (a.statusTag !== 'NEW' && b.statusTag === 'NEW') return 1;
+      return (b.huntScore || 0) - (a.huntScore || 0);
+    });
 
     // Update persistent search session metrics
     dbStore.updateSession(sessionId, {
@@ -434,10 +468,15 @@ export class DiscoveryEngine {
     });
 
     const durationMs = Date.now() - startMs;
+    const stopReason = allQualified.length >= targetLeads
+      ? `Target of ${targetLeads} qualified leads satisfied.`
+      : stagnationOccurred
+      ? `${allQualified.length} unique qualified leads found. Additional searches produced mostly duplicate or low-confidence results across searched sources.`
+      : `${allQualified.length} unique qualified leads found after searching available sources (${totalDuplicatesGlobal} duplicates prevented).`;
 
     emit({
       type: 'complete',
-      message: `Discovery complete in ${(durationMs / 1000).toFixed(1)}s. Qualified ${allQualified.length} fresh leads (${totalDuplicatesGlobal} duplicates prevented).`,
+      message: `Discovery complete in ${(durationMs / 1000).toFixed(1)}s: ${stopReason}`,
       stage: 7,
       stageName: 'Completed',
     });
@@ -450,6 +489,8 @@ export class DiscoveryEngine {
       totalQualified: allQualified.length,
       totalRejected: allRejected.length,
       totalDuplicatesRemoved: totalDuplicatesGlobal,
+      totalNew: totalNewGlobal,
+      totalPreviouslySeen: totalPreviouslySeenGlobal,
       stagnationOccurred,
       durationMs,
       sourcesSearched: Array.from(allSourcesSearched),

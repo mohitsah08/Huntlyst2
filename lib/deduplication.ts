@@ -25,6 +25,24 @@ const CORPORATE_SUFFIXES = [
   'co.', 'co', 'company', 'holdings', 'group', 'ventures', 'technologies', 'tech'
 ];
 
+// Common media, social, aggregator, and search domains that must never be treated as company leads
+export const NON_COMPANY_DOMAINS = new Set([
+  'wikipedia.org', 'en.wikipedia.org', 'linkedin.com', 'twitter.com', 'x.com',
+  'facebook.com', 'instagram.com', 'youtube.com', 'github.com', 'medium.com',
+  'reddit.com', 'bloomberg.com', 'reuters.com', 'forbes.com', 'techcrunch.com',
+  'dealroom.co', 'pitchbook.com', 'crunchbase.com', 'ycombinator.com',
+  'news.ycombinator.com', 'producthunt.com', 'substack.com', 'google.com',
+  'apple.com', 'microsoft.com', 'amazon.com', 'yahoo.com', 'duckduckgo.com',
+  'sifted.eu', 'eu-startups.com', 'tech.eu', 'inc42.com', 'techinasia.com'
+]);
+
+export function isLikelyCompanyDomain(rawUrlOrDomain: string): boolean {
+  const canonical = extractCanonicalDomain(rawUrlOrDomain);
+  if (!canonical || canonical.length < 3) return false;
+  if (NON_COMPANY_DOMAINS.has(canonical)) return false;
+  return true;
+}
+
 /**
  * Extracts the canonical root domain from any URL or domain string.
  * Example:
@@ -120,7 +138,8 @@ export const calculateCompositeFingerprint = createCompanyFingerprint;
  */
 export interface DeduplicationCheckResult {
   isDuplicate: boolean;
-  reason?: 'canonical_domain_seen' | 'company_fingerprint_seen' | 'normalized_name_matched' | 'current_session_duplicate';
+  isPreviouslySeen: boolean;
+  reason?: 'canonical_domain_seen' | 'company_fingerprint_seen' | 'normalized_name_matched' | 'current_session_duplicate' | 'invalid_non_company_domain';
   canonicalDomain: string;
   normalizedName: string;
   fingerprint: string;
@@ -136,31 +155,47 @@ export function checkCompanyDuplicate(
   const normalizedName = normalizeCompanyName(name);
   const fingerprint = createCompanyFingerprint(name, urlOrDomain);
 
-  // 1. Current session check
-  if (canonicalDomain && sessionSeenDomains.has(canonicalDomain)) {
-    return { isDuplicate: true, reason: 'current_session_duplicate', canonicalDomain, normalizedName, fingerprint };
-  }
-  if (fingerprint && sessionSeenFingerprints.has(fingerprint)) {
-    return { isDuplicate: true, reason: 'current_session_duplicate', canonicalDomain, normalizedName, fingerprint };
+  // 0. Non-company / aggregator / media domain check
+  if (!isLikelyCompanyDomain(canonicalDomain) || !isLikelyCompanyDomain(urlOrDomain)) {
+    return { isDuplicate: true, isPreviouslySeen: false, reason: 'invalid_non_company_domain', canonicalDomain, normalizedName, fingerprint };
   }
 
-  // 2. Global persistent store check (server only)
+  // 1. Current session check: strictly reject duplicates within the same search session
+  if (canonicalDomain && sessionSeenDomains.has(canonicalDomain)) {
+    return { isDuplicate: true, isPreviouslySeen: false, reason: 'current_session_duplicate', canonicalDomain, normalizedName, fingerprint };
+  }
+  if (fingerprint && sessionSeenFingerprints.has(fingerprint)) {
+    return { isDuplicate: true, isPreviouslySeen: false, reason: 'current_session_duplicate', canonicalDomain, normalizedName, fingerprint };
+  }
+
+  // 2. Global persistent store check (from past historical sessions)
+  let isPreviouslySeen = false;
+  let pastReason: 'canonical_domain_seen' | 'company_fingerprint_seen' | undefined;
+
   if (typeof window === 'undefined') {
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { dbStore } = require('@/lib/db/store');
       if (canonicalDomain && dbStore?.isDomainPreviouslySeen(canonicalDomain)) {
-        return { isDuplicate: true, reason: 'canonical_domain_seen', canonicalDomain, normalizedName, fingerprint };
-      }
-      if (fingerprint && dbStore?.isFingerprintSeen(fingerprint)) {
-        return { isDuplicate: true, reason: 'company_fingerprint_seen', canonicalDomain, normalizedName, fingerprint };
+        isPreviouslySeen = true;
+        pastReason = 'canonical_domain_seen';
+      } else if (fingerprint && dbStore?.isFingerprintSeen(fingerprint)) {
+        isPreviouslySeen = true;
+        pastReason = 'company_fingerprint_seen';
       }
     } catch {
       // Ignore if dbStore is not loaded in client runtime
     }
   }
 
-  return { isDuplicate: false, canonicalDomain, normalizedName, fingerprint };
+  return {
+    isDuplicate: false,
+    isPreviouslySeen,
+    reason: pastReason,
+    canonicalDomain,
+    normalizedName,
+    fingerprint,
+  };
 }
 
 /**

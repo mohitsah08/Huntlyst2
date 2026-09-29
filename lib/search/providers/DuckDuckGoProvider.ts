@@ -5,6 +5,7 @@
  */
 
 import { ISearchProvider, SearchQueryOptions, SearchProviderResult, SearchCandidateItem } from '../types';
+import { isLikelyCompanyDomain, extractCanonicalDomain } from '@/lib/deduplication';
 
 export class DuckDuckGoProvider implements ISearchProvider {
   public readonly name = 'DuckDuckGo Open Web';
@@ -67,14 +68,19 @@ export class DuckDuckGoProvider implements ISearchProvider {
           }
 
           if (actualUrl.startsWith('http') && !actualUrl.includes('duckduckgo.com')) {
+            const canonical = extractCanonicalDomain(actualUrl);
+            if (!isLikelyCompanyDomain(canonical)) {
+              continue;
+            }
+
             const rawSnippet = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '').trim() : '';
             // Extract company name from domain or snippet
-            let name = actualUrl.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].split('.')[0];
+            let name = canonical.split('.')[0];
             name = name.charAt(0).toUpperCase() + name.slice(1);
 
             candidates.push({
               name,
-              url: actualUrl,
+              url: `https://${canonical}`,
               snippet: rawSnippet || `${name} website`,
               source: this.name,
               page,
