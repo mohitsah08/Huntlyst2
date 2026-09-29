@@ -1,0 +1,281 @@
+{
+  "loading": "Loading…",
+  "listTitle": "Routines",
+  "wizard": {
+    "wakeTitle": "When should this run?",
+    "scheduleOptionTitle": "On a schedule",
+    "eventOptionTitle": "When something happens in an app",
+    "triggerDescription": "Pick the app to watch. You'll say what should happen in it in the chat.",
+    "build": "Create it with your AI Employee",
+    "webhookOptionTitle": "From an external app",
+    "webhookTitle": "Wake it from a web address",
+    "webhookDescription": "You'll get a unique web address that wakes this routine whenever anything calls it."
+  },
+  "intake": {
+    "startTitle": "How do you want to start?",
+    "startKnow": "From scratch",
+    "startTemplate": "Start from a template",
+    "scheduleTitle": "When should it run?",
+    "scheduleOptions": {
+      "weekdayMorning": "Every weekday morning",
+      "onceADay": "Once a day",
+      "fridayAfternoon": "Every Friday afternoon",
+      "everyHour": "Every hour"
+    },
+    "templatePickTitle": "Pick a template to start from",
+    "templates": {
+      "morningBriefing": {
+        "name": "Morning briefing",
+        "description": "A weekday summary of your day ahead",
+        "intent": "Every weekday morning, send me a short briefing of my day ahead: what is on my calendar, anything urgent, and what I should focus on."
+      },
+      "weeklyReview": {
+        "name": "Weekly review",
+        "description": "A Friday recap of your week",
+        "intent": "Every Friday afternoon, give me a recap of the week: what got done, what is still open, and what is coming up next week."
+      },
+      "deadlineReminders": {
+        "name": "Deadline reminders",
+        "description": "A daily nudge before things are due",
+        "intent": "Each day, remind me about upcoming deadlines and anything due soon, so nothing slips through the cracks."
+      },
+      "inboxTriage": {
+        "name": "Inbox triage",
+        "description": "Summarize new emails as they arrive",
+        "intent": "When a new email arrives, summarize it for me and flag anything that needs my attention."
+      },
+      "newsDigest": {
+        "name": "News digest",
+        "description": "A morning roundup of news you care about",
+        "intent": "Every morning, put together a short digest of the latest news on the topics I care about."
+      }
+    }
+  },
+  "triggerStep": {
+    "title": "Pick an app",
+    "searchPlaceholder": "Search apps",
+    "connectedHeader": "Connected",
+    "connectableHeader": "Connect a new app",
+    "notConnected": "Not connected",
+    "searchToConnect": "Search to connect a new app",
+    "noMatches": "No apps match your search",
+    "noConnectable": "No other apps to connect",
+    "connectReason": "Connect {{app}} to watch it for events",
+    "connectKeyReason": "Add your {{app}} key to watch it for events",
+    "connect": "Connect",
+    "saveKey": "Save key",
+    "savingKey": "Saving",
+    "back": "Choose another app",
+    "change": "Change",
+    "selectedHint": "You'll say what should happen in {{app}} in the chat.",
+    "accountLabel": "Which account?",
+    "accountPlaceholder": "Choose an account",
+    "catalogError": "Couldn't load this app's events. Check your connection and try again.",
+    "retry": "Retry",
+    "loadingCatalog": "Getting {{app}} ready…"
+  },
+  "grid": {
+    "loading": "Loading…",
+    "emptyTitle": "No routines yet",
+    "emptyDescription": "Create your first one and it runs on its own from then on.",
+    "listLabel": "Routines",
+    "draftTitle": "Routine being created in chat",
+    "draftDiscard": "Discard",
+    "timezoneLabel": "Timezone",
+    "timezoneHint": "All your routines run in this timezone.",
+    "timezoneSearchPlaceholder": "Search timezones…",
+    "timezoneNoResults": "No timezones found"
+  },
+  "setupChat": {
+    "missionTitle": "Set up a new routine"
+  },
+  "chat": {
+    "newRoutineTitle": "New routine",
+    "intakePlaceholder": "Describe what you'd like to automate…",
+    "routineLabel": "Routine: {{name}}",
+    "close": "Close",
+    "opening": "Opening chat…",
+    "activation": {
+      "checking": "Checking your trigger…",
+      "activating": "Activating…",
+      "active": "Trigger active"
+    },
+    "back": "Back"
+  },
+  "details": {
+    "promptTitle": "What this routine does",
+    "scheduleTitle": "When it runs",
+    "modelTitle": "Model",
+    "openChat": "Edit in chat",
+    "editName": "Edit name",
+    "nextRun": "Next run {{when}}",
+    "runsTitle": "Runs",
+    "runsLoading": "Loading runs…",
+    "runsEmpty": "No runs yet",
+    "openRun": "Open this run's chat",
+    "status": {
+      "running": "Running",
+      "silent": "Nothing to report",
+      "surfaced": "Done",
+      "error": "Failed",
+      "cancelled": "Stopped"
+    },
+    "model": {
+      "followsAgent": "Follows the AI Employee's model",
+      "reset": "Use the AI Employee's model"
+    },
+    "health": {
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "needsReconnect": "Needs reconnect",
+      "outOfCredits": "Out of credits",
+      "checking": "Checking",
+      "connect": "Connect {{provider}}",
+      "runsAsCreator": "Runs on the creator's connected account",
+      "runsAsCreatorProvider": "Runs on the creator's {{provider}} account"
+    },
+    "failure": {
+      "creatorNotConnected": "The routine's creator has no {{provider}} account connected.",
+      "teamNotConnected": "This team has no {{provider}} account connected.",
+      "creatorNeedsReconnect": "{{provider}} needs to be reconnected by the routine's creator.",
+      "teamNeedsReconnect": "{{provider}} needs to be reconnected.",
+      "outOfCredits": "The {{provider}} account is out of credits."
+    }
+  },
+  "row": {
+    "untitled": "Untitled",
+    "pauseRoutine": "Pause routine",
+    "resumeRoutine": "Resume routine",
+    "openChat": "Open routine",
+    "editSchedule": "Edit schedule",
+    "save": "Save",
+    "cancel": "Cancel",
+    "runNow": "Run now",
+    "stopRun": "Stop run",
+    "moreActions": "More actions",
+    "delete": "Delete",
+    "deleteTitle": "Delete {name}?",
+    "deleteDescription": "This can't be undone. Its chat history stays untouched.",
+    "deleteConfirm": "Delete",
+    "deleteCancel": "Cancel"
+  },
+  "schedule": {
+    "presets": {
+      "every_30min": "Every 30 minutes",
+      "hourly": "Every hour",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "custom": "Custom"
+    },
+    "units": {
+      "minutes": "minutes",
+      "hours": "hours",
+      "days": "days",
+      "months": "months"
+    },
+    "unitsSingular": {
+      "minutes": "minute",
+      "hours": "hour",
+      "days": "day",
+      "months": "month"
+    },
+    "timeLabel": "Time",
+    "dayOfMonthLabel": "Day of month",
+    "repeatEvery": "Repeat every",
+    "enterNumber": "Enter a number",
+    "pickDay": "Pick at least one day",
+    "weekdaysLabel": "On these days",
+    "weekdayShortcuts": {
+      "everyDay": "Every day",
+      "weekdays": "Weekdays",
+      "weekends": "Weekends"
+    },
+    "decrease": "Decrease",
+    "increase": "Increase",
+    "timePicker": {
+      "hour": "Hour",
+      "minute": "Minute",
+      "period": "AM/PM"
+    },
+    "summary": {
+      "noSchedule": "No schedule set",
+      "custom": "Custom schedule",
+      "customCron": "Custom cron schedule",
+      "every30": "Runs every 30 minutes",
+      "everyHourStart": "Runs at the start of every hour",
+      "everyMinute": "Runs every minute",
+      "everyNMinutes": "Runs every {n} minutes",
+      "everyHour": "Runs every hour",
+      "everyNHours": "Runs every {n} hours",
+      "everyDay": "Runs every day at {time}",
+      "everyNDays": "Runs every {n} days at {time}",
+      "weekly": "Runs every {day} at {time}",
+      "weeklyOnDays": "Runs every week on {days} at {time}",
+      "monthly": "Runs on the {ordinal} of every month at {time}",
+      "everyNMonths": "Runs on the {ordinal} of every {months} months at {time}"
+    }
+  },
+  "nextFire": {
+    "lessThanMinute": "in less than a minute",
+    "inMinutes": "in {m}m",
+    "inHoursMinutes": "in {h}h {m}m",
+    "inDaysHours": "in {d}d {h}h",
+    "inDays": "in {d}d",
+    "today": "today",
+    "tomorrow": "tomorrow",
+    "soon": "soon",
+    "at": "{day} at {time}"
+  },
+  "trigger": {
+    "wakeEvent": "When something happens",
+    "status": {
+      "active": "Active",
+      "pending": "Setting up…",
+      "paused_disconnected": "Reconnect needed",
+      "paused_revoked": "Access turned off",
+      "error": "Needs attention"
+    },
+    "statusUnknown": "Verifying trigger…",
+    "statusTimeout": "We couldn't confirm this trigger was set up.",
+    "waitingFirstEvent": "Active. Waiting for the first event.",
+    "reconnect": "Reconnect",
+    "statusDisconnectedHint": "The connected account was disconnected.",
+    "statusRevokedHint": "This app was turned off for this AI Employee.",
+    "rowSummary": "Wakes on an event in {{app}}",
+    "loadFailed": "Couldn't load event triggers",
+    "webhookRowSummary": "When its webhook address is called"
+  },
+  "toasts": {
+    "timezoneSet": "Timezone set to {{zone}}",
+    "timezoneError": "Couldn't update the timezone",
+    "discardError": "Couldn't discard the draft",
+    "modelError": "Couldn't change the model",
+    "updateError": "Couldn't save the routine"
+  },
+  "webhook": {
+    "createAddress": "Create webhook address",
+    "active": "Webhook active",
+    "rotate": "New key",
+    "unsupportedTitle": "Update needed",
+    "unsupportedBody": "Creating a webhook address needs the latest version of Houston.",
+    "dialog": {
+      "title": "Your webhook address",
+      "subtitle": "Send a request to this address to wake the routine.",
+      "urlLabel": "Web address",
+      "secretLabel": "Secret key",
+      "warning": "Save the secret key now. It will not be shown again.",
+      "copy": "Copy",
+      "copied": "Copied",
+      "copyFailed": "Could not copy",
+      "done": "Done",
+      "close": "Close"
+    },
+    "rotateConfirm": {
+      "title": "Create a new key?",
+      "body": "This creates a new secret key and turns off the old one. Anything using the old key stops working until you update it.",
+      "confirm": "Create new key",
+      "cancel": "Cancel"
+    }
+  }
+}

@@ -1,0 +1,105 @@
+import type { AgentSettings } from "@houston/engine-adapter";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { analytics } from "../../lib/analytics";
+import { queryKeys } from "../../lib/query-keys";
+import { tauriAgentSettings } from "../../lib/tauri";
+
+/**
+ * Teams v2 only: this agent's settings — the allowed-toolkit ceiling (the whole
+ * effective allowlist; policy is per agent only) plus the caller's effective
+ * `access`. Gated on the `teams` capability
+ * via `enabled`: a host that predates Teams has no settings route (or the
+ * desktop/local engine throws), so the query stays idle there and the
+ * Apps section renders exactly as it does today. On a Teams host the route
+ * always answers for an assigned caller or owner, so no 404→null degradation is
+ * needed here — feature detection is the `teams` flag, not a swallowed error.
+ */
+export function useAgentSettings(agentId: string, enabled: boolean) {
+  return useQuery(agentSettingsQueryOptions(agentId, enabled));
+}
+
+/** Shared cache contract for editors and roster-wide policy overviews. */
+export function agentSettingsQueryOptions(
+  agentId: string,
+  enabled: boolean,
+  quiet = false,
+) {
+  return {
+    queryKey: queryKeys.agentSettings(agentId),
+    queryFn: () =>
+      quiet
+        ? tauriAgentSettings.getQuiet(agentId)
+        : tauriAgentSettings.get(agentId),
+    enabled,
+    staleTime: 30_000,
+  };
+}
+
+/**
+ * Teams v2, agent-manager only: replace this agent's allowed-toolkit ceiling
+ * (`null` = all allowed, `[]` = none). Optimistic — a single manager action, so
+ * a whole-value swap with rollback on error is enough. Carries no `onError`
+ * toast: the `tauriAgentSettings.*` wrappers route through `call()`, which
+ * surfaces + reports the failure once (adding one here would double-toast); the
+ * `onError` below only rolls the optimistic value back.
+ */
+export function useSetAgentSettings(agentId: string) {
+  const qc = useQueryClient();
+  const key = queryKeys.agentSettings(agentId);
+  return useMutation({
+    mutationFn: (allowedToolkits: string[] | null) =>
+      tauriAgentSettings.set(agentId, { allowedToolkits }),
+    onMutate: async (allowedToolkits) => {
+      await qc.cancelQueries({ queryKey: key });
+      const prev = qc.getQueryData<AgentSettings>(key);
+      if (prev) {
+        qc.setQueryData<AgentSettings>(key, { ...prev, allowedToolkits });
+      }
+      return { prev };
+    },
+    onError: (_err, _next, ctx) => {
+      if (ctx?.prev) qc.setQueryData(key, ctx.prev);
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: key });
+    },
+  });
+}
+
+/**
+ * Teams v2, agent-manager only: replace this agent's AI-model ceiling
+ * (`allowedModels`: `null` = every model allowed, `[]` = none) via the same
+ * `setAgentSettings` PUT. Optimistic whole-value swap with rollback, mirroring
+ * `useSetAgentSettings` — but models carry no server-side grant pruning, so this
+ * only invalidates the agent's settings, not its grant set. No `onError` toast:
+ * `tauriAgentSettings.set` routes through `call()`, which surfaces + reports the
+ * failure once; `onError` here only rolls the optimistic value back.
+ */
+export function useSetAgentAllowedModels(agentId: string) {
+  const qc = useQueryClient();
+  const key = queryKeys.agentSettings(agentId);
+  return useMutation({
+    mutationFn: (allowedModels: string[] | null) =>
+      tauriAgentSettings.set(agentId, { allowedModels }),
+    onMutate: async (allowedModels) => {
+      await qc.cancelQueries({ queryKey: key });
+      const prev = qc.getQueryData<AgentSettings>(key);
+      if (prev) {
+        qc.setQueryData<AgentSettings>(key, { ...prev, allowedModels });
+      }
+      return { prev };
+    },
+    onSuccess: (_data, allowedModels) => {
+      analytics.track("models_allowlist_updated", {
+        agent_id: agentId,
+        source: allowedModels === null ? "any" : "picked",
+      });
+    },
+    onError: (_err, _next, ctx) => {
+      if (ctx?.prev) qc.setQueryData(key, ctx.prev);
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: key });
+    },
+  });
+}

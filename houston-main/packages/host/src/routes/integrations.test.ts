@@ -1,0 +1,1074 @@
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import type { Server } from "node:http";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import type { Capabilities } from "@houston/protocol";
+import { expect, test } from "vitest";
+import { MemoryCredentialStore } from "../credentials/store";
+import { EnvCredentialVault } from "../credentials/vault";
+import { FakeIntegrationProvider } from "../integrations/fake";
+import { IntegrationRegistry } from "../integrations/registry";
+import { IntegrationUpstreamError } from "../integrations/types";
+import type { TokenVerifier } from "../ports";
+import { type ControlPlaneDeps, createControlPlaneServer } from "../server";
+import { MemoryWorkspaceStore } from "../store/memory";
+import { providerForAction } from "./integrations-sandbox";
+import { GROUP_ORDER } from "./registry";
+
+/**
+ * The host integration surface end-to-end over real HTTP: the user routes
+ * (`/v1/integrations/*`) and the runtime-facing HMAC proxy
+ * (`/sandbox/integrations/*`), driven against an in-memory fake provider so the
+ * routing/auth logic is verified without a live Composio. Platform model: no
+ * provider login — users only connect toolkits, keyed by their Houston userId.
+ */
+
+const USER = "alice";
+const CAPS: Capabilities = {
+  profile: "cloud",
+  revealInOs: false,
+  terminal: false,
+  tunnel: false,
+  codeExecution: "remote-sandbox",
+  providers: ["openai-codex"],
+  openaiCompatible: false,
+  integrations: ["composio"],
+  sharedSkills: false,
+};
+
+async function setup(
+  opts: {
+    withIntegrations?: boolean;
+    reconnectNotice?: {
+      active(): boolean;
+      dismiss(): void | Promise<void>;
+    };
+    session?: { set(token: string | null): void };
+  } = {},
+) {
+  const withIntegrations = opts.withIntegrations ?? true;
+  const verifier: TokenVerifier = {
+    async verify(b) {
+      return b === "tok" ? { userId: USER } : null;
+    },
+  };
+  const store = new MemoryWorkspaceStore({ defaultRuntime: "gke" });
+  const vault = new EnvCredentialVault({ secret: "test-secret" });
+  const fake = new FakeIntegrationProvider({ id: "composio" });
+  const deps: ControlPlaneDeps = {
+    verifier,
+    store,
+    credentials: new MemoryCredentialStore(),
+    vault,
+    channels: {},
+    capabilities: CAPS,
+    integrations: withIntegrations
+      ? {
+          registry: new IntegrationRegistry([fake]),
+          ...(opts.reconnectNotice
+            ? { reconnectNotice: opts.reconnectNotice }
+            : {}),
+          ...(opts.session ? { session: opts.session } : {}),
+        }
+      : undefined,
+    corsOrigin: "*",
+  };
+  const server: Server = createControlPlaneServer(deps);
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", () => r()));
+  const addr = server.address();
+  const base = `http://127.0.0.1:${typeof addr === "object" && addr ? addr.port : 0}`;
+  const ws = await store.getOrCreatePersonalWorkspace(USER);
+  return { base, ws, store, vault, fake, stop: () => server.close() };
+}
+
+const auth = {
+  Authorization: "Bearer tok",
+  "Content-Type": "application/json",
+};
+
+test("status reports readiness (no login concept, no account, no secret)", async () => {
+  const { base, fake, stop } = await setup();
+  try {
+    let status = await (
+      await fetch(`${base}/v1/integrations`, { headers: auth })
+    ).json();
+    expect(status).toEqual({ items: [{ provider: "composio", ready: true }] });
+
+    fake.setNotReady();
+    status = await (
+      await fetch(`${base}/v1/integrations`, { headers: auth })
+    ).json();
+    expect(status).toEqual({
+      items: [{ provider: "composio", ready: false, reason: "signin" }],
+    });
+  } finally {
+    stop();
+  }
+});
+
+test("a legacy for-you credentials file surfaces the one-time reconnect notice, and dismiss deletes it", async () => {
+  // A real legacy file on disk (the local profile's wiring shape: active() is
+  // a live existsSync, dismiss() an idempotent rm) — so the test proves the
+  // retired plaintext-key file is actually deleted and the flag clears live.
+  const dir = mkdtempSync(join(tmpdir(), "houston-legacy-integrations-"));
+  const legacyPath = join(dir, "integrations.json");
+  writeFileSync(legacyPath, JSON.stringify({ apiKey: "legacy-plaintext-key" }));
+  const { base, stop } = await setup({
+    reconnectNotice: {
+      active: () => existsSync(legacyPath),
+      dismiss: () => rmSync(legacyPath, { force: true }),
+    },
+  });
+  try {
+    let status = await (
+      await fetch(`${base}/v1/integrations`, { headers: auth })
+    ).json();
+    expect(status.items[0]).toMatchObject({ reconnect: true });
+
+    const dismiss = await fetch(
+      `${base}/v1/integrations/reconnect-notice/dismiss`,
+      { method: "POST", headers: auth },
+    );
+    expect(dismiss.status).toBe(200);
+    expect(await dismiss.json()).toEqual({ ok: true });
+    expect(existsSync(legacyPath)).toBe(false);
+
+    // The flag reflects reality immediately — no host restart.
+    status = await (
+      await fetch(`${base}/v1/integrations`, { headers: auth })
+    ).json();
+    expect(status.items[0].reconnect).toBeUndefined();
+
+    // Idempotent: dismissing an already-gone file is still a 200.
+    const again = await fetch(
+      `${base}/v1/integrations/reconnect-notice/dismiss`,
+      { method: "POST", headers: auth },
+    );
+    expect(again.status).toBe(200);
+    expect(await again.json()).toEqual({ ok: true });
+  } finally {
+    stop();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("dismiss with no legacy path wired (cloud) is a no-op success; a deletion failure surfaces", async () => {
+  const cloud = await setup();
+  try {
+    const res = await fetch(
+      `${cloud.base}/v1/integrations/reconnect-notice/dismiss`,
+      { method: "POST", headers: auth },
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+  } finally {
+    cloud.stop();
+  }
+
+  // A real failure (e.g. EACCES) must NOT be swallowed behind {ok:true}.
+  const failing = await setup({
+    reconnectNotice: {
+      active: () => true,
+      dismiss: () => {
+        throw new Error("EACCES: permission denied");
+      },
+    },
+  });
+  try {
+    const res = await fetch(
+      `${failing.base}/v1/integrations/reconnect-notice/dismiss`,
+      { method: "POST", headers: auth },
+    );
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toContain("EACCES");
+  } finally {
+    failing.stop();
+  }
+});
+
+test("the frontend keeps the gateway session fresh via PUT /v1/integrations/session", async () => {
+  const seen: (string | null)[] = [];
+  const { base, stop } = await setup({
+    session: { set: (t) => seen.push(t) },
+  });
+  try {
+    const put = (token: unknown) =>
+      fetch(`${base}/v1/integrations/session`, {
+        method: "PUT",
+        headers: auth,
+        body: JSON.stringify({ token }),
+      });
+    expect((await put("jwt-1")).status).toBe(200);
+    expect((await put(null)).status).toBe(200);
+    expect((await put(42)).status).toBe(400);
+    expect(seen).toEqual(["jwt-1", null]);
+  } finally {
+    stop();
+  }
+});
+
+test("no session sink (cloud) → PUT session is a no-op", async () => {
+  const { base, stop } = await setup();
+  try {
+    const res = await fetch(`${base}/v1/integrations/session`, {
+      method: "PUT",
+      headers: auth,
+      body: JSON.stringify({ token: "jwt" }),
+    });
+    expect(res.status).toBe(200);
+  } finally {
+    stop();
+  }
+});
+
+test("no integrations configured → PUT session is still a no-op", async () => {
+  const { base, stop } = await setup({ withIntegrations: false });
+  try {
+    const res = await fetch(`${base}/v1/integrations/session`, {
+      method: "PUT",
+      headers: auth,
+      body: JSON.stringify({ token: "jwt" }),
+    });
+    expect(res.status).toBe(200);
+  } finally {
+    stop();
+  }
+});
+
+test("toolkits/connect/poll/disconnect — the full OAuth hand-off, no provider account", async () => {
+  const { base, fake, stop } = await setup();
+  try {
+    const toolkits = await (
+      await fetch(`${base}/v1/integrations/composio/toolkits`, {
+        headers: auth,
+      })
+    ).json();
+    expect(toolkits.items.map((t: { slug: string }) => t.slug)).toContain(
+      "gmail",
+    );
+
+    const connect = (await (
+      await fetch(`${base}/v1/integrations/composio/connect`, {
+        method: "POST",
+        headers: auth,
+        body: JSON.stringify({ toolkit: "gmail" }),
+      })
+    ).json()) as { redirectUrl: string; connectionId: string };
+    expect(connect.redirectUrl).toContain("gmail");
+
+    // Pending until the user finishes the OAuth in the browser…
+    let conn = await (
+      await fetch(
+        `${base}/v1/integrations/composio/connections/${connect.connectionId}`,
+        { headers: auth },
+      )
+    ).json();
+    expect(conn.status).toBe("pending");
+
+    // …then the poll sees it active.
+    fake.completeConnection(USER, connect.connectionId);
+    conn = await (
+      await fetch(
+        `${base}/v1/integrations/composio/connections/${connect.connectionId}`,
+        { headers: auth },
+      )
+    ).json();
+    expect(conn.status).toBe("active");
+
+    const conns = await (
+      await fetch(`${base}/v1/integrations/composio/connections`, {
+        headers: auth,
+      })
+    ).json();
+    expect(conns.items.map((c: { toolkit: string }) => c.toolkit)).toEqual([
+      "gmail",
+    ]);
+
+    await fetch(`${base}/v1/integrations/composio/disconnect`, {
+      method: "POST",
+      headers: auth,
+      body: JSON.stringify({ toolkit: "gmail" }),
+    });
+    expect(
+      (
+        await (
+          await fetch(`${base}/v1/integrations/composio/connections`, {
+            headers: auth,
+          })
+        ).json()
+      ).items,
+    ).toEqual([]);
+
+    // Polling a vanished connection 404s.
+    expect(
+      (
+        await fetch(`${base}/v1/integrations/composio/connections/nope`, {
+          headers: auth,
+        })
+      ).status,
+    ).toBe(404);
+  } finally {
+    stop();
+  }
+});
+
+test("user-facing search/execute exist (the desktop gateway forwards here)", async () => {
+  const { base, stop } = await setup();
+  try {
+    const search = await (
+      await fetch(`${base}/v1/integrations/composio/search`, {
+        method: "POST",
+        headers: auth,
+        body: JSON.stringify({ query: "send an email" }),
+      })
+    ).json();
+    expect(search.items.map((m: { action: string }) => m.action)).toContain(
+      "GMAIL_SEND_EMAIL",
+    );
+
+    const exec = await (
+      await fetch(`${base}/v1/integrations/composio/execute`, {
+        method: "POST",
+        headers: auth,
+        body: JSON.stringify({
+          action: "GMAIL_SEND_EMAIL",
+          params: { to: "a@b.com" },
+        }),
+      })
+    ).json();
+    expect(exec.successful).toBe(true);
+  } finally {
+    stop();
+  }
+});
+
+test("unknown provider 404s; no auth 401s", async () => {
+  const { base, stop } = await setup();
+  try {
+    expect(
+      (await fetch(`${base}/v1/integrations/nope/toolkits`, { headers: auth }))
+        .status,
+    ).toBe(404);
+    expect((await fetch(`${base}/v1/integrations`)).status).toBe(401);
+  } finally {
+    stop();
+  }
+});
+
+test("sandbox proxy: HMAC token → workspace owner's userId → execute/search", async () => {
+  const { base, ws, vault, stop } = await setup();
+  try {
+    const sb = vault.sandboxToken(ws.id, `${ws.id}/Assistant`);
+
+    const exec = await fetch(`${base}/sandbox/integrations/execute`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "GMAIL_SEND_EMAIL",
+        params: { to: "a@b.com" },
+      }),
+    });
+    expect(exec.status).toBe(200);
+    expect((await exec.json()).successful).toBe(true);
+
+    const search = await fetch(`${base}/sandbox/integrations/search`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: "send an email" }),
+    });
+    expect(
+      (await search.json()).items.map((m: { action: string }) => m.action),
+    ).toContain("GMAIL_SEND_EMAIL");
+  } finally {
+    stop();
+  }
+});
+
+test("search's app scope reaches the provider on BOTH routes (PRODUCT-1274)", async () => {
+  const { base, ws, vault, fake, stop } = await setup();
+  try {
+    // Sandbox proxy (the agent's integration_search).
+    const sb = vault.sandboxToken(ws.id, `${ws.id}/Assistant`);
+    await fetch(`${base}/sandbox/integrations/search`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: "send an email", app: "gmail" }),
+    });
+    expect(fake.lastApp).toBe("gmail");
+
+    // User-facing route (what the desktop gateway adapter forwards to).
+    fake.lastApp = undefined;
+    await fetch(`${base}/v1/integrations/composio/search`, {
+      method: "POST",
+      headers: auth,
+      body: JSON.stringify({ query: "send an email", app: "gmail" }),
+    });
+    expect(fake.lastApp).toBe("gmail");
+
+    // Omitted, empty, or whitespace-only → undefined at the port, never an
+    // empty-string scope (which would false-not-found a valid query).
+    await fetch(`${base}/sandbox/integrations/search`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: "send an email", app: "   " }),
+    });
+    expect(fake.lastApp).toBeUndefined();
+  } finally {
+    stop();
+  }
+});
+
+test("a scope NO provider resolves retries unscoped ONCE and flags the fallback", async () => {
+  const { base, ws, vault, fake, stop } = await setup();
+  try {
+    const sb = vault.sandboxToken(ws.id, `${ws.id}/Assistant`);
+    const res = await fetch(`${base}/sandbox/integrations/search`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      // The fake scopes by exact toolkit — "acne" (a typo) matches nothing,
+      // so the route must retry unscoped and say so via the flag.
+      body: JSON.stringify({ query: "send an email", app: "acne" }),
+    });
+    const body = await res.json();
+    expect(body.unscopedFallback).toBe(true);
+    expect(body.items.map((m: { action: string }) => m.action)).toContain(
+      "GMAIL_SEND_EMAIL",
+    );
+    expect(fake.lastApp).toBeUndefined();
+
+    // A RESOLVED scope never sets the flag.
+    const scoped = await fetch(`${base}/sandbox/integrations/search`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: "send an email", app: "gmail" }),
+    });
+    expect((await scoped.json()).unscopedFallback).toBeUndefined();
+  } finally {
+    stop();
+  }
+});
+
+test("the user route echoes what became of the scope (the gateway handshake)", async () => {
+  const { base, stop } = await setup();
+  try {
+    const post = async (body: Record<string, string>) =>
+      (
+        await fetch(`${base}/v1/integrations/composio/search`, {
+          method: "POST",
+          headers: auth,
+          body: JSON.stringify(body),
+        })
+      ).json();
+    // Resolved scope → scoped:true (items are hard-scoped).
+    expect((await post({ query: "send an email", app: "gmail" })).scoped).toBe(
+      true,
+    );
+    // Unresolvable scope → scoped:false with strict-empty items.
+    const missed = await post({ query: "send an email", app: "acne" });
+    expect(missed.scoped).toBe(false);
+    expect(missed.items).toEqual([]);
+    // No scope requested → no echo at all.
+    expect((await post({ query: "send an email" })).scoped).toBeUndefined();
+  } finally {
+    stop();
+  }
+});
+
+test("a provider that IGNORED the scope suppresses the retry and flags scopeIgnored", async () => {
+  // The remote adapter against a gateway predating the scope contract: it
+  // serves UNSCOPED items. The proxy must not present them as scoped (flag),
+  // and must not read the merge as a resolved scope (no unscopedFallback).
+  const ignoring = new FakeIntegrationProvider({ id: "composio" });
+  ignoring.search = async (_u, _q, _a, app) => ({
+    items: [
+      {
+        action: "GMAIL_SEND_EMAIL",
+        toolkit: "gmail",
+        description: "unscoped noise",
+        connected: true,
+        status: "connected" as const,
+      },
+    ],
+    ...(app ? { scope: "ignored" as const } : {}),
+  });
+  const custom = new FakeIntegrationProvider({
+    id: "custom",
+    actions: [
+      {
+        action: "tools.acme.org.default.doThing",
+        toolkit: "acme",
+        description: "do the acme thing",
+      },
+    ],
+  });
+  const { base, ws, vault, stop } = await setupMulti([ignoring, custom]);
+  try {
+    const sb = vault.sandboxToken(ws.id, `${ws.id}/Assistant`);
+    const res = await fetch(`${base}/sandbox/integrations/search`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: "send an email", app: "posthog" }),
+    });
+    const body = await res.json();
+    expect(body.scopeIgnored).toBe(true);
+    expect(body.unscopedFallback).toBeUndefined();
+    expect(body.items.map((m: { action: string }) => m.action)).toEqual([
+      "GMAIL_SEND_EMAIL",
+    ]);
+  } finally {
+    stop();
+  }
+});
+
+test("an EMPTY merge under an ignored scope still flags it — never a confident not-found", async () => {
+  const ignoring = new FakeIntegrationProvider({ id: "composio" });
+  ignoring.search = async (_u, _q, _a, app) => ({
+    items: [],
+    ...(app ? { scope: "ignored" as const } : {}),
+  });
+  const { base, ws, vault, stop } = await setupMulti([ignoring]);
+  try {
+    const sb = vault.sandboxToken(ws.id, `${ws.id}/Assistant`);
+    const res = await fetch(`${base}/sandbox/integrations/search`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: "churn cohort deltas", app: "posthog" }),
+    });
+    const body = await res.json();
+    expect(body.items).toEqual([]);
+    expect(body.scopeIgnored).toBe(true);
+    // No unscoped retry ran: it would just repeat the same unscoped search.
+    expect(body.unscopedFallback).toBeUndefined();
+  } finally {
+    stop();
+  }
+});
+
+test("sandbox proxy: a write action executes directly (no host approval gate)", async () => {
+  // The host executes every authenticated execute directly — integration
+  // confirmations are model-driven ask_user questions, not a host-side gate. A
+  // write slug (GMAIL_SEND_EMAIL) runs 200 with no grant, no 409.
+  const { base, ws, vault, stop } = await setup();
+  try {
+    const sb = vault.sandboxToken(ws.id, `${ws.id}/Assistant`);
+    const res = await fetch(`${base}/sandbox/integrations/execute`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ action: "GMAIL_SEND_EMAIL", params: {} }),
+    });
+    expect(res.status).toBe(200);
+    expect((await res.json()).successful).toBe(true);
+  } finally {
+    stop();
+  }
+});
+
+test("sandbox proxy: forwards the C2 acting headers into the provider (absent → undefined)", async () => {
+  const { base, ws, vault, fake, stop } = await setup();
+  try {
+    const sb = vault.sandboxToken(ws.id, `${ws.id}/Assistant`);
+    const call = (headers: Record<string, string>) =>
+      fetch(`${base}/sandbox/integrations/execute`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sb}`,
+          "Content-Type": "application/json",
+          ...headers,
+        },
+        body: JSON.stringify({ action: "GMAIL_SEND_EMAIL", params: {} }),
+      });
+
+    // An acting-as token rides through verbatim.
+    await call({ "x-houston-acting-as": "acting-v1.tok" });
+    expect(fake.lastActing).toEqual({
+      actingAs: "acting-v1.tok",
+      actingUser: undefined,
+    });
+
+    // A routine's acting-user rides through.
+    await call({ "x-houston-acting-user": "sub-123" });
+    expect(fake.lastActing).toEqual({
+      actingAs: undefined,
+      actingUser: "sub-123",
+    });
+
+    // Neither header (today's desktop path) → no acting context at all.
+    await call({});
+    expect(fake.lastActing).toBeUndefined();
+  } finally {
+    stop();
+  }
+});
+
+test("sandbox proxy: bad token 401; a signed-out gateway surfaces 409 signin_required", async () => {
+  const { base, ws, vault, fake, stop } = await setup();
+  try {
+    const sb = vault.sandboxToken(ws.id, `${ws.id}/Assistant`);
+
+    expect(
+      (
+        await fetch(`${base}/sandbox/integrations/execute`, {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer nope",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ action: "X" }),
+        })
+      ).status,
+    ).toBe(401);
+
+    fake.throwSigninRequired = true;
+    const res = await fetch(`${base}/sandbox/integrations/execute`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ action: "X" }),
+    });
+    expect(res.status).toBe(409);
+    expect((await res.json()).code).toBe("signin_required");
+  } finally {
+    stop();
+  }
+});
+
+test("integration routes relay upstream policy status and body", async () => {
+  const { base, ws, vault, fake, stop } = await setup();
+  const body = { error: "not granted", code: "integration_grant_required" };
+  fake.throwSearchExecute = new IntegrationUpstreamError(403, body);
+  try {
+    const user = await fetch(`${base}/v1/integrations/composio/execute`, {
+      method: "POST",
+      headers: auth,
+      body: JSON.stringify({ action: "GMAIL_SEND_EMAIL", params: {} }),
+    });
+    expect(user.status).toBe(403);
+    expect(await user.json()).toEqual(body);
+
+    const sb = vault.sandboxToken(ws.id, `${ws.id}/Assistant`);
+    const sandbox = await fetch(`${base}/sandbox/integrations/execute`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ action: "GMAIL_SEND_EMAIL", params: {} }),
+    });
+    expect(sandbox.status).toBe(403);
+    expect(await sandbox.json()).toEqual(body);
+  } finally {
+    stop();
+  }
+});
+
+test("integration routes 503 when integrations are not configured", async () => {
+  const { base, stop } = await setup({ withIntegrations: false });
+  try {
+    expect(
+      (await fetch(`${base}/v1/integrations`, { headers: auth })).status,
+    ).toBe(503);
+  } finally {
+    stop();
+  }
+});
+
+// ── Multi-provider fan-out (custom + Composio registered together) ─────────
+
+/**
+ * The custom-integrations feature registers a SECOND IntegrationProvider
+ * ("custom") beside Composio. The sandbox proxy's search/execute must treat
+ * "no explicit provider" as "every registered provider", merging search
+ * results and routing execute by the action's own shape (see
+ * `providerForAction` in integrations-sandbox.ts) — not just always Composio.
+ */
+async function setupMulti(providers: FakeIntegrationProvider[]) {
+  const verifier: TokenVerifier = {
+    async verify(b) {
+      return b === "tok" ? { userId: USER } : null;
+    },
+  };
+  const store = new MemoryWorkspaceStore({ defaultRuntime: "gke" });
+  const vault = new EnvCredentialVault({ secret: "test-secret" });
+  const registry = new IntegrationRegistry(providers);
+  const deps: ControlPlaneDeps = {
+    verifier,
+    store,
+    credentials: new MemoryCredentialStore(),
+    vault,
+    channels: {},
+    capabilities: CAPS,
+    integrations: { registry },
+    corsOrigin: "*",
+  };
+  const server: Server = createControlPlaneServer(deps);
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", () => r()));
+  const addr = server.address();
+  const base = `http://127.0.0.1:${typeof addr === "object" && addr ? addr.port : 0}`;
+  const ws = await store.getOrCreatePersonalWorkspace(USER);
+  const agent = await store.createAgent({
+    workspaceId: ws.id,
+    name: "Assistant",
+  });
+  return { base, ws, agent, vault, stop: () => server.close() };
+}
+
+test("sandbox search with no explicit provider fans out to EVERY registered provider and merges", async () => {
+  const custom = new FakeIntegrationProvider({
+    id: "custom",
+    actions: [
+      {
+        action: "tools.acme.org.default.doThing",
+        toolkit: "acme",
+        description: "do the acme thing",
+      },
+    ],
+  });
+  const composio = new FakeIntegrationProvider({
+    id: "composio",
+    actions: [
+      {
+        action: "GMAIL_SEND_EMAIL",
+        toolkit: "gmail",
+        description: "send an acme-branded email",
+      },
+    ],
+  });
+  const { base, ws, vault, stop } = await setupMulti([custom, composio]);
+  try {
+    const sb = vault.sandboxToken(ws.id, `${ws.id}/Assistant`);
+    const res = await fetch(`${base}/sandbox/integrations/search`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: "acme" }),
+    });
+    expect(res.status).toBe(200);
+    const items = ((await res.json()).items as { action: string }[]).map(
+      (m) => m.action,
+    );
+    expect(items.sort()).toEqual(
+      ["GMAIL_SEND_EMAIL", "tools.acme.org.default.doThing"].sort(),
+    );
+  } finally {
+    stop();
+  }
+});
+
+test("one provider rejecting must not hide another provider's search results", async () => {
+  const custom = new FakeIntegrationProvider({
+    id: "custom",
+    actions: [
+      {
+        action: "tools.acme.org.default.doThing",
+        toolkit: "acme",
+        description: "do the acme thing",
+      },
+    ],
+  });
+  const composio = new FakeIntegrationProvider({ id: "composio" });
+  composio.throwSearchExecute = new Error("upstream boom");
+  const { base, ws, vault, stop } = await setupMulti([custom, composio]);
+  try {
+    const sb = vault.sandboxToken(ws.id, `${ws.id}/Assistant`);
+    const res = await fetch(`${base}/sandbox/integrations/search`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: "acme" }),
+    });
+    expect(res.status).toBe(200);
+    const items = (await res.json()).items as { action: string }[];
+    expect(items.map((m) => m.action)).toEqual([
+      "tools.acme.org.default.doThing",
+    ]);
+  } finally {
+    stop();
+  }
+});
+
+test("an ALL-empty merge still surfaces a signin_required underneath it (409), not an empty success", async () => {
+  const custom = new FakeIntegrationProvider({ id: "custom" }); // default gmail action won't match
+  const composio = new FakeIntegrationProvider({ id: "composio" });
+  composio.throwSigninRequired = true;
+  const { base, ws, vault, stop } = await setupMulti([custom, composio]);
+  try {
+    const sb = vault.sandboxToken(ws.id, `${ws.id}/Assistant`);
+    const res = await fetch(`${base}/sandbox/integrations/search`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: "no-such-app-anywhere" }),
+    });
+    expect(res.status).toBe(409);
+    expect((await res.json()).code).toBe("signin_required");
+  } finally {
+    stop();
+  }
+});
+
+test("execute: an executor action (tools.*) routes to the 'custom' provider when registered", async () => {
+  const custom = new FakeIntegrationProvider({ id: "custom" });
+  const composio = new FakeIntegrationProvider({ id: "composio" });
+  composio.throwSearchExecute = new Error(
+    "composio must not be called for a tools.* action",
+  );
+  const { base, ws, vault, stop } = await setupMulti([custom, composio]);
+  try {
+    const sb = vault.sandboxToken(ws.id, `${ws.id}/Assistant`);
+    const res = await fetch(`${base}/sandbox/integrations/execute`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "tools.acme.org.default.doThing",
+        params: {},
+      }),
+    });
+    expect(res.status).toBe(200);
+    expect((await res.json()).successful).toBe(true);
+  } finally {
+    stop();
+  }
+});
+
+test("execute: a Composio-style action routes to the first non-custom provider", async () => {
+  const custom = new FakeIntegrationProvider({ id: "custom" });
+  custom.throwSearchExecute = new Error(
+    "custom must not be called for a Composio-style action",
+  );
+  const composio = new FakeIntegrationProvider({ id: "composio" });
+  const { base, ws, vault, stop } = await setupMulti([custom, composio]);
+  try {
+    const sb = vault.sandboxToken(ws.id, `${ws.id}/Assistant`);
+    const res = await fetch(`${base}/sandbox/integrations/execute`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ action: "GMAIL_SEND_EMAIL", params: {} }),
+    });
+    expect(res.status).toBe(200);
+    expect((await res.json()).successful).toBe(true);
+  } finally {
+    stop();
+  }
+});
+
+test("providerForAction: tools.* goes to 'custom' when registered, else the first non-custom, else whatever exists", () => {
+  const withCustom = new IntegrationRegistry([
+    new FakeIntegrationProvider({ id: "custom" }),
+    new FakeIntegrationProvider({ id: "composio" }),
+  ]);
+  expect(providerForAction(withCustom, "tools.acme.org.default.doThing")).toBe(
+    "custom",
+  );
+  expect(providerForAction(withCustom, "GMAIL_SEND_EMAIL")).toBe("composio");
+
+  // No "custom" provider registered at all: a tools.* action still resolves to
+  // whatever non-custom provider IS registered rather than throwing.
+  const noCustom = new IntegrationRegistry([
+    new FakeIntegrationProvider({ id: "composio" }),
+  ]);
+  expect(providerForAction(noCustom, "tools.acme.org.default.doThing")).toBe(
+    "composio",
+  );
+
+  // "custom" is the only provider registered: even a Composio-shaped action
+  // falls back to it (there is nothing else to route to).
+  const onlyCustom = new IntegrationRegistry([
+    new FakeIntegrationProvider({ id: "custom" }),
+  ]);
+  expect(providerForAction(onlyCustom, "GMAIL_SEND_EMAIL")).toBe("custom");
+});
+
+test("merged multi-provider search is NOT filtered per agent (grants removed)", async () => {
+  const custom = new FakeIntegrationProvider({
+    id: "custom",
+    actions: [
+      {
+        action: "tools.acme.org.default.doThing",
+        toolkit: "acme",
+        description: "acme email helper",
+      },
+    ],
+  });
+  const composio = new FakeIntegrationProvider({
+    id: "composio",
+    actions: [
+      {
+        action: "GMAIL_SEND_EMAIL",
+        toolkit: "gmail",
+        description: "send an email",
+      },
+    ],
+  });
+  const { base, ws, agent, vault, stop } = await setupMulti([custom, composio]);
+  try {
+    for (const [provider, toolkit] of [
+      [custom, "acme"],
+      [composio, "gmail"],
+    ] as const) {
+      const { connectionId } = await provider.connect(USER, toolkit);
+      provider.completeConnection(USER, connectionId);
+    }
+
+    const sb = vault.sandboxToken(ws.id, agent.id);
+    // Usability is connection ∩ allowlist (enforced by the cloud gateway, not
+    // this host) — the pod no longer filters search by any per-agent record, so
+    // BOTH connected toolkits' actions surface.
+    const searchRes = await fetch(`${base}/sandbox/integrations/search`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: "email" }),
+    });
+    const items = (await searchRes.json()).items as { action: string }[];
+    expect(items.map((m) => m.action).sort()).toEqual([
+      "GMAIL_SEND_EMAIL",
+      "tools.acme.org.default.doThing",
+    ]);
+
+    // ...and execute of a toolkit that the old grant record would have excluded
+    // is NOT 403'd — the pod runs it (no local grant gate anymore).
+    const execRes = await fetch(`${base}/sandbox/integrations/execute`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "tools.acme.org.default.doThing",
+        params: {},
+      }),
+    });
+    expect(execRes.status).toBe(200);
+  } finally {
+    stop();
+  }
+});
+
+// ── Multi-account plumbing (HOU-901) ─────────────────────────────────────────
+
+test("sandbox execute forwards the target account to the provider", async () => {
+  const { base, ws, vault, fake, stop } = await setup();
+  try {
+    const sb = vault.sandboxToken(ws.id, `${ws.id}/Assistant`);
+    const res = await fetch(`${base}/sandbox/integrations/execute`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sb}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "GMAIL_SEND_EMAIL",
+        params: { to: "a@b.com" },
+        account: "ca_2",
+      }),
+    });
+    expect(res.status).toBe(200);
+    expect(fake.lastAccount).toBe("ca_2");
+  } finally {
+    stop();
+  }
+});
+
+test("disconnect with a connectionId removes only that account of the toolkit", async () => {
+  const { base, fake, stop } = await setup();
+  try {
+    // Two Gmail accounts, both active.
+    const first = await fake.connect(USER, "gmail");
+    fake.completeConnection(USER, first.connectionId, "dan@gmail.com");
+    const second = await fake.connect(USER, "gmail");
+    fake.completeConnection(USER, second.connectionId, "work@acme.com");
+
+    const res = await fetch(`${base}/v1/integrations/composio/disconnect`, {
+      method: "POST",
+      headers: auth,
+      body: JSON.stringify({
+        toolkit: "gmail",
+        connectionId: first.connectionId,
+      }),
+    });
+    expect(res.status).toBe(200);
+    const left = await fake.listConnections(USER);
+    expect(left.map((c) => c.connectionId)).toEqual([second.connectionId]);
+
+    // Without a connectionId the whole toolkit still goes (legacy behavior).
+    await fetch(`${base}/v1/integrations/composio/disconnect`, {
+      method: "POST",
+      headers: auth,
+      body: JSON.stringify({ toolkit: "gmail" }),
+    });
+    expect(await fake.listConnections(USER)).toEqual([]);
+  } finally {
+    stop();
+  }
+});
+
+test("connections carry the account label the provider derived", async () => {
+  const { base, fake, stop } = await setup();
+  try {
+    const started = await fake.connect(USER, "gmail");
+    fake.completeConnection(USER, started.connectionId, "dan@gmail.com");
+    const res = await fetch(`${base}/v1/integrations/composio/connections`, {
+      headers: auth,
+    });
+    const { items } = await res.json();
+    expect(items[0].accountLabel).toBe("dan@gmail.com");
+  } finally {
+    stop();
+  }
+});
+
+/**
+ * The generic provider family claims the WHOLE `/v1/integrations` subtree, so
+ * the custom-integration definitions are reachable only because their group
+ * runs first. Nothing in the two modules enforces that — the chain order does,
+ * and it is one appended line away from being lost.
+ */
+test("custom-integration definitions are matched before the provider family", () => {
+  const custom = GROUP_ORDER.indexOf("custom-integrations");
+  const generic = GROUP_ORDER.indexOf("integrations");
+  expect(custom).toBeGreaterThanOrEqual(0);
+  expect(custom).toBeLessThan(generic);
+});

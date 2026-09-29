@@ -1,0 +1,162 @@
+{
+  "header": {
+    "label": "AI providers and models",
+    "title": "AI Providers",
+    "models": "AI Models"
+  },
+  "sections": {
+    "connected": "Connected",
+    "available": "Available",
+    "subscription": "Subscription",
+    "apiKey": "API key"
+  },
+  "search": {
+    "placeholder": "Search AI models and providers",
+    "clear": "Clear search",
+    "showAll": "Show all {{count}} providers"
+  },
+  "card": {
+    "connect": "Connect",
+    "connectName": "Connect {{name}}",
+    "connecting": "Connecting",
+    "connected": "Connected",
+    "checking": "Checking",
+    "signOut": "Sign out",
+    "cancel": "Cancel",
+    "models_one": "{{count}} model",
+    "models_other": "{{count}} models"
+  },
+  "directory": {
+    "search": "Search {{count}}+ models",
+    "searchFew": "Search models",
+    "filters": {
+      "allSpecialties": "All specialties",
+      "reasoning": "Reasoning",
+      "images": "Images",
+      "budget": "Budget",
+      "goodAt": "Good at",
+      "provider": "AI provider",
+      "allProviders": "All providers",
+      "searchProviders": "Search providers",
+      "noProviders": "No providers found",
+      "cost": "Cost",
+      "costAll": "Any cost",
+      "costFree": "Free tier",
+      "costLow": "Low",
+      "costMid": "Mid",
+      "costHigh": "High",
+      "memory": "Memory",
+      "memoryAll": "Any memory",
+      "memorySmall": "Small",
+      "memoryMid": "Mid",
+      "memoryLong": "Long"
+    },
+    "showMore": "Show more",
+    "empty": {
+      "title": "No models found",
+      "description": "Try a different search or filter."
+    }
+  },
+  "caps": {
+    "reasoning": "Reasoning",
+    "images": "Images"
+  },
+  "providerModal": {
+    "signedInWith": "Signed in with {{provider}}",
+    "signOut": "Sign out",
+    "disconnect": "Disconnect",
+    "connect": "Connect",
+    "models": "Models",
+    "searchModels": "Search models",
+    "clearSearch": "Clear search",
+    "noModels": "Models are ready as soon as you connect."
+  },
+  "model": {
+    "specs": {
+      "context": "Context",
+      "output": "Max output",
+      "knowledge": "Knowledge up to",
+      "released": "Released",
+      "reasoning": "Reasoning",
+      "vision": "Vision"
+    },
+    "offers": {
+      "title": "Get it through",
+      "subtitle": "Connect any of these to start using {{model}}.",
+      "subscription": "Included with subscription",
+      "pricing": "{{input}} in · {{output}} out per 1M tokens"
+    }
+  },
+  "providers": {
+    "search": "Search providers",
+    "seeAll": "See all providers",
+    "empty": {
+      "title": "No providers found",
+      "description": "Try a different search or filter."
+    },
+    "filter": {
+      "label": "Filter providers",
+      "subscription": "Subscription",
+      "payg": "Pay as you go"
+    },
+    "openai": {
+      "description": "Sign in with ChatGPT and put the GPT and Codex models to work."
+    },
+    "anthropic": {
+      "description": "Sign in with Claude and bring the models behind Claude Code."
+    },
+    "github-copilot": {
+      "description": "One Copilot subscription, many models: Claude, GPT, and Gemini under one plan."
+    },
+    "opencode-account": {
+      "description": "One account for curated coding models from every major lab, with a free tier to start."
+    },
+    "openrouter": {
+      "description": "The everything gateway. One key unlocks hundreds of models from every lab."
+    },
+    "deepseek": {
+      "description": "Frontier reasoning at a fraction of the price, straight from DeepSeek."
+    },
+    "google": {
+      "description": "The Gemini family from Google AI Studio, with a free tier to start."
+    },
+    "amazon-bedrock": {
+      "description": "Claude and more on your own AWS account, built for companies."
+    },
+    "minimax": {
+      "description": "Fast, affordable models tuned for AI Employees."
+    },
+    "nvidia": {
+      "description": "Free NVIDIA-hosted models: Llama, Nemotron, GPT-OSS and more."
+    },
+    "openai-compatible": {
+      "description": "Run models on your own computer with Ollama, LM Studio, and friends."
+    },
+    "xiaomi": {
+      "description": "MiMo models from Xiaomi: fast, low-cost, built for AI Employees."
+    }
+  },
+  "toast": {},
+  "providerUsage": {
+    "window": {
+      "session": "Session limit",
+      "week": "Weekly limit",
+      "week_opus": "Weekly limit (Opus)",
+      "month": "Monthly limit",
+      "premium": "Premium requests",
+      "chat": "Chat requests",
+      "completions": "Code completions"
+    },
+    "percentUsed": "{{percent}}% used",
+    "resets": "Resets {{when}}",
+    "creditsLeft": "{{amount}} left",
+    "tokensUsed": "{{amount}} tokens used",
+    "tokensSplit": "{{input}} in, {{output}} out",
+    "meteredSince": "measured since {{when}}",
+    "noData": "This account reports no limits right now.",
+    "notMeteredYet": "No usage yet. Measuring starts with your next message.",
+    "reconnect": "Sign in again to see this account's usage.",
+    "error": "Couldn't load usage right now. Try again in a moment.",
+    "staleReading": "Couldn't refresh usage. Showing the reading from {{when}}."
+  }
+}

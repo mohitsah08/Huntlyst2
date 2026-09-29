@@ -1,0 +1,229 @@
+import { isPendingInteraction } from "@houston/protocol";
+import type { ChatMessage } from "@houston/runtime-client";
+import {
+  ENGINE_RESTART_MESSAGE,
+  ENGINE_RESUMED_MESSAGE,
+  STOPPED_BY_USER,
+} from "./turn-errors";
+import {
+  finishErr,
+  finishOk,
+  finishResumed,
+  push,
+  settleProviderErrorCard,
+  type TurnState,
+} from "./turn-settle";
+
+/**
+ * Settling a turn whose terminal frame was LOST — the reconnect resynced and
+ * the turn is over, so persisted history (complete once a turn ends) is the
+ * settle source. The live-frame settles live in turn-settle.ts.
+ */
+
+/**
+ * A turn that died without persisting a reply — the same copy the host's
+ * dead-pump reaper stamps on the terminal `error` frame it synthesizes
+ * (`packages/host/src/turn/relay-dialect.ts` TURN_DIED_MESSAGE), so the
+ * surface reads identically whether the server or this client detected it.
+ */
+export const TURN_DIED_MESSAGE = "The turn ended unexpectedly";
+
+/**
+ * Settle a turn whose terminal frame was lost. With a known `turnId` the
+ * settle is exact: adopt the assistant message persisted FOR THIS TURN
+ * (text/usage/providerError); no such message means the turn died before
+ * persisting a reply — an error surface with the server's own dead-turn
+ * copy, NEVER an empty "completed" render.
+ *
+ * Without turn ids (legacy servers / old histories) fall back to the trailing
+ * assistant message gated by `guard` — a heuristic with a known weakness:
+ * turn mode matches the newest user message against the prompt, so two
+ * identical prompts in a row can adopt the PREVIOUS turn's reply. When the
+ * guard rejects, the streamed accumulation is all there is: settle it as
+ * completed when text was streamed, else as the dead-turn error.
+ */
+export function settleFromHistory(
+  s: TurnState,
+  messages: ChatMessage[] | null,
+  turnId: string | undefined,
+  guard: (messages: ChatMessage[]) => boolean,
+  onAdoptTurnId?: (turnId: string) => void,
+): void {
+  if (messages && turnId) {
+    const reply = messages.find(
+      (m) => m.role === "assistant" && m.turnId === turnId,
+    );
+    if (reply) {
+      adoptReply(s, reply, onAdoptTurnId);
+      return;
+    }
+    finishErr(s, TURN_DIED_MESSAGE);
+    return;
+  }
+  if (messages) {
+    // Legacy fallback: no turn ids anywhere — trailing reply + guard.
+    const last = messages[messages.length - 1];
+    if (last?.role === "assistant" && guard(messages)) {
+      adoptReply(s, last, onAdoptTurnId);
+      return;
+    }
+  }
+  // History reload failed, or the legacy guard rejected the trailing reply:
+  // the streamed accumulation is all there is.
+  if (s.text) finishOk(s);
+  else finishErr(s, TURN_DIED_MESSAGE);
+}
+
+function adoptReply(
+  s: TurnState,
+  reply: ChatMessage,
+  onAdoptTurnId?: (turnId: string) => void,
+): void {
+  // The persisted reply names the turn this settle recovers. Adopt its id
+  // FIRST: the settle's own pushes then carry the identity a later replay
+  // dedupes against (HOU-1214), and the sink's callback stamps the optimistic
+  // user bubble the lost echo left id-less — the anchor edit-and-resend
+  // (PRODUCT-1217) rewinds on.
+  if (reply.turnId !== undefined) {
+    s.turnId ??= reply.turnId;
+    onAdoptTurnId?.(reply.turnId);
+  }
+  if (reply.providerError) {
+    // Adopt the persisted partial reply (same guards as the clean path below)
+    // so the settle finalizes what streamed before the failure and the card
+    // lands below it — never above a bubble still marked streaming.
+    if (reply.content) s.text = reply.content;
+    if (reply.thinking && !s.thinking) s.thinking = reply.thinking;
+    settleProviderErrorCard(s, reply.providerError);
+    return;
+  }
+  // A turn the user interrupted persisted `stopped`. The runtime never publishes
+  // a clean `done` for it, so adopting it as a plain reply would render an
+  // interrupted turn as a normal successful finish. Route it through the SAME
+  // body the live Stop uses — `finishErr` with the verbatim `STOPPED_BY_USER`:
+  // it pushes the "Stopped by user" system line, an invisible final, an `error`
+  // status with no text, and settles `needs_you`. `stopped` wins over any
+  // (illegal) `pendingInteraction` — a stopped turn must never render a card —
+  // so this precedes the adopt below.
+  if (reply.stopped) {
+    finishErr(s, STOPPED_BY_USER);
+    return;
+  }
+  // A turn the ENGINE died on: the runtime's boot settle wrote this reply in
+  // place of the one the dead process never persisted. Same body as the dead-
+  // turn settle above (`finishErr` → system line + `error` status), with the
+  // authored restart copy instead of the generic one — the client's own
+  // detection never sees this shape, only a reload after the engine is back.
+  if (reply.interrupted) {
+    // …unless the engine is already running the turn again by itself: the
+    // work is not over, so this settles NEUTRALLY (no error status, no
+    // needs_you card) and only accounts for the pause the user saw.
+    if (reply.interrupted.resumed) finishResumed(s, ENGINE_RESUMED_MESSAGE);
+    else finishErr(s, ENGINE_RESTART_MESSAGE, "engine_restart");
+    return;
+  }
+  s.text = reply.content;
+  // Adopt the persisted reasoning only when nothing streamed live — a settle
+  // from history must not clobber (or double) what the watcher already saw
+  // (finishOk flushes `s.thinking` into the feed).
+  if (reply.thinking && !s.thinking) s.thinking = reply.thinking;
+  if (reply.usage) s.usage = reply.usage;
+  // A turn that ended on an interaction (a question / connect, or an offer)
+  // persisted it (runtime, clean path only). Adopt it BEFORE finishOk so the
+  // recovered settle carries it onto the terminal `needs_you` persist — the card
+  // renders exactly what the live `done` frame we missed would have shown.
+  // Guarded: persisted messages outlive code, and a reply written by an older
+  // build carries a pre-step interaction shape that must not reach the VM.
+  if (isPendingInteraction(reply.pendingInteraction))
+    s.pendingInteraction = reply.pendingInteraction;
+  finishOk(s);
+}
+
+/**
+ * The PRE-SETTLED poll's settle source: a turn that finished BEFORE our
+ * subscription's first sync (no frames ever replayed, only a fresh idle sync).
+ * Unlike {@link settleFromHistory} — which is entered on a CONFIRMED
+ * lost-terminal (a boundary / resync) and therefore falls through to
+ * `finishErr(TURN_DIED)` when it finds no reply — this settle is SPECULATIVE:
+ * a fresh idle sync in turn mode is ALSO the normal "turn we're about to
+ * trigger" shape, so a turn that simply hasn't produced its reply yet must NOT
+ * be errored. It settles ONLY on conclusive proof the turn is over — a reply
+ * for our exact `turnId`, or (legacy, no ids) a trailing assistant message the
+ * `guard` accepts as ours — and returns `true` iff it did. Inconclusive (a
+ * trailing USER message, a guard reject, a failed reload, or live evidence that
+ * arrived mid-reload) returns `false` and settles nothing: the poll re-arms and
+ * the stream stays the authority.
+ */
+export async function presettleFromHistory(
+  s: TurnState,
+  reloadHistory: () => Promise<ChatMessage[]>,
+  turnId: string | undefined,
+  guard: (messages: ChatMessage[]) => boolean,
+  hasEvidence: () => boolean,
+  onAdoptTurnId?: (turnId: string) => void,
+): Promise<boolean> {
+  let messages: ChatMessage[];
+  try {
+    messages = await reloadHistory();
+  } catch {
+    // A speculative background reload — swallow and re-arm, never surface noise
+    // on every poll tick. A genuinely lost stream is owned by the reconnect
+    // budget, which settles the turn on its own.
+    return false;
+  }
+  // Live evidence landed while we were reloading, or another path already
+  // settled: the stream now owns the turn — never settle from a stale poll.
+  if (s.settled || hasEvidence()) return false;
+  const reply = conclusiveReply(messages, turnId, guard);
+  if (!reply) return false;
+  adoptReply(s, reply, onAdoptTurnId);
+  return true;
+}
+
+/**
+ * The one message that PROVES the turn is over, or null (inconclusive). With a
+ * turnId it must be the reply persisted FOR THIS TURN; without one (legacy) the
+ * trailing message must be an assistant reply the `guard` accepts as ours.
+ */
+function conclusiveReply(
+  messages: ChatMessage[],
+  turnId: string | undefined,
+  guard: (messages: ChatMessage[]) => boolean,
+): ChatMessage | null {
+  if (turnId) {
+    return (
+      messages.find((m) => m.role === "assistant" && m.turnId === turnId) ??
+      null
+    );
+  }
+  const last = messages[messages.length - 1];
+  if (last?.role === "assistant" && guard(messages)) return last;
+  return null;
+}
+
+/**
+ * Refetch history and settle from it (`settleFromHistory`), then stop the
+ * subscription. A failed reload surfaces as a system message (no silent
+ * fallback) and the settle proceeds from the streamed accumulation — the UI
+ * must never hang.
+ */
+export async function reloadAndSettle(
+  s: TurnState,
+  reloadHistory: () => Promise<ChatMessage[]>,
+  turnId: string | undefined,
+  guard: (messages: ChatMessage[]) => boolean,
+  stop: () => void,
+  onAdoptTurnId?: (turnId: string) => void,
+): Promise<void> {
+  let messages: ChatMessage[] | null = null;
+  try {
+    messages = await reloadHistory();
+  } catch (e) {
+    push(s, {
+      feed_type: "system_message",
+      data: `Couldn't reload the conversation: ${e instanceof Error ? e.message : String(e)}`,
+    });
+  }
+  if (!s.settled) settleFromHistory(s, messages, turnId, guard, onAdoptTurnId);
+  stop();
+}

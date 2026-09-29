@@ -1,0 +1,629 @@
+import type { Options, SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import type { WireEvent } from "@houston/runtime-client";
+import { beforeEach, expect, test, vi } from "vitest";
+import type { ResolvedModel } from "../types";
+import { type ClaudeQuery, ClaudeSession } from "./session";
+import type { SessionsStore } from "./sessions-store";
+
+/**
+ * ClaudeSession is the Claude Agent SDK implementation of the HarnessSession
+ * seam. These tests pin the same contract `backend-contract.test.ts` requires —
+ * ordered delivery, unsubscribe, prompt-resolves-after-terminal, abort-before-
+ * prompt safe, dispose idempotent, no double terminal on abort — plus the
+ * backend's own guarantees: a provider failure rides the stream (never a throw),
+ * model/thinking apply to the next query, resume is passed, session_id persists.
+ * Driven entirely by a scripted `query` generator — no binary, no network.
+ */
+
+beforeEach(() => {
+  vi.spyOn(console, "error").mockImplementation(() => {});
+});
+
+const tick = () => new Promise((r) => setImmediate(r));
+
+function fakeStore(
+  resume?: string,
+): SessionsStore & { setCalls: Array<[string, string]> } {
+  const setCalls: Array<[string, string]> = [];
+  return {
+    setCalls,
+    getSessionId: () => undefined,
+    setSessionId: (c, s) => {
+      setCalls.push([c, s]);
+    },
+    remove: () => {},
+    purge: () => {},
+    resolveResume: () => resume,
+  };
+}
+
+function arrayQuery(msgs: SDKMessage[]): ClaudeQuery {
+  return async function* () {
+    for (const m of msgs) {
+      await Promise.resolve();
+      yield m;
+    }
+  };
+}
+
+/** An async iterable that yields nothing (a turn that produced no messages). */
+function emptyIterable(): AsyncIterable<SDKMessage> {
+  return {
+    [Symbol.asyncIterator]: () => ({
+      next: async () => ({ done: true, value: undefined }),
+    }),
+  };
+}
+
+/** A query that records the options it was called with, then yields nothing. */
+function capturingQuery(onOptions: (o: Options) => void): ClaudeQuery {
+  return (params) => {
+    onOptions(params.options);
+    return emptyIterable();
+  };
+}
+
+/** A query whose iterator rejects (an unexpected transport failure). */
+function throwingQuery(err: unknown): ClaudeQuery {
+  return () => ({
+    [Symbol.asyncIterator]: () => ({
+      next: async () => {
+        throw err;
+      },
+    }),
+  });
+}
+
+function textMsg(text: string, sessionId = "s"): SDKMessage {
+  return {
+    type: "stream_event",
+    event: {
+      type: "content_block_delta",
+      index: 0,
+      delta: { type: "text_delta", text },
+    },
+    session_id: sessionId,
+    parent_tool_use_id: null,
+  } as unknown as SDKMessage;
+}
+function usageMsg(sessionId = "s"): SDKMessage {
+  return {
+    type: "result",
+    subtype: "success",
+    usage: { input_tokens: 100, output_tokens: 20, cache_read_input_tokens: 0 },
+    session_id: sessionId,
+  } as unknown as SDKMessage;
+}
+
+function make(deps: {
+  query: ClaudeQuery;
+  store?: SessionsStore;
+  model?: string;
+  refreshAuth?: () => { env: Record<string, string>; accessDigest?: string };
+  freshRetryPromptPrefix?: string;
+}): ClaudeSession {
+  return new ClaudeSession({
+    query: deps.query,
+    conversationId: "c1",
+    baseOptions: {} as Options,
+    sessionsStore: deps.store ?? fakeStore(),
+    model: deps.model ?? "claude-sonnet-4-6",
+    refreshAuth: deps.refreshAuth ?? (() => ({ env: {} })),
+    freshRetryPromptPrefix: deps.freshRetryPromptPrefix,
+  });
+}
+
+test("events are delivered to the subscriber in order", async () => {
+  const session = make({
+    query: arrayQuery([textMsg("one "), textMsg("two"), usageMsg()]),
+  });
+  const seen: WireEvent[] = [];
+  session.subscribe((e) => seen.push(e));
+
+  await session.prompt("go");
+
+  expect(seen).toEqual([
+    { type: "text", data: "one " },
+    { type: "text", data: "two" },
+    {
+      type: "usage",
+      data: { context_tokens: 100, output_tokens: 20, cached_tokens: 0 },
+    },
+  ]);
+});
+
+test("unsubscribe stops delivery", async () => {
+  const session = make({ query: arrayQuery([textMsg("a")]) });
+  const seen: WireEvent[] = [];
+  const unsub = session.subscribe((e) => seen.push(e));
+  unsub();
+
+  await session.prompt("go");
+  expect(seen).toEqual([]);
+});
+
+test("prompt resolves only after the whole script has been delivered", async () => {
+  const session = make({ query: arrayQuery([textMsg("hi"), usageMsg()]) });
+  const seen: WireEvent[] = [];
+  session.subscribe((e) => seen.push(e));
+
+  await session.prompt("go");
+  // The terminal (usage) frame is the last thing delivered before settlement.
+  expect(seen.at(-1)).toEqual({
+    type: "usage",
+    data: { context_tokens: 100, output_tokens: 20, cached_tokens: 0 },
+  });
+});
+
+test("abort before any prompt is safe (no throw)", async () => {
+  const session = make({ query: arrayQuery([]) });
+  await expect(session.abort()).resolves.toBeUndefined();
+});
+
+test("dispose is idempotent", async () => {
+  const session = make({ query: arrayQuery([]) });
+  expect(() => {
+    session.dispose();
+    session.dispose();
+  }).not.toThrow();
+});
+
+test("prompt never throws on a provider failure — it emits a provider_error", async () => {
+  const errored = {
+    type: "assistant",
+    error: "authentication_failed",
+    message: { role: "assistant", model: "claude-sonnet-4-6", content: [] },
+    parent_tool_use_id: null,
+    session_id: "s",
+  } as unknown as SDKMessage;
+  const session = make({ query: arrayQuery([errored]) });
+  const seen: WireEvent[] = [];
+  session.subscribe((e) => seen.push(e));
+
+  await expect(session.prompt("go")).resolves.toBeUndefined();
+  expect(seen).toEqual([
+    {
+      type: "provider_error",
+      data: {
+        kind: "unauthenticated",
+        provider: "anthropic",
+        cause: "unknown",
+        message: "Claude error: authentication_failed",
+      },
+    },
+  ]);
+});
+
+test("an unexpected iterator throw becomes a typed provider_error, not a rethrow", async () => {
+  const session = make({ query: throwingQuery(new Error("socket hang up")) });
+  const seen: WireEvent[] = [];
+  session.subscribe((e) => seen.push(e));
+
+  await expect(session.prompt("go")).resolves.toBeUndefined();
+  expect(seen).toHaveLength(1);
+  expect(seen[0]).toMatchObject({
+    type: "provider_error",
+    data: { kind: "network_unreachable", provider: "anthropic" },
+  });
+});
+
+test("abort mid-stream: the post-abort throw is swallowed, no second terminal", async () => {
+  let release!: () => void;
+  const gate = new Promise<void>((r) => {
+    release = r;
+  });
+  const query: ClaudeQuery = async function* (params) {
+    yield textMsg("hi");
+    await gate;
+    if (params.options.abortController?.signal.aborted)
+      throw new Error("aborted by user");
+  };
+  const session = make({ query });
+  const seen: WireEvent[] = [];
+  session.subscribe((e) => seen.push(e));
+
+  const p = session.prompt("go");
+  await tick();
+  await session.abort();
+  release();
+  await expect(p).resolves.toBeUndefined();
+
+  // Only the pre-abort frame; NO provider_error / second terminal for the stop.
+  expect(seen).toEqual([{ type: "text", data: "hi" }]);
+});
+
+test("setModel + setThinkingLevel apply to the NEXT query's options", async () => {
+  let captured: Options | undefined;
+  const session = make({
+    query: capturingQuery((o) => {
+      captured = o;
+    }),
+  });
+  const model: ResolvedModel = {
+    provider: "anthropic",
+    id: "claude-opus-4-5",
+    contextWindow: 200_000,
+  };
+  await session.setModel(model);
+  session.setThinkingLevel("high");
+
+  await session.prompt("go");
+
+  expect(captured?.model).toBe("claude-opus-4-5");
+  expect(captured?.thinking).toEqual({ type: "enabled" });
+  expect(captured?.effort).toBe("high");
+});
+
+test("a stored resume id is passed to the query", async () => {
+  let captured: Options | undefined;
+  const session = make({
+    query: capturingQuery((o) => {
+      captured = o;
+    }),
+    store: fakeStore("sess-resume"),
+  });
+  await session.prompt("go");
+  expect(captured?.resume).toBe("sess-resume");
+});
+
+test("no resume id → the option is omitted (fresh session)", async () => {
+  let captured: Options | undefined;
+  const session = make({
+    query: capturingQuery((o) => {
+      captured = o;
+    }),
+    store: fakeStore(undefined),
+  });
+  await session.prompt("go");
+  expect(captured && "resume" in captured).toBe(false);
+});
+
+test("a resume the SDK rejects as unknown retries fresh: mapping dropped, no phantom error (HOU-892)", async () => {
+  // After an agent rename the transcript survives under the OLD cwd slug, so
+  // resolveResume still hands out the id but the SDK's cwd-scoped lookup
+  // rejects it — without the retry, every future turn of the conversation
+  // errors permanently (observed live: a weekly routine failing on every fire).
+  const store = fakeStore("sess-gone");
+  const removed: string[] = [];
+  store.remove = (c) => {
+    removed.push(c);
+  };
+  const optionsSeen: Options[] = [];
+  let call = 0;
+  const query: ClaudeQuery = (params) => {
+    optionsSeen.push(params.options);
+    call++;
+    if (call === 1)
+      return throwingQuery(
+        new Error("No conversation found with session ID: sess-gone"),
+      )(params);
+    return arrayQuery([textMsg("recovered", "sess-new"), usageMsg("sess-new")])(
+      params,
+    );
+  };
+  const session = make({ query, store });
+  const events: WireEvent[] = [];
+  session.subscribe((e) => events.push(e));
+  await session.prompt("go");
+
+  expect(removed).toEqual(["c1"]); // stale mapping dropped
+  expect(optionsSeen[0]?.resume).toBe("sess-gone");
+  expect(optionsSeen[1] && "resume" in optionsSeen[1]).toBe(false); // fresh retry
+  expect(events.some((e) => e.type === "provider_error")).toBe(false);
+  expect(events.some((e) => e.type === "text")).toBe(true);
+  expect(store.setCalls).toContainEqual(["c1", "sess-new"]);
+});
+
+test("a dangling-resume retry prefixes the fresh prompt with canonical history", async () => {
+  const prompts: string[] = [];
+  let call = 0;
+  const query: ClaudeQuery = (params) => {
+    prompts.push(params.prompt);
+    call++;
+    if (call === 1)
+      return throwingQuery(
+        new Error("No conversation found with session ID: sess-gone"),
+      )(params);
+    return arrayQuery([usageMsg("sess-new")])(params);
+  };
+  const session = make({
+    query,
+    store: fakeStore("sess-gone"),
+    freshRetryPromptPrefix: "[canonical replay]\n",
+  });
+
+  await session.prompt("current prompt");
+
+  expect(prompts).toEqual([
+    "current prompt",
+    "[canonical replay]\ncurrent prompt",
+  ]);
+});
+
+test("the same SDK error WITHOUT a resume surfaces normally (no retry loop)", async () => {
+  const session = make({
+    query: throwingQuery(
+      new Error("No conversation found with session ID: whatever"),
+    ),
+    store: fakeStore(undefined),
+  });
+  const events: WireEvent[] = [];
+  session.subscribe((e) => events.push(e));
+  await session.prompt("go");
+  expect(events.some((e) => e.type === "provider_error")).toBe(true);
+});
+
+test("the captured session_id is persisted after the turn", async () => {
+  const store = fakeStore();
+  const session = make({
+    query: arrayQuery([textMsg("hi", "sess-99"), usageMsg("sess-99")]),
+    store,
+  });
+  await session.prompt("go");
+  expect(store.setCalls).toContainEqual(["c1", "sess-99"]);
+});
+
+test("every prompt spawns with the env refreshAuth returns AT THAT PROMPT — a rotated token is adopted, never the build-time env (PRODUCT-1355)", async () => {
+  // The live incident: the gateway rotates the family mid-conversation, so the
+  // token the session was built with is invalid on every later turn. Each
+  // query() spawns its own subprocess, so the env must be re-read per prompt.
+  let current = { token: "sk-ant-oat01-first", digest: "digest-first" };
+  const optionsSeen: Options[] = [];
+  const session = make({
+    query: capturingQuery((o) => {
+      optionsSeen.push(o);
+    }),
+    refreshAuth: () => ({
+      env: { CLAUDE_CODE_OAUTH_TOKEN: current.token },
+      accessDigest: current.digest,
+    }),
+  });
+
+  await session.prompt("one");
+  current = { token: "sk-ant-oat01-rotated", digest: "digest-rotated" };
+  await session.prompt("two");
+
+  expect(optionsSeen[0]?.env?.CLAUDE_CODE_OAUTH_TOKEN).toBe(
+    "sk-ant-oat01-first",
+  );
+  expect(optionsSeen[1]?.env?.CLAUDE_CODE_OAUTH_TOKEN).toBe(
+    "sk-ant-oat01-rotated",
+  );
+  // The digest follows the env, so a revoked-token report (and the cache's
+  // rotation check) names the token the CURRENT turn actually ran on.
+  expect(session.getUsedAccessDigest()).toBe("digest-rotated");
+});
+
+test("the retry-fresh rerun reuses the SAME prompt's auth (one read per prompt, not per attempt)", async () => {
+  const store = fakeStore("sess-gone");
+  let reads = 0;
+  const optionsSeen: Options[] = [];
+  let call = 0;
+  const query: ClaudeQuery = (params) => {
+    optionsSeen.push(params.options);
+    call++;
+    if (call === 1)
+      return throwingQuery(
+        new Error("No conversation found with session ID: sess-gone"),
+      )(params);
+    return arrayQuery([usageMsg("sess-new")])(params);
+  };
+  const session = make({
+    query,
+    store,
+    refreshAuth: () => {
+      reads++;
+      return { env: { CLAUDE_CODE_OAUTH_TOKEN: "tok" }, accessDigest: "d" };
+    },
+  });
+  await session.prompt("go");
+  expect(reads).toBe(1);
+  expect(optionsSeen).toHaveLength(2);
+  expect(optionsSeen[1]?.env?.CLAUDE_CODE_OAUTH_TOKEN).toBe("tok");
+});
+
+test("getContextUsage is undefined before a turn, then reflects the last usage", async () => {
+  const session = make({ query: arrayQuery([usageMsg()]) });
+  expect(session.getContextUsage()).toBeUndefined();
+  await session.prompt("go");
+  expect(session.getContextUsage()).toEqual({ tokens: 100 });
+});
+
+function toolInputDeltaMsg(partialJson: string, sessionId = "s"): SDKMessage {
+  return {
+    type: "stream_event",
+    event: {
+      type: "content_block_delta",
+      index: 1,
+      delta: { type: "input_json_delta", partial_json: partialJson },
+    },
+    session_id: sessionId,
+    parent_tool_use_id: null,
+  } as unknown as SDKMessage;
+}
+
+test("subscribeLiveness ticks per SDK message, including tool-input deltas the wire drops (PRODUCT-1632)", async () => {
+  const session = make({
+    query: arrayQuery([
+      toolInputDeltaMsg('{"command":"cat > /tmp/brain.py'),
+      toolInputDeltaMsg(" << 'PYEOF'"),
+      textMsg("ok"),
+    ]),
+  });
+  const wire: WireEvent[] = [];
+  let ticks = 0;
+  session.subscribe((e) => wire.push(e));
+  const unsub = session.subscribeLiveness(() => ticks++);
+
+  await session.prompt("write it");
+
+  // Two input deltas produced no wire frame at all; the text delta produced one.
+  expect(wire).toEqual([{ type: "text", data: "ok" }]);
+  expect(ticks).toBe(3);
+
+  unsub();
+  await session.prompt("again");
+  expect(ticks).toBe(3);
+});
+
+function messageStartMsg(parentToolUseId: string | null): SDKMessage {
+  return {
+    type: "stream_event",
+    event: { type: "message_start", message: {} },
+    session_id: "s",
+    parent_tool_use_id: parentToolUseId,
+  } as unknown as SDKMessage;
+}
+
+test("subscribeAssistantMessageStart fires per main-thread message_start, never for a subagent's", async () => {
+  const session = make({
+    query: arrayQuery([
+      messageStartMsg(null),
+      textMsg("one"),
+      messageStartMsg("toolu_sub"),
+      messageStartMsg(null),
+      textMsg("two"),
+      usageMsg(),
+    ]),
+  });
+  const wire: WireEvent[] = [];
+  let starts = 0;
+  session.subscribe((e) => wire.push(e));
+  const unsub = session.subscribeAssistantMessageStart(() => starts++);
+
+  await session.prompt("go");
+
+  // The boundary rides its own channel: no wire frame for it.
+  expect(wire.map((e) => e.type)).toEqual(["text", "text", "usage"]);
+  expect(starts).toBe(2);
+
+  unsub();
+  await session.prompt("again");
+  expect(starts).toBe(2);
+});
+
+// PRODUCT-1706: a resumed session that comes up without Houston's tool server
+// reruns fresh (with the canonical history) instead of letting the model finish
+// a tool-less turn and report the integrations as "missing".
+function initMsg(servers: unknown, sessionId = "s"): SDKMessage {
+  return {
+    type: "system",
+    subtype: "init",
+    session_id: sessionId,
+    mcp_servers: servers,
+  } as unknown as SDKMessage;
+}
+function missingHoustonToolResult(sessionId = "s"): SDKMessage {
+  return {
+    type: "user",
+    message: {
+      role: "user",
+      content: [
+        {
+          type: "tool_result",
+          tool_use_id: "t1",
+          is_error: true,
+          content:
+            "<tool_use_error>Error: No such tool available: mcp__houston__integration_execute</tool_use_error>",
+        },
+      ],
+    },
+    session_id: sessionId,
+  } as unknown as SDKMessage;
+}
+
+test("a resume whose init lacks the houston server reruns fresh with the history prefix", async () => {
+  const store = fakeStore("sess-old");
+  const prompts: string[] = [];
+  const optionsSeen: Options[] = [];
+  const query: ClaudeQuery = (params) => {
+    prompts.push(params.prompt);
+    optionsSeen.push(params.options);
+    if (params.options.resume)
+      return arrayQuery([
+        initMsg([{ name: "houston", status: "failed" }], "sess-old"),
+        textMsg("tool-less answer", "sess-old"),
+        usageMsg("sess-old"),
+      ])(params);
+    return arrayQuery([
+      initMsg([{ name: "houston", status: "connected" }], "sess-new"),
+      textMsg("recovered", "sess-new"),
+      usageMsg("sess-new"),
+    ])(params);
+  };
+  const session = make({
+    query,
+    store,
+    freshRetryPromptPrefix: "[canonical replay]\n",
+  });
+  const events: WireEvent[] = [];
+  session.subscribe((e) => events.push(e));
+
+  await session.prompt("run the routine");
+
+  expect(prompts).toEqual([
+    "run the routine",
+    "[canonical replay]\nrun the routine",
+  ]);
+  expect(optionsSeen[0]?.resume).toBe("sess-old");
+  expect(optionsSeen[1] && "resume" in optionsSeen[1]).toBe(false);
+  expect(optionsSeen[0]?.abortController?.signal.aborted).toBe(true);
+  // The abandoned attempt's answer never reaches the wire; the fresh one does.
+  expect(events.filter((e) => e.type === "text")).toEqual([
+    { type: "text", data: "recovered" },
+  ]);
+  expect(events.some((e) => e.type === "provider_error")).toBe(false);
+  // The dropped mapping is not re-stored from the abandoned attempt.
+  expect(store.setCalls).toEqual([["c1", "sess-new"]]);
+});
+
+test("the live signature (a houston tool answered 'No such tool') also reruns fresh", async () => {
+  const store = fakeStore("sess-old");
+  let call = 0;
+  const query: ClaudeQuery = (params) => {
+    call++;
+    if (call === 1)
+      return arrayQuery([
+        initMsg([{ name: "houston", status: "connected" }], "sess-old"),
+        missingHoustonToolResult("sess-old"),
+        textMsg("integrations are missing", "sess-old"),
+        usageMsg("sess-old"),
+      ])(params);
+    return arrayQuery([textMsg("recovered", "sess-new"), usageMsg("sess-new")])(
+      params,
+    );
+  };
+  const session = make({ query, store });
+  const events: WireEvent[] = [];
+  session.subscribe((e) => events.push(e));
+
+  await session.prompt("go");
+
+  expect(call).toBe(2);
+  expect(events.filter((e) => e.type === "text")).toEqual([
+    { type: "text", data: "recovered" },
+  ]);
+});
+
+test("a FRESH session without the houston server fails the turn visibly, no retry loop", async () => {
+  let call = 0;
+  const query: ClaudeQuery = (params) => {
+    call++;
+    return arrayQuery([
+      initMsg([], "sess-new"),
+      textMsg("tool-less answer", "sess-new"),
+      usageMsg("sess-new"),
+    ])(params);
+  };
+  const session = make({ query, store: fakeStore() });
+  const events: WireEvent[] = [];
+  session.subscribe((e) => events.push(e));
+
+  await session.prompt("go");
+
+  expect(call).toBe(1);
+  expect(events.some((e) => e.type === "text")).toBe(false);
+  const error = events.find((e) => e.type === "provider_error");
+  expect(error).toBeDefined();
+  expect(JSON.stringify(error)).toContain("did not attach");
+});

@@ -1,0 +1,238 @@
+{
+  "title": "Configuración",
+  "nav": {
+    "profile": "Perfil",
+    "aboutMe": "Sobre mí",
+    "apiKeys": "Claves de API",
+    "language": "Idioma",
+    "shortcuts": "Atajos de teclado",
+    "reportBug": "Reportar bug",
+    "danger": "Eliminar espacio de trabajo"
+  },
+  "workspaceGate": {
+    "failedTitle": "No pudimos cargar tu configuración",
+    "failedBody": "Tu espacio no llegó. Revisa tu conexión e inténtalo de nuevo.",
+    "emptyTitle": "No hay ningún espacio disponible",
+    "emptyBody": "No encontramos un espacio para tu cuenta. Inténtalo de nuevo o reinicia la aplicación.",
+    "retry": "Reintentar"
+  },
+  "account": {
+    "signOut": "Cerrar sesión"
+  },
+  "profile": {
+    "title": "Perfil",
+    "subtitle": "Así te ven tus compañeros en Houston.",
+    "photo": {
+      "label": "Foto",
+      "hint": "Las imágenes cuadradas se ven mejor. Ajustamos el tamaño por ti.",
+      "change": "Cambiar foto",
+      "changing": "Trabajando en eso…",
+      "remove": "Quitar foto"
+    },
+    "name": {
+      "label": "Nombre visible",
+      "placeholder": "Tu nombre",
+      "hint": "Aparece en tus mensajes, tus menciones y la lista de tu equipo."
+    },
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "errors": {
+      "nameEmpty": "Escribe un nombre.",
+      "nameTooLong": "Usa 60 caracteres o menos.",
+      "notImage": "Elige un archivo de imagen, como JPG, PNG o WebP.",
+      "unreadable": "No pudimos leer esa imagen. Prueba con otra.",
+      "tooLarge": "Esa foto es demasiado pesada para guardarla. Prueba con una más pequeña."
+    },
+    "toasts": {
+      "saved": "Perfil actualizado",
+      "photoRemoved": "Foto eliminada",
+      "photoFailed": "No pudimos usar esa foto"
+    }
+  },
+  "appearance": {
+    "title": "Apariencia",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema",
+    "summary": "{{mode}} · {{light}} / {{dark}}",
+    "customize": "Personalizar",
+    "palettesTitle": "Paletas",
+    "palettesDescription": "Elige una paleta para el modo claro y otra para el oscuro. Lo que ves detrás de esta ventana es el resultado en vivo.",
+    "lightSection": "Claro",
+    "darkSection": "Oscuro",
+    "showsInLight": "Se ve cuando la app está en modo claro",
+    "showsInDark": "Se ve cuando la app está en modo oscuro"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "description": "Recibe un aviso cuando una tarea termine o te necesite",
+    "state": {
+      "on": "Activadas",
+      "off": "Desactivadas",
+      "osBlocked": "Desactivadas en macOS",
+      "browserBlocked": "Bloqueadas en tu navegador"
+    },
+    "openSettings": "Abrir configuración del sistema",
+    "toggleFailed": "No se pudo guardar tu preferencia de notificaciones."
+  },
+  "dangerZone": {
+    "title": "Zona de peligro",
+    "description": "Elimina este espacio de trabajo y todos sus empleados de IA de forma permanente.",
+    "deleteButton": "Eliminar espacio de trabajo",
+    "confirmTitle": "¿Eliminar \"{{name}}\"?",
+    "confirmDescription": "Esto eliminará de forma permanente este espacio de trabajo y todos sus empleados de IA. No se puede deshacer.",
+    "confirmLabel": "Eliminar",
+    "deleting": "Eliminando…",
+    "deleted": "Se eliminó \"{{name}}\".",
+    "blocked": {
+      "has_members": {
+        "title": "Primero quita a los demás miembros",
+        "body": "Todavía hay personas en este espacio de trabajo. Quítalas desde Personas, o pídeles que salgan, y luego elimínalo."
+      },
+      "subscription_active": {
+        "title": "Primero cancela la suscripción",
+        "body": "Este espacio de trabajo todavía tiene una suscripción activa. Cancélala desde Facturación y luego elimina el espacio de trabajo."
+      },
+      "personal_space": {
+        "title": "Tu espacio de trabajo personal no se puede eliminar",
+        "body": "Se elimina junto con tu cuenta. Puedes eliminar los espacios de trabajo de equipo que te pertenecen."
+      }
+    }
+  },
+  "deleteAccount": {
+    "title": "Eliminar cuenta",
+    "description": "Elimina de forma permanente tu cuenta, tus empleados de IA y todo lo guardado en Houston.",
+    "button": "Eliminar cuenta",
+    "confirmTitle": "¿Eliminar tu cuenta para siempre?",
+    "confirmBody": "Esto elimina de forma permanente tu cuenta, tus empleados de IA y todos tus datos guardados en Houston, y cierra tu sesión en todos tus dispositivos. No hay forma de recuperar nada. Los archivos guardados en tu computador se quedan donde están.",
+    "typeToConfirm": "Escribe {{word}} para confirmar.",
+    "confirmWord": "ELIMINAR",
+    "cancel": "Cancelar",
+    "confirm": "Eliminar mi cuenta",
+    "dialogClose": "Cerrar",
+    "errors": {
+      "teamMember": "Todavía formas parte de un equipo. Sal de tus equipos, o pásaselos a otra persona, y vuelve a intentarlo.",
+      "network": "No pudimos conectarnos. Revisa tu conexión y vuelve a intentarlo.",
+      "generic": "Algo salió mal y tu cuenta no fue eliminada. Vuelve a intentarlo."
+    }
+  },
+  "shortcuts": {
+    "title": "Atajos de teclado",
+    "description": "Usa Houston sin tocar el mouse."
+  },
+  "reportBug": {
+    "title": "Reportar bug",
+    "intro": "Cuéntanos qué salió mal. Enviaremos tu mensaje junto con los registros de tu última actividad para ver qué pasó. Una idea, o algo que simplemente se siente raro, también es bienvenido aquí.",
+    "timingTip": "Solo recibimos la actividad más reciente, así que envía el reporte apenas ocurra el bug para que la información sea útil.",
+    "toastEquivalence": "Esto es lo mismo que tocar Reportar bug en la notificación roja de error, no necesitas enviar las dos.",
+    "label": "¿Qué pasó?",
+    "placeholder": "Describe el bug. ¿Qué estabas haciendo, qué esperabas y qué pasó en realidad?",
+    "send": "Enviar reporte",
+    "sending": "Enviando…",
+    "toasts": {
+      "successTitle": "Recibido, reporte registrado.",
+      "successBody": "El centro de control ya está trabajando en la solución.",
+      "successBodyWithId": "El centro de control ya está trabajando en la solución. Referencia: {{id}}",
+      "errorTitle": "No se pudo enviar el reporte"
+    }
+  },
+  "migration": {
+    "title": "Migración a la nube",
+    "description": "Si tu mudanza a la nube no terminó, puedes volver a intentarla.",
+    "button": "Continuar migración"
+  },
+  "version": "Versión {{version}}",
+  "toasts": {
+    "providerSwitched": "Cambiaste a {{provider}} ({{model}})",
+    "versionCopied": "Versión copiada",
+    "versionCopyFailed": "No se pudo copiar la versión"
+  },
+  "index": {
+    "subtitle": "Administra tu espacio de trabajo y tu cuenta.",
+    "groups": {
+      "general": "General"
+    },
+    "rows": {
+      "profile": "Tu nombre y tu foto",
+      "aboutMe": "Lo que tus empleados de IA saben de ti antes de empezar",
+      "apiKeys": "Permite que otras apps y asistentes de IA inicien tareas con tus empleados de IA",
+      "shortcuts": "Usa Houston sin el mouse",
+      "reportBug": "¿Algo falló o tienes una idea? Cuéntanos",
+      "migration": "Retoma tu mudanza a la nube"
+    }
+  },
+  "apiKeys": {
+    "title": "Claves de API",
+    "intro": "Otras apps, asistentes de IA y herramientas de automatización pueden iniciar tareas con tus empleados de IA. Cada conexión necesita una clave que creas aquí. <docs>Lee la documentación para desarrolladores</docs>.",
+    "dialogClose": "Cerrar",
+    "createButton": "Crear clave",
+    "empty": {
+      "title": "Aún no tienes claves de API",
+      "description": "Una clave permite que una app de tu confianza inicie tareas con tus empleados de IA. Crea una para conectar tu primera app."
+    },
+    "error": {
+      "title": "No se pudieron cargar tus claves",
+      "description": "Algo salió mal al conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
+      "retry": "Reintentar"
+    },
+    "row": {
+      "created": "Creada el {{date}}",
+      "lastUsed": "Último uso {{when}}",
+      "neverUsed": "Nunca usada",
+      "revoke": "Revocar"
+    },
+    "create": {
+      "title": "Crear clave de API",
+      "subtitle": "Ponle un nombre a esta clave para reconocerla más tarde.",
+      "nameLabel": "Nombre de la clave",
+      "namePlaceholder": "ej. Mi script de automatización",
+      "limitReached": "Llegaste al máximo de 20 claves. Revoca una que ya no uses para crear una nueva.",
+      "cancel": "Cancelar",
+      "submit": "Crear clave",
+      "revealTitle": "Copia tu clave de API",
+      "revealSubtitle": "\"{{name}}\" está lista. Cópiala ahora y guárdala en un lugar seguro.",
+      "copy": "Copiar",
+      "copied": "Copiada",
+      "copyFailed": "No se pudo copiar la clave",
+      "warning": "Esta es la única vez que verás esta clave. No podrás volver a verla después de cerrar.",
+      "done": "Listo"
+    },
+    "revoke": {
+      "title": "¿Revocar esta clave?",
+      "description": "\"{{name}}\" dejará de funcionar de inmediato. Cualquier herramienta que la use perderá el acceso. Esto no se puede deshacer.",
+      "confirm": "Revocar",
+      "cancel": "Cancelar"
+    }
+  },
+  "channels": {
+    "title": "Canales",
+    "navDescription": "Habla con Houston desde Slack",
+    "intro": "Habla con Houston donde estés. Continúa la misma conversación en la app y en Slack.",
+    "space": "Espacio de Houston: {{name}}",
+    "empty": "Conecta Slack para enviarle mensajes directos a Houston.",
+    "connected": "Conectado",
+    "connect": "Conectar Slack",
+    "connecting": "Abriendo Slack…",
+    "finishInSlack": "Termina de conectar en Slack y vuelve aquí.",
+    "blocked": "Tu navegador no abrió Slack. Ábrelo para terminar de conectar.",
+    "openSlack": "Abrir Slack",
+    "completing": "Terminando tu conexión con Slack…",
+    "completeInvalid": "Ese enlace de conexión con Slack no es válido o venció. Conéctate de nuevo.",
+    "completeAlready": "Esa cuenta de Slack ya está conectada a otra cuenta de Houston. Desconéctala allí y vuelve a conectarte.",
+    "alreadyAdded": "¿Ya agregaste Houston a Slack?",
+    "newCode": "Obtener un nuevo código de conexión",
+    "linkInstructions": "Abre tu mensaje directo con Houston en Slack y envía este comando.",
+    "commandLabel": "Comando de conexión de Slack",
+    "copy": "Copiar comando",
+    "copied": "Copiado",
+    "linkExpires": "Usa este código antes de las {{time}}.",
+    "linkExpired": "Este código venció. Obtén uno nuevo para conectar.",
+    "disconnect": "Desconectar",
+    "disconnectTitle": "¿Desconectar Slack?",
+    "disconnectDescription": "{{name}} dejará de recibir respuestas de Houston en Slack. Tu conversación se conserva en la app.",
+    "cancel": "Cancelar",
+    "refresh": "Actualizar conexiones",
+    "notConfigured": "Las conexiones de Slack aún no están listas para este espacio de Houston. Pídele a tu administrador de Houston que termine de configurar Slack y actualiza.",
+    "unsupported": "Los canales no están disponibles en esta instalación de Houston."
+  }
+}

@@ -1,0 +1,198 @@
+import { mkdir } from "node:fs/promises";
+import {
+  type HydrateManifest,
+  hydrate,
+  type ObjectStore,
+  StoreFencedError,
+} from "@houston/runtime-client/object-sync";
+import type { TreeWatch } from "../watch/watch-tree";
+import {
+  logFenceLost,
+  logHydrated,
+  logSyncFailed,
+  logSyncResult,
+} from "./daemon-log";
+import {
+  awaitInFlightSync,
+  DEFAULT_INTERVAL_MS,
+  DEFAULT_MAX_HYDRATE_BYTES,
+  DEFAULT_QUIET_MS,
+  runFinalSync,
+  runSyncBack,
+  STORE_SYNC_EXCLUDES,
+  type StoreSyncOptions,
+  startTreeWatch,
+} from "./daemon-policy";
+
+export { STORE_SYNC_EXCLUDES, type StoreSyncOptions } from "./daemon-policy";
+
+export class StoreSyncDaemon {
+  private manifest: HydrateManifest = new Map();
+  private hydrated = false;
+  private started = false;
+  private stopping = false;
+  private dirty = false;
+  private dirtyVersion = 0;
+  private watcher: TreeWatch | undefined;
+  private quietTimer: ReturnType<typeof setTimeout> | undefined;
+  private intervalTimer: ReturnType<typeof setInterval> | undefined;
+  private syncPromise: Promise<void> | undefined;
+  private rerunRequested = false;
+  private fencedLatch = false;
+  private consecutiveFailures = 0;
+
+  constructor(private readonly opts: StoreSyncOptions) {}
+
+  get fenced(): boolean {
+    return this.fencedLatch;
+  }
+
+  /** The synced tree's root. Owned here so the drain handshake (which writes
+   *  and reads ONE object outside the daemon's passes) never recomputes it. */
+  get rootDir(): string {
+    return this.opts.rootDir;
+  }
+
+  get store(): ObjectStore {
+    return this.opts.store;
+  }
+
+  /** Returns the number of objects restored (the boot telemetry records it). */
+  async hydrate(): Promise<number> {
+    this.hydrated = false;
+    const startedAt = Date.now();
+    await mkdir(this.opts.rootDir, { recursive: true });
+    const manifest = await hydrate(this.opts.store, "", this.opts.rootDir, {
+      excludes: this.excludes,
+      maxBytes: this.opts.maxHydrateBytes ?? DEFAULT_MAX_HYDRATE_BYTES,
+    });
+    this.manifest = manifest;
+    this.hydrated = true;
+    logHydrated(this.opts, manifest.size, startedAt);
+    return manifest.size;
+  }
+
+  start(): void {
+    if (!this.hydrated) {
+      throw new Error("store sync cannot start before successful hydration");
+    }
+    if (this.started || this.fencedLatch) return;
+    this.started = true;
+    this.watcher = startTreeWatch(this.opts, () => this.markDirty());
+    this.intervalTimer = setInterval(
+      () => this.runInBackground("periodic"),
+      this.opts.intervalMs ?? DEFAULT_INTERVAL_MS,
+    );
+    this.intervalTimer.unref?.();
+  }
+
+  async stop(): Promise<void> {
+    this.stopping = true;
+    this.stopScheduling();
+    if (!this.hydrated) return;
+
+    if (this.syncPromise) await awaitInFlightSync(this.opts, this.syncPromise);
+    if (this.fencedLatch) {
+      this.started = false;
+      return;
+    }
+    await runFinalSync(this.opts, () => this.syncOnce());
+    this.started = false;
+  }
+
+  private get excludes(): string[] {
+    return this.opts.excludes ?? STORE_SYNC_EXCLUDES;
+  }
+
+  private markDirty(): void {
+    if (this.stopping || this.fencedLatch) return;
+    this.dirty = true;
+    this.dirtyVersion += 1;
+    if (this.quietTimer) clearTimeout(this.quietTimer);
+    this.quietTimer = setTimeout(
+      () => this.runInBackground("debounced"),
+      this.opts.quietMs ?? DEFAULT_QUIET_MS,
+    );
+    this.quietTimer.unref?.();
+  }
+
+  /**
+   * Sync the tree NOW and resolve once it landed. For writes another party
+   * reads back from object storage right away — the gateway's bridge binding
+   * check reads the runtime's `custom-endpoint.json` the moment the desktop
+   * probes a freshly connected local model, while the watcher skips the
+   * workspaces subtree (HOU-1237) and the periodic pass is 5 minutes out
+   * (PRODUCT-1807). A no-op before start, after stop, or once fenced.
+   */
+  async flush(): Promise<void> {
+    if (!this.started || this.stopping || this.fencedLatch) return;
+    this.dirty = true;
+    this.dirtyVersion += 1;
+    await this.requestSync();
+  }
+
+  private runInBackground(trigger: string): void {
+    if (
+      this.stopping ||
+      this.fencedLatch ||
+      (trigger === "debounced" && !this.dirty)
+    )
+      return;
+    void this.requestSync().catch((err) => {
+      logSyncFailed(this.opts, trigger, this.consecutiveFailures, err);
+    });
+  }
+
+  private requestSync(): Promise<void> {
+    if (this.syncPromise) {
+      this.rerunRequested = true;
+      return this.syncPromise;
+    }
+    this.syncPromise = (async () => {
+      do {
+        this.rerunRequested = false;
+        await this.syncOnce();
+      } while (this.rerunRequested && !this.stopping && !this.fencedLatch);
+    })().finally(() => {
+      this.syncPromise = undefined;
+    });
+    return this.syncPromise;
+  }
+
+  private async syncOnce(): Promise<void> {
+    const version = this.dirtyVersion;
+    let result: Awaited<ReturnType<typeof runSyncBack>>;
+    try {
+      result = await runSyncBack(this.opts, this.manifest, this.excludes);
+    } catch (err) {
+      if (!(err instanceof StoreFencedError)) {
+        this.consecutiveFailures += 1;
+        throw err;
+      }
+      this.loseFence(err);
+      return;
+    }
+    this.consecutiveFailures = 0;
+    this.manifest = result.manifest;
+    if (version === this.dirtyVersion) this.dirty = false;
+    logSyncResult(result, this.opts);
+  }
+
+  private loseFence(err: StoreFencedError): void {
+    if (this.fencedLatch) return;
+    this.fencedLatch = true;
+    this.dirty = false;
+    this.rerunRequested = false;
+    this.stopScheduling();
+    logFenceLost(this.opts, err);
+  }
+
+  private stopScheduling(): void {
+    this.watcher?.close();
+    this.watcher = undefined;
+    if (this.quietTimer) clearTimeout(this.quietTimer);
+    if (this.intervalTimer) clearInterval(this.intervalTimer);
+    this.quietTimer = undefined;
+    this.intervalTimer = undefined;
+  }
+}

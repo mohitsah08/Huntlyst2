@@ -1,0 +1,657 @@
+import type {
+  AssistantMessage,
+  Usage,
+  UserMessage,
+} from "@earendil-works/pi-ai";
+import type { AgentSessionEvent } from "@earendil-works/pi-coding-agent";
+import { expect, test, vi } from "vitest";
+import { resetCodexRefusalMemory } from "../../ai/codex-terse-refusal";
+import {
+  authFailureActive,
+  resetAuthFailures,
+} from "../../auth/credential-health";
+import { reportRevokedServedToken } from "../../auth/report-revoked";
+import {
+  newUsedTokenCapture,
+  runWithUsedTokenCapture,
+} from "../../auth/used-token";
+import { createWireTranslator, normalizeUsage, toWire } from "./wire";
+
+// The reporter is a workspace-wide DELETE trigger; here only its arguments are
+// under test (its own gates live in report-revoked.test.ts).
+vi.mock("../../auth/report-revoked", () => ({
+  reportRevokedServedToken: vi.fn(),
+}));
+
+/** A valid pi `Usage` for fixtures; `cost` is required by the type. */
+function usage(partial: Partial<Usage>): Usage {
+  return {
+    input: 0,
+    output: 0,
+    cacheRead: 0,
+    cacheWrite: 0,
+    totalTokens: 0,
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+    ...partial,
+  };
+}
+
+/** A minimal valid assistant message carrying the given usage. */
+function assistantMessage(u: Usage): AssistantMessage {
+  return {
+    role: "assistant",
+    content: [],
+    api: "anthropic",
+    provider: "anthropic",
+    model: "test",
+    usage: u,
+    stopReason: "stop",
+    timestamp: 0,
+  };
+}
+
+/**
+ * An assistant message that ended in failure — pi's shape: a model/provider error
+ * (or the user's abort) is caught internally and delivered as the final message
+ * with stopReason "error"/"aborted" and the reason in `errorMessage`, NOT thrown
+ * from prompt(). `over` sets provider/model/usage for a specific provider's shape.
+ */
+function failedAssistantMessage(
+  stopReason: "error" | "aborted",
+  errorMessage: string | undefined,
+  over: Partial<AssistantMessage> = {},
+): AssistantMessage {
+  return {
+    role: "assistant",
+    content: [],
+    api: "anthropic",
+    provider: "anthropic",
+    model: "test",
+    usage: usage({}),
+    stopReason,
+    ...(errorMessage !== undefined ? { errorMessage } : {}),
+    timestamp: 0,
+    ...over,
+  };
+}
+
+/** A user message — has no `usage` field, like a turn that ended without one. */
+const userMessage: UserMessage = { role: "user", content: "", timestamp: 0 };
+
+/** A `turn_end` session event with the given final message. */
+function turnEnd(message: AssistantMessage | UserMessage): AgentSessionEvent {
+  return { type: "turn_end", message, toolResults: [] };
+}
+
+test("normalizeUsage: context_tokens = totalTokens - output; cached = cacheRead", () => {
+  // input 100 + output 20 + cacheRead 300 + cacheWrite 50 = 470 totalTokens.
+  // The prompt occupying the window is everything but output: 450.
+  expect(
+    normalizeUsage({
+      input: 100,
+      output: 20,
+      cacheRead: 300,
+      cacheWrite: 50,
+      totalTokens: 470,
+    }),
+  ).toEqual({ context_tokens: 450, output_tokens: 20, cached_tokens: 300 });
+});
+
+test("normalizeUsage: missing/garbage usage degrades to null (no misleading zeroes)", () => {
+  expect(normalizeUsage(undefined)).toBeNull();
+  expect(normalizeUsage(null)).toBeNull();
+  expect(normalizeUsage({})).toBeNull();
+  // Output alone carries no context signal, and there is no totalTokens to derive
+  // one from → null rather than a misleading empty context.
+  expect(normalizeUsage({ output: 5 })).toBeNull();
+  expect(normalizeUsage({ output: 5, totalTokens: "x" })).toBeNull();
+});
+
+test("normalizeUsage: no totalTokens → synthesizes context from the components", () => {
+  // The Gemini-through-pi case: components present, but pi never summed them.
+  // context_tokens = input + cacheRead + cacheWrite (everything but output).
+  expect(
+    normalizeUsage({ input: 100, output: 20, cacheRead: 300, cacheWrite: 50 }),
+  ).toEqual({ context_tokens: 450, output_tokens: 20, cached_tokens: 300 });
+  // Input only (no cache, no total): context is the input.
+  expect(normalizeUsage({ input: 5000, output: 100 })).toEqual({
+    context_tokens: 5000,
+    output_tokens: 100,
+    cached_tokens: 0,
+  });
+  // A lone cacheRead is a valid context signal on its own.
+  expect(normalizeUsage({ cacheRead: 200 })).toEqual({
+    context_tokens: 200,
+    output_tokens: 0,
+    cached_tokens: 200,
+  });
+});
+
+test("normalizeUsage: clamps a degenerate output > total to zero, never negative", () => {
+  expect(normalizeUsage({ output: 99, cacheRead: 0, totalTokens: 10 })).toEqual(
+    {
+      context_tokens: 0,
+      output_tokens: 99,
+      cached_tokens: 0,
+    },
+  );
+});
+
+test("toWire maps turn_end (with usage) to a usage frame", () => {
+  expect(
+    toWire(
+      turnEnd(
+        assistantMessage(
+          usage({
+            input: 100,
+            output: 20,
+            cacheRead: 300,
+            cacheWrite: 50,
+            totalTokens: 470,
+          }),
+        ),
+      ),
+    ),
+  ).toEqual({
+    type: "usage",
+    data: { context_tokens: 450, output_tokens: 20, cached_tokens: 300 },
+  });
+});
+
+test("toWire drops a turn_end whose final message has no usage", () => {
+  // A user message carries no `usage` field, so there is nothing to report.
+  expect(toWire(turnEnd(userMessage))).toBeNull();
+});
+
+test("toWire maps an errored turn_end to a typed provider_error frame", () => {
+  // pi resolves a failed request rather than throwing — the final message comes
+  // back with stopReason "error" + errorMessage. toWire classifies it.
+  expect(
+    toWire(
+      turnEnd(
+        failedAssistantMessage(
+          "error",
+          "OpenAI API error (401): Your session has ended. Please log in again. (app_session_terminated)",
+          { provider: "openai-codex", model: "gpt-5.1-codex" },
+        ),
+      ),
+    ),
+  ).toEqual({
+    type: "provider_error",
+    data: {
+      kind: "unauthenticated",
+      provider: "openai-codex",
+      cause: "token_revoked",
+      message:
+        "OpenAI API error (401): Your session has ended. Please log in again. (app_session_terminated)",
+    },
+  });
+});
+
+test("toWire reports an auth failure under the digest of the token the TURN ran on (PRODUCT-1319)", () => {
+  // The turn's used-token capture — filled by the credential store at pi's
+  // request-time read, inside this same async subtree — is what names the
+  // failed token. Re-reading auth.json at report time would digest whatever a
+  // re-serve stored since, aiming the gateway's compare-and-delete at a fresh,
+  // healthy credential.
+  vi.mocked(reportRevokedServedToken).mockClear();
+  const capture = newUsedTokenCapture();
+  capture.record("openai-codex", "the-token-that-401d");
+  runWithUsedTokenCapture(capture, () => {
+    toWire(
+      turnEnd(
+        failedAssistantMessage(
+          "error",
+          "OpenAI API error (401): Your session has ended. Please log in again. (app_session_terminated)",
+          { provider: "openai-codex", model: "gpt-5.1-codex" },
+        ),
+      ),
+    );
+  });
+  expect(reportRevokedServedToken).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ kind: "unauthenticated" }),
+    capture.digestFor("openai-codex"),
+  );
+
+  // Outside a turn's capture the used token is unknown — said so explicitly,
+  // and the reporter's unknown-token gate skips.
+  vi.mocked(reportRevokedServedToken).mockClear();
+  toWire(
+    turnEnd(
+      failedAssistantMessage(
+        "error",
+        "OpenAI API error (401): Your session has ended. Please log in again. (app_session_terminated)",
+        { provider: "openai-codex", model: "gpt-5.1-codex" },
+      ),
+    ),
+  );
+  expect(reportRevokedServedToken).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ kind: "unauthenticated" }),
+    undefined,
+  );
+  resetAuthFailures();
+});
+
+test("toWire marks raw openai auth failures against openai-codex", () => {
+  resetAuthFailures();
+  toWire(
+    turnEnd(
+      failedAssistantMessage("error", "401 Unauthorized: token expired", {
+        provider: "openai",
+        model: "gpt-5.1-codex",
+      }),
+    ),
+  );
+
+  expect(authFailureActive("openai-codex")).toBe(true);
+  expect(authFailureActive("openai")).toBe(false);
+  resetAuthFailures();
+});
+
+test("toWire surfaces a pi-internal turn error (the Copilot no-response bug) as a typed provider_error", () => {
+  // The regression that made Copilot look dead: pi catches a model/provider
+  // failure (an expired/rejected token, a rate limit, a 4xx) and delivers it here
+  // instead of throwing. Dropping it left the turn an empty, silent success ("no
+  // response, no error"). The reason MUST reach the user — now as a typed card.
+  expect(
+    toWire(
+      turnEnd(
+        failedAssistantMessage(
+          "error",
+          "401 Unauthorized: Copilot token expired",
+          { provider: "github-copilot", model: "claude-opus-4.8" },
+        ),
+      ),
+    ),
+  ).toEqual({
+    type: "provider_error",
+    data: {
+      kind: "unauthenticated",
+      provider: "github-copilot",
+      cause: "token_expired",
+      message: "401 Unauthorized: Copilot token expired",
+    },
+  });
+});
+
+test("toWire does NOT surface an aborted turn (the user's Stop) as a provider_error", () => {
+  // Pressing Stop aborts the session -> pi emits an aborted failure message.
+  // cancelTurn already published "Stopped by user", so surfacing this too would
+  // double-report the stop. It falls through to the usage path, never an error.
+  expect(
+    toWire(
+      turnEnd(
+        failedAssistantMessage("aborted", "Request aborted by user", {
+          usage: usage({ totalTokens: 10, output: 4 }),
+        }),
+      ),
+    ),
+  ).toEqual({
+    type: "usage",
+    data: { context_tokens: 6, output_tokens: 4, cached_tokens: 0 },
+  });
+});
+
+test("toWire ignores a stopReason 'error' with no errorMessage (falls back to usage)", () => {
+  // Defensive: only surface when there is an actual reason to show; otherwise
+  // fall through to usage so the turn still settles rather than emitting a blank.
+  expect(
+    toWire(
+      turnEnd(
+        failedAssistantMessage("error", undefined, {
+          usage: usage({ totalTokens: 25, output: 5 }),
+        }),
+      ),
+    ),
+  ).toEqual({
+    type: "usage",
+    data: { context_tokens: 20, output_tokens: 5, cached_tokens: 0 },
+  });
+});
+
+test("toWire carries a tool_execution_end's result text, clipped (HOU-717)", () => {
+  const ev = {
+    type: "tool_execution_end",
+    toolCallId: "t1",
+    toolName: "bash",
+    result: {
+      content: [
+        { type: "text", text: "file-a.ts" },
+        { type: "image", data: "…" },
+        { type: "text", text: "file-b.ts" },
+      ],
+      details: {},
+    },
+    isError: false,
+  } as unknown as AgentSessionEvent;
+  expect(toWire(ev)).toEqual({
+    type: "tool_end",
+    data: { name: "bash", isError: false, content: "file-a.ts\nfile-b.ts" },
+  });
+});
+
+test("toWire omits tool_end content for a text-less or malformed result", () => {
+  const bare = {
+    type: "tool_execution_end",
+    toolCallId: "t1",
+    toolName: "bash",
+    result: null,
+    isError: true,
+  } as unknown as AgentSessionEvent;
+  expect(toWire(bare)).toEqual({
+    type: "tool_end",
+    data: { name: "bash", isError: true },
+  });
+});
+
+// --- createWireTranslator: block-boundary separators (HOU-857) ---------------
+
+/** A `message_update` session event carrying the given assistant-message event. */
+function msgUpdate(assistantMessageEvent: unknown): AgentSessionEvent {
+  return {
+    type: "message_update",
+    message: assistantMessage(usage({})),
+    assistantMessageEvent,
+  } as unknown as AgentSessionEvent;
+}
+const textStart = () => msgUpdate({ type: "text_start", contentIndex: 0 });
+const textDelta = (delta: string) =>
+  msgUpdate({ type: "text_delta", contentIndex: 0, delta });
+const thinkingStart = () =>
+  msgUpdate({ type: "thinking_start", contentIndex: 0 });
+const thinkingDelta = (delta: string) =>
+  msgUpdate({ type: "thinking_delta", contentIndex: 0, delta });
+const agentStart = () =>
+  ({ type: "agent_start" }) as unknown as AgentSessionEvent;
+
+test("translator inserts a paragraph break between a turn's text blocks (HOU-857)", () => {
+  // The screenshot bug: text → tool call → text streamed as two blocks, but the
+  // bare deltas concatenate downstream into "…for you now.Go ahead…". The
+  // second block's FIRST delta must carry the separator.
+  const translate = createWireTranslator();
+  expect(translate(textStart())).toBeNull();
+  expect(translate(textDelta("I'll get that set up for you now."))).toEqual({
+    type: "text",
+    data: "I'll get that set up for you now.",
+  });
+  translate({
+    type: "tool_execution_start",
+    toolCallId: "t1",
+    toolName: "connect",
+    args: {},
+  } as unknown as AgentSessionEvent);
+  expect(translate(textStart())).toBeNull();
+  expect(translate(textDelta("Go ahead and sign in."))).toEqual({
+    type: "text",
+    data: "\n\nGo ahead and sign in.",
+  });
+  // Later deltas of the SAME block stream unprefixed.
+  expect(translate(textDelta(" Once connected, I'll confirm."))).toEqual({
+    type: "text",
+    data: " Once connected, I'll confirm.",
+  });
+});
+
+test("translator never prefixes the turn's first text block — even after thinking", () => {
+  const translate = createWireTranslator();
+  expect(translate(thinkingStart())).toBeNull();
+  expect(translate(thinkingDelta("hmm"))).toEqual({
+    type: "thinking",
+    data: "hmm",
+  });
+  // First TEXT block: thinking streamed already, but text starts fresh.
+  expect(translate(textStart())).toBeNull();
+  expect(translate(textDelta("Hello"))).toEqual({
+    type: "text",
+    data: "Hello",
+  });
+});
+
+test("translator separates thinking blocks independently of text blocks", () => {
+  const translate = createWireTranslator();
+  translate(thinkingStart());
+  expect(translate(thinkingDelta("first block"))).toEqual({
+    type: "thinking",
+    data: "first block",
+  });
+  translate(thinkingStart());
+  expect(translate(thinkingDelta("second block"))).toEqual({
+    type: "thinking",
+    data: "\n\nsecond block",
+  });
+});
+
+test("translator resets its block state on agent_start (a new turn starts fresh)", () => {
+  const translate = createWireTranslator();
+  translate(textStart());
+  translate(textDelta("turn one"));
+  translate(agentStart());
+  translate(textStart());
+  // A long-lived subscriber crossing into the next turn: no leaked separator.
+  expect(translate(textDelta("turn two"))).toEqual({
+    type: "text",
+    data: "turn two",
+  });
+});
+
+// --- createWireTranslator: provider errors gated on the prompt's outcome
+// (HOU-1057) ------------------------------------------------------------------
+
+const agentSettled = () =>
+  ({ type: "agent_settled" }) as unknown as AgentSessionEvent;
+
+/** An errored turn_end shaped like a GPT-5.5 context-overflow rejection. */
+const overflowTurnEnd = () =>
+  turnEnd(
+    failedAssistantMessage(
+      "error",
+      "Your input exceeds the context window of this model.",
+      { provider: "openai-codex", model: "gpt-5.5" },
+    ),
+  );
+
+test("translator suppresses an errored turn_end that pi recovers from (HOU-1057)", () => {
+  // The false "chat got too long, switch model" card: one request overflowed,
+  // pi compacted and retried INSIDE the same prompt, and the turn answered
+  // normally — but the errored turn_end had already painted a terminal card.
+  // The error must be held, and a later clean assistant turn must drop it.
+  const translate = createWireTranslator();
+  expect(translate(overflowTurnEnd())).toBeNull();
+  // pi's recovery re-runs the prompt and it succeeds.
+  translate(agentStart());
+  expect(
+    translate(
+      turnEnd(assistantMessage(usage({ totalTokens: 50, output: 10 }))),
+    ),
+  ).toEqual({
+    type: "usage",
+    data: { context_tokens: 40, output_tokens: 10, cached_tokens: 0 },
+  });
+  // The prompt settles clean: no provider_error ever reaches the chat.
+  expect(translate(agentSettled())).toBeNull();
+});
+
+test("translator flushes the held error at agent_settled when recovery never happened", () => {
+  // A failure pi could NOT recover (compaction declined, retries exhausted):
+  // the card must still surface — at settle time, before prompt() resolves.
+  const translate = createWireTranslator();
+  expect(translate(overflowTurnEnd())).toBeNull();
+  const flushed = translate(agentSettled());
+  expect(flushed?.type).toBe("provider_error");
+  expect(flushed && "data" in flushed && flushed.data).toMatchObject({
+    kind: "context_overflow",
+    provider: "openai-codex",
+  });
+  // Once flushed, nothing leaks into the next prompt.
+  expect(translate(agentSettled())).toBeNull();
+});
+
+test("translator keeps the NEWEST failure when a retry fails again", () => {
+  // Overflow recovery retried the prompt and the retry itself failed for a
+  // different reason — the flushed card must name the final failure.
+  const translate = createWireTranslator();
+  expect(translate(overflowTurnEnd())).toBeNull();
+  translate(agentStart());
+  expect(
+    translate(
+      turnEnd(
+        failedAssistantMessage("error", "401 Unauthorized: token expired", {
+          provider: "openai-codex",
+          model: "gpt-5.5",
+        }),
+      ),
+    ),
+  ).toBeNull();
+  const flushed = translate(agentSettled());
+  expect(flushed && "data" in flushed && flushed.data).toMatchObject({
+    kind: "unauthenticated",
+  });
+});
+
+test("translator does NOT treat an aborted turn as recovery — the error still flushes", () => {
+  const translate = createWireTranslator();
+  expect(translate(overflowTurnEnd())).toBeNull();
+  translate(agentStart());
+  translate(
+    turnEnd(
+      failedAssistantMessage("aborted", undefined, {
+        usage: usage({ totalTokens: 10, output: 2 }),
+      }),
+    ),
+  );
+  // An aborted turn is neutral (the Stop is its own surface) — the held error
+  // still flushes at settle so a real failure is never silently dropped.
+  const flushed = translate(agentSettled());
+  expect(flushed?.type).toBe("provider_error");
+});
+
+test("toWire clips an oversized tool result to the preview cap", () => {
+  const ev = {
+    type: "tool_execution_end",
+    toolCallId: "t1",
+    toolName: "read",
+    result: { content: [{ type: "text", text: "x".repeat(10_000) }] },
+    isError: false,
+  } as unknown as AgentSessionEvent;
+  const wire = toWire(ev) as Extract<
+    NonNullable<ReturnType<typeof toWire>>,
+    { type: "tool_end" }
+  >;
+  expect(wire.data.content?.length).toBeLessThan(4_100);
+  expect(wire.data.content?.endsWith("… (truncated)")).toBe(true);
+});
+
+// --- ChatGPT's terse refusals (PRODUCT-1832) ---------------------------------
+
+const TERSE = '{"detail":"Bad Request"}';
+
+const terseTurnEnd = (model: string) =>
+  turnEnd(
+    failedAssistantMessage("error", TERSE, { provider: "openai-codex", model }),
+  );
+
+const autoRetryStart = (errorMessage: string): AgentSessionEvent => ({
+  type: "auto_retry_start",
+  attempt: 1,
+  maxAttempts: 3,
+  delayMs: 2000,
+  errorMessage,
+});
+
+test("translator reads a terse final attempt from the retry attempt that explained it (PRODUCT-1832)", () => {
+  // The gpt-6-astra flavor: pi retried a usage-limit 429 three times with the
+  // friendly text, and the final attempt got the bare `Bad Request`. The card
+  // must be the usage-limit one, and the log a warning, not a Sentry error.
+  resetCodexRefusalMemory();
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  const translate = createWireTranslator();
+  translate(agentStart());
+  translate(
+    autoRetryStart(
+      "You have hit your ChatGPT usage limit (plus plan). Try again in ~7524 min.",
+    ),
+  );
+  expect(translate(terseTurnEnd("gpt-6-astra"))).toBeNull();
+  const flushed = translate(agentSettled());
+  expect(flushed && "data" in flushed && flushed.data).toMatchObject({
+    kind: "quota_exhausted",
+    provider: "openai-codex",
+    model: "gpt-6-astra",
+  });
+  expect(error).not.toHaveBeenCalled();
+  expect(warn).toHaveBeenCalledWith(
+    expect.stringContaining("kind=quota_exhausted ::"),
+  );
+  vi.restoreAllMocks();
+  resetAuthFailures();
+  resetCodexRefusalMemory();
+});
+
+test("toWire reads a terse refusal from the plan gate the same model hit a turn earlier", () => {
+  // The gpt-5.4-mini storm: a routine firing every minute alternates between
+  // the explained gate and the bare 400. The explained one is remembered, so
+  // the bare one renders the same switch-model card.
+  resetCodexRefusalMemory();
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  toWire(
+    turnEnd(
+      failedAssistantMessage(
+        "error",
+        '{"detail":"The \'gpt-5.4-mini\' model is not supported when using Codex with a ChatGPT account."}',
+        { provider: "openai-codex", model: "gpt-5.4-mini" },
+      ),
+    ),
+  );
+  expect(toWire(terseTurnEnd("gpt-5.4-mini"))).toMatchObject({
+    type: "provider_error",
+    data: {
+      kind: "model_unavailable",
+      model: "gpt-5.4-mini",
+      suggested_fallback: "gpt-6-luna",
+    },
+  });
+  expect(error).not.toHaveBeenCalled();
+  expect(warn).toHaveBeenCalledTimes(2);
+  vi.restoreAllMocks();
+  resetCodexRefusalMemory();
+});
+
+test("a terse refusal nothing can explain stays unknown on the card but logs as a warning", () => {
+  resetCodexRefusalMemory();
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  expect(toWire(terseTurnEnd("gpt-5.5"))).toMatchObject({
+    type: "provider_error",
+    data: { kind: "unknown", provider: "openai-codex", raw_excerpt: TERSE },
+  });
+  expect(error).not.toHaveBeenCalled();
+  expect(warn).toHaveBeenCalledWith(
+    expect.stringContaining(`kind=unknown :: ${TERSE}`),
+  );
+  vi.restoreAllMocks();
+});
+
+test("translator forgets a retry attempt's text once the turn ends or a new prompt starts", () => {
+  resetCodexRefusalMemory();
+  resetAuthFailures();
+  vi.spyOn(console, "warn").mockImplementation(() => {});
+  const translate = createWireTranslator();
+  translate(
+    autoRetryStart(
+      "You have hit your ChatGPT usage limit (plus plan). Try again in ~10 min.",
+    ),
+  );
+  // A clean turn consumes the attempt; nothing remembered for the next prompt.
+  translate(turnEnd(assistantMessage(usage({ totalTokens: 5, output: 1 }))));
+  translate(agentSettled());
+  translate(agentStart());
+  expect(translate(terseTurnEnd("gpt-6-astra"))).toBeNull();
+  const flushed = translate(agentSettled());
+  expect(flushed && "data" in flushed && flushed.data).toMatchObject({
+    kind: "unknown",
+  });
+  vi.restoreAllMocks();
+  resetCodexRefusalMemory();
+});

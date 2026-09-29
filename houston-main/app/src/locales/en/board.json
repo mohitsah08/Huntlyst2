@@ -1,0 +1,121 @@
+{
+  "cardActions": {
+    "approve": "Move to done",
+    "approveTooltip": "Move to done",
+    "archiveTooltip": "Archive",
+    "renameTooltip": "Change title",
+    "deleteTooltip": "Delete",
+    "select": "Select task",
+    "closePanel": "Close panel"
+  },
+  "deleteCard": {
+    "titleWithName": "Delete \"{{name}}\"?",
+    "description": "This item and its history will be permanently removed."
+  },
+  "tags": {
+    "routine": "Routine",
+    "agentStarted": "Started by AI Employee",
+    "startedByAgent": "Started by {{name}}",
+    "setup": "Set up"
+  },
+  "panel": {
+    "taskLabel": "Task: {{title}}",
+    "newTask": "New task",
+    "expand": "Expand chat",
+    "collapse": "Shrink chat",
+    "backToArchived": "Back to archived",
+    "backToTasks": "Back to tasks"
+  },
+  "people": {
+    "label": "People on this task",
+    "expand": "All people"
+  },
+  "search": {
+    "placeholder": "Search tasks",
+    "placeholderShort": "Search...",
+    "clear": "Clear search",
+    "clearCta": "Clear search",
+    "searchingText": "Searching task text",
+    "searchingTitle": "Searching task text",
+    "searchingDescription": "Looking through older messages now.",
+    "emptyTitle": "No matching tasks",
+    "emptyDescription": "Try a different search or clear the current one.",
+    "historyErrorTitle": "Couldn't search every task",
+    "historyErrorDescription": "Some older task text could not be loaded."
+  },
+  "toasts": {
+    "attached": "Attached: {{names}}"
+  },
+  "attachmentMessage": {
+    "count_one": "1 file attached",
+    "count_other": "{{count}} files attached"
+  },
+  "chatEmpty": {
+    "heading": "What can I help with?",
+    "subheading": "Tap a skill to get started, or just type what you need below.",
+    "seeMore_one": "See {{count}} more skill",
+    "seeMore_other": "See {{count}} more skills"
+  },
+  "composer": {
+    "placeholder": "What should the AI Employee work on?",
+    "followUp": "Send a follow-up...",
+    "assistantPlaceholder": "What should Houston work on?"
+  },
+  "composerSkill": {
+    "browse": "Skills"
+  },
+  "composerAttach": {
+    "addFiles": "Add files",
+    "addFolder": "Add a folder"
+  },
+  "selectedSkill": {
+    "cancel": "Close"
+  },
+  "bulk": {
+    "selected_one": "{{count}} selected",
+    "selected_other": "{{count}} selected",
+    "moveTo": "Move to",
+    "archive": "Archive",
+    "delete": "Delete",
+    "clear": "Clear selection",
+    "cancel": "Cancel",
+    "error": "Couldn't update the selected tasks. Please try again.",
+    "confirmMove": {
+      "title": "Move tasks?",
+      "description_one": "Move {{count}} task to {{target}}?",
+      "description_other": "Move {{count}} tasks to {{target}}?",
+      "action": "Move"
+    },
+    "confirmArchive": {
+      "title": "Archive tasks?",
+      "description_one": "Archive {{count}} task? You can reopen it from the Archived tab.",
+      "description_other": "Archive {{count}} tasks? You can reopen them from the Archived tab.",
+      "action": "Archive"
+    },
+    "confirmDelete": {
+      "title": "Delete tasks?",
+      "description_one": "Permanently delete {{count}} task and its history?",
+      "description_other": "Permanently delete {{count}} tasks and their history?",
+      "action": "Delete"
+    }
+  },
+  "column": {
+    "menu": "Column actions",
+    "selectAll": "Select all in column"
+  },
+  "archived": {
+    "emptyTitle": "No archived tasks",
+    "emptyDescription": "Archived tasks appear here. Reply to one to bring it back."
+  },
+  "dnd": {
+    "moveError": "Couldn't move the task. Please try again."
+  },
+  "firstDay": {
+    "start": "Start {{name}}'s first day",
+    "heroTitle": "All set for {{name}}'s first day",
+    "explain": "{{name}} will ask you a few questions to learn the job.",
+    "compactTitle": "{{name}}'s first day hasn't started yet",
+    "bannerTitle": "Your team is ready. Pick an AI Employee and start their first day.",
+    "bannerExplain": "Each one will ask you a few questions to learn the job."
+  }
+}

@@ -1,0 +1,191 @@
+import type { KanbanItem } from "@houston-ai/board";
+import type { FeedItem } from "@houston-ai/chat";
+import { messagePreviewText } from "@houston-ai/chat";
+import { createElement, useCallback, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useAllConversations } from "../../hooks/queries";
+import { useOpenConversationFeed } from "../../hooks/use-open-conversation-feed";
+import { forgetConversationDraftsOf } from "../../lib/conversation-drafts";
+import { missionCardTags } from "../../lib/mission-card";
+import { missionOriginAgentName } from "../../lib/mission-card-agent";
+import {
+  type HistoryLoadOptions,
+  tauriActivity,
+  tauriChat,
+} from "../../lib/tauri";
+import type { Agent } from "../../lib/types";
+import { AgentCardAvatar } from "../shell/agent-card-avatar";
+import { archivedMissionRows } from "./archived-mission-filter";
+import { boardItemConversationRow } from "./board-item-row";
+import { agentsByPath, missionCardAgentName } from "./mission-card-agent";
+import { rowSessionKey } from "./session-loading";
+
+/**
+ * Cross-agent archived data: every agent's *archived* missions on one list,
+ * mirroring {@link useMissionControl} (feed flattening + agent maps) but
+ * filtered to `status === "archived"`. Send/reactivation lives in the
+ * component (it needs the chat panel's effective provider/model), so this hook
+ * stays data-only: items, feed, history, delete, and the session→agent maps.
+ */
+export function useMissionControlArchived(agents: Agent[]) {
+  const { t } = useTranslation(["board"]);
+
+  const agentPaths = useMemo(() => agents.map((a) => a.folderPath), [agents]);
+  const { data: convos } = useAllConversations(agentPaths);
+
+  // ONE roster lookup behind both halves of a card's identity. The colour was
+  // always taken from here; the NAME used to come off the swept row, which the
+  // web adapter stamps from a registry that does not know the host's agents —
+  // so every card read "Houston". See `mission-card-agent.ts`.
+  const agentsByFolderPath = useMemo(() => agentsByPath(agents), [agents]);
+  const agentMap = useMemo(() => {
+    const m: Record<string, Agent> = {};
+    for (const a of agents) m[a.folderPath] = a;
+    return m;
+  }, [agents]);
+
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const pathMapRef = useRef<Record<string, string>>({});
+  const sessionMapRef = useRef<
+    Record<string, { agentPath: string; activityId: string }>
+  >({});
+
+  const items: KanbanItem[] = useMemo(() => {
+    if (!convos) return [];
+    const map: Record<string, string> = {};
+    const sessionMap: Record<
+      string,
+      { agentPath: string; activityId: string }
+    > = {};
+    const result = archivedMissionRows(convos).map((c) => {
+      map[c.id] = c.agent_path;
+      sessionMap[c.session_key] = {
+        agentPath: c.agent_path,
+        activityId: c.id,
+      };
+      const originAgentName = missionOriginAgentName(agents, c.origin_agent);
+      return {
+        id: c.id,
+        title: c.title,
+        // Decode a Skill / attachment first-message marker to the user's
+        // words; never echo the raw `<!--houston:...-->` on the card (HOU-425).
+        description: messagePreviewText(c.description),
+        group: missionCardAgentName(
+          agentsByFolderPath,
+          c.agent_path,
+          c.agent_name,
+        ),
+        icon: createElement(AgentCardAvatar, {
+          color: agentsByFolderPath.get(c.agent_path)?.color,
+        }),
+        status: c.status ?? "archived",
+        updatedAt: c.updated_at ?? new Date().toISOString(),
+        tags: missionCardTags({
+          routineId: c.routine_id,
+          routineLabel: t("board:tags.routine"),
+          originSessionKey: c.origin_session_key,
+          agentStartedLabel: originAgentName
+            ? t("board:tags.startedByAgent", {
+                name: originAgentName,
+              })
+            : t("board:tags.agentStarted"),
+          agentMode: c.agent,
+          setupLabel: t("board:tags.setup"),
+        }),
+        metadata: {
+          agentPath: c.agent_path,
+          sessionKey: c.session_key,
+          ...(c.agent ? { agent: c.agent } : {}),
+          ...(c.routine_id ? { routineId: c.routine_id } : {}),
+        },
+      };
+    });
+    pathMapRef.current = map;
+    sessionMapRef.current = sessionMap;
+    return result;
+  }, [convos, agents, agentsByFolderPath, t]);
+
+  const sessionKeyFor = useCallback(
+    (activityId: string) => {
+      const item = items.find((i) => i.id === activityId);
+      // One reading of a card's conversation key, shared with the draft seams:
+      // a card carrying none falls back to the `activity-<id>` stand-in.
+      return rowSessionKey(
+        item ? boardItemConversationRow(item) : { id: activityId },
+      );
+    },
+    [items],
+  );
+
+  // The open conversation's reactive feed, plus its scroll-up lazy-load — the
+  // same seam the active board uses.
+  const activeSessionKey = selectedId ? sessionKeyFor(selectedId) : null;
+  const activeAgentPath = activeSessionKey
+    ? (sessionMapRef.current[activeSessionKey]?.agentPath ?? null)
+    : null;
+  const { feedItems, hasOlderMessages, onLoadOlderMessages } =
+    useOpenConversationFeed(activeAgentPath, activeSessionKey);
+
+  const loadHistory = useCallback(
+    async (
+      sessionKey: string,
+      opts?: HistoryLoadOptions,
+    ): Promise<FeedItem[]> => {
+      const agentPath = sessionMapRef.current[sessionKey]?.agentPath;
+      if (!agentPath) return [];
+      return (await tauriChat.loadHistory(
+        agentPath,
+        sessionKey,
+        opts,
+      )) as FeedItem[];
+    },
+    [],
+  );
+
+  const handleDelete = useCallback(
+    async (item: KanbanItem) => {
+      const agentPath = pathMapRef.current[item.id];
+      if (!agentPath) return;
+      // The card is the only place this mission's conversation key survives the
+      // delete, so the row is read off it before the write goes out.
+      const row = boardItemConversationRow(item);
+      await tauriActivity.delete(agentPath, item.id);
+      // Files attached in this conversation stay in the workspace's uploads/
+      // folder — they are agent context, not conversation scratch (HOU-706);
+      // the composer draft and the half-walked card beside it go.
+      forgetConversationDraftsOf(row);
+      if (selectedId === item.id) setSelectedId(null);
+    },
+    [selectedId],
+  );
+
+  // The open mission resolved all the way through to the agent that owns it:
+  // the chat panel, the send path and the archived → active handoff all need
+  // the same values, so they are derived ONCE here rather than in the view.
+  const selectedItem = selectedId
+    ? (items.find((i) => i.id === selectedId) ?? null)
+    : null;
+  const activeAgent = selectedItem
+    ? (agentMap[selectedItem.metadata?.agentPath as string] ?? null)
+    : null;
+
+  return {
+    items,
+    /** The swept rows BEFORE the archived filter — the one view of the
+     *  workspace where active and archived missions coexist, and so the only
+     *  honest input to the surface decision (`lib/board-surface-nav.ts`). */
+    rawConversations: convos,
+    feedItems,
+    selectedId,
+    setSelectedId,
+    selectedItem,
+    activeAgent,
+    selectedSessionKey: activeSessionKey,
+    sessionKeyFor,
+    loadHistory,
+    onLoadOlderMessages,
+    hasOlderMessages,
+    handleDelete,
+    agentMap,
+  };
+}

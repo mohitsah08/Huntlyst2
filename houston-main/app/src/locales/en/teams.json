@@ -1,0 +1,592 @@
+{
+  "agentAdmin": {
+    "title": "Settings",
+    "rows": {
+      "knowledge": {
+        "title": "Learnings"
+      },
+      "model": {
+        "title": "AI Models"
+      },
+      "people": {
+        "title": "People"
+      },
+      "integrations": {
+        "title": "Integrations"
+      }
+    },
+    "values": {
+      "allModels": "Any model",
+      "modelCount_one": "{{count}} model only",
+      "modelCount_other": "{{count}} models only",
+      "allApps": "Any app",
+      "appCount_one": "{{count}} app only",
+      "appCount_other": "{{count}} apps only"
+    },
+    "models": {
+      "question": "Which AI models can this AI Employee use?",
+      "policyHelper": "You decide which models this AI Employee can run on. People with access pick their own model from the ones you allow.",
+      "anyLabel": "Allow all models",
+      "anyDesc": "People with access can run this AI Employee on any available model.",
+      "pickedLabel": "Only models you pick",
+      "pickedDesc": "People with access can only use the models you allow below.",
+      "allowModel": "Allow {{name}}",
+      "searchModels": "Search models",
+      "clearSearch": "Clear search",
+      "labFilter": "Filter by lab",
+      "allLabs": "All labs",
+      "searchLabs": "Search labs",
+      "noLabs": "No labs found",
+      "noModels": "No models found",
+      "allowedHeading": "Allowed models",
+      "allowedEmpty": "No models picked yet. Add models below.",
+      "allowedEmptyLab": "No models picked from this lab yet.",
+      "addHeading": "Add models"
+    },
+    "integrations": {
+      "unavailable": "Integration limits are not available here."
+    },
+    "heroes": {
+      "people": "Allowed People",
+      "integrations": "Allowed Integrations",
+      "models": "Allowed AI Models"
+    }
+  },
+  "agentSettings": {
+    "railLabel": "Settings sections",
+    "manage": {
+      "sectionTitle": "Settings",
+      "identity": "Change color & name",
+      "identityTitle": "Change color & name for {{name}}",
+      "moveTeam": "Move to group",
+      "chooseTeam": "Choose a group",
+      "moveOrganization": "Move to another organization",
+      "moveOrganizationDescription": "Move this AI Employee into an organization so a team can work with it.",
+      "delete": "Delete {{name}}",
+      "noTeam": "No group"
+    },
+    "people": {
+      "helper": "Pick whether everyone on your team can use this AI Employee, or only the people you choose.",
+      "anyLabel": "Everyone on your team",
+      "anyDesc": "Every teammate can use this AI Employee, including people who join later.",
+      "pickedLabel": "Only specific people",
+      "pickedDesc": "Only the people you pick below can use this AI Employee.",
+      "everyoneNote": "Everyone on your team can use this AI Employee, so there is nothing to set person by person. Switch to Only specific people to manage access individually.",
+      "confirmEveryone": {
+        "title": "Give everyone access?",
+        "description": "This replaces the current list. Everyone on your team will be able to use this AI Employee, and any Manager access granted here will be removed.",
+        "confirm": "Yes, give everyone access",
+        "cancel": "Cancel"
+      },
+      "confirmSpecific": {
+        "title": "Switch to specific people?",
+        "description_one": "The {{count}} person who can use this AI Employee today keeps access. New teammates will not be added automatically.",
+        "description_other": "The {{count}} people who can use this AI Employee today keep access. New teammates will not be added automatically.",
+        "confirm": "Yes, pick people",
+        "cancel": "Cancel"
+      }
+    }
+  },
+  "delegation": {
+    "sectionTitle": "Teamwork",
+    "outgoing": {
+      "label": "Gives missions to",
+      "aria": "{{name}} gives missions to",
+      "everyone": "Everyone",
+      "picked": "Only the ones I pick",
+      "none": "No one"
+    },
+    "picker": {
+      "rowAria": "Let {{name}} work with {{other}}",
+      "empty": "No other AI Employees in this space yet."
+    },
+    "incoming": {
+      "label": "Takes missions from",
+      "aria": "{{name}} takes missions from",
+      "everyone": "Everyone",
+      "none": "No one"
+    },
+    "loadError": {
+      "title": "Couldn't load these settings",
+      "retry": "Try again"
+    }
+  },
+  "agentTeams": {
+    "create": {
+      "title": "Create a group",
+      "submit": "Create group"
+    },
+    "form": {
+      "iconAndName": "Icon & Name",
+      "nameLabel": "Group name",
+      "namePlaceholder": "e.g. Marketing",
+      "tooLong": "Use up to {{max}} characters."
+    }
+  },
+  "integrations": {
+    "allowlist": {
+      "question": "Which integrations can this AI Employee use?",
+      "policyHelper": "You decide which integrations this AI Employee is allowed to use. People with access still connect their own accounts for each integration you allow.",
+      "anyLabel": "Allow all integrations",
+      "anyDesc": "People with access can connect this AI Employee to any of 1000+ integrations.",
+      "pickedLabel": "Only integrations you pick",
+      "pickedDesc": "People with access can only use the integrations you allow below.",
+      "allowApp": "Allow {{name}}",
+      "allowedHeading": "Allowed integrations",
+      "allowedEmpty": "No integrations picked yet. Add integrations below.",
+      "allowedEmptyCategory": "No allowed integrations in this category yet.",
+      "addHeading": "Add integrations"
+    }
+  },
+  "org": {
+    "title": "Workspace",
+    "tabs": {
+      "label": "Workspace sections",
+      "people": "People",
+      "billing": "Billing",
+      "activity": "Activity",
+      "orgChart": "Org chart"
+    },
+    "companyContext": {
+      "title": "Company context",
+      "description": "What all your AI Employees know on every task and routine they run."
+    },
+    "loading": "Loading your workspace...",
+    "unavailable": "We couldn't load your workspace."
+  },
+  "permissions": {
+    "agentPeople": {
+      "none": "No access",
+      "noneHint": "Cannot use this AI Employee.",
+      "changeAccess": "Change access for {{name}}",
+      "viewerOnly": "You can use this AI Employee. Someone who manages it can change who has access.",
+      "empty": {
+        "title": "No people yet",
+        "body": "Invite teammates from Admin to manage their access here."
+      }
+    }
+  },
+  "share": {
+    "title": "Share {{name}}",
+    "subtitle": "Choose who can use this AI Employee.",
+    "button": "Share",
+    "viewTitle": "Who has access to {{name}}",
+    "viewSubtitle": "These people can use this shared AI Employee.",
+    "sectionTitle": "Share this AI Employee",
+    "sectionHelper": "Add teammates who can use this AI Employee, and pick who can manage it.",
+    "peopleCount_one": "{{count}} person with access",
+    "peopleCount_other": "{{count}} people with access",
+    "overflow": "+{{count}}",
+    "addPeople": "Add people",
+    "searchPeople": "Search by name or email",
+    "noPeople": "No one left to add.",
+    "empty": {
+      "title": "No one else has access yet",
+      "body": "Add a teammate to let them chat with this AI Employee."
+    },
+    "conversationNote": "Everyone with access shares this AI Employee's conversation.",
+    "you": "You",
+    "ownerAccess": "Owner, always has access",
+    "remove": "Remove",
+    "changeAccessFor": "Change access for {{name}}",
+    "selfNote": "Changing your own access here can remove your ability to manage this AI Employee.",
+    "managerRequiresSeat": "Only teammates with a Manager seat can manage AI Employees.",
+    "levels": {
+      "manager": "Manager",
+      "user": "Can use",
+      "managerHint": "Can use and reconfigure this AI Employee.",
+      "userHint": "Can chat with this AI Employee, but not change it."
+    },
+    "selfLockout": {
+      "title": "Change your own access?",
+      "description": "You are about to remove your own ability to manage this AI Employee. You may not be able to undo this yourself.",
+      "confirm": "Yes, change it",
+      "cancel": "Cancel"
+    }
+  },
+  "people": {
+    "createOrganization": {
+      "title": "Create an organization to invite people",
+      "body": "To invite other people, create an organization.",
+      "cta": "Create organization"
+    },
+    "adminNotice": "You can view your team. Only the owner can add or remove people.",
+    "add": {
+      "title": "Add someone",
+      "subtitle": "Invite a teammate by email. If they don't have Houston yet, we'll send an invitation.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@company.com",
+      "roleLabel": "Role",
+      "submit": "Add",
+      "added": "{{email}} was added to your team.",
+      "invited": "Invitation sent to {{email}}. They'll join when they sign in."
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Manager",
+      "user": "Member"
+    },
+    "roleHelp": {
+      "owner": "Owners have full control of the organization, including people and billing.",
+      "admin": "Managers create and run AI Employees.",
+      "user": "Members use AI Employees shared with them."
+    },
+    "invites": {
+      "title": "Pending invitations",
+      "empty": "No pending invitations.",
+      "invitedBy": "Invited by {{name}}",
+      "revoke": "Revoke",
+      "revokeLabel": "Revoke invitation for {{email}}"
+    },
+    "roster": {
+      "title": "Team",
+      "you": "(you)",
+      "changeRole": "Change role for {{name}}",
+      "remove": "Remove",
+      "removeLabel": "Remove {{name}}"
+    },
+    "removeConfirm": {
+      "title": "Remove {{name}}?",
+      "description": "They'll lose access to every AI Employee shared with them. You can add them again later.",
+      "confirm": "Remove",
+      "cancel": "Cancel"
+    },
+    "makeOwnerConfirm": {
+      "title": "Make {{name}} an owner?",
+      "description": "Owners have full control of this organization: people, AI Employees, and billing. You can change this later as long as the organization keeps at least one owner.",
+      "confirm": "Make owner"
+    },
+    "lastOwner": {
+      "title": "The organization needs an owner",
+      "body": "You can't remove or demote the only owner. Make someone else an owner first."
+    }
+  },
+  "activityTab": {
+    "error": "We couldn't load the activity feed.",
+    "empty": {
+      "title": "No activity yet",
+      "body": "Changes to your team, AI Employees, and apps show up here."
+    },
+    "loading": "Loading...",
+    "showMore": "Show more",
+    "roles": {
+      "owner": "Owner",
+      "admin": "Manager",
+      "user": "Member"
+    },
+    "actions": {
+      "memberAdd": "{{actor}} added {{name}} as a {{role}}",
+      "memberRemove": "{{actor}} removed {{name}}",
+      "memberRole": "{{actor}} changed {{name}}'s role to {{role}}",
+      "inviteCreate": "{{actor}} invited {{email}} as a {{role}}",
+      "inviteRevoke": "{{actor}} canceled the invite for {{email}}",
+      "inviteAccept": "{{actor}} joined as a {{role}}",
+      "agentCreate": "{{actor}} created {{agent}}",
+      "agentRename": "{{actor}} renamed {{from}} to {{to}}",
+      "agentDelete": "{{actor}} deleted {{agent}}",
+      "agentAssignments": "{{actor}} changed who can use {{agent}}",
+      "agentShared_one": "{{actor}} shared {{agent}} with {{count}} person",
+      "agentShared_other": "{{actor}} shared {{agent}} with {{count}} people",
+      "agentSettings": "{{actor}} changed which apps {{agent}} can use",
+      "orgSettings": "{{actor}} changed your organization's app settings",
+      "grantsSet": "{{actor}} allowed {{apps}} for {{agent}}",
+      "agentConfigure": "{{actor}} updated {{agent}}'s settings",
+      "unknown": "{{actor}} made a change ({{action}})"
+    }
+  },
+  "createTeam": {
+    "trigger": "Create organization",
+    "title": "Create an organization",
+    "description": "Organizations let you share AI Employees and work together. You can invite people once it exists.",
+    "nameLabel": "Organization name",
+    "namePlaceholder": "e.g. Marketing",
+    "submit": "Create organization",
+    "creating": "Creating…",
+    "tooLong": "Keep the name under {{max}} characters.",
+    "successTitle": "Organization \"{{name}}\" created",
+    "successBody": "Invite people so you can work together.",
+    "successAction": "Invite your team"
+  },
+  "shareViaTeam": {
+    "sectionHelper": "This AI Employee lives in your personal space. Move it into a team to share it with teammates.",
+    "button": "Invite your team",
+    "title": "Share {{name}} with a team",
+    "pick": {
+      "subtitle": "Pick a team to move this AI Employee into, or create a new one.",
+      "empty": "You don't have a team yet. Create one to share this AI Employee.",
+      "createTrigger": "Create a new team",
+      "namePlaceholder": "e.g. Marketing",
+      "nameLabel": "Team name",
+      "create": "Create",
+      "creating": "Creating…",
+      "failed": "We couldn't create the team. Please try again."
+    },
+    "confirm": {
+      "body": "{{agent}} will move to {{team}}. You and your teammates will find it there.",
+      "downtime": "The AI Employee restarts during the move, so it may be unavailable for a moment.",
+      "cancel": "Cancel",
+      "move": "Move AI Employee"
+    },
+    "moving": {
+      "heading": "Moving {{agent}} to {{team}}",
+      "body": "This can take a moment. Please keep this window open."
+    },
+    "switching": {
+      "heading": "Getting {{team}} ready"
+    },
+    "switchFailed": {
+      "body": "Your AI Employee moved to {{team}}, but we couldn't switch to that team. Try again to continue inviting.",
+      "retry": "Try again",
+      "close": "Close"
+    },
+    "moveFailed": {
+      "unsupported_move": "This AI Employee can't be moved to that team.",
+      "unmovable_volume": "This AI Employee's storage can't be moved automatically yet. Contact support.",
+      "needs_upgrade": "This team needs an upgrade before you can move AI Employees into it.",
+      "unknown": "Something went wrong during the move.",
+      "timeout": "The move is taking longer than expected. It may still finish in the background. You can try again or close this.",
+      "retry": "Try again",
+      "close": "Close"
+    },
+    "invite": {
+      "subtitle": "{{agent}} is now in {{team}}. Invite people to use it with you.",
+      "emailPlaceholder": "name@company.com",
+      "add": "Add",
+      "send": "Send invites",
+      "sending": "Sending…",
+      "done": "Done",
+      "status": {
+        "pending": "Pending",
+        "sending": "Sending…",
+        "sent": "Invited"
+      },
+      "error": {
+        "already_member": "Already on the team",
+        "generic": "Couldn't invite. Try again."
+      }
+    },
+    "done": {
+      "heading": "Shared with {{team}}"
+    }
+  },
+  "moveResume": {
+    "done": "{{agent}} finished moving to {{team}}.",
+    "failed": "{{agent}} could not finish moving to {{team}}. We'll try again the next time the app starts."
+  },
+  "moveTeam": {
+    "title": "Move {{team}} to another space",
+    "pick": {
+      "subtitle": "Pick a space to move this group into, or create a new one.",
+      "empty": "You don't have another space yet. Create one to move this group into.",
+      "createTrigger": "Create a new space",
+      "namePlaceholder": "e.g. Marketing",
+      "nameLabel": "Space name",
+      "create": "Create",
+      "creating": "Creating…",
+      "failed": "We couldn't create the space. Please try again."
+    },
+    "confirm": {
+      "body_one": "Move {{team}} and its {{count}} AI Employee to {{destination}}?",
+      "body_other": "Move {{team}} and its {{count}} AI Employees to {{destination}}?",
+      "downtime": "AI Employees pause while they move.",
+      "move": "Move group"
+    },
+    "moving": "Moving {{name}} ({{index}} of {{total}})",
+    "movingBody": "AI Employees move one at a time. Please keep this window open.",
+    "createTarget": "Creating the group in the destination space",
+    "cleanupSource": "Removing the group from this space",
+    "switching": "Switching to the space",
+    "moveFailedFirst_one": "The AI Employee could not move.",
+    "moveFailedFirst_other": "None of the {{count}} AI Employees moved. The first one could not move.",
+    "moveFailedNext": "{{moved}} of {{total}} AI Employees moved. The next AI Employee could not move.",
+    "postscriptFailed_one": "The AI Employee moved, but setup did not finish.",
+    "postscriptFailed_other": "All {{count}} AI Employees moved, but setup did not finish.",
+    "postscriptFailedEmpty": "The group could not finish moving.",
+    "retry": "Try again",
+    "close": "Close"
+  },
+  "moveTeamResume": {
+    "done": "{{team}} finished moving to its new space.",
+    "failed": "{{team}} could not finish moving. We'll try again the next time the app starts."
+  },
+  "billing": {
+    "unavailable": "We couldn't load billing for this team.",
+    "status": {
+      "free": "Free",
+      "trialing": "Free trial",
+      "trialingDays_one": "Free trial, {{count}} day left",
+      "trialingDays_other": "Free trial, {{count}} days left",
+      "active": "Active",
+      "past_due": "Payment past due",
+      "expired": "Trial ended"
+    },
+    "seats_one": "{{count}} seat",
+    "seats_other": "{{count}} seats",
+    "interval": {
+      "monthly": "Billed monthly",
+      "annual": "Billed yearly"
+    },
+    "pickPlan": "Choose a plan to add your whole team.",
+    "checkoutMonthly": "Upgrade, monthly",
+    "checkoutAnnual": "Upgrade, yearly",
+    "manage": "Manage billing",
+    "askOwner": "Only the owner can change billing. Ask them to upgrade your team.",
+    "trialPill_one": "{{count}} day left in trial",
+    "trialPill_other": "{{count}} days left in trial"
+  },
+  "degrade": {
+    "owner": "Your team's trial ended. Upgrade to keep everyone working.",
+    "member": "Your team's trial ended. Ask your team's owner to upgrade.",
+    "upgrade": "Upgrade",
+    "writeBlockedTitle": "Upgrade needed",
+    "writeBlockedBody": "Your team's trial ended. Ask your team's owner to upgrade to make changes."
+  },
+  "personalSpace": {
+    "inviteBlockedTitle": "This is your personal space",
+    "inviteBlockedBody": "Your personal space is just for you. Create a team to invite people."
+  },
+  "inviteInbox": {
+    "title": "Invitations",
+    "headline": "You were invited to join {{team}}",
+    "headlineFrom": "{{name}} invited you to {{team}}",
+    "asRole": "You will join as {{role}}.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "acceptLabel": "Accept the invitation to {{team}}",
+    "declineLabel": "Decline the invitation to {{team}}",
+    "railLabel_one": "{{count}} pending invitation",
+    "railLabel_other": "{{count}} pending invitations",
+    "joinedTitle": "You joined {{team}}",
+    "joinedBody": "Switch to it any time from the space menu at the top of the sidebar.",
+    "joinedBodyUnconfirmed": "We could not refresh your spaces just now. Open the space menu again in a moment to find it.",
+    "errors": {
+      "needsUpgradeTitle": "This team needs an upgrade",
+      "needsUpgradeBody": "Its trial ended, so it cannot add people right now. Ask the person who invited you to upgrade, then accept again.",
+      "alreadyMemberTitle": "You are already in this team",
+      "alreadyMemberBody": "Nothing to do. Find it in the space menu at the top of the sidebar.",
+      "goneTitle": "This invitation is no longer available",
+      "goneBody": "It was withdrawn or already used. Ask your team to send a new one."
+    }
+  },
+  "teamView": {
+    "tabs": {
+      "missionControl": "Tasks",
+      "routines": "Routines",
+      "files": "Files",
+      "label": "AI Employee sections"
+    },
+    "agentTabs": {
+      "settings": "Settings"
+    },
+    "archive": {
+      "open": "Archived",
+      "back": "Back to tasks"
+    },
+    "move": {
+      "confirmTitle": "Move {{agent}} to {{team}}?",
+      "confirmBody": "{{agent}} moves to {{team}}.",
+      "confirm": "Move AI Employee",
+      "cancel": "Cancel"
+    },
+    "agentMenu": {
+      "delete": "Delete AI Employee"
+    },
+    "routines": {
+      "newRoutine": "New routine",
+      "unreadable": {
+        "title": "Couldn't load this AI Employee's routines",
+        "body": "Try again above to see what this AI Employee runs on its own."
+      }
+    }
+  },
+  "orgChart": {
+    "caption": "Organization",
+    "captionPersonal": "Personal space",
+    "captionYours": "Your AI Employees",
+    "crew": "<strong>{{agents}}</strong> and <strong>{{people}}</strong>.",
+    "crewPersonal": "<strong>{{agents}}</strong>.",
+    "crewYours_one": "Your <strong>{{agents}}</strong>.",
+    "crewYours_other": "Your <strong>{{agents}}</strong>.",
+    "workBoth": "<strong>{{messages}}</strong> and <strong>{{hours}}</strong> of work in the last 30 days.",
+    "workBothManaged": "<strong>{{messages}}</strong> to the AI Employees you manage and <strong>{{hours}}</strong> of work in the last 30 days.",
+    "workHours": "<strong>{{hours}}</strong> of work in the last 30 days.",
+    "workMessages": "<strong>{{messages}}</strong> in the last 30 days.",
+    "workMessagesManaged": "<strong>{{messages}}</strong> to the AI Employees you manage in the last 30 days.",
+    "agentCount_one": "{{count}} AI Employee",
+    "agentCount_other": "{{count}} AI Employees",
+    "peopleCount_one": "{{count}} person",
+    "peopleCount_other": "{{count}} people",
+    "messagesAmount_one": "{{value}} message",
+    "messagesAmount_other": "{{value}} messages",
+    "hoursAmount_one": "{{value}} hour",
+    "hoursAmount_other": "{{value}} hours",
+    "minutesAmount_one": "{{value}} minute",
+    "minutesAmount_other": "{{value}} minutes",
+    "messagesUnit_one": "message",
+    "messagesUnit_other": "messages",
+    "hoursUnit_one": "hour",
+    "hoursUnit_other": "hours",
+    "minutesUnit_one": "minute",
+    "minutesUnit_other": "minutes",
+    "unitHours": "h",
+    "unitMinutes": "min",
+    "heroHours": "Hours of work",
+    "heroMessages": "Messages",
+    "heroMessagesManaged": "Messages to AI Employees you manage",
+    "chartHours": "Hours worked · last 30 days",
+    "chartMessages": "Messages · last 30 days",
+    "chartMessagesManaged": "Messages to AI Employees you manage · last 30 days",
+    "chartHoursLabel": "Hours worked each day over the last 30 days",
+    "chartMessagesLabel": "Messages each day over the last 30 days",
+    "chartMessagesManagedLabel": "Messages to AI Employees you manage each day over the last 30 days",
+    "today": "Today",
+    "statMessages_one": "<strong>{{value}}</strong> message",
+    "statMessages_other": "<strong>{{value}}</strong> messages",
+    "statMessagesManaged_one": "<strong>{{value}}</strong> message to AI Employees you manage",
+    "statMessagesManaged_other": "<strong>{{value}}</strong> messages to AI Employees you manage",
+    "statAgents_one": "<strong>{{value}}</strong> AI Employee",
+    "statAgents_other": "<strong>{{value}}</strong> AI Employees",
+    "statPeople_one": "<strong>{{value}}</strong> person",
+    "statPeople_other": "<strong>{{value}}</strong> people",
+    "ledgerLabel": "AI Employees, ranked",
+    "rankedByHours": "Ranked by hours",
+    "rankedByMessages": "Ranked by messages",
+    "rankedByName": "AI Employees",
+    "colAgent": "AI Employee",
+    "colHours": "Hours worked",
+    "colMessages": "Messages",
+    "manages": "Manages",
+    "uses": "Uses",
+    "legendManages": "Manages · can change it",
+    "legendUses": "Uses · can talk to it",
+    "none": "None",
+    "everyone": "Everyone",
+    "peopleHidden": "People hidden",
+    "notCounted": "Not counted",
+    "openBoardFor": "Open {{name}}'s board",
+    "openPerson": "Open {{name}} in People",
+    "more": "+{{count}}",
+    "hoursUnavailable": "Hours worked unavailable.",
+    "messagesUnavailable": "Messages unavailable.",
+    "retry": "Try again",
+    "loading": "Loading your org chart...",
+    "empty": "No AI Employees yet",
+    "emptyBody": "Hire your first AI Employee and it appears here, with the people who manage it and use it."
+  },
+  "phoneEmployee": {
+    "emptyGroup": {
+      "title": "No AI Employees in this group",
+      "description": "Open an AI Employee, tap its ⋯ menu and choose Move to group."
+    }
+  },
+  "groupDelete": {
+    "title": "Delete \"{{name}}\"?",
+    "description": "The AI Employees in this group stay. They move out of the group, nothing else changes.",
+    "confirm": "Delete group",
+    "cancel": "Cancel"
+  },
+  "agentNav": {
+    "settingsUnavailable": "We couldn't open this AI Employee's settings",
+    "settingsUnavailableBody": "This AI Employee is no longer in this space. It may have been removed or moved."
+  }
+}

@@ -1,0 +1,165 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { expect, test } from "vitest";
+
+// Isolate this file's runtime state: config reads the env at import time, and
+// vitest gives each test file its own module registry, so pointing the data
+// dir at a tmpdir BEFORE importing keeps the failure-persistence writes out of
+// the developer's real ~/.houston-ts.
+process.env.HOUSTON_DATA_DIR = mkdtempSync(join(tmpdir(), "houston-chat-"));
+process.env.HOUSTON_WORKSPACE_DIR = process.env.HOUSTON_DATA_DIR;
+const { runTurn } = await import("./chat");
+const { getHistory } = await import("../store/conversations");
+const { subscribe } = await import("./bus");
+const { recordServedScope, resetServedScopes } = await import(
+  "../auth/served-scope"
+);
+const { runWithActingContext } = await import("./acting-context");
+
+/**
+ * A turn that fails BEFORE executing (a pin naming an unknown provider — a
+ * junk id routinePin passed through verbatim) must persist its failure, not
+ * just publish an ephemeral stream error: an unattended reader (the host's
+ * routine reconcile) errors the run off the persisted providerError, instead
+ * of finding no reply and timing out with a vague message 15 minutes later.
+ */
+test("a turn failing before execution persists the user message + typed providerError", async () => {
+  await runTurn("conv-fail-1", "do the thing", undefined, {
+    provider: "gemini-cli",
+  });
+
+  const history = getHistory("conv-fail-1");
+  expect(history?.messages).toHaveLength(2);
+  const [user, assistant] = history?.messages ?? [];
+  expect(user).toMatchObject({ role: "user", content: "do the thing" });
+  expect(assistant?.role).toBe("assistant");
+  expect(assistant?.content).toBe("");
+  expect(assistant?.providerError).toMatchObject({
+    kind: "unknown",
+    provider: "gemini-cli",
+  });
+  expect(
+    (assistant?.providerError as { raw_excerpt?: string }).raw_excerpt,
+  ).toContain("unknown provider: gemini-cli");
+});
+
+/**
+ * A NOT-CONNECTED failure (disconnected local model / no provider) is typed
+ * `unauthenticated`, not `unknown`: the typed card is the full reconnect
+ * surface — correct provider label, the provider's own reconnect flow, and the
+ * automatic task resume on reconnect. `undelivered_prompt` carries the turn's
+ * text because the model never received it (the failure precedes the session).
+ */
+test("a disconnected-local-model failure persists a typed unauthenticated error with the undelivered prompt", async () => {
+  await runTurn("conv-fail-3", "everything is okey?", undefined, {
+    provider: "openai-compatible",
+  });
+
+  const history = getHistory("conv-fail-3");
+  const assistant = history?.messages.at(-1);
+  expect(assistant?.providerError).toMatchObject({
+    kind: "unauthenticated",
+    provider: "openai-compatible",
+    cause: "no_credentials",
+    undelivered_prompt: "everything is okey?",
+  });
+  expect((assistant?.providerError as { message?: string }).message).toContain(
+    "No local model configured",
+  );
+});
+
+/**
+ * The failure must be RENDERABLE by a live turn stream, not just persisted:
+ * the client sink adopts its turnId from the nonce-stamped `user` echo, and a
+ * stamped `error` frame with no adopted id classifies as foreign and is
+ * dropped — the turn then spins forever with no error and no reconnect card
+ * (the disconnected-local-model repro). So the pre-execution failure path
+ * publishes the SAME echo-then-error sequence as a normal turn, sharing one
+ * turnId, echo first.
+ */
+test("a turn failing before execution publishes the nonce-stamped echo before the error", async () => {
+  const frames: { type: string; turnId?: string; nonce?: string }[] = [];
+  const unsub = subscribe("conv-fail-2", (f) => {
+    frames.push({
+      type: f.type,
+      turnId: f.turnId,
+      nonce: (f.data as { nonce?: string })?.nonce,
+    });
+  });
+  try {
+    await runTurn(
+      "conv-fail-2",
+      "hello",
+      "nonce-123",
+      {
+        provider: "openai-compatible",
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      "accepted-turn-id",
+    );
+  } finally {
+    unsub();
+  }
+
+  const user = frames.find((f) => f.type === "user");
+  const error = frames.find((f) => f.type === "error");
+  expect(user).toBeDefined();
+  expect(error).toBeDefined();
+  // The echo carries OUR nonce (the sink's adoption key) and the error is
+  // stamped with the SAME turnId, in echo-then-error order.
+  expect(user?.nonce).toBe("nonce-123");
+  expect(user?.turnId).toBe("accepted-turn-id");
+  expect(getHistory("conv-fail-2")?.messages[0]).toMatchObject({
+    nonce: "nonce-123",
+    turnId: "accepted-turn-id",
+  });
+  expect(error?.turnId).toBe(user?.turnId);
+  expect(frames.indexOf(user as never)).toBeLessThan(
+    frames.indexOf(error as never),
+  );
+});
+
+/**
+ * A pre-execution failure is SYNTHESIZED here rather than classified by
+ * ai/provider-error.ts, so it has to stamp the credential context itself
+ * (HOU-976). Without the stamp a member whose OWN account is not connected gets
+ * a card that never says whose account is missing, which is the one fact that
+ * tells them the fix is theirs to make.
+ */
+test("a pre-execution failure under a personal scope stamps the credential context", async () => {
+  resetServedScopes();
+  const acting = {
+    actingAs: `acting-v1.${Buffer.from(
+      JSON.stringify({ sub: "sub-stamp", agent: "acme", exp: 9_000_000_000 }),
+    ).toString("base64url")}.sig`,
+  };
+  await runWithActingContext(acting, async () => {
+    recordServedScope("openai-compatible", "personal");
+    await runTurn("conv-fail-4", "who am I?", undefined, {
+      provider: "openai-compatible",
+    });
+  });
+
+  const assistant = getHistory("conv-fail-4")?.messages.at(-1);
+  expect(assistant?.providerError).toMatchObject({
+    kind: "unauthenticated",
+    provider: "openai-compatible",
+    cause: "no_credentials",
+    credential: { scope: "personal" },
+  });
+  resetServedScopes();
+});
+
+/** The team scope records no served verdict, so the wire shape is unchanged. */
+test("a pre-execution failure with no acting identity carries no credential stamp", async () => {
+  resetServedScopes();
+  await runTurn("conv-fail-5", "who am I?", undefined, {
+    provider: "openai-compatible",
+  });
+  const assistant = getHistory("conv-fail-5")?.messages.at(-1);
+  expect(assistant?.providerError).not.toHaveProperty("credential");
+});

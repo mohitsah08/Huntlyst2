@@ -1,0 +1,143 @@
+---
+rootPath: "../"
+---
+{% extends "subpage.njk" %}
+{% block title %}Changelog — Houston{% endblock %}
+{% block favicon %}<link rel="icon" type="image/svg+xml" href="../favicon.svg">{% endblock %}
+{% block meta %}
+<meta name="description" content="Every Houston release, what changed, and how it affects you. Plain language, no jargon.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gethouston.ai/changelog/">
+<meta property="og:title" content="Changelog — Houston">
+<meta property="og:description" content="Every Houston release, what changed, and how it affects you.">
+<meta property="og:site_name" content="Houston">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Changelog — Houston">
+<meta name="twitter:description" content="Every Houston release, what changed, and how it affects you.">
+{% endblock %}
+{% block subpageStyles %}
+<style>
+  /* Changelog timeline — bone rail, ink markers. Layout only; type + palette
+     come from subpage.css / site-tokens. */
+  .cl-timeline {
+    width: min(824px, 100%);
+    margin: 0 auto;
+    padding: 0 var(--gutter);
+    position: relative;
+  }
+  .cl-rail {
+    position: relative;
+    padding-left: 40px;
+  }
+  .cl-rail::before {
+    content: "";
+    position: absolute;
+    left: 6px; top: 10px; bottom: 10px;
+    width: 1px; background: var(--line-strong);
+  }
+  .release {
+    position: relative;
+    padding: 0 0 clamp(40px, 5vw, 56px);
+  }
+  .release:last-child { padding-bottom: 0; }
+  .release-marker {
+    position: absolute;
+    left: -40px; top: 8px;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 2px solid var(--line-strong);
+    margin-left: 0.5px;
+  }
+  .release.is-latest .release-marker {
+    border-color: var(--ink-strong);
+    background: var(--ink-strong);
+    box-shadow: 0 0 0 4px rgba(40, 36, 28, 0.08);
+  }
+  .release-meta {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .release-version {
+    font-size: 26px; font-weight: 500; letter-spacing: -0.02em;
+    color: var(--ink-strong); line-height: 1;
+  }
+  .release-date { font-size: 13px; color: var(--ink-subtle); }
+  .release-badge {
+    display: inline-flex; align-items: center;
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--ink-strong); color: var(--action-text);
+  }
+  .release-badge.beta {
+    background: var(--panel-raised); color: var(--ink-muted);
+  }
+  .release-body { font-size: 15.5px; }
+  .release-body h1 { font-size: 20px; }
+  .release-body h2 { font-size: 18px; margin-top: 28px; }
+  .release-body h3 { font-size: 16px; }
+  .release-actions {
+    display: inline-flex; gap: 18px; align-items: center;
+    margin-top: 18px; font-size: 13.5px;
+  }
+  .release-actions a {
+    color: var(--ink-muted);
+    text-decoration: underline;
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 3px;
+  }
+  .release-actions a:hover {
+    color: var(--ink-strong);
+    text-decoration-color: var(--ink-strong);
+  }
+  .cl-empty {
+    max-width: 480px; margin: 40px auto 0;
+    padding: 40px; text-align: center;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 16px; color: var(--ink-muted);
+  }
+  .cl-empty p { margin-bottom: 14px; }
+  .cl-empty p:last-child { margin-bottom: 0; }
+</style>
+{% endblock %}
+{% block subpageContent %}
+<div class="subpage-header is-center">
+  <div class="subpage-eyebrow">Changelog</div>
+  <h1>What's new in Houston</h1>
+  <p class="subpage-lead">Every release. Plain language. What changed and how it affects you.</p>
+  <div class="subpage-meta">
+    <a href="https://github.com/gethouston/houston/releases" target="_blank" rel="noopener noreferrer" style="color: var(--ink-muted); text-decoration: underline; text-underline-offset: 3px;">Releases on GitHub →</a>
+  </div>
+</div>
+
+<div class="cl-timeline">
+  {% if changelog and changelog.length %}
+    <div class="cl-rail">
+      {% for release in changelog %}
+        <article class="release {% if loop.first %}is-latest{% endif %}" id="{{ release.tag }}">
+          <div class="release-marker"></div>
+          <div class="release-meta">
+            <div class="release-version">{{ release.tag }}</div>
+            <div class="release-date">{{ release.publishedDate }}</div>
+            {% if loop.first and not release.isPrerelease %}<span class="release-badge">Latest</span>{% endif %}
+            {% if release.isPrerelease %}<span class="release-badge beta">Beta</span>{% endif %}
+          </div>
+          <div class="release-body prose">
+            {{ release.body | markdown | safe }}
+          </div>
+          <div class="release-actions">
+            <a href="{{ release.url }}" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+            {% if release.dmgAsset %}<a href="{{ release.dmgAsset.browser_download_url }}">Download DMG</a>{% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="cl-empty">
+      <p>The changelog couldn't load right now.</p>
+      <p><a href="https://github.com/gethouston/houston/releases" target="_blank" rel="noopener noreferrer" style="color: var(--ink-strong); text-decoration: underline; text-underline-offset: 3px;">Read the release notes on GitHub →</a></p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

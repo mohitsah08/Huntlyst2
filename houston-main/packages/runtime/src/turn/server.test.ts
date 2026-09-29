@@ -1,0 +1,306 @@
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { readFile, writeFile } from "node:fs/promises";
+import type { Server } from "node:http";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import {
+  LocalDirStore,
+  type ObjectStore,
+} from "@houston/runtime-client/object-sync";
+import { afterAll, beforeAll, expect, test } from "vitest";
+import {
+  authFailureActive,
+  clearProviderMarks,
+  noteAuthFailure,
+  resetAuthFailures,
+} from "../auth/credential-health";
+import { currentActingContext } from "../session/acting-context";
+import { createTurnServer } from "./server";
+import type { TurnRunner } from "./turn-session";
+
+/**
+ * The per-turn server contract, end to end against a real (local) object
+ * store: hydrate → run → stream frames → sync back → terminal frame. The pi
+ * session itself is injected (a real turn needs an LLM); what's under test is
+ * the orchestration every turn depends on — including that `done` is only
+ * sent AFTER the workspace is durable, and that the per-turn credential is
+ * written locally but never persisted.
+ */
+
+const storeRoot = mkdtempSync(join(tmpdir(), "houston-turnstore-"));
+const store = new LocalDirStore(storeRoot);
+const PREFIX = "ws/w1/agent-1";
+
+function seed(rel: string, content: string) {
+  const abs = join(storeRoot, ...PREFIX.split("/"), ...rel.split("/"));
+  mkdirSync(join(abs, ".."), { recursive: true });
+  writeFileSync(abs, content);
+}
+
+// A fake pi turn: proves it sees the hydrated workspace + injected credential,
+// mutates the workspace, emits frames (stamped with the server-minted turnId,
+// like the real runTurn).
+const fakeTurn: TurnRunner = async (layout, turn) => {
+  const { text, provider, emit, turnId } = turn;
+  const notes = await readFile(join(layout.workspaceDir, "notes.txt"), "utf8");
+  const auth = await readFile(join(layout.dataDir, "auth.json"), "utf8");
+  await writeFile(join(layout.workspaceDir, "deck.pptx"), "DECK-BYTES");
+  emit({ type: "user", data: { content: text, ts: 1 }, turnId });
+  emit({
+    type: "text",
+    data: `saw:${notes};provider:${provider};auth:${JSON.parse(auth)[provider].access}`,
+    turnId,
+  });
+  return {};
+};
+
+let server: Server;
+let base = "";
+
+beforeAll(async () => {
+  server = createTurnServer({ store, token: "turn-secret", runTurn: fakeTurn });
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", () => r()));
+  const addr = server.address();
+  base = `http://127.0.0.1:${typeof addr === "object" && addr ? addr.port : 0}`;
+});
+
+afterAll(() => server.close());
+
+const CRED = {
+  provider: "openai-codex",
+  access: "AT-turn",
+  expires: 1750000000000,
+  accountId: "acc",
+};
+const turnBody = (over: Record<string, unknown> = {}) => ({
+  workspaceId: "w1",
+  agentId: "agent-1",
+  conversationId: "c1",
+  text: "build me a deck",
+  gcsPrefix: PREFIX,
+  credential: CRED,
+  ...over,
+});
+
+const post = (body: unknown, token = "turn-secret") =>
+  fetch(`${base}/turn`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-internal-token": token },
+    body: JSON.stringify(body),
+  });
+
+test("rejects a missing/wrong app token (401) and a bad body (400)", async () => {
+  expect((await post(turnBody(), "wrong")).status).toBe(401);
+  const bad = await post({ workspaceId: "w1" });
+  expect(bad.status).toBe(400);
+  expect(((await bad.json()) as { error: string }).error).toContain("agentId");
+});
+
+test("a full turn: hydrates, injects the credential, streams frames, syncs back", async () => {
+  seed("workspace/notes.txt", "hello-from-gcs");
+  const res = await post(turnBody());
+  expect(res.status).toBe(200);
+  expect(res.headers.get("content-type")).toContain("text/event-stream");
+  const raw = await res.text();
+
+  // Frames arrive in order and carry proof the fake turn saw hydrated state +
+  // the injected access token (and only the access token — applyServedCredential).
+  expect(raw).toContain('"type":"user"');
+  expect(raw).toContain("saw:hello-from-gcs");
+  expect(raw).toContain("provider:openai-codex");
+  expect(raw).toContain("auth:AT-turn");
+  expect(raw.indexOf('"type":"text"')).toBeLessThan(
+    raw.indexOf('"type":"done"'),
+  );
+
+  // The mutation is durable in the store; the credential is NOT.
+  const keys = await store.list(PREFIX);
+  expect(keys).toContain(`${PREFIX}/workspace/deck.pptx`);
+  expect(keys.find((k) => k.endsWith("auth.json"))).toBeUndefined();
+});
+
+test("no credential → error frame with a clear message, never a hang", async () => {
+  const res = await post(turnBody({ credential: null }));
+  const raw = await res.text();
+  expect(raw).toContain("No provider connected");
+  expect(raw).toContain('"type":"error"');
+  expect(raw).not.toContain('"type":"done"');
+});
+
+test("one agent's auth failure survives another agent's clean turn", async () => {
+  resetAuthFailures();
+  let agentAFailureSurvived = false;
+  let actingIdentityLeaked = false;
+  const probe: TurnRunner = async (_root, turn) => {
+    const acting = currentActingContext();
+    actingIdentityLeaked ||= !!(acting?.actingAs || acting?.actingUser);
+    if (turn.text === "fail") noteAuthFailure(turn.provider, "dead-token");
+    if (turn.text === "clean") clearProviderMarks(turn.provider);
+    if (turn.text === "probe") {
+      agentAFailureSurvived = authFailureActive(turn.provider, "dead-token");
+    }
+    return {};
+  };
+  const scopedServer = createTurnServer({
+    store,
+    token: "",
+    runTurn: probe,
+  });
+  await new Promise<void>((resolve) =>
+    scopedServer.listen(0, "127.0.0.1", resolve),
+  );
+  const address = scopedServer.address();
+  const scopedBase = `http://127.0.0.1:${
+    typeof address === "object" && address ? address.port : 0
+  }`;
+  const run = (agentId: string, text: string) =>
+    fetch(`${scopedBase}/turn`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(
+        turnBody({
+          agentId,
+          text,
+          gcsPrefix: `ws/w1/${agentId}`,
+        }),
+      ),
+    }).then((response) => response.text());
+
+  try {
+    await run("agent-a", "fail");
+    await run("agent-b", "clean");
+    await run("agent-a", "probe");
+    expect(agentAFailureSurvived).toBe(true);
+    expect(actingIdentityLeaked).toBe(false);
+  } finally {
+    resetAuthFailures();
+    scopedServer.close();
+  }
+});
+
+test("a sync failure surfaces as the turn's error — never a quiet done", async () => {
+  // Fresh prefix: the fake turn's deck.pptx is genuinely NEW here, so syncBack
+  // must attempt the (broken) upload. Reusing the happy-path prefix would let
+  // the content differ correctly skip the identical bytes and mask the test.
+  const PREFIX2 = "ws/w2/agent-2";
+  const abs = join(storeRoot, ...PREFIX2.split("/"), "workspace", "notes.txt");
+  mkdirSync(join(abs, ".."), { recursive: true });
+  writeFileSync(abs, "hello-from-gcs");
+  const broken: ObjectStore = {
+    list: (p) => store.list(p),
+    download: (k, d) => store.download(k, d),
+    upload: async () => {
+      throw new Error("disk on fire");
+    },
+    delete: (k) => store.delete(k),
+  };
+  const s2 = createTurnServer({ store: broken, token: "", runTurn: fakeTurn });
+  await new Promise<void>((r) => s2.listen(0, "127.0.0.1", () => r()));
+  const addr = s2.address();
+  const b2 = `http://127.0.0.1:${typeof addr === "object" && addr ? addr.port : 0}`;
+  try {
+    const res = await fetch(`${b2}/turn`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(
+        turnBody({ workspaceId: "w2", agentId: "agent-2", gcsPrefix: PREFIX2 }),
+      ),
+    });
+    const raw = await res.text();
+    expect(raw).toContain("sync failed");
+    expect(raw).toContain("disk on fire");
+    expect(raw).not.toContain('"type":"done"');
+  } finally {
+    s2.close();
+  }
+});
+
+test("a routine's model/effort pin reaches the pi turn", async () => {
+  // Capture the pin the server forwards to runTurn.
+  let seen: { model?: string | null; effort?: string | null } | undefined;
+  const capture: TurnRunner = async (_root, turn) => {
+    seen = turn.pin;
+    turn.emit({
+      type: "user",
+      data: { content: turn.text, ts: 1 },
+      turnId: turn.turnId,
+    });
+    return {};
+  };
+  const s = createTurnServer({ store, token: "", runTurn: capture });
+  await new Promise<void>((r) => s.listen(0, "127.0.0.1", () => r()));
+  const addr = s.address();
+  const b = `http://127.0.0.1:${typeof addr === "object" && addr ? addr.port : 0}`;
+  try {
+    await fetch(`${b}/turn`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(
+        turnBody({ model: "claude-opus-4-8", effort: "high" }),
+      ),
+    });
+    expect(seen).toEqual({ model: "claude-opus-4-8", effort: "high" });
+  } finally {
+    s.close();
+  }
+});
+
+test("a turn's pinned provider outranks the attached credential's (PRODUCT-1515)", async () => {
+  // A dispatcher that serves a different provider's credential must fail as
+  // the PINNED provider's auth error, never silently run the turn on the
+  // credential's provider.
+  let seen: string | undefined;
+  const capture: TurnRunner = async (_root, turn) => {
+    seen = turn.provider;
+    turn.emit({
+      type: "user",
+      data: { content: turn.text, ts: 1 },
+      turnId: turn.turnId,
+    });
+    return {};
+  };
+  const s = createTurnServer({ store, token: "", runTurn: capture });
+  await new Promise<void>((r) => s.listen(0, "127.0.0.1", () => r()));
+  const addr = s.address();
+  const b = `http://127.0.0.1:${typeof addr === "object" && addr ? addr.port : 0}`;
+  try {
+    await (
+      await fetch(`${b}/turn`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(turnBody({ provider: "openrouter" })),
+      })
+    ).text();
+    expect(seen).toBe("openrouter");
+    await (
+      await fetch(`${b}/turn`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(turnBody()),
+      })
+    ).text();
+    expect(seen).toBe(CRED.provider);
+  } finally {
+    s.close();
+  }
+});
+
+test("every frame of a turn — including the server's terminal — carries ONE turnId", async () => {
+  seed("workspace/notes.txt", "hello-from-gcs");
+  const res = await post(turnBody());
+  const raw = await res.text();
+  const frames = raw
+    .split("\n\n")
+    .map((b) => b.split("\n").find((l) => l.startsWith("data: ")))
+    .filter((l): l is string => !!l)
+    .map((l) => JSON.parse(l.slice(6)) as { type: string; turnId?: string });
+  expect(frames.map((f) => f.type)).toEqual(["user", "text", "done"]);
+  const ids = new Set(frames.map((f) => f.turnId));
+  expect(ids.size).toBe(1);
+  expect([...ids][0]).toMatch(/^[0-9a-f-]{36}$/);
+});
+
+test("health endpoint reports turn mode", async () => {
+  const r = await fetch(`${base}/health`);
+  expect(((await r.json()) as { mode: string }).mode).toBe("turn");
+});

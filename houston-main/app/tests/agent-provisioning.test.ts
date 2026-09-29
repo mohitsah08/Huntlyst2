@@ -1,0 +1,413 @@
+import { deepStrictEqual, ok, strictEqual } from "node:assert";
+import { describe, it } from "node:test";
+import { detectEngineAsleep } from "../src/lib/agent-provisioning/asleep.ts";
+import {
+  PROVISIONING_TTL_MS,
+  warmingFlushRefetchKeys,
+  warmingReadsAnswerEmpty,
+} from "../src/lib/agent-provisioning/entry.ts";
+import { parsePersistedProvisioning } from "../src/lib/agent-provisioning/persist.ts";
+import {
+  PROVISIONING_RETRY_MS,
+  ProvisioningTimeoutError,
+  probeSaysAgentGone,
+  probeSaysStillStarting,
+  runProvisioningProbe,
+} from "../src/lib/agent-provisioning/probe.ts";
+
+const httpError = (status: number) => Object.assign(new Error("x"), { status });
+
+describe("detectEngineAsleep (HOU-730)", () => {
+  /** Fast-answering read + a timer that never fires (awake engines win). */
+  const fastDeps = (read: Promise<unknown>) => ({
+    readFile: () => read,
+    sleep: () => new Promise<void>(() => {}),
+  });
+
+  it("awake: the probe answers before the window", async () => {
+    strictEqual(
+      await detectEngineAsleep("/w/a", fastDeps(Promise.resolve("ok"))),
+      false,
+    );
+  });
+
+  it("awake: any definitive HTTP answer means something responded", async () => {
+    strictEqual(
+      await detectEngineAsleep(
+        "/w/a",
+        fastDeps(Promise.reject(httpError(404))),
+      ),
+      false,
+    );
+    strictEqual(
+      await detectEngineAsleep(
+        "/w/a",
+        fastDeps(Promise.reject(httpError(401))),
+      ),
+      false,
+    );
+  });
+
+  it("awake: a fast transport failure is a network problem, not sleep", async () => {
+    strictEqual(
+      await detectEngineAsleep(
+        "/w/a",
+        fastDeps(Promise.reject(new TypeError("fetch failed"))),
+      ),
+      false,
+    );
+  });
+
+  it("asleep: a gateway warm-up status", async () => {
+    strictEqual(
+      await detectEngineAsleep(
+        "/w/a",
+        fastDeps(Promise.reject(httpError(503))),
+      ),
+      true,
+    );
+  });
+
+  it("asleep: the read is held past the detection window", async () => {
+    const deps = {
+      readFile: () => new Promise<unknown>(() => {}),
+      sleep: () => Promise.resolve(),
+    };
+    strictEqual(await detectEngineAsleep("/w/a", deps), true);
+  });
+});
+
+describe("probeSaysStillStarting", () => {
+  it("keeps waiting on gateway warm-up statuses", () => {
+    strictEqual(probeSaysStillStarting(httpError(502)), true);
+    strictEqual(probeSaysStillStarting(httpError(503)), true);
+    strictEqual(probeSaysStillStarting(httpError(504)), true);
+  });
+
+  it("keeps waiting on transport-level failures with no HTTP verdict", () => {
+    strictEqual(probeSaysStillStarting(new TypeError("fetch failed")), true);
+    strictEqual(probeSaysStillStarting(undefined), true);
+    strictEqual(probeSaysStillStarting("connection reset"), true);
+  });
+
+  it("treats any definitive HTTP answer as the engine having responded", () => {
+    strictEqual(probeSaysStillStarting(httpError(404)), false);
+    strictEqual(probeSaysStillStarting(httpError(401)), false);
+    strictEqual(probeSaysStillStarting(httpError(500)), false);
+  });
+});
+
+describe("probeSaysAgentGone (HOUSTON-APP-4ZF)", () => {
+  it("a 404 means the server no longer knows the agent — a missing probe file answers 200-empty", () => {
+    strictEqual(probeSaysAgentGone(httpError(404)), true);
+  });
+
+  it("everything else is not agent-gone", () => {
+    strictEqual(probeSaysAgentGone(httpError(401)), false);
+    strictEqual(probeSaysAgentGone(httpError(503)), false);
+    strictEqual(probeSaysAgentGone(new TypeError("fetch failed")), false);
+    strictEqual(probeSaysAgentGone(undefined), false);
+  });
+});
+
+describe("parsePersistedProvisioning", () => {
+  const now = 1_000_000_000;
+  const fresh = { agentId: "a1", agentPath: "/w/a1", since: now - 60_000 };
+
+  it("keeps fresh entries and drops expired ones", () => {
+    const expired = {
+      agentId: "a2",
+      agentPath: "/w/a2",
+      since: now - PROVISIONING_TTL_MS,
+    };
+    deepStrictEqual(
+      parsePersistedProvisioning(JSON.stringify([fresh, expired]), now),
+      [fresh],
+    );
+  });
+
+  it("keeps a timed-out entry regardless of age (HOU-693 regression)", () => {
+    const stalled = {
+      agentId: "a3",
+      agentPath: "/w/a3",
+      since: now - PROVISIONING_TTL_MS * 10,
+      timedOut: true,
+    };
+    deepStrictEqual(
+      parsePersistedProvisioning(JSON.stringify([stalled, fresh]), now),
+      [stalled, fresh],
+    );
+  });
+
+  it("survives malformed storage", () => {
+    deepStrictEqual(parsePersistedProvisioning(null, now), []);
+    deepStrictEqual(parsePersistedProvisioning("not json", now), []);
+    deepStrictEqual(parsePersistedProvisioning('{"a":1}', now), []);
+    deepStrictEqual(
+      parsePersistedProvisioning(JSON.stringify([{ agentId: 3 }, fresh]), now),
+      [fresh],
+    );
+  });
+
+  it("keeps well-formed pending sends and drops malformed ones", () => {
+    const send = { id: "s1", sessionKey: "activity-a", text: "hi" };
+    const parsed = parsePersistedProvisioning(
+      JSON.stringify([
+        { ...fresh, pendingSends: [send, { text: 5 }, null, { id: "x" }] },
+      ]),
+      now,
+    );
+    deepStrictEqual(parsed[0].pendingSends, [send]);
+  });
+
+  it("round-trips the optimistic-row fields on a pending send (HOU-713)", () => {
+    const send = {
+      id: "s1",
+      sessionKey: "welcome-a",
+      text: "",
+      queuedAt: now - 1_000,
+      titleText: "hi",
+      rowOnly: true,
+      row: { id: "a", title: "Hi", description: "hi", status: "needs_you" },
+    };
+    const parsed = parsePersistedProvisioning(
+      JSON.stringify([{ ...fresh, pendingSends: [send] }]),
+      now,
+    );
+    deepStrictEqual(parsed[0].pendingSends, [send]);
+  });
+
+  it("round-trips the warming reason across a relaunch", () => {
+    const asleep = { ...fresh, agentId: "a4", reason: "asleep" };
+    const created = { ...fresh, agentId: "a5", reason: "create" };
+    deepStrictEqual(
+      parsePersistedProvisioning(JSON.stringify([asleep, created]), now),
+      [asleep, created],
+    );
+  });
+});
+
+describe("warmingReadsAnswerEmpty", () => {
+  const base = { agentId: "a1", agentPath: "/w/a1", since: 0 };
+
+  it("just-created agents answer reads with 'nothing yet'", () => {
+    strictEqual(warmingReadsAnswerEmpty({ ...base, reason: "create" }), true);
+  });
+
+  it("entries persisted by older builds keep the pre-split behavior", () => {
+    strictEqual(warmingReadsAnswerEmpty(base), true);
+  });
+
+  it("an existing asleep agent's reads ride the hold — an instant empty success would wipe the cached board (HOU-730)", () => {
+    strictEqual(warmingReadsAnswerEmpty({ ...base, reason: "asleep" }), false);
+  });
+});
+
+describe("warmingFlushRefetchKeys (HOU-713)", () => {
+  const has = (keys: readonly (readonly unknown[])[], key: unknown[]) =>
+    keys.some(
+      (k) => k.length === key.length && k.every((seg, i) => seg === key[i]),
+    );
+
+  it("refetches the cross-agent sweep the boards actually read", () => {
+    // PREFIX, not one roster variant: the aggregate's key embeds every agent
+    // path (`["all-conversations", ...paths]`), so only the prefix matches the
+    // variant the open board is mounted on.
+    deepStrictEqual(warmingFlushRefetchKeys("/w/a1")[0], ["all-conversations"]);
+  });
+
+  it("refetches the agent's own activity list for the per-agent surfaces", () => {
+    ok(has(warmingFlushRefetchKeys("/w/a1"), ["activity", "/w/a1"]));
+  });
+
+  it("re-reads the agent's config, answered as an empty placeholder while it was created", () => {
+    ok(has(warmingFlushRefetchKeys("/w/a1"), ["config", "/w/a1"]));
+  });
+});
+
+describe("runProvisioningProbe", () => {
+  const entry = { agentId: "a1", agentPath: "/w/a1", since: 0 };
+  /** Sentinel read result: the request stays held open forever. */
+  const HELD = Symbol("held");
+
+  function harness(readResults: Array<unknown | Error>) {
+    const calls = { ready: 0, gone: 0, timeout: 0, sleeps: 0, reads: 0 };
+    let timeoutError: ProvisioningTimeoutError | undefined;
+    let goneError: unknown;
+    let marked = true;
+    let clock = 1;
+    // The whole-probe TTL deadline is the one sleep longer than a retry
+    // pause; hold it pending unless a test fires it explicitly.
+    let fireDeadline: () => void = () => {
+      throw new Error("deadline not armed");
+    };
+    const deps = {
+      readFile: (): Promise<unknown> => {
+        calls.reads++;
+        const next = readResults.shift();
+        if (next === HELD) return new Promise(() => {});
+        if (next instanceof Error) return Promise.reject(next);
+        return Promise.resolve(next);
+      },
+      isMarked: () => marked,
+      onReady: () => {
+        calls.ready++;
+        marked = false;
+      },
+      onGone: (_id: string, err: unknown) => {
+        calls.gone++;
+        goneError = err;
+        marked = false;
+      },
+      onTimeout: (_id: string, error: ProvisioningTimeoutError) => {
+        calls.timeout++;
+        timeoutError = error;
+        marked = false;
+      },
+      sleep: (ms: number): Promise<void> => {
+        if (ms > PROVISIONING_RETRY_MS) {
+          return new Promise<void>((r) => {
+            fireDeadline = r;
+          });
+        }
+        calls.sleeps++;
+        return Promise.resolve();
+      },
+      now: () => clock,
+      setClock: (t: number) => {
+        clock = t;
+      },
+      unmark: () => {
+        marked = false;
+      },
+      fireDeadline: () => fireDeadline(),
+    };
+    return {
+      deps,
+      calls,
+      timeoutError: () => timeoutError,
+      goneError: () => goneError,
+    };
+  }
+
+  it("clears the moment the engine answers", async () => {
+    const { deps, calls } = harness(["ok"]);
+    await runProvisioningProbe(entry, deps);
+    deepStrictEqual(calls, {
+      ready: 1,
+      gone: 0,
+      timeout: 0,
+      sleeps: 0,
+      reads: 1,
+    });
+  });
+
+  it("retries through warm-up failures, then clears", async () => {
+    const { deps, calls } = harness([
+      httpError(503),
+      new TypeError("fetch failed"),
+      "ok",
+    ]);
+    await runProvisioningProbe(entry, deps);
+    deepStrictEqual(calls, {
+      ready: 1,
+      gone: 0,
+      timeout: 0,
+      sleeps: 2,
+      reads: 3,
+    });
+  });
+
+  it("treats a definitive HTTP failure as ready (engine responded)", async () => {
+    const { deps, calls } = harness([httpError(401)]);
+    await runProvisioningProbe(entry, deps);
+    deepStrictEqual(calls, {
+      ready: 1,
+      gone: 0,
+      timeout: 0,
+      sleeps: 0,
+      reads: 1,
+    });
+  });
+
+  it("resolves gone — never ready — when the server no longer knows the agent (HOUSTON-APP-4ZF)", async () => {
+    const err = httpError(404);
+    const { deps, calls, goneError } = harness([err]);
+    await runProvisioningProbe(entry, deps);
+    // Ready would flush the queued sends into the same 404.
+    deepStrictEqual(calls, {
+      ready: 0,
+      gone: 1,
+      timeout: 0,
+      sleeps: 0,
+      reads: 1,
+    });
+    strictEqual(goneError(), err);
+  });
+
+  it("times out with the last failure once the TTL elapses", async () => {
+    const { deps, calls, timeoutError } = harness([httpError(503)]);
+    const retrySleep = deps.sleep;
+    deps.sleep = (ms: number) => {
+      const p = retrySleep(ms);
+      if (ms <= PROVISIONING_RETRY_MS) deps.setClock(PROVISIONING_TTL_MS + 1);
+      return p;
+    };
+    await runProvisioningProbe(entry, deps);
+    deepStrictEqual(calls, {
+      ready: 0,
+      gone: 0,
+      timeout: 1,
+      sleeps: 1,
+      reads: 1,
+    });
+    const err = timeoutError();
+    ok(err instanceof ProvisioningTimeoutError);
+    strictEqual((err.cause as { status?: number }).status, 503);
+    strictEqual(err.heldOpen, false);
+    strictEqual(err.attempts, 1);
+    ok(err.message.includes("HTTP 503"), err.message);
+  });
+
+  it("times out even while an attempt is held open server-side", async () => {
+    const { deps, calls, timeoutError } = harness([HELD]);
+    const probe = runProvisioningProbe(entry, deps);
+    // Let the probe issue the read (which never settles), then hit the TTL.
+    await Promise.resolve();
+    deps.fireDeadline();
+    await probe;
+    deepStrictEqual(calls, {
+      ready: 0,
+      gone: 0,
+      timeout: 1,
+      sleeps: 0,
+      reads: 1,
+    });
+    // No attempt ever failed, so there is no "last error" — the timeout must
+    // still be a real, descriptive Error rather than a forwarded `undefined`
+    // (that bare value is what Sentry used to receive).
+    const err = timeoutError();
+    ok(err instanceof ProvisioningTimeoutError);
+    strictEqual(err.heldOpen, true);
+    strictEqual(err.cause, undefined);
+    ok(err.message.includes("never answered"), err.message);
+  });
+
+  it("stops silently when the entry is retired mid-loop", async () => {
+    const { deps, calls } = harness([httpError(503)]);
+    const retrySleep = deps.sleep;
+    deps.sleep = (ms: number) => {
+      const p = retrySleep(ms);
+      if (ms <= PROVISIONING_RETRY_MS) deps.unmark();
+      return p;
+    };
+    await runProvisioningProbe(entry, deps);
+    deepStrictEqual(calls, {
+      ready: 0,
+      gone: 0,
+      timeout: 0,
+      sleeps: 1,
+      reads: 1,
+    });
+  });
+});

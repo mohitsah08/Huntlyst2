@@ -1,0 +1,109 @@
+# Houston Web (`packages/web`)
+
+Standalone browser build of the Houston desktop UI. It composes `app/src`
+verbatim and swaps Tauri/OS imports for browser shims at build time.
+
+The backend is the Houston host (`packages/host`) over protocol v3, the only
+engine. Which root mounts depends on the deployment, not on the engine.
+
+## Modes
+
+- **Cloud host mode**: `VITE_CONTROL_PLANE_URL` is set. Domain calls go to the
+  host through `@houston/engine-adapter`, the app's own GCIP (Firebase) auth
+  gates sign-in, and `/admin` mounts the operator dashboard.
+- **Self-host mode**: no control-plane URL. The host URL + token come from a
+  stored config, from `VITE_NEW_ENGINE_URL` / `VITE_NEW_ENGINE_TOKEN`, or from
+  the Connect screen at runtime.
+
+## Running in dev
+
+Run `pnpm dev` from the repo root — the ONE entry point. Its `web` pane serves
+this package on http://localhost:1430 against the local Go gateway (cloud
+profile: real sign-in, multiplayer).
+Do not run this package's `dev` script directly; outside the pane's env it
+boots a differently-configured app, which is the drift `pnpm dev` exists to
+prevent.
+
+## How It Works
+
+```
+src/
+  main.tsx          chooses cloud-host / self-host root from env
+  cloud-login.tsx   host-mode auth wrapper
+  app-tree.tsx      app/src providers + gates + <App />
+  new-engine/       external-host connect screen + app wrapper
+  shims/            @tauri-apps/* browser equivalents
+  admin/            cloud operator dashboard mounted at /admin
+```
+
+Host mode covers workspaces, agents, chat, board, skills, routines, files,
+providers, preferences, attachments, portable agents, integrations, the Agent
+Store, and global `/v1/events` reactivity.
+
+The Agent Store is fully wired here, not stubbed:
+
+- **Browse** — `@houston/engine-adapter` (`src/store-catalog.ts`). Anonymous,
+  CORS-open catalog reads against the store gateway, so browsing works
+  signed-out.
+- **Install** — `@houston/engine-adapter` (`src/portable-from-store.ts`).
+  Prefers the host's `/v1/portable/fetch-from-store`; hosted deployments have no
+  local host (the cloud gateway answers 501 for `/v1/portable*`), so the browser
+  falls back to reading the public IR off the store gateway and converting it
+  with the same shared code the host route runs. Either path parks the package
+  in the registry a file upload uses, so the wizard steps downstream are
+  identical.
+- **Publish** — `@houston/engine-adapter` (`src/portable-store.ts` +
+  `src/store-gateway.ts`). Posts the agent IR to the gateway `/v1/agentstore`
+  API with the user's own session bearer (no manage tokens), reusing the engine
+  transport's 401-refresh discipline.
+
+## Optional Env
+
+- `VITE_CONTROL_PLANE_URL` / `VITE_CP_DEV_TOKEN` — host-mode endpoint + dev token.
+- `VITE_NEW_ENGINE` / `VITE_NEW_ENGINE_URL` / `VITE_NEW_ENGINE_TOKEN` — external
+  new-engine mode.
+- `VITE_AGENTSTORE_GATEWAY_URL` — store gateway for the public catalog reads.
+  There is no production fallback: a build without it has no store, loudly.
+- `VITE_AGENTSTORE_SITE_URL` — public store site for "browse the store" links
+  (defaults to the production site).
+- `POSTHOG_KEY` / `POSTHOG_HOST` — analytics.
+- `SENTRY_DSN` — error reporting.
+
+Auth storage mode is forced to `browser`; a browser tab has no OS keychain.
+
+## Browser Equivalents And Limits
+
+Browser shims implement external-link open, desktop notifications, and portable
+agent import/export via Blob download and file input.
+
+Desktop-only actions surface a clear error if triggered: reveal in Finder, open
+file or terminal, pick local directory, native app update, and local log files.
+
+`Report Bug` works in cloud host mode by posting the desktop payload to the
+host's `POST /feedback` route, which files Linear server-side. Outside cloud host
+mode it stays desktop-only.
+
+## Installable (PWA)
+
+The web app installs to a phone or desktop home screen with the Houston icon:
+`public/manifest.webmanifest` (name, standalone display, 192/512 `any` +
+`maskable` icons) plus the `apple-touch-icon` / `apple-mobile-web-app-*` head
+tags in `index.html`, which are what iOS Safari's "Add to Home Screen" reads.
+The icons are renders of the opaque app icon in the Tauri icon set
+(`app/src-tauri/icons/ios/AppIcon-512@2x.png`); regenerate them from that file
+if the brand mark changes. There is deliberately no service worker: the bundle
+is served `no-cache` so every launch runs the current release, and an offline
+cache would only serve stale chunks against a live host. `tests/pwa-manifest.test.ts`
+pins the contract.
+
+## Parity Guard
+
+`scripts/check-desktop-native.mjs` runs during `typecheck` and `build`, and from
+the root `pnpm check`. It fails if `app/src` imports a new Tauri module or
+invokes a native command this package has not shimmed, and it holds the rest of
+the native boundary too (see `app/src/lib/desktop-native-commands.ts`).
+
+## Relationship To Other Frontends
+
+- `app/` — Tauri desktop app, same React tree plus native shell.
+- `packages/web` — same UI in a browser tab, backed by the host.

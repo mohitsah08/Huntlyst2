@@ -1,0 +1,162 @@
+{
+  "header": {
+    "label": "Proveedores y modelos de IA",
+    "title": "Proveedores de IA",
+    "models": "Modelos de IA"
+  },
+  "sections": {
+    "connected": "Conectados",
+    "available": "Disponibles",
+    "subscription": "Suscripción",
+    "apiKey": "Clave de API"
+  },
+  "search": {
+    "placeholder": "Busca modelos y proveedores de IA",
+    "clear": "Borrar búsqueda",
+    "showAll": "Ver los {{count}} proveedores"
+  },
+  "card": {
+    "connect": "Conectar",
+    "connectName": "Conectar {{name}}",
+    "connecting": "Conectando",
+    "connected": "Conectado",
+    "checking": "Verificando",
+    "signOut": "Cerrar sesión",
+    "cancel": "Cancelar",
+    "models_one": "{{count}} modelo",
+    "models_other": "{{count}} modelos"
+  },
+  "directory": {
+    "search": "Busca {{count}}+ modelos",
+    "searchFew": "Buscar modelos",
+    "filters": {
+      "allSpecialties": "Todas las especialidades",
+      "reasoning": "Razonamiento",
+      "images": "Imágenes",
+      "budget": "Económico",
+      "goodAt": "Ideal para",
+      "provider": "Proveedor de IA",
+      "allProviders": "Todos los proveedores",
+      "searchProviders": "Buscar proveedores",
+      "noProviders": "No se encontraron proveedores",
+      "cost": "Costo",
+      "costAll": "Cualquier costo",
+      "costFree": "Nivel gratuito",
+      "costLow": "Bajo",
+      "costMid": "Medio",
+      "costHigh": "Alto",
+      "memory": "Memoria",
+      "memoryAll": "Cualquier memoria",
+      "memorySmall": "Pequeña",
+      "memoryMid": "Media",
+      "memoryLong": "Amplia"
+    },
+    "showMore": "Ver más",
+    "empty": {
+      "title": "No se encontraron modelos",
+      "description": "Prueba con otra búsqueda o filtro."
+    }
+  },
+  "caps": {
+    "reasoning": "Razonamiento",
+    "images": "Imágenes"
+  },
+  "providerModal": {
+    "signedInWith": "Sesión iniciada con {{provider}}",
+    "signOut": "Cerrar sesión",
+    "disconnect": "Desconectar",
+    "connect": "Conectar",
+    "models": "Modelos",
+    "searchModels": "Buscar modelos",
+    "clearSearch": "Borrar búsqueda",
+    "noModels": "Los modelos están listos apenas te conectas."
+  },
+  "model": {
+    "specs": {
+      "context": "Contexto",
+      "output": "Salida máxima",
+      "knowledge": "Conocimiento hasta",
+      "released": "Lanzado",
+      "reasoning": "Razonamiento",
+      "vision": "Visión"
+    },
+    "offers": {
+      "title": "Consíguelo a través de",
+      "subtitle": "Conecta cualquiera de estos para empezar a usar {{model}}.",
+      "subscription": "Incluido con la suscripción",
+      "pricing": "{{input}} de entrada · {{output}} de salida por 1M de tokens"
+    }
+  },
+  "providers": {
+    "search": "Buscar proveedores",
+    "seeAll": "Ver todos los proveedores",
+    "empty": {
+      "title": "No se encontraron proveedores",
+      "description": "Prueba con otra búsqueda u otro filtro."
+    },
+    "filter": {
+      "label": "Filtrar proveedores",
+      "subscription": "Suscripción",
+      "payg": "Pago por uso"
+    },
+    "openai": {
+      "description": "Inicia sesión con ChatGPT y pon a trabajar los modelos GPT y Codex."
+    },
+    "anthropic": {
+      "description": "Inicia sesión con Claude y trae los modelos detrás de Claude Code."
+    },
+    "github-copilot": {
+      "description": "Una suscripción de Copilot, muchos modelos: Claude, GPT y Gemini en un solo plan."
+    },
+    "opencode-account": {
+      "description": "Una cuenta para modelos de programación seleccionados de cada gran laboratorio, con un plan gratuito para empezar."
+    },
+    "openrouter": {
+      "description": "La puerta de acceso a todo. Una sola clave desbloquea cientos de modelos de cada laboratorio."
+    },
+    "deepseek": {
+      "description": "Razonamiento de frontera a una fracción del precio, directo de DeepSeek."
+    },
+    "google": {
+      "description": "La familia Gemini de Google AI Studio, con un plan gratuito para empezar."
+    },
+    "amazon-bedrock": {
+      "description": "Claude y más en tu propia cuenta de AWS, pensado para empresas."
+    },
+    "minimax": {
+      "description": "Modelos rápidos y económicos ajustados para el trabajo con empleados de IA."
+    },
+    "nvidia": {
+      "description": "Modelos gratis alojados por NVIDIA: Llama, Nemotron, GPT-OSS y más."
+    },
+    "openai-compatible": {
+      "description": "Ejecuta modelos en tu propio computador con Ollama, LM Studio y similares."
+    },
+    "xiaomi": {
+      "description": "Modelos MiMo de Xiaomi: rápidos, económicos y hechos para el trabajo con empleados de IA."
+    }
+  },
+  "toast": {},
+  "providerUsage": {
+    "window": {
+      "session": "Límite por sesión",
+      "week": "Límite semanal",
+      "week_opus": "Límite semanal (Opus)",
+      "month": "Límite mensual",
+      "premium": "Solicitudes premium",
+      "chat": "Solicitudes de chat",
+      "completions": "Autocompletado de código"
+    },
+    "percentUsed": "{{percent}}% usado",
+    "resets": "Se reinicia {{when}}",
+    "creditsLeft": "Te quedan {{amount}}",
+    "tokensUsed": "{{amount}} tokens usados",
+    "tokensSplit": "{{input}} de entrada, {{output}} de salida",
+    "meteredSince": "medido desde {{when}}",
+    "noData": "Esta cuenta no reporta límites por ahora.",
+    "notMeteredYet": "Aún no hay uso. La medición empieza con tu próximo mensaje.",
+    "reconnect": "Inicia sesión de nuevo para ver el uso de esta cuenta.",
+    "error": "No pudimos cargar el uso. Intenta de nuevo en un momento.",
+    "staleReading": "No pudimos actualizar el uso. Mostramos la lectura de {{when}}."
+  }
+}

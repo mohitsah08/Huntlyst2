@@ -1,0 +1,60 @@
+{# The teammate who taught a learning. Same identity source as the rest of the
+   landing (`landing.people` + `t.js.people`), with this section's own shape:
+   the name also rides the img alt, and every face carries `feat-face`. #}
+{%- macro featFace(id) %}{% set p = landing.people[id] %}{% set name = t.js.people[id] or p.initials %}{% if p.img %}<span class="face face-img feat-face" title="{{ name }}"><img src="/assets/img/{{ p.img }}-48.webp" srcset="/assets/img/{{ p.img }}-96.webp 2x" width="48" height="48" alt="{{ name }}"></span>{% else %}<span class="face {{ p.tone }} feat-face" title="{{ name }}">{{ p.initials }}</span>{% endif %}{% endmacro %}
+{#- The colored brand marks of the Skills rows. One source: landing.compound.skillLogos. #}
+{%- macro skillMark(id) %}{% set m = landing.compound.skillLogos[id] %}<svg viewBox="0 0 24 24" fill="{{ m.fill }}"><path d="{{ m.d }}"/></svg>{% endmacro -%}
+<section id="compound" class="section">
+  {# Split, reversed: statement left, the agent's compounding memory right.
+     Pills swap three static views of the SAME agent: learnings, skills,
+     context. Same data-swap mechanic as #parallel; JS-off shows Learnings
+     settled. Team-taught learnings carry the teammate's avatar. #}
+  <div class="split split-rev reveal">
+    <div class="split-copy">
+      <h2 class="sec-title">{{ t.compound.title }}</h2>
+{%- for line in t.compound.lines %}
+      <p class="split-line">{{ line }}</p>
+{%- endfor %}
+    </div>
+
+    <div class="split-visual">
+      <div class="feat-demo" data-swap-group="feat">
+        <div class="chat-tabs feat-tabs" role="tablist" aria-label="{{ t.compound.tabsLabel }}">
+          <button class="chat-tab active" data-swap="0" role="tab" aria-selected="true">{{ t.compound.tabs.learnings }}</button>
+          <button class="chat-tab" data-swap="1" role="tab" aria-selected="false">{{ t.compound.tabs.skills }}</button>
+          <button class="chat-tab" data-swap="2" role="tab" aria-selected="false">{{ t.compound.tabs.context }}</button>
+        </div>
+
+        <div class="share-mock feat-card">
+          <div class="shm-head">
+            <span class="av {{ landing.compound.av }}" aria-hidden="true"></span>
+            <span class="shm-title">{{ t.compound.agentName }}<span class="shm-sub">{{ t.compound.agentSub }}</span></span>
+            <span class="shm-count"><b data-cl-count>{{ landing.compound.count }}</b> {{ t.compound.countLabel }}</span>
+          </div>
+
+          <div class="swap-panel active" data-compound-live role="img" aria-label="{{ t.compound.learnings.alt }}">
+{%- for s in landing.compound.learnings %}{% set row = t.compound.learnings.rows[loop.index0] %}
+            <div class="feat-row"><span class="feat-note">{{ row.note }}</span><span class="feat-when">{{ row.when }}</span>{% if s.people.length > 1 %}<span class="feat-faces">{% for id in s.people %}{{ featFace(id) }}{% endfor %}</span>{% else %}{% for id in s.people %}{{ featFace(id) }}{% endfor %}{% endif %}</div>
+{%- endfor %}
+          </div>
+          <div class="swap-panel" role="img" aria-label="{{ t.compound.skills.alt }}">
+{%- for s in landing.compound.skills %}{% set row = t.compound.skills.rows[loop.index0] %}
+            <div class="feat-row"><span class="feat-note">{{ row.note }}</span><span class="skill-logos" aria-hidden="true">{% for id in s.logos %}{{ skillMark(id) }}{% endfor %}</span></div>
+{%- endfor %}
+          </div>
+          <div class="swap-panel" role="img" aria-label="{{ t.compound.context.alt }}">
+            <div class="file-grid">
+{%- for s in landing.compound.context %}{% set tile = t.compound.context.tiles[loop.index0] %}
+              <div class="file-tile">
+                <span class="file-prev" aria-hidden="true">{% if s.kind == "folder" %}<span class="fp-folder"></span>{% elif s.kind == "sheet" %}<span class="fp-page fp-sheet"></span>{% else %}<span class="fp-page"><i></i><i></i><i></i><i></i></span>{% endif %}<span class="fp-badge">{{ s.badge }}</span></span>
+                <span class="file-name">{{ tile.name }}</span><span class="file-meta">{{ tile.meta }}</span>
+              </div>
+{%- endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>

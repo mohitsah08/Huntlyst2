@@ -1,0 +1,151 @@
+name: Website Deploy
+
+# Builds the Eleventy site in website/ and deploys it to Firebase Hosting
+# (project: gethouston, site: gethouston-site). Runs automatically when
+# website/ changes land on main; can also be triggered manually.
+#
+# ── Cutover choreography (Cloudflare Pages -> Firebase Hosting) ────────────────
+# This job deploys to the gethouston-site.web.app Firebase site ONLY. It does
+# NOT touch DNS and does NOT decommission Cloudflare. The apex/www DNS records
+# for gethouston.ai still point at Cloudflare Pages until the human flip. Order:
+#   1. Orchestrator creates the Firebase site once (see PR body):
+#        firebase hosting:sites:create gethouston-site --project gethouston
+#      (equivalently the Hosting REST API `sites.create` with siteId=gethouston-site).
+#   2. This workflow runs on the next website/ push (or manual dispatch) and
+#      publishes the build to https://gethouston-site.web.app.
+#   3. Verify the deploy on https://gethouston-site.web.app (redirects, headers,
+#      URL shape) while gethouston.ai still serves from Cloudflare.
+#   4. Human adds the custom domain in Firebase Hosting and flips the apex/www
+#      DNS records to Firebase, then retires the Cloudflare Pages project. The
+#      src/_headers and src/_redirects files stay in the repo (harmless, unused
+#      on Firebase — firebase.json is the source of truth) until that cleanup.
+#
+# ── GCP auth: Workload Identity Federation ────────────────────────────────────
+#   SA: github-deploy-web@gethouston.iam.gserviceaccount.com — Firebase Hosting
+#   deploy only. The WIF provider condition restricts this binding to
+#   attribute.repository=='gethouston/houston'. firebase-tools authenticates via
+#   the Application Default Credentials exported by google-github-actions/auth.
+#
+# ── Required repo secrets ─────────────────────────────────────────────────────
+#   SUPABASE_ANON_KEY   - public (RLS-protected) Supabase anon key for the
+#                         /waitlist form. Still Supabase, intentionally unchanged.
+#   POSTHOG_KEY         - public PostHog ingest token (phc_...). base.njk omits
+#                         the whole analytics snippet when it is empty, so a
+#                         guard step fails the build loudly instead of shipping
+#                         a blind site (this exact miss cost 2026-05-25 →
+#                         2026-07-21 of website analytics when builds moved off
+#                         Cloudflare Pages, which held the key in its dashboard).
+# Optional (committed defaults exist):
+#   SUPABASE_URL, WAITLIST_SHEET_ENDPOINT, POSTHOG_HOST
+#   CERTS_EXPORT_TOKEN  - bearer token for the gateway's /v1/certs/export
+#                         endpoint, read at build time to generate the
+#                         certificate pages and images. Deliberately NOT
+#                         guarded: the data layer warns and yields an empty
+#                         certificate set, so the rest of the site still ships.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - '.github/workflows/website-deploy.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: website-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build & deploy to Firebase Hosting
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Workload Identity Federation
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: website/package-lock.json
+
+      - name: Install dependencies
+        working-directory: website
+        run: npm ci
+
+      - name: Unit tests
+        working-directory: website
+        run: npm test
+
+      # env.js falls back to an empty posthogKey and base.njk then silently
+      # omits the whole PostHog snippet, so a missing secret would ship a site
+      # with no analytics and a green build. Fail loudly instead.
+      - name: Fail if POSTHOG_KEY is missing
+        env:
+          POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
+        run: |
+          if [ -z "$POSTHOG_KEY" ]; then
+            echo "::error::POSTHOG_KEY secret is not set — refusing to deploy the site without analytics. Create it in Settings → Secrets and variables → Actions (public phc_ ingest token)."
+            exit 1
+          fi
+
+      # Certificate images are expensive: every issued certificate is two big
+      # satori + resvg canvases, and without this cache a fresh runner re-draws
+      # the whole cohort on every deploy (~20 min of the run). The digest
+      # manifest (website/.cache) decides staleness per attendee, but the skip
+      # also requires the previously rendered PNGs to exist in _site/c, so both
+      # are cached. The key is per-run so the post-job save always records the
+      # latest state; restore falls back to the most recent previous deploy.
+      # Correctness lives in the manifest digests (attendee data + renderer
+      # fingerprint), and render.mjs prunes images for certificates that are no
+      # longer issued, so a stale cache can never ship a wrong or revoked image.
+      - name: Restore certificate image cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            website/.cache
+            website/_site/c
+          key: cert-images-${{ github.run_id }}
+          restore-keys: |
+            cert-images-
+
+      - name: Build site
+        working-directory: website
+        run: npx @11ty/eleventy
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          WAITLIST_SHEET_ENDPOINT: ${{ secrets.WAITLIST_SHEET_ENDPOINT }}
+          POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
+          POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
+          CERTS_EXPORT_TOKEN: ${{ secrets.CERTS_EXPORT_TOKEN }}
+          CERTS_GATEWAY_URL: https://gateway.gethouston.ai
+
+      - name: Auth to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/1056698080170/locations/global/workloadIdentityPools/github/providers/houston
+          service_account: github-deploy-web@gethouston.iam.gserviceaccount.com
+
+      - name: Deploy to Firebase Hosting
+        working-directory: website
+        run: >-
+          npx --yes firebase-tools@15 deploy
+          --only hosting:gethouston-site
+          --project gethouston
+          --non-interactive
+          --message "${{ github.sha }}"
+
+      # TEMPORARY dual-deploy: gethouston.ai's apex/www DNS still points at
+      # Cloudflare Pages, so until the DNS flip (cutover step 4 in the header)
+      # Cloudflare must keep receiving deploys or the live site goes stale.
+      # DELETE this step when the DNS flip lands.
+      - name: Deploy to Cloudflare Pages (until DNS flip)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: website
+          command: pages deploy _site --project-name=houston-site --branch=main

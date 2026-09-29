@@ -1,0 +1,65 @@
+/**
+ * Type augmentation for react-i18next so `t()` keys are checked at compile
+ * time. Catches typos like `t("dashoard:columns.running")` before runtime.
+ *
+ * English is the source of truth; other locales fall back to English at
+ * runtime, so it's enough to type against the English namespace shapes.
+ */
+
+import "react-i18next";
+import type academy from "../locales/en/academy.json";
+import type agentOnboarding from "../locales/en/agent-onboarding.json";
+import type agents from "../locales/en/agents.json";
+import type aiHub from "../locales/en/ai-hub.json";
+import type assistant from "../locales/en/assistant.json";
+import type auth from "../locales/en/auth.json";
+import type board from "../locales/en/board.json";
+import type chat from "../locales/en/chat.json";
+import type common from "../locales/en/common.json";
+import type context from "../locales/en/context.json";
+import type dashboard from "../locales/en/dashboard.json";
+import type errors from "../locales/en/errors.json";
+import type events from "../locales/en/events.json";
+import type integrations from "../locales/en/integrations.json";
+import type migration from "../locales/en/migration.json";
+import type plan from "../locales/en/plan.json";
+import type portable from "../locales/en/portable.json";
+import type providers from "../locales/en/providers.json";
+import type routines from "../locales/en/routines.json";
+import type settings from "../locales/en/settings.json";
+import type setup from "../locales/en/setup.json";
+import type shell from "../locales/en/shell.json";
+import type skills from "../locales/en/skills.json";
+import type teams from "../locales/en/teams.json";
+
+declare module "react-i18next" {
+  interface CustomTypeOptions {
+    defaultNS: "common";
+    resources: {
+      common: typeof common;
+      aiHub: typeof aiHub;
+      assistant: typeof assistant;
+      auth: typeof auth;
+      setup: typeof setup;
+      shell: typeof shell;
+      dashboard: typeof dashboard;
+      settings: typeof settings;
+      chat: typeof chat;
+      board: typeof board;
+      agents: typeof agents;
+      skills: typeof skills;
+      routines: typeof routines;
+      providers: typeof providers;
+      errors: typeof errors;
+      events: typeof events;
+      integrations: typeof integrations;
+      migration: typeof migration;
+      portable: typeof portable;
+      plan: typeof plan;
+      context: typeof context;
+      teams: typeof teams;
+      agentOnboarding: typeof agentOnboarding;
+      academy: typeof academy;
+    };
+  }
+}

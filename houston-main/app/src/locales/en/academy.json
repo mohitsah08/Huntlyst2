@@ -1,0 +1,129 @@
+{
+  "title": "Academy",
+  "status": {
+    "experience": "Experience",
+    "experienceOf": "{{value}} / {{goal}}",
+    "experienceTotal": "{{value}} in total",
+    "usageChip": "Usage {{points}}",
+    "streakChip_one": "{{count}}-day streak",
+    "streakChip_other": "{{count}}-day streak",
+    "streakBest_one": "Best: {{count}} day",
+    "streakBest_other": "Best: {{count}} days",
+    "toNextRank": "{{points}} to {{rank}}",
+    "topRank": "Top rank reached",
+    "avatarAlt": "Your Academy rank"
+  },
+  "ranks": {
+    "cadet": "Cadet",
+    "pilot": "Pilot",
+    "specialist": "Specialist",
+    "commander": "Commander",
+    "missionDirector": "Mission Director"
+  },
+  "path": {
+    "title": "Your path",
+    "earned": "{{points}} experience",
+    "chapterProgress": "{{done}} of {{total}} done",
+    "chapterDone": "Completed"
+  },
+  "chapters": {
+    "getting-started": {
+      "title": "Getting started"
+    }
+  },
+  "actions": {
+    "start": "Start",
+    "continue": "Continue",
+    "replay": "Replay"
+  },
+  "locked": {
+    "title": "Coming soon",
+    "description": "A new chapter opens here as the Academy grows."
+  },
+  "error": {
+    "title": "Couldn't load your progress",
+    "description": "Something went wrong reaching the server. Check your connection and try again.",
+    "retry": "Try again"
+  },
+  "lessons": {
+    "exit": "Exit lesson",
+    "progress": "Step {{current}} of {{total}}",
+    "stepCount": "{{current}} / {{total}}",
+    "video": {
+      "kicker": "Watch",
+      "continue": "Continue",
+      "comingSoon": "The video is on its way. You can start now."
+    },
+    "houston-tour": {
+      "title": "Take a tour of Houston",
+      "description": "See where everything lives, in under a minute.",
+      "steps": {
+        "team": {
+          "body": "Your AI Employees live here. Open one any time to see what it's working on.",
+          "cta": "Next"
+        },
+        "board": {
+          "body": "This is your AI Employee's board. Every task you give them shows up here, with where it stands.",
+          "cta": "Next"
+        },
+        "newTask": {
+          "body": "Use New task whenever you need something done. Your AI Employee takes it from there.",
+          "cta": "Next"
+        },
+        "aiModels": {
+          "body": "AI Models is where you connect your AI, or switch to another one.",
+          "cta": "Next"
+        },
+        "integrations": {
+          "body": "Integrations connect the apps you already use, like Gmail or Slack, so your AI Employees can work in them.",
+          "cta": "Next"
+        },
+        "academy": {
+          "body": "And this is the Academy. Come back any time to learn more and level up.",
+          "cta": "Done"
+        }
+      }
+    },
+    "employee-email": {
+      "title": "Have an AI Employee email you",
+      "description": "Connect your email and get a real email from your AI Employee.",
+      "steps": {
+        "intro": {
+          "title": "Your AI Employee, doing real work",
+          "body": "Connect your email, pick an AI Employee, and ask it to email you. It takes about a minute.",
+          "cta": "Let's go"
+        },
+        "connect": {
+          "title": "Connect your email",
+          "body": "Pick the email you use. You can manage it any time in Integrations.",
+          "connect": "Connect",
+          "connecting": "Connecting…",
+          "cancel": "Cancel",
+          "connected": "Connected",
+          "unavailable": "Email apps aren't available here yet.",
+          "loading": "Checking your email apps…"
+        },
+        "sender": {
+          "title": "Who should email you?",
+          "body": "Pick the AI Employee that sends it.",
+          "cta": "Continue",
+          "empty": {
+            "title": "Hire your first AI Employee",
+            "body": "You need an AI Employee to send the email. Hire one and this lesson picks right up.",
+            "askAdmin": "Your team has no AI Employees yet. Ask a workspace admin to add one, then come back.",
+            "cta": "Hire an AI Employee"
+          }
+        },
+        "ask": {
+          "body": "Your request is ready. Press Send to give it to your AI Employee.",
+          "request": "Send me a short, friendly hello email at my own email address, using {{app}}.",
+          "requestAnyApp": "Send me a short, friendly hello email at my own email address."
+        },
+        "watch": {
+          "body": "Your AI Employee is on it. Check your inbox.",
+          "cta": "I got it"
+        }
+      }
+    }
+  }
+}

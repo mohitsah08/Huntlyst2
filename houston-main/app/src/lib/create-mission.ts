@@ -1,0 +1,187 @@
+/**
+ * createMission — single source of truth for creating a new activity and
+ * kicking off its Claude session. Used by both the desktop board-tab UI
+ * and the mobile sync responder so the flow stays identical.
+ */
+
+import type { MessageMention } from "@houston/engine-adapter";
+import { isAgentProvisioning } from "../stores/agent-provisioning";
+import { activityRowPin, definedPins } from "./agent-model-overrides";
+import { analytics } from "./analytics";
+import { createMissionNow } from "./create-mission-now";
+import { createMissionWhileWarming } from "./create-mission-warming";
+import { hiddenPromptDisplayText } from "./hidden-prompt-display-text";
+import { logger } from "./logger";
+import {
+  hasHiddenPrompt,
+  type MissionPromptOptions,
+  missionPrompt,
+} from "./mission-prompt";
+import { fallbackMissionTitle, refreshMissionTitle } from "./mission-title";
+import { tauriActivity, tauriChat } from "./tauri";
+
+/** Build a session key for a given activity id. */
+function sessionKeyForActivity(activityId: string): string {
+  return `activity-${activityId}`;
+}
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+/**
+ * Minimal Conversation shape consumed by createMission. Loosely based on
+ * the legacy `@houston-ai/sync-protocol` type; kept local so the desktop
+ * compiles without the deleted package.
+ */
+export interface Conversation {
+  id: string;
+  title: string;
+  description?: string;
+  agentName: string;
+  agentColor?: string;
+  status: string;
+  updatedAt: string;
+  agentPath: string;
+}
+
+/**
+ * Derive an activity title from the user's message.
+ * - Trims whitespace; empty input becomes "New mission".
+ * - Truncates to ~40 chars on a word boundary and appends an ellipsis if
+ *   the message was longer.
+ */
+export function autoTitleFromText(text: string): string {
+  return fallbackMissionTitle(text);
+}
+
+export interface CreateMissionAgent {
+  id: string;
+  name: string;
+  color?: string;
+  folderPath: string;
+}
+
+export interface CreateMissionOptions extends MissionPromptOptions {
+  /** Sub-agent mode id to store with the activity row. */
+  agentMode?: string;
+  /** Provider override forwarded to tauriChat.send. */
+  providerOverride?: string;
+  /** Model override forwarded to tauriChat.send. */
+  modelOverride?: string;
+  /** Reasoning-effort override forwarded to tauriChat.send. */
+  effortOverride?: string;
+  /** Per-turn mode pin (composer "Mode" selector) forwarded to tauriChat.send. */
+  modeOverride?: "execute" | "plan" | "auto";
+  /** Teammates the first message @mentions (HOU-944), forwarded to
+   *  tauriChat.send as a sidecar beside the prompt. */
+  mentions?: MessageMention[];
+  /**
+   * Explicit activity title. Overrides the default `autoTitleFromText(text)`.
+   * Used by action invocations where `text` is a structured marker that
+   * should not bleed into the kanban card title.
+   */
+  title?: string;
+  /** Source text used for async AI title generation. Defaults to `text`. */
+  titleText?: string;
+  /**
+   * A composer send (PRODUCT-1643): resolve the moment the turn is on screen —
+   * the board row lands in the background through an id-upsert, so nothing
+   * waits on the pod (asleep or not) before the user sees their message.
+   * Setup flows leave this unset: they patch the row right after create and
+   * need it landed first.
+   */
+  optimistic?: boolean;
+}
+
+export interface CreateMissionResult {
+  /** Activity id returned by the backend. */
+  conversationId: string;
+  /** Derived session key (`activity-{id}`). */
+  sessionKey: string;
+  /** Wire-ready Conversation payload for the mobile list. */
+  conversation: Conversation;
+}
+
+/**
+ * Create an activity under the given agent and start its Claude session.
+ * If prompt preparation or session start fails, remove the just-created
+ * activity so the board never keeps a fake "running" mission.
+ */
+export async function createMission(
+  agent: CreateMissionAgent,
+  text: string,
+  opts: CreateMissionOptions = {},
+): Promise<CreateMissionResult> {
+  // A warming engine holds the activity write for the whole cold start —
+  // awaiting it would freeze the composer with the user's text still in it
+  // (HOU-693). The warming path answers immediately instead.
+  if (isAgentProvisioning(agent.id)) {
+    return createMissionWhileWarming(agent, text, opts);
+  }
+  if (opts.optimistic) return createMissionNow(agent, text, opts);
+  const titleText = opts.titleText ?? text;
+  const title = opts.title ?? fallbackMissionTitle(titleText);
+  const description = text;
+
+  // The row is stamped in pi's CANONICAL dialect (the one every send path reads
+  // it back in), and a model the catalog could not resolve is left OFF the row
+  // rather than written as an empty pin.
+  const rowPin = activityRowPin(opts);
+  const item = await tauriActivity.create(
+    agent.folderPath,
+    title,
+    description,
+    opts.agentMode,
+    rowPin.provider,
+    rowPin.model,
+  );
+  const conversationId = item.id;
+  const sessionKey = sessionKeyForActivity(conversationId);
+
+  try {
+    const prompt = await missionPrompt(opts, conversationId, text);
+
+    await tauriChat.send(agent.folderPath, prompt, sessionKey, {
+      // Empty pins dropped: a turn naming a provider and an empty model is a
+      // half-pin the runtime rejects.
+      ...definedPins(opts),
+      modeOverride: opts.modeOverride,
+      mentions: opts.mentions,
+      displayText: hiddenPromptDisplayText(text, hasHiddenPrompt(opts)),
+    });
+
+    analytics.track("mission_created", {
+      agent_mode: opts.agentMode,
+      provider: opts.providerOverride,
+      model: opts.modelOverride,
+    });
+
+    if (!opts.title) {
+      void refreshMissionTitle({
+        agentPath: agent.folderPath,
+        activityId: conversationId,
+        text: titleText,
+      });
+    }
+  } catch (e) {
+    try {
+      await tauriActivity.delete(agent.folderPath, conversationId);
+    } catch (cleanupErr) {
+      logger.error(`[create-mission] rollback failed: ${cleanupErr}`);
+    }
+    throw e;
+  }
+
+  const conversation: Conversation = {
+    id: conversationId,
+    title,
+    description,
+    agentName: agent.name,
+    agentColor: agent.color,
+    status: "running",
+    updatedAt: nowIso(),
+    agentPath: agent.folderPath,
+  };
+
+  return { conversationId, sessionKey, conversation };
+}

@@ -1,0 +1,41 @@
+{
+  "button": {
+    "aria": "Uso del contexto"
+  },
+  "card": {
+    "title": "Contexto",
+    "percent": "{{percent}}%",
+    "usedOfTotal": "{{used}} de {{total}} tokens",
+    "tokensUsed": "{{used}} tokens usados",
+    "empty": "Envía un mensaje y el uso del contexto aparecerá aquí.",
+    "unknownWindow": "Todavía no se conoce el tamaño del contexto de este modelo, así que la cantidad usada se muestra sin porcentaje."
+  },
+  "aboutMe": {
+    "title": "Sobre mí",
+    "subtitle": "Lo que cada empleado de IA sabe sobre ti antes de empezar."
+  },
+  "editor": {
+    "toolbar": {
+      "label": "Formato",
+      "heading": "Título",
+      "subheading": "Subtítulo",
+      "bold": "Negrita",
+      "italic": "Cursiva",
+      "bulletList": "Lista con viñetas",
+      "numberedList": "Lista numerada",
+      "quote": "Cita"
+    },
+    "saving": "Guardando…",
+    "saved": "Guardado",
+    "user": {
+      "placeholder": "p. ej. Soy Juan, líder de ventas. Me importa la velocidad del pipeline y prefiero respuestas cortas."
+    },
+    "workspace": {
+      "placeholder": "## Quiénes somos\nAcme Corp. Fintech B2B, Serie A, 40 personas.\n\n## Producto y clientes\nSoftware de facturación para CFOs de empresas medianas.\n\n## Cómo nos comunicamos\nCercanos y directos. Frases cortas. Nunca prometemos de más."
+    },
+    "noAgent": {
+      "title": "Aún no tienes empleados de IA",
+      "body": "Lo que escribas aquí se guarda con tus empleados de IA, así que se abre cuando contrates el primero."
+    }
+  }
+}

@@ -1,0 +1,290 @@
+{
+  "catalog": {
+    "personal-assistant": {
+      "name": "Personal assistant",
+      "description": "A general-purpose assistant for your day, inbox, calendar, follow-ups, and recurring work."
+    },
+    "blank": {
+      "name": "Start from scratch",
+      "description": "A blank AI Employee with no pre-configured actions, instructions, or learnings. Build it your way."
+    },
+    "bookkeeping": {
+      "name": "Bookkeeper",
+      "description": "Categorize transactions, reconcile accounts, close the books every month, and generate investor-ready financials. Connects to QuickBooks, Xero, Stripe, and your bank feeds. Drafts journal entries and statements, never posts to your ledger or moves money."
+    },
+    "legal": {
+      "name": "General Counsel",
+      "description": "Review contracts, audit privacy compliance, prep Delaware filings, run trademark searches, and answer legal questions on the spot. Drafts NDAs, policies, and escalation briefs, never files, signs, or sends anything on your behalf."
+    },
+    "marketing": {
+      "name": "Growth Lead",
+      "description": "Build positioning, plan campaigns, write blog posts and landing pages, audit SEO and AI-search visibility, and draft email sequences. Strategy through execution across content, paid, social, and conversion copy, all drafts, never published."
+    },
+    "operations": {
+      "name": "Chief of Staff",
+      "description": "Triage your inbox, prep meetings, track goals, manage vendor renewals, audit SaaS spend, and run data queries. Covers planning, scheduling, finance hygiene, and reporting, drafts only, never sends or commits."
+    },
+    "people": {
+      "name": "Head of Talent",
+      "description": "Source and evaluate candidates, coordinate interview loops, draft offer letters, run review cycles, and track compliance deadlines. Covers hiring through retention, drafts only, never sends or modifies your HR systems."
+    },
+    "sales": {
+      "name": "Chief Revenue Officer",
+      "description": "Find leads, research accounts, prep calls, draft outreach, manage your CRM, and forecast pipeline. Covers prospecting through expansion, drafts only, never sends or changes deal stages without your approval."
+    },
+    "support": {
+      "name": "Head of Customer Success",
+      "description": "Triage tickets, draft replies, write help-center articles, score customer health, and build churn-save playbooks. Covers inbox through customer success, drafts only, never sends."
+    },
+    "outbound": {
+      "name": "Growth Hacker",
+      "description": "Turn a single LinkedIn post into a paused cold email campaign in Instantly. I scrape the commenters or reactors, store them in Airtable, find verified emails through Apollo, co-write a 3-email sequence with you, then load it all into Instantly. The campaign always stays paused for your review, I never auto-launch."
+    }
+  },
+  "toasts": {
+    "renamed": "Workspace renamed",
+    "nameConflict": "An AI Employee named {{name}} already exists",
+    "nameConflictDescription": "Choose a different name and try again.",
+    "deleted": "Workspace deleted",
+    "switchedModel": "Switched to {{provider}} ({{model}})",
+    "timezoneSet": "Timezone set to {{zone}}"
+  },
+  "nameErrors": {
+    "invalidChars": "AI Employee names can't contain slashes or special characters",
+    "tooLong": "AI Employee names can be at most {{max}} characters"
+  },
+  "instructions": {
+    "specific": "Specific instructions",
+    "placeholder": "Write instructions for your AI Employee…",
+    "brief": {
+      "industry": "Industry",
+      "role": "Role",
+      "addIndustry": "Add industry",
+      "addRole": "Add role"
+    },
+    "loadFailed": "Couldn't load the job description."
+  },
+  "learnings": {
+    "emptyTitle": "No learnings yet",
+    "emptyDescription": "The AI Employee jots things down as it works, or you can add them yourself.",
+    "addLearning": "Add learning",
+    "helper": "Quick notes the AI Employee picks up over time.",
+    "inputPlaceholder": "Type a learning and press Enter…",
+    "editAria": "Edit learning",
+    "expandAria": "Expand learning",
+    "collapseAria": "Collapse learning",
+    "removeAria": "Remove learning",
+    "confirmRemoveTitle": "Remove this learning?",
+    "confirmRemoveDescription": "The AI Employee will lose this note. You can add it back later.",
+    "confirmRemoveLabel": "Remove",
+    "provenanceFromMission": "From {{name}} · {{mission}}",
+    "provenanceFrom": "From {{name}}",
+    "provenanceMission": "From {{mission}}"
+  },
+  "subTabs": {
+    "instructions": "Job description",
+    "skills": "Skills",
+    "learnings": "Learnings"
+  },
+  "configure": {
+    "projectContext": {
+      "title": "Project context",
+      "description": "Injected into all AI Employees. Describe your project, conventions, and rules.",
+      "placeholder": "Project context, coding conventions, architecture notes..."
+    },
+    "agentPrompts": {
+      "title": "AI Employee prompts",
+      "description": "Each AI Employee mode gets its own system prompt.",
+      "placeholder": "System prompt for {{name}}..."
+    },
+    "skills": {
+      "title": "Skills",
+      "description": "Reusable procedures the AI Employees can run."
+    },
+    "learnings": {
+      "title": "Learnings",
+      "description": "AI Employees save learnings as they work. You can add them manually too."
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "AI Employee configuration and runtime settings.",
+      "savingHint": "Saving...",
+      "worktreeMode": "Worktree mode",
+      "worktreeModeDescription": "Create a separate git worktree for each task",
+      "installCommand": "Install command",
+      "installCommandPlaceholder": "e.g. pnpm install, npm install, cargo build",
+      "devCommand": "Dev command",
+      "devCommandPlaceholder": "e.g. pnpm dev, npm run dev, cargo run"
+    }
+  },
+  "promptCards": {
+    "projectContext": "Project Context",
+    "claudeMdSummary": "CLAUDE.md, {{count}} lines",
+    "modeSummary": "{{file}}, {{count}} lines"
+  },
+  "files": {
+    "openInFileManager": "Open in File Manager",
+    "loading": "Loading…",
+    "sortBy": "Sort by",
+    "newMenu": "New",
+    "newFolder": "New folder",
+    "newFolderPlaceholder": "untitled folder",
+    "emptyFolder": "This folder is empty",
+    "itemSingular": "item",
+    "itemPlural": "items",
+    "itemCount_one": "{{count}} item",
+    "itemCount_other": "{{count}} items",
+    "menuButton": "More actions",
+    "expandAgent": "Expand {{name}} files",
+    "collapseAgent": "Collapse {{name}} files",
+    "nameTaken": {
+      "title": "That name is already in use",
+      "description": "A file or folder named “{{name}}” already exists here."
+    },
+    "readOnly": {
+      "title": "These files can’t be changed right now",
+      "description": "Changes can’t be saved there. Check the folder’s permissions and try again."
+    },
+    "conflict": {
+      "title": "“{{name}}” already exists",
+      "description": "The destination folder already has an item named “{{name}}”. You can replace it or keep both.",
+      "replace": "Replace",
+      "keepBoth": "Keep both",
+      "cancel": "Cancel"
+    },
+    "uploadFiles": "Upload files",
+    "uploadFolder": "Upload folder",
+    "folderDropFailed": "We could not read that folder. Try the Upload button instead.",
+    "downloadAll": "Download all",
+    "gone": {
+      "title": "That file is not there anymore",
+      "description": "Your assistant may have renamed, moved, or removed it. Check its Files tab for the latest version."
+    },
+    "uploadingBusy": "Uploading…",
+    "searchPlaceholder": "Search files",
+    "searchClear": "Clear search",
+    "searchNoResults": "No files match your search",
+    "selectRow": "Select",
+    "selectAll": "Select all",
+    "selectedCount_one": "{{count}} selected",
+    "selectedCount_other": "{{count}} selected",
+    "deleteSelected": "Delete",
+    "clearSelection": "Clear selection",
+    "uploadTooLarge": {
+      "title_one": "File too large",
+      "title_other": "Files too large",
+      "description_one": "The limit is {{maxSize}} per file, so {{names}} was not uploaded.",
+      "description_other": "The limit is {{maxSize}} per file, so these were not uploaded: {{names}}",
+      "batchTitle": "Upload too large",
+      "batchDescription": "This upload goes over the {{maxSize}} limit. Try smaller files."
+    },
+    "delete": {
+      "title": "Move “{{name}}” to Trash?",
+      "fileDescription": "This file will be removed from your assistant’s workspace.",
+      "folderDescription": "This folder and everything inside it will be removed from your assistant’s workspace.",
+      "batchTitle_one": "Move {{count}} item to Trash?",
+      "batchTitle_other": "Move {{count}} items to Trash?",
+      "batchDescription_one": "This item will be removed from your assistant’s workspace.",
+      "batchDescription_other": "These items will be removed from your assistant’s workspace.",
+      "confirm": "Move to Trash",
+      "cancel": "Cancel"
+    },
+    "columns": {
+      "name": "Name",
+      "dateModified": "Modified",
+      "size": "Size"
+    },
+    "menu": {
+      "open": "Open",
+      "rename": "Rename",
+      "reveal": "Show in File Manager",
+      "delete": "Move to Trash",
+      "preview": "Preview",
+      "download": "Download"
+    },
+    "preview": {
+      "loading": "Loading preview…",
+      "unsupportedTitle": "No preview for this file type",
+      "unsupportedDescription": "Download it to open it on your computer.",
+      "download": "Download",
+      "close": "Close",
+      "errorTitle": "Couldn’t load the file",
+      "expand": "Expand",
+      "collapse": "Shrink"
+    },
+    "toasts": {
+      "savedTitle": "File saved",
+      "savedDescription": "{{name}} was saved to your computer.",
+      "revealAction": "Show in File Manager",
+      "revealFailed": "Couldn’t show the file",
+      "saveFailedTitle": "Couldn’t save the file",
+      "openFailedTitle": "Couldn’t open the file",
+      "savedRenamedDescription": "Saved as {{name}} because {{original}} is open in another program.",
+      "saveLocked": "That file is open in another program. Close it there and download again.",
+      "savePermission": "The app isn't allowed to save into that folder. Choose another folder, like Downloads.",
+      "saveDiskFull": "There isn't enough free space on this computer to save the file.",
+      "revealPermission": "The app isn't allowed to open that folder on this computer. Look for the file where you saved it."
+    },
+    "modifiedToday": "Today"
+  },
+  "copyAgent": {
+    "row": "Duplicate {{name}}",
+    "rowDescription": "Create a duplicate in one of your groups. Conversations are not duplicated.",
+    "title": "Duplicate {{name}}",
+    "body": "The duplicate starts with the same job description, skills, routines, learnings and color. Conversations stay with the original and are never duplicated.",
+    "nameLabel": "Name for the duplicate",
+    "nameTaken": "An AI Employee named {{name}} already exists. AI Employee names are shared across all your groups, so give the duplicate its own name.",
+    "teamLabel": "Group for the duplicate",
+    "confirm": "Create duplicate",
+    "copySuffix": "copy",
+    "toasts": {
+      "createdTitle": "Duplicate created",
+      "createdDescription": "{{name}} is ready.",
+      "chatsCopiedTitle": "Chats copied",
+      "chatsCopiedDescription_one": "{{count}} conversation now lives with {{name}} too.",
+      "chatsCopiedDescription_other": "{{count}} conversations now live with {{name}} too."
+    },
+    "errors": {
+      "failed": "We couldn't duplicate the AI Employee",
+      "chatsFailed": "We couldn't copy the chats",
+      "chatsPartial": "Some chats did not make it. Duplicate the AI Employee again to retry."
+    },
+    "wizard": {
+      "source": {
+        "title": "Which AI Employee should we copy?",
+        "body": "The new AI Employee starts out like the one you pick. On the next screens you choose what it keeps. Files stay with the original.",
+        "empty": "You have no AI Employees to copy yet."
+      },
+      "instructions": {
+        "title": "What should the copy know?",
+        "body": "Everything is on to start, except the conversations. Turn off anything the new AI Employee should not carry over.",
+        "instructionsLabel": "Job description",
+        "instructionsRow": "Job description and rules",
+        "noInstructions": "{{name}} has no job description yet.",
+        "learningsLabel": "Learnings",
+        "learningsBody": "Notes the AI Employee picked up while working. Personal ones can stay behind.",
+        "chatsLabel": "Chats",
+        "chatsRow": "Conversations",
+        "chatsCount_one": "{{count}} conversation {{name}} has had so far",
+        "chatsCount_other": "{{count}} conversations {{name}} has had so far",
+        "noChats": "{{name}} has no conversations yet."
+      },
+      "routines": {
+        "title": "Which routines should come along?",
+        "body": "Routines run on their own schedule. Each one you keep is copied as it is in {{name}}, and you can change it later."
+      },
+      "skills": {
+        "title": "Which skills should come along?",
+        "body": "Skills are the things {{name}} knows how to do. Keep the ones the copy needs."
+      },
+      "name": {
+        "heading": "Based on {{name}}"
+      },
+      "actions": {
+        "next": "Continue",
+        "selectAll": "Select all",
+        "clearAll": "Clear"
+      }
+    }
+  }
+}

@@ -1,0 +1,127 @@
+import { HoustonAvatar, resolveAgentColor } from "@houston-ai/core";
+import type { SidebarGroupView, SidebarItem } from "@houston-ai/layout";
+import { Users } from "lucide-react";
+import type { ReactNode } from "react";
+
+/**
+ * The **Your Agents** area's shared stand-in content.
+ *
+ * Every component on this rail is domain-blind — `AppSidebar` takes `icon` and
+ * `trailing` nodes, `TabBar` takes labels — so an honest specimen has to feed
+ * them exactly what the desktop shell feeds them: `HoustonAvatar` for the agent
+ * glyph, a count `Badge` for "needs you", a quiet dot for unread. These are the
+ * same shapes `app/src/components/shell/agent-sidebar-status.tsx` builds.
+ */
+
+/** The rail's agent glyph: the Houston helmet in the agent's palette colour. */
+export function AgentIcon({
+  color,
+  running,
+}: {
+  color: string;
+  running?: boolean;
+}) {
+  return (
+    <HoustonAvatar
+      color={resolveAgentColor(color)}
+      diameter={20}
+      running={running}
+    />
+  );
+}
+
+/**
+ * A team block's mark, in the same glyph column the agent avatars use one
+ * indent to the right. Deliberately MONOCHROME — it inherits the row's colour,
+ * because the identity colour in that column belongs to the avatars below it
+ * and a second palette stacked above them would compete with the one that
+ * carries real meaning.
+ */
+export function TeamIcon() {
+  return <Users className="size-4" />;
+}
+
+/** "Act on me now": a count chip, the loudest signal a row carries. */
+
+/** "There is something new here": deliberately a dot, never a count. */
+export function UnreadDot() {
+  return (
+    <span
+      role="img"
+      aria-label="Unread activity"
+      title="Unread activity"
+      className="flex size-3 shrink-0 items-center justify-center"
+    >
+      <span className="size-1.5 rounded-full bg-action" />
+    </span>
+  );
+}
+
+/** Four agents a Houston user would actually have, with live-looking signals. */
+export const agentItems: SidebarItem[] = [
+  {
+    id: "inbox-zero",
+    name: "Inbox Zero",
+    icon: <AgentIcon color="navy" running />,
+  },
+  {
+    id: "meeting-notes",
+    name: "Meeting Notes",
+    icon: <AgentIcon color="forest" />,
+    trailing: <UnreadDot />,
+  },
+  {
+    id: "weekly-report",
+    name: "Weekly Report",
+    icon: <AgentIcon color="golden" />,
+  },
+  {
+    id: "expense-filer",
+    name: "Expense Filer",
+    icon: <AgentIcon color="crimson" />,
+  },
+];
+
+/** Two named groups; Expense Filer leads the list without a folder header. */
+export const agentGroups: SidebarGroupView[] = [
+  {
+    id: "mornings",
+    name: "Mornings",
+    collapsed: false,
+    itemIds: ["inbox-zero", "meeting-notes"],
+  },
+  {
+    id: "finance",
+    name: "Finance",
+    collapsed: true,
+    itemIds: ["weekly-report"],
+  },
+];
+
+/** The workspaces the switcher lists. */
+export const workspaces: readonly { id: string; name: string }[] = [
+  { id: "personal", name: "Julian's workspace" },
+  { id: "taxflow", name: "Taxflow" },
+  { id: "houston", name: "Houston HQ" },
+];
+
+/**
+ * A bounded stage for a full-height app-frame component. The rail and the split
+ * view both size themselves from their parent, so a specimen has to give them a
+ * window with a real height or they collapse to nothing.
+ */
+export function Viewport({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`flex overflow-hidden rounded-2xl border border-line bg-gutter ${className ?? "h-[420px]"}`}
+    >
+      {children}
+    </div>
+  );
+}

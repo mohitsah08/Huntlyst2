@@ -1,0 +1,73 @@
+{
+  "name": {
+    "description": "Workspaces keep your AI Employees organized, one for personal, one for work, etc.",
+    "placeholder": "e.g. Personal, Work, Acme Corp"
+  },
+  "migrationReconnect": {
+    "title": "Welcome back",
+    "body": "Your AI Employees and everything you've worked on are right here. Just reconnect your AI to pick up where you left off.",
+    "skip": "I'll do this later",
+    "dismissError": "We couldn't save that. Please try again."
+  },
+  "connectAi": {
+    "title": "Connect your AI",
+    "plans": {
+      "claude": {
+        "title": "Your Claude subscription",
+        "subtitle": "Use the Claude plan you already pay for.",
+        "cancel": "Cancel Claude sign-in"
+      },
+      "chatgpt": {
+        "title": "Your ChatGPT subscription",
+        "subtitle": "Use the ChatGPT plan you already pay for.",
+        "cancel": "Cancel ChatGPT sign-in"
+      }
+    },
+    "signIn": "Sign in",
+    "waiting": "Waiting for you to sign in",
+    "cancel": "Cancel",
+    "connected": "Connected",
+    "checking": "Checking",
+    "viewMore": "View more",
+    "showFewer": "Show fewer options"
+  },
+  "team": {
+    "choice": {
+      "title": "Let's build your team",
+      "subtitle": "Your AI Employees take work off your plate. Start with a ready-made team, or hire each one yourself.",
+      "soFar_one": "You have 1 AI Employee on your team so far",
+      "soFar_other": "You have {{count}} AI Employees on your team so far",
+      "basicTitle": "Start with a basic team",
+      "basicBody": "Three AI Employees ready to go: {{roles}}.",
+      "hireTitle": "Hire your team",
+      "hireBody": "Pick an industry, a job and a name, one AI Employee at a time."
+    },
+    "hire": {
+      "submit": "Hire"
+    },
+    "hired": {
+      "title_one": "You hired your first AI Employee",
+      "title_other": "You hired {{count}} AI Employees",
+      "subtitle": "Change a name or a color anytime. Hire another, or finish and meet your team.",
+      "hireAnother": "Hire another"
+    },
+    "basic": {
+      "title": "Meet your new team",
+      "subtitle": "Everything here is editable: change any name, job or color before you hire them.",
+      "submit": "Hire my team",
+      "add": "Hire one more",
+      "attention_one": "{{name}} couldn't join your team yet. Try again or remove them to finish.",
+      "attention_other": "{{count}} AI Employees couldn't join your team yet. Try again or remove them to finish.",
+      "unsaved_one": "We couldn't save the changes to {{name}} yet. We'll try again when you hire your team.",
+      "unsaved_other": "We couldn't save the changes to {{count}} AI Employees yet. We'll try again when you hire your team."
+    }
+  },
+  "onboardingSurvey": {
+    "goal": {
+      "title": "Which task would you love to hand off to an AI Employee?"
+    },
+    "completion": {
+      "notNow": "Not now"
+    }
+  }
+}

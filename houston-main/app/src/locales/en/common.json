@@ -1,0 +1,75 @@
+{
+  "actions": {
+    "continue": "Continue",
+    "back": "Back",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "getStarted": "Get started",
+    "delete": "Delete",
+    "remove": "Remove",
+    "confirm": "Confirm",
+    "retry": "Retry",
+    "tryAgain": "Try again",
+    "edit": "Edit",
+    "rename": "Rename",
+    "add": "Add",
+    "next": "Next",
+    "done": "Done",
+    "loading": "Loading",
+    "saving": "Saving",
+    "saved": "Saved",
+    "create": "Create",
+    "dismiss": "Dismiss",
+    "submit": "Submit",
+    "search": "Search",
+    "loadMore": "Load more",
+    "install": "Install",
+    "installing": "Installing",
+    "reload": "Reload",
+    "later": "Later",
+    "signIn": "Sign in"
+  },
+  "language": {
+    "title": "Language",
+    "description": "Choose the language the app uses for this workspace.",
+    "label": "Interface language",
+    "toastChanged": "Language changed"
+  },
+  "env": {
+    "preview": "Preview"
+  },
+  "notifications": {
+    "sessionComplete": {
+      "title": "{{workspace}} · {{agent}}",
+      "body": "Your AI Employee has finished working.",
+      "question_one": "Your AI Employee has a question for you.",
+      "question_other": "Your AI Employee has questions for you.",
+      "signin": "Your AI Employee needs you to sign in.",
+      "connect": "Your AI Employee needs you to connect an app.",
+      "credential": "Your AI Employee needs an API key to finish.",
+      "handsOn": "Your AI Employee needs you to finish something in Houston."
+    },
+    "mentioned": {
+      "title": "{{name}} mentioned you",
+      "titleUnknown": "You were mentioned",
+      "body": "In {{mission}}"
+    },
+    "preprompt": {
+      "title": "Want a ping when your AI Employee finishes?",
+      "body": "Turn on notifications and Houston will let you know the moment a task finishes or needs you.",
+      "cta": "Turn on notifications"
+    },
+    "catchNet": {
+      "title": "You missed a heads-up",
+      "body": "Turn on notifications so Houston can ping you when a task finishes.",
+      "cta": "Turn on notifications"
+    },
+    "granted": "Notifications are on.",
+    "blocked": "Notifications are blocked. Open your system settings to turn them on.",
+    "blockedBrowser": "Notifications are blocked. Turn them on in your browser settings.",
+    "openSettings": "Open System Settings",
+    "openSettingsFailed": "Could not open system settings. Please try again.",
+    "requestFailed": "Could not turn on notifications. Please try again."
+  }
+}

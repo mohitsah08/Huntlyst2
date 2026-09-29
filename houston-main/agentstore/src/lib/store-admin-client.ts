@@ -1,0 +1,114 @@
+/**
+ * Client-side facade over the Agent Store SDK for the moderation console
+ * (`/v1/agentstore/admin/*`). Every call carries the signed-in user's bearer;
+ * the gateway authorizes by matching the caller's UID against
+ * `GW_STORE_ADMIN_UIDS` and fail-closes to 404 when the env is empty, so a
+ * non-admin sees the same "not found" a stranger does.
+ *
+ * This module owns only the browser-specific concerns: the public gateway
+ * origin, wrapping the caller's bearer into the SDK's `getToken`, and forcing
+ * `cache: "no-store"` on the admin reads. All HTTP and error plumbing lives in
+ * `@houston/agentstore-client`.
+ */
+import {
+  type AdminGrantHandleInput,
+  type AdminQueueItem,
+  type AdminReport,
+  AgentStoreClient,
+  type CreatorProfile,
+  type CreatorReport,
+  type PurgeResult,
+  type ReportStatus,
+  type StoreRequestOptions,
+} from "@houston/agentstore-client";
+import { clientGatewayBase } from "./store-api-types";
+
+/** Admin calls must never be served from the browser HTTP cache. */
+const NO_STORE: StoreRequestOptions = { init: { cache: "no-store" } };
+
+/** An SDK client that authorizes every admin call with the caller's bearer. */
+function admin(token: string): AgentStoreClient {
+  return new AgentStoreClient({
+    baseUrl: clientGatewayBase(),
+    getToken: () => token,
+  });
+}
+
+/** The public-visibility review queue. */
+export function listAdminQueue(token: string): Promise<AdminQueueItem[]> {
+  return admin(token).adminListQueue(NO_STORE);
+}
+
+/** Approve (make public) or reject a queued agent. */
+export async function actOnQueueItem(
+  token: string,
+  id: string,
+  action: "approve" | "reject",
+): Promise<void> {
+  await admin(token).adminActOnQueueItem(id, action, NO_STORE);
+}
+
+/** The abuse reports, optionally filtered by status. */
+export function listAdminReports(
+  token: string,
+  status?: ReportStatus,
+): Promise<AdminReport[]> {
+  return admin(token).adminListReports(status, NO_STORE);
+}
+
+/** Resolve or dismiss a report. */
+export async function actOnReport(
+  token: string,
+  id: string,
+  action: "resolve" | "dismiss",
+): Promise<void> {
+  await admin(token).adminActOnReport(id, action, NO_STORE);
+}
+
+/** Run the retention purge of stale drafts and expired soft-deletes. */
+export function runPurge(token: string): Promise<PurgeResult> {
+  return admin(token).adminPurge(NO_STORE);
+}
+
+/** Set or clear a creator's verified badge. */
+export async function setCreatorVerified(
+  token: string,
+  handle: string,
+  verified: boolean,
+): Promise<void> {
+  await admin(token).adminSetCreatorVerified(handle, verified, NO_STORE);
+}
+
+/** Grant a creator handle to a user, materializing or moving their profile. */
+export function grantCreatorHandle(
+  token: string,
+  handle: string,
+  input: AdminGrantHandleInput,
+): Promise<CreatorProfile> {
+  return admin(token).adminGrantCreatorHandle(handle, input, NO_STORE);
+}
+
+/** Release (null) a creator's handle; it becomes immediately claimable. */
+export async function releaseCreatorHandle(
+  token: string,
+  handle: string,
+): Promise<void> {
+  await admin(token).adminReleaseHandle(handle, NO_STORE);
+}
+
+/** The creator abuse reports, optionally filtered by status. */
+export function listCreatorReports(
+  token: string,
+  status?: ReportStatus,
+): Promise<CreatorReport[]> {
+  return admin(token).adminListCreatorReports(status, NO_STORE);
+}
+
+/** Resolve or dismiss a creator report. */
+export async function actOnCreatorReport(
+  token: string,
+  id: string,
+  action: "resolve" | "dismiss",
+): Promise<void> {
+  await admin(token).adminActOnCreatorReport(id, action, NO_STORE);
+}

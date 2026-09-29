@@ -1,0 +1,206 @@
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { ASSISTANT_AGENT_NAME } from "@houston/host/src/routes/assistant";
+import { expect, test } from "vitest";
+import { RULES_HEADING } from "../../session/assistant-rules-context";
+import { learningsDocPath } from "../../session/learnings-context";
+import { buildSystemPrompt } from "./system-prompt";
+
+function freshWorkspace(withHouston = true): string {
+  const dir = mkdtempSync(join(tmpdir(), "houston-sysprompt-"));
+  if (withHouston) mkdirSync(join(dir, ".houston"), { recursive: true });
+  return dir;
+}
+
+test("the workspace/user context section is appended to the system prompt", () => {
+  const dir = freshWorkspace();
+  writeFileSync(join(dir, "CLAUDE.md"), "# Role\nYou are the sales agent.");
+  writeFileSync(join(dir, "WORKSPACE.md"), "Acme Corp.");
+  writeFileSync(join(dir, "USER.md"), "Juan, sales lead.");
+
+  const prompt = buildSystemPrompt(dir, "You are Houston.");
+  // Base prompt, then the CLAUDE.md instructions, then the context section.
+  expect(prompt).toContain("You are Houston.");
+  expect(prompt).toContain("You are the sales agent.");
+  expect(prompt).toContain("# Workspace Context");
+  expect(prompt).toContain("Acme Corp.");
+  expect(prompt).toContain("# User Context");
+  expect(prompt).toContain("Juan, sales lead.");
+});
+
+test("the job description's industry and role reach the model as plain lines", () => {
+  const dir = freshWorkspace();
+  writeFileSync(
+    join(dir, "CLAUDE.md"),
+    "---\nindustry: Healthcare\nrole: Medical coder\n---\n\nYou code charts.\n",
+  );
+
+  const prompt = buildSystemPrompt(dir, "You are Houston.");
+  // The model never sees the YAML block: it reads the two answers as text.
+  expect(prompt).toContain("Industry: Healthcare\nRole: Medical coder");
+  expect(prompt).toContain("You code charts.");
+  expect(prompt).not.toContain("industry: Healthcare");
+});
+
+test("the section renders with empty markers even when no context is written", () => {
+  const dir = freshWorkspace();
+  const prompt = buildSystemPrompt(dir, "You are Houston.");
+  expect(prompt).toContain("# Workspace Context");
+  expect(prompt).toContain("(empty so far");
+});
+
+test("a non-workspace cwd gets only the base prompt (no context section)", () => {
+  const dir = freshWorkspace(false);
+  const prompt = buildSystemPrompt(dir, "You are Houston.");
+  expect(prompt).toBe("You are Houston.");
+});
+
+function writeSkill(dir: string, slug: string, frontmatter: string): void {
+  const skillDir = join(dir, ".agents", "skills", slug);
+  mkdirSync(skillDir, { recursive: true });
+  writeFileSync(
+    join(skillDir, "SKILL.md"),
+    `---\n${frontmatter}\n---\n\n## Procedure\nDo the thing.\n`,
+  );
+}
+
+test("workspace skills are indexed with their SKILL.md locations (HOU-894)", () => {
+  const dir = freshWorkspace();
+  writeSkill(
+    dir,
+    "marketing-report",
+    "name: marketing-report\ndescription: Weekly marketing report with brand guidelines",
+  );
+
+  const prompt = buildSystemPrompt(dir, "You are Houston.");
+  expect(prompt).toContain("<available_skills>");
+  expect(prompt).toContain("<name>marketing-report</name>");
+  expect(prompt).toContain("Weekly marketing report with brand guidelines");
+  // The location is the absolute path the Read tool loads the procedure from.
+  expect(prompt).toContain(
+    join(dir, ".agents", "skills", "marketing-report", "SKILL.md"),
+  );
+});
+
+test("no skills directory means no skills section", () => {
+  const dir = freshWorkspace();
+  const prompt = buildSystemPrompt(dir, "You are Houston.");
+  expect(prompt).not.toContain("<available_skills>");
+});
+
+test("a skill without a description is dropped (pi loader parity)", () => {
+  const dir = freshWorkspace();
+  writeSkill(dir, "bare-skill", "name: bare-skill");
+  writeSkill(dir, "good-skill", "name: good-skill\ndescription: A real one");
+
+  const prompt = buildSystemPrompt(dir, "You are Houston.");
+  expect(prompt).toContain("<name>good-skill</name>");
+  expect(prompt).not.toContain("bare-skill");
+});
+
+test("the skills index lands before the mode overlay", () => {
+  const dir = freshWorkspace();
+  writeSkill(dir, "plan-me", "name: plan-me\ndescription: Plan something");
+
+  const prompt = buildSystemPrompt(dir, "You are Houston.", "plan");
+  const skillsAt = prompt.indexOf("<available_skills>");
+  const overlayAt = prompt.indexOf("You are in Plan mode.");
+  expect(skillsAt).toBeGreaterThan(-1);
+  expect(overlayAt).toBeGreaterThan(skillsAt);
+});
+
+/**
+ * The assistant's memory injection, pinned on the claude side of the
+ * prompt-assembly parity pair (its twin is session/loader.test.ts).
+ */
+function agentDirNamed(name: string): string {
+  const dir = join(mkdtempSync(join(tmpdir(), "houston-sysprompt-")), name);
+  mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+function seedLearnings(cwd: string, text: string): void {
+  const path = learningsDocPath(cwd);
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(
+    path,
+    JSON.stringify([
+      { id: "l1", text, created_at: "2026-01-01T00:00:00.000Z" },
+    ]),
+  );
+}
+
+/**
+ * The assistant's memory and rules follow the ROLE the host stamped on this
+ * runtime, not the name of the directory it runs in (the managed pod runs under
+ * `/workspace` with an ordinarily-named agent).
+ */
+async function asCoordinator<T>(fn: () => Promise<T> | T): Promise<T> {
+  const prior = process.env.HOUSTON_ASSISTANT_ROLE;
+  process.env.HOUSTON_ASSISTANT_ROLE = "coordinator";
+  try {
+    return await fn();
+  } finally {
+    if (prior === undefined) delete process.env.HOUSTON_ASSISTANT_ROLE;
+    else process.env.HOUSTON_ASSISTANT_ROLE = prior;
+  }
+}
+
+test("the assistant's memory lands after the context sections and before the overlay", async () => {
+  const dir = agentDirNamed(ASSISTANT_AGENT_NAME);
+  writeFileSync(join(dir, "WORKSPACE.md"), "Acme Corp.");
+  writeSkill(dir, "plan-me", "name: plan-me\ndescription: Plan something");
+  seedLearnings(dir, "Julian prefers short replies.");
+
+  const prompt = await asCoordinator(() =>
+    buildSystemPrompt(dir, "You are Houston.", "plan"),
+  );
+  const memoryAt = prompt.indexOf("# What you remember about this user");
+  expect(memoryAt).toBeGreaterThan(-1);
+  expect(prompt).toContain("- Julian prefers short replies.");
+  expect(memoryAt).toBeGreaterThan(prompt.indexOf("# Workspace Context"));
+  // Skills stay last before the overlay, and the overlay stays last of all.
+  expect(prompt.indexOf("<available_skills>")).toBeGreaterThan(memoryAt);
+  expect(prompt.indexOf("You are in Plan mode.")).toBeGreaterThan(
+    prompt.indexOf("<available_skills>"),
+  );
+});
+
+test("the assistant's operating rules land right after its memory", async () => {
+  const dir = agentDirNamed(ASSISTANT_AGENT_NAME);
+  seedLearnings(dir, "Julian prefers short replies.");
+
+  const prompt = await asCoordinator(() =>
+    buildSystemPrompt(dir, "You are Houston.", "plan"),
+  );
+  const memoryAt = prompt.indexOf("# What you remember about this user");
+  const rulesAt = prompt.indexOf(RULES_HEADING);
+  expect(rulesAt).toBeGreaterThan(memoryAt);
+  // Skills, then the overlay, still come after both.
+  expect(prompt.indexOf("You are in Plan mode.")).toBeGreaterThan(rulesAt);
+});
+
+test("the rules render for the coordinator even with no memory yet", async () => {
+  const prompt = await asCoordinator(() =>
+    buildSystemPrompt(agentDirNamed("Assistant"), "You are Houston."),
+  );
+  expect(prompt).toContain(RULES_HEADING);
+});
+
+test("a normal agent gets no operating rules, whatever its directory is called", () => {
+  for (const dir of ["Helper", ASSISTANT_AGENT_NAME]) {
+    const prompt = buildSystemPrompt(agentDirNamed(dir), "You are Houston.");
+    expect(prompt).not.toContain(RULES_HEADING);
+    expect(prompt).not.toContain("# What you remember about this user");
+  }
+});
+
+test("a normal agent's learnings are never injected", () => {
+  const dir = agentDirNamed("Helper");
+  seedLearnings(dir, "Julian prefers short replies.");
+
+  const prompt = buildSystemPrompt(dir, "You are Houston.");
+  expect(prompt).not.toContain("# What you remember about this user");
+  expect(prompt).not.toContain("Julian prefers short replies.");
+});

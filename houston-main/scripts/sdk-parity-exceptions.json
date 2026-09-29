@@ -1,0 +1,526 @@
+{
+  "$comment": "Written exceptions for scripts/check-sdk-parity.ts, which FAILS the process on any violation not listed here. An entry is { rule, key, reason } and nothing else; `key` is the violation identity the report prints, and `reason` must be at least 20 characters saying WHY parity stops here. An entry whose violation no longer reproduces fails the gate as stale: the PR that binds the route is the one that deletes its excuse and lowers `baseline`. Keys read as the report prints them: `host|gateway METHOD /path` for a route, `proxy METHOD /path` for a runtime-proxy member, and `client <adapter method>` for a method of the shipped client's mixin chain that reaches a server with no @houston/sdk method behind it. `baseline` may only go down on its own; raising it is a visible diff a reviewer must accept, because it means a new route shipped with no client behind it.",
+  "baseline": 104,
+  "entries": [
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /v1/portable/preview",
+      "reason": "permanent: the portable surface lives in the web adapter, which unpacks the uploaded archive in the browser and runs the domain threat scan there"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /v1/portable/install",
+      "reason": "permanent: the portable surface lives in the web adapter, which unpacks the uploaded archive in the browser and runs the domain threat scan there"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host GET /v1/migration/source",
+      "reason": "the source scan of the desktop-to-cloud wizard, read from the passive host the app spawns over the old ~/.houston tree — a second peer with its own base URL and static bearer, which a module scope rooted at the one engine base cannot address"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /v1/integrations/{}/disconnect",
+      "reason": "the SDK's integrations.disconnect resolves to the literal /v1/integrations/composio/disconnect, which does not fold onto this :provider spelling"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /v1/integrations/{}/search",
+      "reason": "the tool search/execute leg a host forwards upstream through RemoteIntegrationProvider (integrations/remote.ts); no client and no SDK method issues it"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /v1/integrations/{}/execute",
+      "reason": "the tool search/execute leg a host forwards upstream through RemoteIntegrationProvider (integrations/remote.ts); no client and no SDK method issues it"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /setup-runtime/credential/capture",
+      "reason": "sdk.providers.credentials issues this route, but its optional argument (the provider to capture, the endpoint beside the key) is spread into the request conditionally so the web app sends the same bytes it always did — and the catalog extractor derives no route from a conditional spread, so the operation publishes with route: null and the gate cannot see the binding. Un-blinding it edits OPERATION_POLICY_FLOOR, which is a reviewed change of its own."
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /setup-runtime/credential/api-key",
+      "reason": "sdk.providers.credentials issues this route, but its optional argument (the provider to capture, the endpoint beside the key) is spread into the request conditionally so the web app sends the same bytes it always did — and the catalog extractor derives no route from a conditional spread, so the operation publishes with route: null and the gate cannot see the binding. Un-blinding it edits OPERATION_POLICY_FLOOR, which is a reviewed change of its own."
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host GET /setup-runtime/providers",
+      "reason": "the hidden per-space setup runtime's own login surface, driven by the web adapter through setupRuntimeClientFor; the SDK's engine clients are rooted at one agent's sandbox and no agent exists yet when these run, so there is no SDK sub-client that could reach them"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host GET /setup-runtime/auth/status",
+      "reason": "the hidden per-space setup runtime's own login surface, driven by the web adapter through setupRuntimeClientFor; the SDK's engine clients are rooted at one agent's sandbox and no agent exists yet when these run, so there is no SDK sub-client that could reach them"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /setup-runtime/auth/{}/login",
+      "reason": "the hidden per-space setup runtime's own login surface, driven by the web adapter through setupRuntimeClientFor; the SDK's engine clients are rooted at one agent's sandbox and no agent exists yet when these run, so there is no SDK sub-client that could reach them"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /setup-runtime/auth/{}/login/complete",
+      "reason": "the hidden per-space setup runtime's own login surface, driven by the web adapter through setupRuntimeClientFor; the SDK's engine clients are rooted at one agent's sandbox and no agent exists yet when these run, so there is no SDK sub-client that could reach them"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /setup-runtime/auth/{}/login/cancel",
+      "reason": "the hidden per-space setup runtime's own login surface, driven by the web adapter through setupRuntimeClientFor; the SDK's engine clients are rooted at one agent's sandbox and no agent exists yet when these run, so there is no SDK sub-client that could reach them"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /setup-runtime/auth/{}/logout",
+      "reason": "the hidden per-space setup runtime's own login surface, driven by the web adapter through setupRuntimeClientFor; the SDK's engine clients are rooted at one agent's sandbox and no agent exists yet when these run, so there is no SDK sub-client that could reach them"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host GET /v1/assistant",
+      "reason": "permanent: the assistant address probe owns its retry ladder in the adapter (CALLER_OWNED_RETRY_PATHS) and reads Retry-After, which viaSdk drops"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /agents/{}/credential/capture",
+      "reason": "sdk.providers.credentials issues this route, but its optional argument (the provider to capture, the endpoint beside the key) is spread into the request conditionally so the web app sends the same bytes it always did — and the catalog extractor derives no route from a conditional spread, so the operation publishes with route: null and the gate cannot see the binding. Un-blinding it edits OPERATION_POLICY_FLOOR, which is a reviewed change of its own."
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /agents/{}/credential/api-key",
+      "reason": "sdk.providers.credentials issues this route, but its optional argument (the provider to capture, the endpoint beside the key) is spread into the request conditionally so the web app sends the same bytes it always did — and the catalog extractor derives no route from a conditional spread, so the operation publishes with route: null and the gate cannot see the binding. Un-blinding it edits OPERATION_POLICY_FLOOR, which is a reviewed change of its own."
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host GET /agents/{}/approvals/{}",
+      "reason": "a pending approval re-read served on both spellings; nothing in the shipped clients issues it, so no SDK method binds it"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host GET /v1/agents/{}/approvals/{}",
+      "reason": "a pending approval re-read served on both spellings; nothing in the shipped clients issues it, so no SDK method binds it"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host GET /agents/{}/missions",
+      "reason": "the gateway's mission dispatch target on the pod (missions-remote-forward is the other end); the app addresses the gateway's /v1 multiplayer surface instead"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host GET /agents/{}/missions/read",
+      "reason": "the gateway's mission dispatch target on the pod (missions-remote-forward is the other end); the app addresses the gateway's /v1 multiplayer surface instead"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /agents/{}/missions/start",
+      "reason": "the gateway's mission dispatch target on the pod (missions-remote-forward is the other end); the app addresses the gateway's /v1 multiplayer surface instead"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /agents/{}/missions/status",
+      "reason": "the gateway's mission dispatch target on the pod (missions-remote-forward is the other end); the app addresses the gateway's /v1 multiplayer surface instead"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host GET /agents/{}/config",
+      "reason": "the app reads and writes this document as an agent file (.houston/<name>/<name>.json) through readAgentFile/writeAgentFile, so no SDK method issues the document route"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host PUT /agents/{}/config",
+      "reason": "the app reads and writes this document as an agent file (.houston/<name>/<name>.json) through readAgentFile/writeAgentFile, so no SDK method issues the document route"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host GET /agents/{}/learnings",
+      "reason": "the app reads and writes this document as an agent file (.houston/<name>/<name>.json) through readAgentFile/writeAgentFile, so no SDK method issues the document route"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host PUT /agents/{}/learnings",
+      "reason": "the app reads and writes this document as an agent file (.houston/<name>/<name>.json) through readAgentFile/writeAgentFile, so no SDK method issues the document route"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host GET /agents/{}/trigger-status",
+      "reason": "the host's own no-trigger-backend answer; the SDK's agentTriggerStatus reads /v1/agents/{id}/trigger-status, which the gateway edge answers without proxying here"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /agents/{}/agentfile/{*}",
+      "reason": "the same write PUT serves, for a client that sends it as POST; the SDK's writeAgentFile only ever issues PUT"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host GET /agents/{}/files/download",
+      "reason": "permanent: a binary download the SDK does not carry, because a Blob cannot cross its dispatch boundary; it stays in project-files-mixin"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host GET /agents/{}/files/archive",
+      "reason": "permanent: a binary download the SDK does not carry, because a Blob cannot cross its dispatch boundary; it stays in project-files-mixin"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /agents/{}/files/import",
+      "reason": "the SDK issues it as uploadProjectFiles, whose body is framed by the caller rather than taken as a parameter, so the extractor cannot route it (coverage.unroutable)"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host GET /agents/{}/portable/preview",
+      "reason": "permanent: the portable surface lives in the web adapter, which unpacks the uploaded archive in the browser and runs the domain threat scan there"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /agents/{}/portable/export",
+      "reason": "permanent: the portable surface lives in the web adapter, which unpacks the uploaded archive in the browser and runs the domain threat scan there"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "host POST /agents/{}/migration/import",
+      "reason": "sdk.migration.migrationImport issues it, but the catalog cannot route a request that carries a zip content type and spells its query keys conditionally, so the parity join never sees the method; the binding is pinned byte for byte by packages/web/tests/wire-migration.test.ts"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway DELETE /v1/me",
+      "reason": "account deletion and the onboarding record the app fetches straight from the gateway with the Firebase token (lib/identity/delete-account.ts, lib/onboarding-sync.ts); the SDK's account module owns the profile and the API keys"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway GET /setup-runtime/auth/status",
+      "reason": "the hidden per-space setup runtime's own login surface, driven by the web adapter through setupRuntimeClientFor; the SDK's engine clients are rooted at one agent's sandbox and no agent exists yet when these run, so there is no SDK sub-client that could reach them"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway GET /setup-runtime/providers",
+      "reason": "the hidden per-space setup runtime's own login surface, driven by the web adapter through setupRuntimeClientFor; the SDK's engine clients are rooted at one agent's sandbox and no agent exists yet when these run, so there is no SDK sub-client that could reach them"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway GET /v1/agents/{}/missions",
+      "reason": "the public missions REST API an outside caller drives with its own API key (the app only shows the address, lib/agent-connect-model.ts); no SDK method issues it"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway GET /v1/agents/{}/missions/{}",
+      "reason": "the public missions REST API an outside caller drives with its own API key (the app only shows the address, lib/agent-connect-model.ts); no SDK method issues it"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway GET /v1/agents/{}/missions/{}/events",
+      "reason": "the public missions REST API an outside caller drives with its own API key (the app only shows the address, lib/agent-connect-model.ts); no SDK method issues it"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway GET /v1/assistant",
+      "reason": "permanent: the assistant address probe owns its retry ladder in the adapter (CALLER_OWNED_RETRY_PATHS) and reads Retry-After, which viaSdk drops"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway GET /v1/capabilities",
+      "reason": "permanent: a boot probe the adapter answers before the SDK exists, since the SDK is built inside HoustonClient's own constructor"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway GET /v1/catalog",
+      "reason": "permanent: a boot probe the adapter answers before the SDK exists, since the SDK is built inside HoustonClient's own constructor"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway GET /v1/events",
+      "reason": "permanent: a boot probe the adapter answers before the SDK exists, since the SDK is built inside HoustonClient's own constructor"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway GET /v1/local-model-bridges/legacy",
+      "reason": "permanent: the control surface beside a NATIVE transport, driven from client/local-model-bridge.ts where the bridge itself lives"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway GET /v1/local-model-bridges/{}",
+      "reason": "permanent: the control surface beside a NATIVE transport, driven from client/local-model-bridge.ts where the bridge itself lives"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway GET /v1/local-model-bridges/{}/connect",
+      "reason": "permanent: the control surface beside a NATIVE transport, driven from client/local-model-bridge.ts where the bridge itself lives"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway GET /v1/me/onboarding",
+      "reason": "account deletion and the onboarding record the app fetches straight from the gateway with the Firebase token (lib/identity/delete-account.ts, lib/onboarding-sync.ts); the SDK's account module owns the profile and the API keys"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway GET /v1/org/profiles",
+      "reason": "the SDK issues it as getOrgProfiles, which joins the member ids into one comma-separated query value rather than binding a query key to a parameter, so the extractor cannot route the path (coverage.unroutable)"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway GET /v1/version",
+      "reason": "permanent: a boot probe the adapter answers before the SDK exists, since the SDK is built inside HoustonClient's own constructor"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway POST /feedback",
+      "reason": "the Send feedback intake the app posts directly to the gateway; no SDK method covers it"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway POST /setup-runtime/auth/{}/login",
+      "reason": "the hidden per-space setup runtime's own login surface, driven by the web adapter through setupRuntimeClientFor; the SDK's engine clients are rooted at one agent's sandbox and no agent exists yet when these run, so there is no SDK sub-client that could reach them"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway POST /setup-runtime/auth/{}/login/cancel",
+      "reason": "the hidden per-space setup runtime's own login surface, driven by the web adapter through setupRuntimeClientFor; the SDK's engine clients are rooted at one agent's sandbox and no agent exists yet when these run, so there is no SDK sub-client that could reach them"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway POST /setup-runtime/auth/{}/login/complete",
+      "reason": "the hidden per-space setup runtime's own login surface, driven by the web adapter through setupRuntimeClientFor; the SDK's engine clients are rooted at one agent's sandbox and no agent exists yet when these run, so there is no SDK sub-client that could reach them"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway POST /setup-runtime/auth/{}/logout",
+      "reason": "the hidden per-space setup runtime's own login surface, driven by the web adapter through setupRuntimeClientFor; the SDK's engine clients are rooted at one agent's sandbox and no agent exists yet when these run, so there is no SDK sub-client that could reach them"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway POST /setup-runtime/credential/api-key",
+      "reason": "sdk.providers.credentials issues this route, but its optional argument (the provider to capture, the endpoint beside the key) is spread into the request conditionally so the web app sends the same bytes it always did — and the catalog extractor derives no route from a conditional spread, so the operation publishes with route: null and the gate cannot see the binding. Un-blinding it edits OPERATION_POLICY_FLOOR, which is a reviewed change of its own."
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway POST /setup-runtime/credential/capture",
+      "reason": "sdk.providers.credentials issues this route, but its optional argument (the provider to capture, the endpoint beside the key) is spread into the request conditionally so the web app sends the same bytes it always did — and the catalog extractor derives no route from a conditional spread, so the operation publishes with route: null and the gate cannot see the binding. Un-blinding it edits OPERATION_POLICY_FLOOR, which is a reviewed change of its own."
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway POST /v1/agents/{}/missions/{}/cancel",
+      "reason": "the public missions REST API an outside caller drives with its own API key (the app only shows the address, lib/agent-connect-model.ts); no SDK method issues it"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway POST /v1/client-metrics",
+      "reason": "the browser's own telemetry post; not a domain capability, so no SDK method issues it"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway POST /v1/analytics/events",
+      "reason": "the client's own product-analytics beacon (app/src/lib/product-analytics/); not a domain capability, so no SDK method issues it"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway POST /v1/integrations/composio/execute",
+      "reason": "the tool search/execute leg an engine pod's turn drives against the gateway through RemoteIntegrationProvider; no client and no SDK method issues it"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway POST /v1/integrations/composio/search",
+      "reason": "the tool search/execute leg an engine pod's turn drives against the gateway through RemoteIntegrationProvider; no client and no SDK method issues it"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway POST /v1/local-model-bridges",
+      "reason": "permanent: the control surface beside a NATIVE transport, driven from client/local-model-bridge.ts where the bridge itself lives"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway POST /v1/local-model-bridges/{}/sessions",
+      "reason": "permanent: the control surface beside a NATIVE transport, driven from client/local-model-bridge.ts where the bridge itself lives"
+    },
+    {
+      "rule": "sdk-route-unbound",
+      "key": "gateway POST /v1/tunnel/credentials",
+      "reason": "permanent: the control surface beside a NATIVE transport, driven from client/local-model-bridge.ts where the bridge itself lives"
+    },
+    {
+      "rule": "proxy-drift",
+      "key": "proxy GET /agents/{}/health",
+      "reason": "a per-agent engine probe the app drives through @houston/engine-client, rooted at an agent the extractor cannot parameterise"
+    },
+    {
+      "rule": "proxy-drift",
+      "key": "proxy GET /agents/{}/busy",
+      "reason": "a per-agent engine probe the app drives through @houston/engine-client, rooted at an agent the extractor cannot parameterise"
+    },
+    {
+      "rule": "proxy-drift",
+      "key": "proxy GET /agents/{}/version",
+      "reason": "a per-agent engine probe the app drives through @houston/engine-client, rooted at an agent the extractor cannot parameterise"
+    },
+    {
+      "rule": "proxy-drift",
+      "key": "proxy GET /agents/{}/providers/usage",
+      "reason": "the provider balances the web adapter reads through the runtime client (engine-adapter/client/provider-status-mixin.ts); no SDK method issues it"
+    },
+    {
+      "rule": "proxy-drift",
+      "key": "proxy PUT /agents/{}/settings",
+      "reason": "the runtime's own settings write; the app addresses the gateway's /v1 spelling, which the SDK binds as setAgentSettings"
+    },
+    {
+      "rule": "proxy-drift",
+      "key": "proxy POST /agents/{}/settings/claim",
+      "reason": "permanent: client/local-model-bridge.ts claims the bridge on the agent directly, beside the native transport it belongs to"
+    },
+    {
+      "rule": "proxy-drift",
+      "key": "proxy GET /agents/{}/auth/export",
+      "reason": "the host's own credential capture reads it from the runtime (channel/capture-credential.ts); no client ever calls it"
+    },
+    {
+      "rule": "proxy-drift",
+      "key": "proxy POST /agents/{}/auth/scrub-refresh",
+      "reason": "the host scrubs a stale refresh token on the runtime itself (channel/capture-credential.ts); no client ever calls it"
+    },
+    {
+      "rule": "proxy-drift",
+      "key": "proxy GET /agents/{}/providers/openai-compatible",
+      "reason": "the runtime's read-back of the configured OpenAI-compatible server; the SDK's setCustomEndpoint writes the POST twin and nothing reads this one"
+    },
+    {
+      "rule": "proxy-drift",
+      "key": "proxy POST /agents/{}/auth/anthropic/oauth-credential",
+      "reason": "the host pushes a captured Claude OAuth credential into the runtime (channel/proxy.ts); no client ever calls it"
+    },
+    {
+      "rule": "proxy-drift",
+      "key": "proxy DELETE /agents/{}/auth/{}/api-key",
+      "reason": "no SDK method clears a stored API key: the runtime client writes one (setApiKey) and signs out (logout), and nothing issues this delete"
+    },
+    {
+      "rule": "proxy-drift",
+      "key": "proxy POST /agents/{}/auth/{}/login",
+      "reason": "the login start carries an optional query (deviceAuth/enterpriseDomain) whose keys are set from a negated test and a literal rather than from a parameter, so no route can say what fills them (coverage.unroutable)"
+    },
+    {
+      "rule": "proxy-drift",
+      "key": "proxy GET /agents/{}/conversations/{}/events",
+      "reason": "the resumable event stream is issued by streamTurn/observeConversation, which take the client as a parameter so a host can drive them with its own FeedOutput; its resume cursor is a conditional path suffix besides"
+    },
+    {
+      "rule": "proxy-drift",
+      "key": "proxy POST /agents/{}/conversations/{}/title",
+      "reason": "the stored-conversation titler has no caller: every surface titles the composer's first message before the chat exists, which is the /agents/{}/title twin conversations.suggestTitle binds"
+    },
+    {
+      "rule": "proxy-drift",
+      "key": "proxy POST /agents/{}/conversations/{}/messages",
+      "reason": "the send is issued by streamTurn, which takes the client as a parameter so a host can drive the turn with its own FeedOutput; the extractor reads a handed-in client as the caller's, never the module's"
+    },
+    {
+      "rule": "proxy-drift",
+      "key": "proxy POST /agents/{}/generate-agent",
+      "reason": "the setup runtime's agent-description generator, called host-side; no client ever calls it"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client health",
+      "reason": "permanent: the runtime health probe rides this.ctx.engine, the boot path's own client, before any SDK call can be made"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client version",
+      "reason": "permanent: a /v1/version boot probe the adapter answers before the SDK exists, and it must answer against a host that predates it"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client capabilities",
+      "reason": "permanent: /v1/capabilities is how a client learns what the deployment IS, read at boot and after every space switch, below the SDK"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client getCatalog",
+      "reason": "permanent: /v1/catalog is a public meta read on baseUrl (the local host or the engine pod), not a control-plane call the SDK dispatches"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client getAssistant",
+      "reason": "permanent: the assistant address probe owns its retry ladder in the adapter (CALLER_OWNED_RETRY_PATHS) and reads Retry-After, which viaSdk drops"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client downloadProjectFile",
+      "reason": "permanent: a binary download the SDK does not carry, because a Blob cannot cross its dispatch boundary; it stays in project-files-mixin"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client downloadProjectArchive",
+      "reason": "permanent: a binary download the SDK does not carry, because a Blob cannot cross its dispatch boundary; it stays in project-files-mixin"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client portablePreview",
+      "reason": "permanent: the portable surface lives in the web adapter, which unpacks the uploaded archive in the browser and runs the domain threat scan there"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client portablePackage",
+      "reason": "permanent: the portable surface lives in the web adapter, which unpacks the uploaded archive in the browser and runs the domain threat scan there"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client getLocalModelBridgeAccess",
+      "reason": "permanent: the control surface beside a NATIVE transport, driven from client/local-model-bridge.ts where the bridge itself lives"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client providerStatus",
+      "reason": "reads the per-agent runtime client's own listProviders/listProviderUsage, a runtime-protocol call proxied to the agent's pod rather than a host route"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client providerStatuses",
+      "reason": "reads the per-agent runtime client's own listProviders/listProviderUsage, a runtime-protocol call proxied to the agent's pod rather than a host route"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client providerStatusesForAgent",
+      "reason": "reads the per-agent runtime client's own listProviders/listProviderUsage, a runtime-protocol call proxied to the agent's pod rather than a host route"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client providerUsage",
+      "reason": "reads the per-agent runtime client's own listProviders/listProviderUsage, a runtime-protocol call proxied to the agent's pod rather than a host route"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client cancelProviderLogin",
+      "reason": "drives the login endpoints of the pinned runtime the flow started in (the agent's pod, or the pre-agent setup runtime); no host route carries it"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client submitProviderLoginCode",
+      "reason": "drives the login endpoints of the pinned runtime the flow started in (the agent's pod, or the pre-agent setup runtime); no host route carries it"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client updateAgent",
+      "reason": "the colour lives in a device overlay the account-preference sync mirrors up; the one request is the /agents refetch the caller renders, and sdk.agents.updateAgentColor publishes the intent"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client generateAgentInstructions",
+      "reason": "a one-shot generation turn on the agent's own runtime (runtime-client generateAgent), not a Houston host route the SDK models"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client getAgentConfig",
+      "reason": "synthesises the local project config from ctx.activeOld(), a runtime provider read; there is no agent-config route to bind"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client setAgentConfig",
+      "reason": "writes /agents/:id/settings through the per-agent runtime client, the same client activeOld reads; the host root serves no /settings route"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client createWorkspace",
+      "reason": "answers with the synthetic personal workspace, labelled from ctx.activeOld()'s runtime provider read; there is no server workspace to create"
+    },
+    {
+      "rule": "client-route-unbound",
+      "key": "client setWorkspaceProvider",
+      "reason": "answers with the synthetic personal workspace, labelled from ctx.activeOld()'s runtime provider read; there is no server workspace to create"
+    }
+  ]
+}

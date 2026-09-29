@@ -1,0 +1,286 @@
+/* Shared download lead form for the landing and every subpage. */
+
+/* Scroll lock. --dl-sbw replaces the width the scrollbar gave back so the
+   page does not jump sideways; download-gate.js also stops Lenis. */
+html.dl-modal-open {
+  overflow: hidden;
+  padding-right: var(--dl-sbw, 0px);
+}
+html.dl-modal-open body {
+  overflow: hidden;
+}
+.dl-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.62);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--dur-fast) var(--ease-standard),
+    visibility var(--dur-fast) var(--ease-standard);
+}
+.dl-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+.dl-card {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 30px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  color: var(--ink);
+  box-shadow: 0 32px 80px -32px rgba(0, 0, 0, 0.22);
+  transform: translateY(8px) scale(0.98);
+  transition: transform var(--dur-elegant) var(--ease-entrance);
+}
+.dl-overlay.open .dl-card {
+  transform: none;
+}
+.dl-card h3 {
+  margin-bottom: 8px;
+  color: var(--ink-strong);
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.dl-card > p,
+.dl-card > div > p {
+  margin-bottom: 18px;
+  color: var(--ink-muted);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+.dl-card [hidden] {
+  display: none !important;
+}
+.dl-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-subtle);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+.dl-close:hover {
+  color: var(--ink);
+}
+.dl-field {
+  margin-bottom: 12px;
+}
+.dl-field label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+}
+.dl-field label .dl-opt {
+  color: var(--ink-subtle);
+  font-weight: 400;
+}
+.dl-field input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  transition: border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}
+.dl-field input::placeholder {
+  color: var(--ink-subtle);
+}
+.dl-field input:focus {
+  border-color: var(--action);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(13, 13, 13, 0.06);
+}
+.dl-phone-group {
+  display: flex;
+  height: 44px;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--ground);
+  transition: border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}
+.dl-phone-group:focus-within {
+  border-color: var(--action);
+  box-shadow: 0 0 0 3px rgba(13, 13, 13, 0.06);
+}
+.dl-phone-group > input {
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.dl-phone-group > input:focus {
+  border: 0;
+  box-shadow: none;
+}
+.dl-phone-divider {
+  width: 1px;
+  height: 24px;
+  flex: 0 0 1px;
+  background: var(--line-strong);
+}
+.dl-cc {
+  position: relative;
+  height: 100%;
+  flex: 0 0 auto;
+}
+.dl-cc-toggle {
+  display: inline-flex;
+  height: 100%;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.dl-cc-flag {
+  font-size: 17px;
+  line-height: 1;
+}
+.dl-cc-abbr {
+  font-weight: 500;
+}
+.dl-cc-toggle .dl-cc-dial {
+  color: var(--ink-muted);
+}
+.dl-cc-caret {
+  width: 14px;
+  height: 14px;
+  color: var(--ink-subtle);
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+.dl-cc.open .dl-cc-caret {
+  transform: rotate(180deg);
+}
+/* Direct child only: the dropdown menus nest their own inputs under a field. */
+.dl-field.invalid > input,
+.dl-field.invalid .dl-phone-group {
+  border-color: var(--app-danger);
+}
+.dl-err {
+  display: none;
+  margin-top: 5px;
+  color: var(--app-danger);
+  font-size: 12px;
+}
+.dl-field.invalid .dl-err {
+  display: block;
+}
+#dl-submit {
+  width: 100%;
+  margin-top: 6px;
+}
+.dl-form-err {
+  margin-top: 10px;
+  color: var(--app-danger);
+  font-size: 13px;
+  text-align: center;
+}
+.dl-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dl-actions .btn,
+#dl-mac-group .btn,
+#dl-windows-group .btn {
+  width: 100%;
+}
+#dl-mac-group,
+#dl-windows-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.btn-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.dl-fineprint {
+  margin: 8px 0 0;
+  color: var(--ink-subtle);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+}
+.dl-fineprint a,
+.dl-skip-body a {
+  color: var(--ink);
+  text-decoration: underline;
+}
+.dl-os-alt {
+  align-self: center;
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  font-family: var(--sans);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.dl-os-alt:hover {
+  color: var(--ink);
+}
+.dl-skip {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.dl-skip summary {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+.dl-skip summary::-webkit-details-marker {
+  display: none;
+}
+.dl-skip-body {
+  margin-top: 10px;
+}
+.dl-skip-body p {
+  margin-bottom: 8px;
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.dl-skip-body a {
+  font-size: 13px;
+  font-weight: 600;
+}

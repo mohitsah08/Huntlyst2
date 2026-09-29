@@ -1,0 +1,55 @@
+{% from "houston-logo.njk" import houstonLogo %}
+<footer>
+  <div style="max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 40px; text-align: left; padding-bottom: 40px; border-bottom: 1px solid var(--border-light); margin-bottom: 32px;">
+    <!-- Brand column -->
+    <div>
+      <a href="/" style="font-family: 'General Sans', sans-serif; font-weight: 500; font-size: 20px; color: var(--gray-950); text-decoration: none; display: block; margin-bottom: 12px;">Houston</a>
+      <p style="font-size: 13px; color: var(--gray-500); line-height: 1.5; margin-bottom: 16px;">AI agents that do the work for you. One free desktop app. Runs on your GPT subscription.</p>
+      <button class="btn btn-primary" style="font-size: 13px; height: 32px; padding: 0 14px;" data-dl-trigger data-dl-source="footer">{{ houstonLogo(13) }} Download</button>
+    </div>
+    <!-- Product column -->
+    <div>
+      <div style="font-size: 12px; font-weight: 500; color: var(--gray-400); margin-bottom: 12px;">Product</div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <a href="#agents" style="font-size: 13px;">Agent Store</a>
+        <a href="#features" style="font-size: 13px;">Features</a>
+        <a href="/#pricing" style="font-size: 13px;">Pricing</a>
+        <a href="mailto:hello@gethouston.ai" style="font-size: 13px;">Always-on hosting</a>
+      </div>
+    </div>
+    <!-- Company column -->
+    <div>
+      <div style="font-size: 12px; font-weight: 500; color: var(--gray-400); margin-bottom: 12px;">Company</div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <a href="/startups/" style="font-size: 13px;">For Startups</a>
+        <a href="mailto:hello@gethouston.ai" style="font-size: 13px;">Contact</a>
+      </div>
+    </div>
+    <!-- Resources column -->
+    <div>
+      <div style="font-size: 12px; font-weight: 500; color: var(--gray-400); margin-bottom: 12px;">Resources</div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <a href="/guides/" style="font-size: 13px;">Guides</a>
+        <a href="/changelog/" style="font-size: 13px;">Changelog</a>
+        <a href="https://github.com/gethouston/houston" target="_blank" rel="noopener noreferrer" style="font-size: 13px;">GitHub</a>
+        <a href="https://x.com/ja818_" target="_blank" rel="noopener noreferrer" style="font-size: 13px;">Twitter / X</a>
+        <a href="/privacy/" style="font-size: 13px;">Privacy</a>
+        <a href="/terms/" style="font-size: 13px;">Terms</a>
+      </div>
+    </div>
+  </div>
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+    <span style="font-size: 12px; color: var(--gray-400); display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+      Houston, a product of Taxflow Inc. Free and open source.
+      {%- if page.url == "/" %}
+      <span>&middot;</span>
+      <span>Milky Way image: <a href="https://www.eso.org/public/images/eso0932a/" target="_blank" rel="noopener noreferrer" style="color: var(--gray-500);">ESO/S. Brunier</a> (CC BY 4.0)</span>
+      {%- endif %}
+    </span>
+    <span style="font-size: 12px; color: var(--gray-400); display: flex; gap: 16px;">
+      <a href="/privacy/" style="color: var(--gray-500);">Privacy Policy</a>
+      <a href="/terms/" style="color: var(--gray-500);">Terms of Service</a>
+      <a href="mailto:hello@gethouston.ai?subject=Unsubscribe&amp;body=Please%20remove%20this%20email%20address%20from%20Houston%20marketing." style="color: var(--gray-500);">Unsubscribe</a>
+    </span>
+  </div>
+</footer>

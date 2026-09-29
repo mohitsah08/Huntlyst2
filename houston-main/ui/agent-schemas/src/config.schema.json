@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Config",
+  "description": "Per-agent config (model, provider, etc.).",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string" },
+    "provider": { "type": "string" },
+    "model": { "type": "string" },
+    "effort": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "xhigh", "max"]
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["execute", "plan", "auto"]
+    }
+  },
+  "additionalProperties": true
+}

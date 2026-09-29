@@ -990,7 +990,8 @@ export class SerpApiSource implements DiscoverySource {
 
 /**
  * Main discovery orchestrator
- * Aggregates all sources according to active HuntConfig parameters.
+ * Aggregates all sources according to active HuntConfig parameters using
+ * QueryPlanner multi-strategy generation and searchManager multi-source fanout.
  */
 export async function discoverCompanies(config: HuntConfig = TVB_EVALUATION_CONFIG): Promise<CandidateUrl[]> {
   const { queries, geoTarget } = generateSearchQueries(config);
@@ -1025,6 +1026,28 @@ export async function discoverCompanies(config: HuntConfig = TVB_EVALUATION_CONF
       }
     }
   });
+
+  // Also query searchManager for open web intelligence if configured
+  try {
+    const { searchManager } = await import('@/lib/search/searchManager');
+    const { QueryPlanner } = await import('@/lib/queryPlanner');
+    const plans = QueryPlanner.generateStrategyPlans(config, 0, 1);
+    if (plans.length > 0) {
+      const extraRes = await searchManager.multiSourceSearch(plans[0].query, {
+        pageSize: 10,
+        strategyName: plans[0].strategyName,
+      });
+      for (const item of extraRes.candidates) {
+        merged.push({
+          url: item.url,
+          snippet: item.snippet,
+          source: item.source,
+        });
+      }
+    }
+  } catch (err) {
+    // Continue gracefully
+  }
 
   const deduplicated = deduplicateByDomain(merged);
   console.log(`[Discovery] Config: ${config.name || 'Custom'} | Candidates: ${merged.length} raw, ${deduplicated.length} unique.`);

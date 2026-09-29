@@ -1,0 +1,64 @@
+{# Faces for this section: `landing.people` holds the identity (photo file or
+   initials + tone), `t.js.people` the display name. `face` is the head's face
+   stack; `avatar` is the bare, unlabelled shape the thread and the composer
+   use, so the caller names the class it needs. #}
+{%- macro face(id) %}{% set p = landing.people[id] %}{% if p.img %}<span class="face face-img" title="{{ t.js.people[id] or p.initials }}"><img src="/assets/img/{{ p.img }}-48.webp" srcset="/assets/img/{{ p.img }}-96.webp 2x" width="48" height="48" alt=""></span>{% else %}<span class="face {{ p.tone }}" title="{{ t.js.people[id] or p.initials }}">{{ p.initials }}</span>{% endif %}{% endmacro %}
+{%- macro avatar(id, cls) %}{% set p = landing.people[id] %}{% if p.img %}<span class="{{ cls }} face-img"><img src="/assets/img/{{ p.img }}-48.webp" srcset="/assets/img/{{ p.img }}-96.webp 2x" width="48" height="48" alt=""></span>{% else %}<span class="{{ cls }} {{ p.tone }}">{{ p.initials }}</span>{% endif %}{% endmacro -%}
+<section id="multiplayer" class="section">
+  {# Hidden alias so cross-site links to #features still resolve. #}
+  <span id="features" class="anchor-alias" aria-hidden="true"></span>
+  <div class="mp-head reveal">
+    <h2 class="sec-title">{{ t.multiplayer.title }}</h2>
+  </div>
+
+  {# Two big phrases left, the live multiplayer chat right. The phrases ARE the
+     copy for this section; everything deeper lives in the Q&A. #}
+  <div class="mp-split reveal reveal-d1">
+    <div class="mp-phrases">
+      <p class="mp-phrase">{{ t.multiplayer.phrase1 }}</p>
+      <p class="mp-phrase is-strong">{{ t.multiplayer.phrase2 }}</p>
+    </div>
+
+    <div class="mp-chat-col">
+<div class="chat-demo reveal reveal-d1" data-chat-demo>
+    <div class="chat-tabs" role="tablist" aria-label="{{ t.multiplayer.tabsLabel }}">
+{%- for tab in t.multiplayer.tabs %}
+      <button class="chat-tab{% if loop.first %} active{% endif %}" data-uc="{{ loop.index0 }}" role="tab" aria-selected="{% if loop.first %}true{% else %}false{% endif %}">{{ tab }}</button>
+{%- endfor %}
+    </div>
+
+    <div class="chat-win win">
+      <div class="chat-head">
+        <span class="chat-agent">
+          <span class="av {{ landing.multiplayer.chat.av }}" id="cd-agent-av" aria-hidden="true"></span>
+          <span class="chat-agent-meta">
+            <span class="chat-agent-name" id="cd-agent-name">{{ t.multiplayer.agentName }}</span>
+            <span class="chat-mission" id="cd-mission">{{ t.multiplayer.mission }}</span>
+          </span>
+        </span>
+        <span class="chat-people" id="cd-people" role="group" aria-label="{{ t.multiplayer.peopleLabel }}">
+{%- for id in landing.multiplayer.chat.people %}
+          {{ face(id) }}
+{%- endfor %}
+        </span>
+      </div>
+
+      <div class="chat-thread" id="cd-thread">
+{%- for m in landing.multiplayer.chat.msgs %}{% set msg = t.multiplayer.msgs[loop.index0] %}
+        <div class="cmsg cmsg-{{ m.who }}">
+          {% if m.who == "agent" %}<span class="cmsg-av av {{ landing.multiplayer.chat.av }}"></span>{% else %}{{ avatar(m.human, "cmsg-av") }}{% endif %}
+          <div class="cmsg-main"><span class="cmsg-name">{{ msg.who }}</span><div class="cmsg-text">{{ msg.textHtml | safe }}</div></div>
+        </div>
+{%- endfor %}
+      </div>
+
+      <div class="chat-composer">
+        {{ avatar(landing.multiplayer.chat.composerAvatar, "cc-avatar") }}
+        <span class="cc-placeholder">{{ t.multiplayer.composer }}</span>
+        <span class="cc-send" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg></span>
+      </div>
+    </div>
+  </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,270 @@
+import { deepStrictEqual, ok, strictEqual } from "node:assert";
+import { describe, it } from "node:test";
+import type {
+  CatalogModelEntry,
+  CatalogProvider,
+  ProviderCatalog,
+} from "@houston/protocol";
+import {
+  addCandidate,
+  type Candidate,
+  type Draft,
+  finalize,
+  foldEnrichment,
+} from "../src/lib/ai-hub/catalog-merge.ts";
+import { piCatalogToCandidates } from "../src/lib/ai-hub/catalog-pi.ts";
+import type { RawModel } from "../src/lib/ai-hub/catalog-snapshot.ts";
+import { isModelVisible } from "../src/lib/provider-overrides.ts";
+
+/** Compact CatalogModelEntry builder with sane defaults. */
+function entry(
+  id: string,
+  opts: Partial<CatalogModelEntry> & { name?: string } = {},
+): CatalogModelEntry {
+  return {
+    id,
+    name: opts.name ?? id,
+    pricing: opts.pricing ?? { input: 3, output: 15 },
+    contextWindow: opts.contextWindow ?? 200_000,
+    maxTokens: opts.maxTokens ?? 8_192,
+    reasoning: opts.reasoning ?? false,
+    vision: opts.vision ?? false,
+  };
+}
+
+const provider = (
+  id: string,
+  auth: CatalogProvider["auth"],
+  models: CatalogModelEntry[],
+): CatalogProvider => ({ id, name: id, auth, models });
+
+describe("piCatalogToCandidates maps the pi-ai catalog to merge candidates", () => {
+  const catalog: ProviderCatalog = [
+    // pi's DIRECT api-key OpenAI — collides with the codex rename, dropped.
+    provider("openai", "apiKey", [entry("gpt-4o"), entry("gpt-4o-mini")]),
+    // OAuth Codex — renamed to `openai`, marked subscription.
+    provider("openai-codex", "oauth", [
+      entry("gpt-6-astra", {
+        reasoning: true,
+        vision: true,
+        maxTokens: 64_000,
+        contextWindow: 272_000,
+        pricing: { input: 1.25, output: 10 },
+      }),
+    ]),
+    provider("groq", "apiKey", [
+      entry("llama-4-scout", {
+        vision: true,
+        pricing: { input: 0.5, output: 1.5 },
+      }),
+    ]),
+  ];
+  const candidates = piCatalogToCandidates(catalog);
+
+  it("applies DROP_PI_PROVIDERS: pi's direct openai models never map", () => {
+    const ids = candidates.map((c) => c.raw.id);
+    ok(!ids.includes("gpt-4o") && !ids.includes("gpt-4o-mini"));
+  });
+
+  it("applies PROVIDER_ID_RENAME: openai-codex → openai, no raw codex id", () => {
+    ok(!candidates.some((c) => c.providerId === "openai-codex"));
+    const openai = candidates.find((c) => c.providerId === "openai");
+    ok(openai, "expected a renamed openai candidate");
+  });
+
+  it("preserves the pi model id verbatim as the offer model id", () => {
+    const openai = candidates.find((c) => c.providerId === "openai");
+    strictEqual(openai?.raw.id, "gpt-6-astra");
+  });
+
+  it("maps pi pricing to costIn / costOut", () => {
+    const openai = candidates.find((c) => c.providerId === "openai");
+    strictEqual(openai?.raw.costIn, 1.25);
+    strictEqual(openai?.raw.costOut, 10);
+  });
+
+  it("turns pi vision into an image input modality", () => {
+    const openai = candidates.find((c) => c.providerId === "openai");
+    deepStrictEqual(openai?.raw.input, ["text", "image"]);
+    const groq = candidates.find((c) => c.providerId === "groq");
+    deepStrictEqual(groq?.raw.input, ["text", "image"]);
+  });
+
+  it("maps reasoning and maxTokens → output", () => {
+    const openai = candidates.find((c) => c.providerId === "openai");
+    strictEqual(openai?.raw.reasoning, true);
+    strictEqual(openai?.raw.output, 64_000);
+    const groq = candidates.find((c) => c.providerId === "groq");
+    strictEqual(groq?.raw.reasoning, undefined);
+  });
+
+  it("marks subscription from provider.auth === oauth", () => {
+    strictEqual(
+      candidates.find((c) => c.providerId === "openai")?.subscription,
+      true,
+    );
+    strictEqual(
+      candidates.find((c) => c.providerId === "groq")?.subscription,
+      false,
+    );
+  });
+
+  it("detects the lab from the (renamed) provider id + model", () => {
+    strictEqual(
+      candidates.find((c) => c.providerId === "openai")?.lab,
+      "openai",
+    );
+    strictEqual(candidates.find((c) => c.providerId === "groq")?.lab, "meta");
+  });
+});
+
+describe("piCatalogToCandidates applies the shared VISIBLE_MODELS curation", () => {
+  // The hub and the chat model picker must offer the SAME set, so both apply
+  // the ONE `isModelVisible` gate (`VISIBLE_MODELS` in provider-overrides.ts):
+  // a curated provider surfaces only its curated ids, an uncurated provider
+  // keeps its full pi list. Hidden ids stay runnable on the wire.
+  const catalog: ProviderCatalog = [
+    provider("anthropic", "oauth", [
+      // In VISIBLE_MODELS.anthropic — surfaces.
+      entry("claude-sonnet-5"),
+      // Runnable but NOT in VISIBLE_MODELS.anthropic — hidden.
+      entry("claude-haiku-4-5"),
+    ]),
+    provider("google", "apiKey", [
+      entry("gemini-3.5-flash"),
+      // Runnable but NOT in VISIBLE_MODELS.google — hidden.
+      entry("gemini-2.5-pro"),
+    ]),
+    provider("groq", "apiKey", [entry("llama-4-scout")]),
+  ];
+  const candidates = piCatalogToCandidates(catalog);
+
+  it("keeps a curated provider's visible models", () => {
+    ok(
+      candidates.some(
+        (c) => c.providerId === "anthropic" && c.raw.id === "claude-sonnet-5",
+      ),
+    );
+    ok(
+      candidates.some(
+        (c) => c.providerId === "google" && c.raw.id === "gemini-3.5-flash",
+      ),
+    );
+  });
+
+  it("drops a curated provider's hidden models", () => {
+    ok(!candidates.some((c) => c.raw.id === "claude-haiku-4-5"));
+    ok(!candidates.some((c) => c.raw.id === "gemini-2.5-pro"));
+  });
+
+  it("keeps an uncurated provider's full list", () => {
+    ok(
+      candidates.some(
+        (c) => c.providerId === "groq" && c.raw.id === "llama-4-scout",
+      ),
+    );
+  });
+});
+
+describe("snapshot enrichment is gated to pi-existing models", () => {
+  function raw(key: string, extra: Partial<RawModel> = {}): RawModel {
+    return { key, id: key, name: key, ...extra };
+  }
+  function piCandidate(key: string, providerId: string): Candidate {
+    return {
+      providerId,
+      raw: raw(key, { costIn: 3, costOut: 15, context: 200_000 }),
+      subscription: false,
+      lab: "other",
+    };
+  }
+  function build(cands: Candidate[], enrich: RawModel[]): Map<string, Draft> {
+    const drafts = new Map<string, Draft>();
+    for (const c of cands) addCandidate(drafts, c);
+    for (const r of enrich) foldEnrichment(drafts, r);
+    return drafts;
+  }
+  function draftFor(drafts: Map<string, Draft>, key: string): Draft {
+    const draft = drafts.get(key);
+    ok(draft, `expected a draft for ${key}`);
+    return draft;
+  }
+
+  it("a pi-ai model gains snapshot imageGen / description / toolCall / release date", () => {
+    const drafts = build(
+      [piCandidate("model-x", "openrouter")],
+      [
+        raw("model-x", {
+          description: "A capable model.",
+          imageGen: true,
+          toolCall: true,
+          releaseDate: "2025-06-01",
+        }),
+      ],
+    );
+    const m = finalize("model-x", draftFor(drafts, "model-x"));
+    strictEqual(m.description, "A capable model.");
+    strictEqual(m.imageGen, true);
+    strictEqual(m.toolCall, true);
+    strictEqual(m.releaseDate, "2025-06-01");
+    // Existence + economics stay pi's.
+    deepStrictEqual(
+      m.offers.map((o) => o.providerId),
+      ["openrouter"],
+    );
+    strictEqual(m.offers[0].costInput, 3);
+  });
+
+  it("drops a snapshot-only model: enrichment with no pi twin is a no-op", () => {
+    const drafts = build(
+      [piCandidate("model-x", "openrouter")],
+      [raw("ghost-model", { description: "Not runnable.", imageGen: true })],
+    );
+    strictEqual(drafts.size, 1);
+    ok(!drafts.has("ghost-model"), "snapshot-only key must not create a draft");
+  });
+
+  it("a pi-ai-only model appears without enrichment", () => {
+    const drafts = build([piCandidate("model-y", "google")], []);
+    const m = finalize("model-y", draftFor(drafts, "model-y"));
+    strictEqual(m.description, undefined);
+    strictEqual(m.imageGen, false);
+    strictEqual(m.toolCall, false);
+    strictEqual(m.releaseDate, undefined);
+    strictEqual(m.offers.length, 1);
+  });
+});
+
+describe("OpenRouter rolling aliases never surface (PRODUCT-1657)", () => {
+  // `~anthropic/claude-opus-latest` ("Anthropic: Claude Opus Latest") is a
+  // duplicate of a concrete model under a name that reads as Anthropic's own.
+  // In the ceiling editor it became a separate Anthropic-lab model offered ONLY
+  // by OpenRouter, so a Claude user who allowed it got a ceiling nothing they
+  // connected could run. Hidden everywhere the visibility gate applies; still
+  // runnable on the wire for an existing pin.
+  const catalog: ProviderCatalog = [
+    provider("openrouter", "apiKey", [
+      entry("anthropic/claude-opus-5", { name: "Claude Opus 5" }),
+      entry("~anthropic/claude-opus-latest", {
+        name: "Anthropic: Claude Opus Latest",
+      }),
+    ]),
+  ];
+  const candidates = piCatalogToCandidates(catalog);
+
+  it("hides the alias and keeps the concrete id", () => {
+    strictEqual(
+      isModelVisible("openrouter", "~anthropic/claude-opus-latest"),
+      false,
+    );
+    strictEqual(isModelVisible("openrouter", "anthropic/claude-opus-5"), true);
+    deepStrictEqual(
+      candidates.map((c) => c.raw.id),
+      ["anthropic/claude-opus-5"],
+    );
+  });
+
+  it("only gates OpenRouter: a tilde id elsewhere is untouched", () => {
+    strictEqual(isModelVisible("groq", "~anything"), true);
+  });
+});

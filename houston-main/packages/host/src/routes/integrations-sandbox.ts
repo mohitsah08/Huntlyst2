@@ -1,0 +1,178 @@
+import type { IncomingMessage, ServerResponse } from "node:http";
+import { IntegrationSigninRequiredError } from "../integrations/types";
+import type { CredentialVault, WorkspaceStore } from "../ports";
+import { bearer, header, json, optionalTrimmed, readJson } from "./http";
+import {
+  type IntegrationDeps,
+  relayIntegrationUpstreamError,
+  signinRequired,
+} from "./integrations";
+import { executeIntegration, searchIntegrations } from "./integrations-fanout";
+import { defineRouteFamily } from "./registry";
+
+export { providerForAction } from "./integrations-fanout";
+
+/**
+ * Which provider owns an action the runtime tool passed with no explicit
+ * provider: executor addresses (`tools.<integration>....`) belong to the
+ * custom provider when it is registered; everything else goes to the first
+ * non-custom provider (Composio's slug convention), falling back to whatever
+ * is registered.
+ */
+/**
+ * The RUNTIME-facing integrations proxy (`/sandbox/integrations/*`, authed by
+ * the per-sandbox HMAC token): the agent's `integration_search` /
+ * `integration_execute` tools call THIS, never the provider directly — no
+ * integration secret ever sits in the agent runtime. The host resolves the
+ * sandbox → its workspace owner → that user's id with the provider. The
+ * user-facing routes live in integrations.ts.
+ */
+defineRouteFamily({
+  group: "sandbox-integrations",
+  members: [
+    { method: "POST", path: "/sandbox/integrations/search" },
+    { method: "POST", path: "/sandbox/integrations/execute" },
+  ],
+  phase: "sandbox",
+  classification: "internal-sandbox",
+  reason:
+    "The runtime's tools call these with a per-sandbox HMAC token so no integration secret ever sits in the agent.",
+  source: "packages/host/src/routes/integrations-sandbox.ts",
+  handler: ({ deps, method, path, url, req, res }) =>
+    handleSandboxIntegrations(deps, method, path, url, req, res),
+});
+
+async function handleSandboxIntegrations(
+  deps: {
+    vault: CredentialVault;
+    store: WorkspaceStore;
+    integrations?: IntegrationDeps;
+  },
+  method: string,
+  path: string,
+  url: URL,
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<boolean> {
+  const m = path.match(/^\/sandbox\/integrations\/(search|execute)$/);
+  if (!m || method !== "POST") return false;
+
+  // Authenticate the sandbox (NOT a user JWT) — same gate as /sandbox/credential.
+  const sbToken = bearer(req, url);
+  const claim = sbToken ? deps.vault.validateSandboxToken(sbToken) : null;
+  if (!claim) {
+    json(res, 401, { error: "unauthorized" });
+    return true;
+  }
+  if (!deps.integrations) {
+    // A stable `code` marks THIS as the host's own not-configured signal (no
+    // key in this install) — distinct from a transient upstream 503 the proxy
+    // relays verbatim during an outage. The runtime tool classifies on the
+    // code, never the bare status, so it never misdirects the user to set
+    // COMPOSIO_API_KEY during a temporary gateway/provider failure.
+    json(res, 503, {
+      error: "integrations not configured",
+      code: "integrations_not_configured",
+    });
+    return true;
+  }
+  const { registry } = deps.integrations;
+
+  const body = await readJson(req);
+  // An explicit provider narrows the call; omitted (the runtime tools always
+  // omit it) means ALL providers: search fans out and merges, execute resolves
+  // the owning provider from the action's shape (see providersFor/executorOf).
+  const explicit =
+    typeof body.provider === "string" && registry.has(body.provider)
+      ? body.provider
+      : null;
+  if (typeof body.provider === "string" && explicit === null) {
+    json(res, 404, {
+      error: `unknown integration provider '${body.provider}'`,
+    });
+    return true;
+  }
+
+  // The sandbox proves its workspace; the provider acts as the workspace owner.
+  const ws = await deps.store.getWorkspace(claim.workspaceId);
+  if (!ws) {
+    json(res, 404, { error: "workspace not found" });
+    return true;
+  }
+
+  // WHO the runtime is acting as this turn (C2): the gateway-minted acting-as
+  // token for a live user, OR the routine creator's sub for a fired routine.
+  // Both absent locally (single-user) → the provider falls back to the owner.
+  const actingAs = header(req, "x-houston-acting-as");
+  const actingUser = header(req, "x-houston-acting-user");
+  const acting = actingAs || actingUser ? { actingAs, actingUser } : undefined;
+
+  try {
+    if (m[1] === "search") {
+      const query = body.query;
+      if (typeof query !== "string") {
+        json(res, 400, { error: "missing 'query'" });
+        return true;
+      }
+      // Optional `app`: the agent's HARD scope when the task names an app —
+      // each provider returns only that app's actions (PRODUCT-1274).
+      const app = optionalTrimmed(body.app);
+      json(
+        res,
+        200,
+        await searchIntegrations({
+          registry,
+          userId: ws.ownerUserId,
+          query,
+          acting,
+          app,
+          provider: explicit ?? undefined,
+        }),
+      );
+      return true;
+    }
+
+    // execute
+    const action = body.action;
+    if (typeof action !== "string") {
+      json(res, 400, { error: "missing 'action'" });
+      return true;
+    }
+    const params =
+      body.params && typeof body.params === "object"
+        ? (body.params as Record<string, unknown>)
+        : {};
+    // Optional `account`: the runtime tool targets ONE of the user's connected
+    // accounts when the action's toolkit holds several (two Gmail logins).
+    const account =
+      typeof body.account === "string" && body.account
+        ? body.account
+        : undefined;
+
+    // The host executes every authenticated execute directly. Integration
+    // confirmations are model-driven `ask_user` questions raised BEFORE the
+    // call (Ask first mode); there is no host-side approval gate. Planner
+    // blocking and the cloud gateway's toolkit allowlist live elsewhere.
+    json(
+      res,
+      200,
+      await executeIntegration({
+        registry,
+        userId: ws.ownerUserId,
+        action,
+        params,
+        acting,
+        account,
+        provider: explicit ?? undefined,
+      }),
+    );
+    return true;
+  } catch (err) {
+    if (err instanceof IntegrationSigninRequiredError) {
+      signinRequired(res);
+      return true;
+    }
+    if (relayIntegrationUpstreamError(res, err)) return true;
+    throw err;
+  }
+}

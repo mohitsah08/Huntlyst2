@@ -1,0 +1,60 @@
+import {
+  AGENT_VIEW_ID,
+  AGENTS_HOME_VIEW_ID,
+  AI_HUB_VIEW_ID,
+  SETTINGS_VIEW_ID,
+} from "../../lib/top-level-views";
+import { ACADEMY_VIEW_ID, AcademyView } from "../academy";
+import { AgentsHomeView } from "../agents-home/agents-home-view";
+import { AiHubView } from "../ai-hub/ai-hub-view";
+import { ASSISTANT_VIEW_ID, AssistantView } from "../assistant";
+import { INTEGRATIONS_VIEW_ID, IntegrationsView } from "../integrations-view";
+import { OrganizationView } from "../organization";
+import { ADMIN_VIEW_ID } from "../organization/id";
+import { SettingsView } from "../settings/settings-view";
+import { AgentView } from "../team-view/agent-view";
+import type { KeepAliveView } from "./keep-alive-views";
+import { adminViewEnabled } from "./top-level-screen-plan";
+
+/**
+ * The cached top-level screens, separated from the shell's agent-tab chrome.
+ *
+ * The Academy is ungated: learning the product exists in every deployment.
+ * Settings carries personal setup sections (`lib/settings-sections.ts`).
+ *
+ * Each employee's policy is reached through their own screen. Admin owns the
+ * space's administration and follows the organization gate: it stays mounted
+ * while that gate resolves so it can show a neutral frame. Employee screens
+ * share one view id and read the selected employee and section from the UI
+ * store.
+ */
+export function topLevelScreenViews(gates: {
+  showAiModels: boolean;
+  showOrganization: boolean;
+  ready: boolean;
+}): KeepAliveView[] {
+  return [
+    // The phone's Agents tab root and the desktop's temporary boot landing.
+    // It also handles an empty roster and dead-view fallbacks.
+    { id: AGENTS_HOME_VIEW_ID, enabled: true, content: <AgentsHomeView /> },
+    // Ungated: onboarding runs in this screen, scripted and local, so it must
+    // exist before discovery answers and on a deployment that serves no
+    // manager. Once onboarding is over there, the view guard sends a stale
+    // `viewMode` home (`blockedTopLevelView`).
+    { id: ASSISTANT_VIEW_ID, enabled: true, content: <AssistantView /> },
+    { id: ACADEMY_VIEW_ID, enabled: true, content: <AcademyView /> },
+    { id: AI_HUB_VIEW_ID, enabled: gates.showAiModels, content: <AiHubView /> },
+    { id: SETTINGS_VIEW_ID, enabled: true, content: <SettingsView /> },
+    {
+      id: INTEGRATIONS_VIEW_ID,
+      enabled: true,
+      content: <IntegrationsView />,
+    },
+    {
+      id: ADMIN_VIEW_ID,
+      enabled: adminViewEnabled(gates),
+      content: <OrganizationView />,
+    },
+    { id: AGENT_VIEW_ID, enabled: true, content: <AgentView /> },
+  ];
+}

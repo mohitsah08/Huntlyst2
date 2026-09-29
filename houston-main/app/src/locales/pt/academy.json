@@ -1,0 +1,129 @@
+{
+  "title": "Academia",
+  "status": {
+    "experience": "Experiência",
+    "experienceOf": "{{value}} / {{goal}}",
+    "experienceTotal": "{{value}} no total",
+    "usageChip": "Uso {{points}}",
+    "streakChip_one": "Sequência de {{count}} dia",
+    "streakChip_other": "Sequência de {{count}} dias",
+    "streakBest_one": "Melhor sequência: {{count}} dia",
+    "streakBest_other": "Melhor sequência: {{count}} dias",
+    "toNextRank": "{{points}} para {{rank}}",
+    "topRank": "Posto máximo alcançado",
+    "avatarAlt": "Seu posto na Academia"
+  },
+  "ranks": {
+    "cadet": "Cadete",
+    "pilot": "Piloto",
+    "specialist": "Especialista",
+    "commander": "Comandante",
+    "missionDirector": "Diretor de missão"
+  },
+  "path": {
+    "title": "Seu caminho",
+    "earned": "{{points}} de experiência",
+    "chapterProgress": "{{done}} de {{total}} concluídas",
+    "chapterDone": "Concluído"
+  },
+  "chapters": {
+    "getting-started": {
+      "title": "Primeiros passos"
+    }
+  },
+  "actions": {
+    "start": "Começar",
+    "continue": "Continuar",
+    "replay": "Repetir"
+  },
+  "locked": {
+    "title": "Em breve",
+    "description": "Um novo capítulo abre aqui conforme a Academia cresce."
+  },
+  "error": {
+    "title": "Não foi possível carregar seu progresso",
+    "description": "Algo deu errado ao conectar com o servidor. Verifique sua conexão e tente novamente.",
+    "retry": "Tentar de novo"
+  },
+  "lessons": {
+    "exit": "Sair da lição",
+    "progress": "Passo {{current}} de {{total}}",
+    "stepCount": "{{current}} / {{total}}",
+    "video": {
+      "kicker": "Assista",
+      "continue": "Continuar",
+      "comingSoon": "O vídeo está a caminho. Você já pode começar."
+    },
+    "houston-tour": {
+      "title": "Faça um tour pelo Houston",
+      "description": "Veja onde fica cada coisa em menos de um minuto.",
+      "steps": {
+        "team": {
+          "body": "Seus funcionários de IA ficam aqui. Abra um quando quiser para ver no que ele está trabalhando.",
+          "cta": "Próximo"
+        },
+        "board": {
+          "body": "Este é o quadro do seu funcionário de IA. Toda tarefa que você passa para ele aparece aqui, com o andamento dela.",
+          "cta": "Próximo"
+        },
+        "newTask": {
+          "body": "Use Nova tarefa sempre que precisar de algo. Seu funcionário de IA cuida do resto.",
+          "cta": "Próximo"
+        },
+        "aiModels": {
+          "body": "Em Modelos de IA você conecta sua IA ou troca por outra.",
+          "cta": "Próximo"
+        },
+        "integrations": {
+          "body": "Integrações conecta os apps que você já usa, como Gmail ou Slack, para seus funcionários de IA trabalharem neles.",
+          "cta": "Próximo"
+        },
+        "academy": {
+          "body": "E esta é a Academia. Volte quando quiser para aprender mais e subir de nível.",
+          "cta": "Pronto"
+        }
+      }
+    },
+    "employee-email": {
+      "title": "Receba um e-mail de um funcionário de IA",
+      "description": "Conecte seu e-mail e receba um e-mail de verdade do seu funcionário de IA.",
+      "steps": {
+        "intro": {
+          "title": "Seu funcionário de IA, fazendo trabalho de verdade",
+          "body": "Conecte seu e-mail, escolha um funcionário de IA e peça para ele escrever para você. Leva cerca de um minuto.",
+          "cta": "Vamos lá"
+        },
+        "connect": {
+          "title": "Conecte seu e-mail",
+          "body": "Escolha o e-mail que você usa. Você pode gerenciar isso quando quiser em Integrações.",
+          "connect": "Conectar",
+          "connecting": "Conectando…",
+          "cancel": "Cancelar",
+          "connected": "Conectado",
+          "unavailable": "Os apps de e-mail ainda não estão disponíveis aqui.",
+          "loading": "Verificando seus apps de e-mail…"
+        },
+        "sender": {
+          "title": "Quem vai enviar para você?",
+          "body": "Escolha o funcionário de IA que envia.",
+          "cta": "Continuar",
+          "empty": {
+            "title": "Contrate seu primeiro funcionário de IA",
+            "body": "Você precisa de um funcionário de IA para enviar o e-mail. Contrate um e a lição continua daqui.",
+            "askAdmin": "Sua equipe ainda não tem funcionários de IA. Peça a um administrador do espaço para adicionar um e volte.",
+            "cta": "Contratar um funcionário de IA"
+          }
+        },
+        "ask": {
+          "body": "Seu pedido está pronto. Aperte Enviar para passá-lo ao seu funcionário de IA.",
+          "request": "Me mande um e-mail curto e simpático de oi no meu próprio e-mail, usando o {{app}}.",
+          "requestAnyApp": "Me mande um e-mail curto e simpático de oi no meu próprio e-mail."
+        },
+        "watch": {
+          "body": "Seu funcionário de IA já está cuidando disso. Confira sua caixa de entrada.",
+          "cta": "Recebi"
+        }
+      }
+    }
+  }
+}

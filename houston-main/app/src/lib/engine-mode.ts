@@ -1,0 +1,189 @@
+/**
+ * Build-time engine-connection env flags. The Houston host is the only engine,
+ * so the app always talks to a v3 host; these flags only pick *which* host —
+ * an external one (`VITE_NEW_ENGINE_URL`), a hosted gateway
+ * (`VITE_HOSTED_ENGINE_URL`), or the local spawned sidecar (no flag).
+ */
+type EngineModeEnv = {
+  VITE_NEW_ENGINE_URL?: string;
+  VITE_HOSTED_ENGINE_URL?: string;
+  /**
+   * Auth method for the hosted engine (`VITE_HOSTED_ENGINE_URL`). The
+   * enable/disable switch for the Supabase Google-login gate — see
+   * {@link hostedAuthMode}. Independent of `VITE_HOSTED_ENGINE_URL` so a
+   * developer can point the desktop app at a hosted gateway (e.g. the local
+   * kind cluster) and toggle the OAuth login on or off without changing the URL.
+   */
+  VITE_HOSTED_ENGINE_AUTH?: string;
+};
+
+/**
+ * True when a URL's host is this same machine (127.0.0.1 / localhost / ::1) —
+ * an engine reached there is CO-LOCATED for provider auth even though it was
+ * configured by URL (the dev two-terminal setup points `VITE_NEW_ENGINE_URL`
+ * at a hand-run local host). Unparseable input reads as NOT loopback: when in
+ * doubt, prefer the device-code flow that works everywhere.
+ */
+export function isLoopbackHostUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    const host = new URL(url).hostname;
+    return (
+      host === "127.0.0.1" ||
+      host === "localhost" ||
+      host === "[::1]" ||
+      host === "::1"
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Provider OAuth loopback only works when the browser and runtime are
+ * co-located on the same machine: pi binds the provider's fixed localhost
+ * callback port IN-PROCESS and completes the token exchange itself, so the
+ * client's only job is opening the authorize URL in the user's browser. A
+ * Tauri desktop pointed at a truly remote host is still a remote client for
+ * provider auth (the runtime's localhost callback is on the remote host) and
+ * must use the device-code flow — but an engine URL at a loopback address IS
+ * co-located, so it keeps the seamless browser flow, exactly like the packaged
+ * host-sidecar build. That applies to BOTH env flags: a loopback
+ * `VITE_NEW_ENGINE_URL` (the dev two-terminal setup) and a loopback
+ * `VITE_HOSTED_ENGINE_URL` (the dev cloud profile's local gateway, whose
+ * "pods" are runtimes on this same machine).
+ */
+export function providerLoginUsesDeviceAuthByDefault(
+  env: Pick<EngineModeEnv, "VITE_NEW_ENGINE_URL" | "VITE_HOSTED_ENGINE_URL">,
+  client: { isTauri: boolean },
+): boolean {
+  if (!client.isTauri) return true;
+  if (env.VITE_HOSTED_ENGINE_URL)
+    return !isLoopbackHostUrl(env.VITE_HOSTED_ENGINE_URL);
+  if (env.VITE_NEW_ENGINE_URL)
+    return !isLoopbackHostUrl(env.VITE_NEW_ENGINE_URL);
+  return false;
+}
+
+/** Gate for the desktop Codex/OpenAI zero-code loopback relay: ON only for a
+ * TRULY remote engine, where pi's own 1455 is in the pod so the desktop's
+ * LOCAL 1455 can't collide. Co-located/web keep existing flows — including a
+ * loopback hosted gateway (the dev cloud profile), whose runtime binds 1455 on
+ * THIS machine: a relay bind there fails EADDRINUSE and kills the sign-in.
+ * Collision rationale (#615/#620) is at the relay call sites
+ * (codex-loopback.ts). */
+export function codexUsesLoopbackRelay(
+  env: Pick<EngineModeEnv, "VITE_NEW_ENGINE_URL" | "VITE_HOSTED_ENGINE_URL">,
+  client: { isTauri: boolean },
+): boolean {
+  return client.isTauri && providerLoginUsesDeviceAuthByDefault(env, client);
+}
+
+/** How the desktop authenticates to the hosted engine (`VITE_HOSTED_ENGINE_URL`). */
+export type HostedAuthMode =
+  /** Houston account login (Firebase): prompt sign-in, session token as bearer. */
+  | "oauth"
+  /** Static bearer (`VITE_HOSTED_ENGINE_TOKEN` / `VITE_NEW_ENGINE_TOKEN`): no login. */
+  | "static";
+
+/**
+ * Resolve the hosted-engine auth method from `VITE_HOSTED_ENGINE_AUTH`.
+ *
+ * This is the enable/disable switch for the hosted Google-login flow. An
+ * explicit value wins; otherwise the presence of a hosted URL implies OAuth
+ * (managed cloud is authenticated by default — the documented contract), and a
+ * plain self-host / dev build with no hosted URL stays static.
+ *
+ * Accepted values (case-insensitive): `oauth` | `supabase` (legacy alias from
+ * pre-Firebase builds) | `google` | `1` | `true` | `on` ⇒ OAuth; `static` |
+ * `token` | `none` | `0` | `false` | `off` ⇒ static. Anything else falls back
+ * to the default.
+ */
+export function hostedAuthMode(env: EngineModeEnv): HostedAuthMode {
+  const raw = (env.VITE_HOSTED_ENGINE_AUTH ?? "").trim().toLowerCase();
+  if (["oauth", "supabase", "google", "1", "true", "on"].includes(raw)) {
+    return "oauth";
+  }
+  if (["static", "token", "none", "0", "false", "off"].includes(raw)) {
+    return "static";
+  }
+  return env.VITE_HOSTED_ENGINE_URL ? "oauth" : "static";
+}
+
+/**
+ * True when the desktop should run the hosted-engine sign-in gate: a hosted
+ * gateway URL is set AND its auth mode is OAuth. Static-token hosted mode (and
+ * every non-hosted build) returns false and skips the login UI.
+ */
+export function hostedOauthLoginActive(env: EngineModeEnv): boolean {
+  return Boolean(env.VITE_HOSTED_ENGINE_URL) && hostedAuthMode(env) === "oauth";
+}
+
+/** The screen the hosted Google-login gate should render for a given auth state. */
+export type HostedGateState =
+  /** Hosted OAuth is on but no Firebase project is configured — can't sign in. */
+  | "misconfigured"
+  /** Resolving the persisted session, or applying a fresh token to the engine. */
+  | "loading"
+  /** No session — prompt "Continue with Google". */
+  | "sign-in"
+  /** Signed in and the engine adapter is bootstrapped — render the app. */
+  | "ready";
+
+/**
+ * Pure decision for {@link HostedEngineGate}. Only consulted when the hosted
+ * OAuth gate is active, so OAuth is assumed; the only escape hatch is a build
+ * that enabled hosted OAuth without baking Supabase creds, which can never
+ * produce a token (`misconfigured`) — surfaced loudly instead of spinning
+ * forever on the "starting" splash.
+ */
+export function hostedGateState(input: {
+  authConfigured: boolean;
+  sessionLoading: boolean;
+  hasSession: boolean;
+  engineReady: boolean;
+}): HostedGateState {
+  if (!input.authConfigured) return "misconfigured";
+  if (input.sessionLoading) return "loading";
+  if (!input.hasSession) return "sign-in";
+  if (!input.engineReady) return "loading";
+  return "ready";
+}
+
+/**
+ * The concrete engine transport the app should bootstrap, from the build-time
+ * env flags.
+ *
+ * - `static-host` — `VITE_NEW_ENGINE_URL` (baked host URL + static token).
+ * - `hosted-oauth` — `VITE_HOSTED_ENGINE_URL`, authenticated with a Supabase
+ *   session token (the managed-cloud default).
+ * - `hosted-static` — `VITE_HOSTED_ENGINE_URL` with OAuth toggled off.
+ * - `sidecar` — the Tauri-spawned Houston host subprocess. Also what
+ *   `packages/web` resolves to: it reuses this module verbatim, injects
+ *   `window.__HOUSTON_ENGINE__` itself, and `engine.ts` adopts that config.
+ */
+export type ResolvedEngine =
+  | { kind: "static-host"; url: string }
+  | { kind: "hosted-oauth"; url: string }
+  | { kind: "hosted-static"; url: string }
+  | { kind: "sidecar" };
+
+/**
+ * Resolve the one transport the app should use from the build-time env flags.
+ *
+ * The gateway URL is baked into the build (HOU-642): a build-baked target (a
+ * host URL, or a hosted gateway) wins, and everything else — the desktop
+ * dev/prod build and the browser build — runs against its co-located host
+ * sidecar / injected config. There is no runtime chooser.
+ */
+export function resolveEngine(env: EngineModeEnv): ResolvedEngine {
+  if (env.VITE_NEW_ENGINE_URL) {
+    return { kind: "static-host", url: env.VITE_NEW_ENGINE_URL };
+  }
+  if (env.VITE_HOSTED_ENGINE_URL) {
+    return hostedAuthMode(env) === "oauth"
+      ? { kind: "hosted-oauth", url: env.VITE_HOSTED_ENGINE_URL }
+      : { kind: "hosted-static", url: env.VITE_HOSTED_ENGINE_URL };
+  }
+  return { kind: "sidecar" };
+}

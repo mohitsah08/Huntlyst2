@@ -1,0 +1,332 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
+// @ts-expect-error -- plain .mjs build helper, no type declarations needed here.
+import { parseColor } from "../build/color.mjs";
+
+/**
+ * WCAG guard for every colour Houston paints as INFORMATION, where a
+ * washed-out hue is not a style slip but something the user cannot read: the
+ * two families that carry a sender's NAME in chat, the file-type tints the
+ * Files list paints its icon glyphs with, the status hues set as text, and the
+ * label on the primary button, whose dark fill is a frost the surface below
+ * shows through.
+ *
+ * Chat attributes every message to its sender WhatsApp-group style: the name
+ * renders inside the bubble in that sender's stable tone. Text has to clear
+ * 4.5:1, and a fill tuned to carry white initials does not automatically do so
+ * — the `person.*` avatar fills measure 2.9-3.1:1 as dark-mode text, which is
+ * exactly why the `person.name-*` variants exist.
+ *
+ * The surfaces are composited from the REAL tokens rather than pinned to a
+ * literal, so if the bubble or canvas ever moves, this test re-measures against
+ * the new surface instead of quietly guarding a stale one:
+ *
+ *   name surface (agent names)  light: background
+ *                               dark:  background over base
+ *   bubble surface (person)     light: chip over background
+ *                               dark:  chip over background over base
+ *
+ *   content surfaces            both:  input, page, recessed-row fill
+ *   (file-type glyphs, status inks)
+ *
+ * Values are read from the generated CSS (the same artifact the app ships), so
+ * a token edit that regresses contrast fails here rather than in someone's eyes.
+ */
+
+const CONTRAST_FLOOR = 4.5;
+const NON_TEXT_CONTRAST_FLOOR = 3;
+
+const cssPath = fileURLToPath(
+  new URL("../dist/css/tokens.css", import.meta.url),
+);
+
+type Rgba = { r: number; g: number; b: number; a: number };
+type Vars = Record<string, string>;
+
+function parseBlock(css: string, selector: string): Vars {
+  const escaped = selector.replace(/[[\]"]/g, "\\$&");
+  const block = new RegExp(`${escaped}\\s*\\{([^}]*)\\}`).exec(css);
+  if (!block) throw new Error(`No ${selector} block in generated tokens.css`);
+  const vars: Vars = {};
+  const re = /--(ht-[a-z0-9-]+)\s*:\s*([^;]+);/g;
+  let m: RegExpExecArray | null = re.exec(block[1]);
+  while (m) {
+    vars[m[1]] = m[2].trim();
+    m = re.exec(block[1]);
+  }
+  return vars;
+}
+
+/** Source-over alpha compositing in sRGB space, matching how a browser paints. */
+function over(fg: Rgba, bg: Rgba): Rgba {
+  const a = fg.a + bg.a * (1 - fg.a);
+  const mix = (f: number, b: number) =>
+    (f * fg.a + b * bg.a * (1 - fg.a)) / (a || 1);
+  return { r: mix(fg.r, bg.r), g: mix(fg.g, bg.g), b: mix(fg.b, bg.b), a };
+}
+
+/** WCAG 2.x relative luminance from sRGB components in [0, 1]. */
+function relativeLuminance({ r, g, b }: Rgba): number {
+  const lin = (c: number) =>
+    c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+
+/** WCAG 2.x contrast ratio; both colours must already be opaque. */
+function contrastRatio(a: Rgba, b: Rgba): number {
+  const la = relativeLuminance(a);
+  const lb = relativeLuminance(b);
+  const [hi, lo] = la > lb ? [la, lb] : [lb, la];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+const css = readFileSync(cssPath, "utf8");
+const themes = {
+  light: parseBlock(css, ":root"),
+  dark: parseBlock(css, '[data-theme="dark"]'),
+} as const;
+
+type Theme = keyof typeof themes;
+
+function token(theme: Theme, name: string): Rgba {
+  const raw = themes[theme][name];
+  if (raw === undefined) {
+    throw new Error(`--${name} is not defined in the ${theme} theme`);
+  }
+  return parseColor(raw) as Rgba;
+}
+
+/** The canvas an agent name sits on: the screen surface, flattened onto the gutter. */
+function nameSurface(theme: Theme): Rgba {
+  return over(token(theme, "ht-background"), token(theme, "ht-base"));
+}
+
+/** The chat bubble a teammate's name sits in: the chip recess over that canvas. */
+function bubbleSurface(theme: Theme): Rgba {
+  return over(token(theme, "ht-chip"), nameSurface(theme));
+}
+
+function contentSurface(theme: Theme, name: string): Rgba {
+  return name === "ht-background"
+    ? nameSurface(theme)
+    : over(token(theme, name), nameSurface(theme));
+}
+
+const PERSON_TONES = ["slate", "sage", "mauve", "taupe", "indigo"] as const;
+const FILETYPE_FAMILIES = [
+  "pdf",
+  "doc",
+  "sheet",
+  "slide",
+  "image",
+  "video",
+  "audio",
+  "archive",
+  "code",
+  "generic",
+] as const;
+
+/**
+ * The status hues worn AS TEXT. `-text` is the label printed ON a status fill;
+ * these are the hue itself set on a normal surface (a "2 failed" count, a
+ * warning line under a field), which is body text and owes 4.5:1. The fills
+ * (`success` / `warning` / `danger`) do not clear it in light: amber on white
+ * measures ~2:1, which is exactly why the ink variants exist.
+ */
+const STATUS_INKS = ["success", "warning", "danger"] as const;
+
+/**
+ * The alphas a status chip washes its own hue at (`bg-success/15`,
+ * `bg-danger/10`). A wash is NOT a neutral surface: it tints the backdrop
+ * TOWARDS the ink sitting on it, so an ink measured only against `input` /
+ * `background` / `chip` is measured against the easiest case. The densest wash
+ * on the most recessed row is the real floor, and it is where the "Connected"
+ * chip used to land at 4.31:1.
+ */
+const STATUS_WASH_ALPHAS = [0.15, 0.1] as const;
+
+/** The status chip's own fill: the hue at `alpha` over the row it sits in. */
+function washSurface(
+  theme: Theme,
+  status: (typeof STATUS_INKS)[number],
+  alpha: number,
+  surfaceToken: string,
+): Rgba {
+  const hue = token(theme, `ht-${status}`);
+  return over(
+    { ...hue, a: hue.a * alpha },
+    contentSurface(theme, surfaceToken),
+  );
+}
+
+/**
+ * The two places a primary button sits: on a field-tone pane and on the bare
+ * window gutter. Houston's dark button is a white FROST, so what is behind it
+ * is part of its fill and its label is measured on the composite, never on the
+ * token alone.
+ */
+function buttonSurfaces(theme: Theme): [string, Rgba][] {
+  return [
+    ["pane", contentSurface(theme, "ht-input")],
+    ["gutter", token(theme, "ht-base")],
+  ];
+}
+
+const AGENT_TONES = [
+  "charcoal",
+  "forest",
+  "navy",
+  "purple",
+  "crimson",
+  "orange",
+  "golden",
+  "teal",
+  "rose",
+  "umber",
+] as const;
+
+describe.each([
+  "light",
+  "dark",
+] as const)("name text contrast (%s)", (theme) => {
+  it("composites both surfaces to fully opaque colours", () => {
+    // The ladder bottoms out at an opaque gutter; if it ever stops doing so,
+    // every ratio below would be measured against a colour that does not exist.
+    expect(token(theme, "ht-base").a).toBe(1);
+    expect(nameSurface(theme).a).toBe(1);
+    expect(bubbleSurface(theme).a).toBe(1);
+  });
+
+  for (const tone of PERSON_TONES) {
+    it(`person name tone "${tone}" clears ${CONTRAST_FLOOR}:1 on the bubble`, () => {
+      const ratio = contrastRatio(
+        token(theme, `ht-person-name-${tone}`),
+        bubbleSurface(theme),
+      );
+      expect(
+        ratio,
+        `--ht-person-name-${tone} (${theme}) measures ${ratio.toFixed(2)}:1 on the chat bubble, below the ${CONTRAST_FLOOR}:1 body-text floor`,
+      ).toBeGreaterThanOrEqual(CONTRAST_FLOOR);
+    });
+  }
+
+  for (const family of FILETYPE_FAMILIES) {
+    it(`file-type tint "${family}" clears ${CONTRAST_FLOOR}:1 on its tile`, () => {
+      // The Files icon tile is filled with --ht-input in both themes, and the
+      // glyph is the only thing inside it: a tint that fails here is a file
+      // type the user cannot read at a glance.
+      const surface = contentSurface(theme, "ht-input");
+      const ratio = contrastRatio(
+        over(token(theme, `ht-filetype-${family}`), surface),
+        surface,
+      );
+      expect(
+        ratio,
+        `--ht-filetype-${family} (${theme}) measures ${ratio.toFixed(2)}:1 on the icon tile, below the ${CONTRAST_FLOOR}:1 floor`,
+      ).toBeGreaterThanOrEqual(CONTRAST_FLOOR);
+    });
+
+    for (const [surfaceName, tokenName] of [
+      ["page", "ht-background"],
+      ["checked row", "ht-chip-subtle"],
+    ] as const) {
+      it(`file-type tint "${family}" clears ${NON_TEXT_CONTRAST_FLOOR}:1 on the ${surfaceName}`, () => {
+        const surface = contentSurface(theme, tokenName);
+        const ratio = contrastRatio(
+          over(token(theme, `ht-filetype-${family}`), surface),
+          surface,
+        );
+        expect(
+          ratio,
+          `--ht-filetype-${family} (${theme}) measures ${ratio.toFixed(2)}:1 on the ${surfaceName}, below the ${NON_TEXT_CONTRAST_FLOOR}:1 non-text floor`,
+        ).toBeGreaterThanOrEqual(NON_TEXT_CONTRAST_FLOOR);
+      });
+    }
+  }
+
+  for (const status of STATUS_INKS) {
+    for (const [surfaceName, tokenName] of [
+      ["field", "ht-input"],
+      ["page", "ht-background"],
+      ["recessed row", "ht-chip-subtle"],
+    ] as const) {
+      it(`status ink "${status}" clears ${CONTRAST_FLOOR}:1 on the ${surfaceName}`, () => {
+        const surface = contentSurface(theme, tokenName);
+        const ratio = contrastRatio(
+          over(token(theme, `ht-${status}-ink`), surface),
+          surface,
+        );
+        expect(
+          ratio,
+          `--ht-${status}-ink (${theme}) measures ${ratio.toFixed(2)}:1 on the ${surfaceName}, below the ${CONTRAST_FLOOR}:1 body-text floor`,
+        ).toBeGreaterThanOrEqual(CONTRAST_FLOOR);
+      });
+    }
+
+    for (const alpha of STATUS_WASH_ALPHAS) {
+      for (const [surfaceName, tokenName] of [
+        ["field", "ht-input"],
+        ["page", "ht-background"],
+        ["chip row", "ht-chip"],
+      ] as const) {
+        it(`status ink "${status}" clears ${CONTRAST_FLOOR}:1 on its own ${alpha * 100}% wash over the ${surfaceName}`, () => {
+          const surface = washSurface(theme, status, alpha, tokenName);
+          const ratio = contrastRatio(
+            over(token(theme, `ht-${status}-ink`), surface),
+            surface,
+          );
+          expect(
+            ratio,
+            `--ht-${status}-ink (${theme}) measures ${ratio.toFixed(2)}:1 on a ${alpha * 100}% --ht-${status} wash over the ${surfaceName}, below the ${CONTRAST_FLOOR}:1 body-text floor`,
+          ).toBeGreaterThanOrEqual(CONTRAST_FLOOR);
+        });
+      }
+    }
+  }
+
+  // The link colour worn AS TEXT: every URL in chat and every link in a rendered
+  // markdown document. It sits on the page, in a field, on a recessed row and
+  // inside a teammate's chip bubble, and it owes body text's floor on each.
+  for (const [surfaceName, surface] of [
+    ["field", contentSurface(theme, "ht-input")],
+    ["page", contentSurface(theme, "ht-background")],
+    ["recessed row", contentSurface(theme, "ht-chip-subtle")],
+    ["chat bubble", bubbleSurface(theme)],
+  ] as [string, Rgba][]) {
+    it(`the link colour clears ${CONTRAST_FLOOR}:1 on the ${surfaceName}`, () => {
+      const ratio = contrastRatio(token(theme, "ht-link"), surface);
+      expect(
+        ratio,
+        `--ht-link (${theme}) measures ${ratio.toFixed(2)}:1 on the ${surfaceName}, below the ${CONTRAST_FLOOR}:1 body-text floor`,
+      ).toBeGreaterThanOrEqual(CONTRAST_FLOOR);
+    });
+  }
+
+  for (const [surfaceName, surface] of buttonSurfaces(theme)) {
+    it(`the primary button's label clears ${CONTRAST_FLOOR}:1 over the ${surfaceName}`, () => {
+      const fill = over(token(theme, "ht-cta"), surface);
+      const ratio = contrastRatio(
+        over(token(theme, "ht-cta-text"), fill),
+        fill,
+      );
+      expect(
+        ratio,
+        `--ht-cta-text (${theme}) measures ${ratio.toFixed(2)}:1 on --ht-cta over the ${surfaceName}, below the ${CONTRAST_FLOOR}:1 body-text floor`,
+      ).toBeGreaterThanOrEqual(CONTRAST_FLOOR);
+    });
+  }
+
+  for (const tone of AGENT_TONES) {
+    it(`agent tone "${tone}" clears ${CONTRAST_FLOOR}:1 as a name`, () => {
+      const ratio = contrastRatio(
+        token(theme, `ht-agent-${tone}`),
+        nameSurface(theme),
+      );
+      expect(
+        ratio,
+        `--ht-agent-${tone} (${theme}) measures ${ratio.toFixed(2)}:1 on the name surface, below the ${CONTRAST_FLOOR}:1 body-text floor`,
+      ).toBeGreaterThanOrEqual(CONTRAST_FLOOR);
+    });
+  }
+});

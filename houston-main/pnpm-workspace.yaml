@@ -1,0 +1,34 @@
+packages:
+  - "ui/*"
+  - "app"
+  - "packages/*"
+  - "agentstore"
+
+# Approve native build scripts (pnpm 10 blocks dependency postinstall by
+# default). @sentry/cli's postinstall downloads the platform `sentry-cli`
+# binary that `app/scripts/sentry-inject.mjs` + the release.yml Sentry upload
+# steps invoke. Lives here, NOT in package.json's `pnpm` field — recent pnpm no
+# longer reads that field ("The pnpm field in package.json is no longer read").
+onlyBuiltDependencies:
+  - "@sentry/cli"
+
+# Security override (uuid <11.1.1 advisory): gaxios 6 and teeny-request 9
+# (both pulled by @google-cloud/storage, which has no gaxios-7-based release
+# yet) declare uuid ^9. Both only call the still-present `v4()` (multipart
+# boundaries), so forcing the patched major is safe. Drop when
+# @google-cloud/storage moves to gaxios >=7 (which dropped uuid entirely).
+overrides:
+  "gaxios>uuid": "^11.1.1"
+  "teeny-request>uuid": "^11.1.1"
+patchedDependencies:
+  '@earendil-works/pi-ai@0.87.1': patches/@earendil-works__pi-ai@0.87.1.patch
+  '@executor-js/sdk@1.5.37': patches/@executor-js__sdk@1.5.37.patch
+# pi-coding-agent's barrel re-exports `main`, whose experimental remote session
+# server imports @earendil-works/pi-server, which the package still lists only
+# under devDependencies (0.87.1: its pi dependencies stop at pi-tui). Under
+# pnpm's isolated layout that is a hard ERR_MODULE_NOT_FOUND on the first import
+# of the barrel. Drop this extension when a pi release declares the dependency.
+packageExtensions:
+  '@earendil-works/pi-coding-agent@0.87.1':
+    dependencies:
+      '@earendil-works/pi-server': '0.87.1'

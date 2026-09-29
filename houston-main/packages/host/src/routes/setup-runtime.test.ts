@@ -1,0 +1,364 @@
+import type { Server } from "node:http";
+import type { Capabilities, CustomEndpoint } from "@houston/protocol";
+import { expect, test } from "vitest";
+import { MemoryCredentialStore } from "../credentials/store";
+import { EnvCredentialVault } from "../credentials/vault";
+import type {
+  CaptureResult,
+  ChannelCtx,
+  RuntimeChannel,
+  TokenVerifier,
+  TurnPin,
+} from "../ports";
+import { type ControlPlaneDeps, createControlPlaneServer } from "../server";
+import { MemoryWorkspaceStore } from "../store/memory";
+
+/**
+ * The pre-agent provider-connect surface (`/setup-runtime/*`) over real HTTP:
+ * first-run onboarding connects the user's AI BEFORE any agent exists, so the
+ * host runs the login in a hidden setup runtime scoped to the personal
+ * workspace. Verifies the synthetic-agent shape (capture lands on the REAL
+ * workspace id), the strict allowlist (no chat/export surface pre-agent), and
+ * the capture/api-key mirrors of the per-agent routes.
+ */
+
+const USER = "alice";
+const CAPS: Capabilities = {
+  profile: "cloud",
+  revealInOs: false,
+  terminal: false,
+  tunnel: false,
+  codeExecution: "remote-sandbox",
+  providers: ["openai-codex"],
+  openaiCompatible: false,
+  integrations: ["composio"],
+  sharedSkills: false,
+};
+
+/** Records every call; dispatch answers 200 with the rest it was asked for. */
+class FakeChannel implements RuntimeChannel {
+  dispatched: { ctx: ChannelCtx; method: string; rest: string }[] = [];
+  captured: { ctx: ChannelCtx; provider?: string }[] = [];
+  apiKeys: { ctx: ChannelCtx; provider: string; apiKey: string }[] = [];
+  claudeOAuth: { ctx: ChannelCtx; accessToken: string }[] = [];
+  forgotten: { ctx: ChannelCtx; provider: string }[] = [];
+  claudeOAuthError: Error | null = null;
+  captureResult: CaptureResult = { ok: true, provider: "openai-codex" };
+
+  async dispatch(
+    ctx: ChannelCtx,
+    method: string,
+    rest: string,
+    _url: URL,
+    _req: unknown,
+    res: import("node:http").ServerResponse,
+  ): Promise<void> {
+    this.dispatched.push({ ctx, method, rest });
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ rest }));
+  }
+  async fireTurn(
+    _ctx: ChannelCtx,
+    _c: string,
+    _t: string,
+    _p?: TurnPin,
+  ): Promise<void> {}
+  async cancelTurn(): Promise<boolean> {
+    return false;
+  }
+  async busy(): Promise<boolean> {
+    return false;
+  }
+  async runtimeStatus() {
+    return "running" as const;
+  }
+  async teardown(): Promise<void> {}
+  async captureCredential(
+    ctx: ChannelCtx,
+    provider?: string,
+  ): Promise<CaptureResult> {
+    this.captured.push({ ctx, provider });
+    return this.captureResult;
+  }
+  async saveApiKeyCredential(
+    ctx: ChannelCtx,
+    provider: string,
+    apiKey: string,
+  ): Promise<void> {
+    this.apiKeys.push({ ctx, provider, apiKey });
+  }
+  async saveCustomEndpoint(
+    _ctx: ChannelCtx,
+    _e: CustomEndpoint,
+  ): Promise<void> {}
+  async saveClaudeOAuthCredential(
+    ctx: ChannelCtx,
+    cred: { accessToken: string },
+  ): Promise<void> {
+    if (this.claudeOAuthError) throw this.claudeOAuthError;
+    this.claudeOAuth.push({ ctx, accessToken: cred.accessToken });
+  }
+  async forgetCredential(ctx: ChannelCtx, provider: string): Promise<void> {
+    this.forgotten.push({ ctx, provider });
+  }
+}
+
+async function setup(opts: { withChannel?: boolean } = {}) {
+  const verifier: TokenVerifier = {
+    async verify(b) {
+      return b === "tok" ? { userId: USER } : null;
+    },
+  };
+  const store = new MemoryWorkspaceStore({ defaultRuntime: "gke" });
+  const channel = new FakeChannel();
+  const deps: ControlPlaneDeps = {
+    verifier,
+    store,
+    credentials: new MemoryCredentialStore(),
+    vault: new EnvCredentialVault({ secret: "test-secret" }),
+    channels: opts.withChannel === false ? {} : { gke: channel },
+    capabilities: CAPS,
+    corsOrigin: "*",
+  };
+  const server: Server = createControlPlaneServer(deps);
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", () => r()));
+  const addr = server.address();
+  const base = `http://127.0.0.1:${typeof addr === "object" && addr ? addr.port : 0}`;
+  const ws = await store.getOrCreatePersonalWorkspace(USER);
+  return { base, ws, channel, stop: () => server.close() };
+}
+
+const auth = {
+  Authorization: "Bearer tok",
+  "Content-Type": "application/json",
+};
+
+test("login + status dispatch to a hidden setup agent on the PERSONAL workspace", async () => {
+  const { base, ws, channel, stop } = await setup();
+  try {
+    for (const [method, path] of [
+      ["POST", "auth/openai-codex/login?deviceAuth=false"],
+      ["POST", "auth/openai-codex/login/complete"],
+      // The reconnect card's every press goes cancel → launch, so a blocked
+      // cancel 404s and the login never launches (HOU-676).
+      ["POST", "auth/openai-codex/login/cancel"],
+      ["GET", "auth/status"],
+      ["GET", "providers"],
+    ] as const) {
+      const res = await fetch(`${base}/setup-runtime/${path}`, {
+        method,
+        headers: auth,
+      });
+      expect(res.status).toBe(200);
+    }
+    expect(channel.dispatched.map((d) => d.rest)).toEqual([
+      "auth/openai-codex/login",
+      "auth/openai-codex/login/complete",
+      "auth/openai-codex/login/cancel",
+      "auth/status",
+      "providers",
+    ]);
+    for (const d of channel.dispatched) {
+      // Capture scope: the credential must land where every REAL agent's
+      // connect-once serve reads it — the user's personal workspace.
+      expect(d.ctx.agent.workspaceId).toBe(ws.id);
+      expect(d.ctx.workspace.id).toBe(ws.id);
+      // Hidden: a dot-directory name the FS store never lists as an agent.
+      expect(d.ctx.agent.name.startsWith(".")).toBe(true);
+    }
+  } finally {
+    stop();
+  }
+});
+
+test("everything outside the connect surface is 404 — chat and auth/export never reach the runtime", async () => {
+  const { base, channel, stop } = await setup();
+  try {
+    for (const [method, path] of [
+      ["GET", "auth/export"], // would hand a refresh token to a client
+      ["POST", "auth/export"],
+      ["POST", "conversations/x/messages"],
+      ["POST", "settings"],
+      ["GET", ""],
+    ] as const) {
+      const res = await fetch(`${base}/setup-runtime/${path}`, {
+        method,
+        headers: auth,
+      });
+      expect(res.status).toBe(404);
+    }
+    expect(channel.dispatched).toEqual([]);
+  } finally {
+    stop();
+  }
+});
+
+test("credential/capture mirrors the per-agent capture (provider passthrough + error mapping)", async () => {
+  const { base, ws, channel, stop } = await setup();
+  try {
+    let res = await fetch(`${base}/setup-runtime/credential/capture`, {
+      method: "POST",
+      headers: auth,
+      body: JSON.stringify({ provider: "openai-codex" }),
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, provider: "openai-codex" });
+    expect(channel.captured).toHaveLength(1);
+    expect(channel.captured[0]?.provider).toBe("openai-codex");
+    expect(channel.captured[0]?.ctx.agent.workspaceId).toBe(ws.id);
+
+    channel.captureResult = {
+      ok: false,
+      status: 400,
+      error: "agent is not connected yet",
+    };
+    res = await fetch(`${base}/setup-runtime/credential/capture`, {
+      method: "POST",
+      headers: auth,
+    });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "agent is not connected yet" });
+  } finally {
+    stop();
+  }
+});
+
+test("credential/api-key stores through the channel and validates its body", async () => {
+  const { base, ws, channel, stop } = await setup();
+  try {
+    const ok = await fetch(`${base}/setup-runtime/credential/api-key`, {
+      method: "POST",
+      headers: auth,
+      body: JSON.stringify({ provider: "opencode", apiKey: "sk-test" }),
+    });
+    expect(ok.status).toBe(200);
+    expect(channel.apiKeys).toEqual([
+      {
+        ctx: expect.objectContaining({
+          agent: expect.objectContaining({ workspaceId: ws.id }),
+        }),
+        provider: "opencode",
+        apiKey: "sk-test",
+      },
+    ]);
+
+    const missing = await fetch(`${base}/setup-runtime/credential/api-key`, {
+      method: "POST",
+      headers: auth,
+      body: JSON.stringify({ provider: "opencode" }),
+    });
+    expect(missing.status).toBe(400);
+  } finally {
+    stop();
+  }
+});
+
+test("credential/forget + auth/:provider/logout: a space with no agent signs out through the setup runtime (PRODUCT-1662)", async () => {
+  const { base, ws, channel, stop } = await setup();
+  try {
+    // The central credential is forgotten on the PERSONAL workspace — the same
+    // scope the setup-runtime connect captured it into.
+    const forget = await fetch(`${base}/setup-runtime/credential/forget`, {
+      method: "POST",
+      headers: auth,
+      body: JSON.stringify({ provider: "anthropic" }),
+    });
+    expect(forget.status).toBe(200);
+    expect(await forget.json()).toEqual({ ok: true });
+    expect(channel.forgotten).toEqual([
+      {
+        ctx: expect.objectContaining({
+          workspace: expect.objectContaining({ id: ws.id }),
+          agent: expect.objectContaining({ workspaceId: ws.id }),
+        }),
+        provider: "anthropic",
+      },
+    ]);
+
+    // …and the runtime's own auth copy is cleared through the allowlisted
+    // logout, so `auth/status` stops reading connected.
+    const logout = await fetch(`${base}/setup-runtime/auth/anthropic/logout`, {
+      method: "POST",
+      headers: auth,
+    });
+    expect(logout.status).toBe(200);
+    expect(channel.dispatched).toEqual([
+      expect.objectContaining({
+        method: "POST",
+        rest: "auth/anthropic/logout",
+      }),
+    ]);
+
+    const missing = await fetch(`${base}/setup-runtime/credential/forget`, {
+      method: "POST",
+      headers: auth,
+      body: JSON.stringify({}),
+    });
+    expect(missing.status).toBe(400);
+    expect(channel.forgotten).toHaveLength(1);
+  } finally {
+    stop();
+  }
+});
+
+test("credential/claude-oauth mirrors the per-agent push (validated envelope, personal-workspace scope, channel error → 502)", async () => {
+  const { base, ws, channel, stop } = await setup();
+  try {
+    // The desktop's browser login lands here when NO agent is selected yet
+    // (first-run onboarding, the cloud-migration wizard) — the regression that
+    // used to force the paste flow.
+    const ok = await fetch(`${base}/setup-runtime/credential/claude-oauth`, {
+      method: "POST",
+      headers: auth,
+      body: JSON.stringify({ claudeAiOauth: { accessToken: "at-1" } }),
+    });
+    expect(ok.status).toBe(200);
+    expect(await ok.json()).toEqual({ ok: true });
+    expect(channel.claudeOAuth).toHaveLength(1);
+    expect(channel.claudeOAuth[0]?.accessToken).toBe("at-1");
+    // Central-store scope: the credential must land on the personal workspace
+    // every real agent pod is served from.
+    expect(channel.claudeOAuth[0]?.ctx.agent.workspaceId).toBe(ws.id);
+
+    // Malformed envelope → clean 400 (never a false success) so the desktop
+    // degrades to the paste flow.
+    const bad = await fetch(`${base}/setup-runtime/credential/claude-oauth`, {
+      method: "POST",
+      headers: auth,
+      body: JSON.stringify({ nope: true }),
+    });
+    expect(bad.status).toBe(400);
+    expect(channel.claudeOAuth).toHaveLength(1);
+
+    // A channel refusal (e.g. the per-turn runtime's explicit gate) surfaces
+    // as 502 with the real reason.
+    channel.claudeOAuthError = new Error("not available here");
+    const refused = await fetch(
+      `${base}/setup-runtime/credential/claude-oauth`,
+      {
+        method: "POST",
+        headers: auth,
+        body: JSON.stringify({ claudeAiOauth: { accessToken: "at-2" } }),
+      },
+    );
+    expect(refused.status).toBe(502);
+    expect(await refused.json()).toEqual({ error: "not available here" });
+  } finally {
+    stop();
+  }
+});
+
+test("401 without a valid bearer; 503 when the workspace runtime has no channel", async () => {
+  const { base, stop } = await setup({ withChannel: false });
+  try {
+    const noAuth = await fetch(`${base}/setup-runtime/providers`);
+    expect(noAuth.status).toBe(401);
+
+    const noChannel = await fetch(`${base}/setup-runtime/providers`, {
+      headers: auth,
+    });
+    expect(noChannel.status).toBe(503);
+  } finally {
+    stop();
+  }
+});

@@ -1,0 +1,165 @@
+{
+  "operations": {
+    "acceptOrgInvite": "Accept this invitation to join a shared space.",
+    "addAgentCustomIntegration": "Add an outside app of your own to this AI Employee, from a link.",
+    "addCustomIntegration": "Add an outside app of your own from a link.",
+    "addOrgMember": "Invite someone to this space with the role you chose.",
+    "cancelRoutineRun": "Stop this routine run while it is under way.",
+    "conversations.delete": "Delete this chat and everything said in it. This cannot be undone.",
+    "createAgent": "Create a new AI Employee.",
+    "createApiKey": "Create a new API key.",
+    "createCheckout": "Start the checkout that subscribes this workspace to a paid plan.",
+    "createOrg": "Create a shared space you can invite teammates into.",
+    "createPlusCheckout": "Start a paid Plus subscription for your personal plan.",
+    "createRoutine": "Create a routine so the AI Employee repeats work on a schedule.",
+    "createSkill": "Create a skill the AI Employee can follow.",
+    "declineOrgInvite": "Decline this invitation to join a shared space.",
+    "deleteActivity": "Delete this mission from the AI Employee's board.",
+    "deleteAgent": "Delete this AI Employee and everything in it. This cannot be undone.",
+    "deleteFile": "Delete this file from the AI Employee's workspace for good.",
+    "deleteOrg": "Delete this shared space and everything inside it. This cannot be undone.",
+    "deleteOrgInvite": "Cancel this pending invitation to the space.",
+    "deleteRoutine": "Delete this routine so it stops running on its schedule.",
+    "deleteSharedSkill": "Delete a skill shared with the workspace, removing it for everyone.",
+    "deleteSkill": "Delete this skill so the AI Employee no longer has it.",
+    "detectAgentCustomIntegration": "Check what kind of service this link points to, using this AI Employee.",
+    "detectCustomIntegration": "Check what kind of service this link points to.",
+    "disconnectChannel": "Disconnect Houston from this Slack account. It stops reading and answering there.",
+    "forgetCredential": "Sign this workspace out of the AI account.",
+    "installAgentFromGithub": "Install an AI Employee from a GitHub repository.",
+    "integrations.disconnect": "Disconnect an outside app from your account.",
+    "keepRoutine": "Keep this routine running on Free. The others stay saved but stop firing.",
+    "mintRoutineWebhookKey": "Create a fresh key that lets an outside service start this routine. Any key issued before stops working.",
+    "moveAgent": "Move this AI Employee into a shared space so teammates can work with it.",
+    "promoteSharedSkill": "Share the AI Employee's skill with everyone in the workspace.",
+    "pushClaudeOAuthCredential": "Send this computer's Claude sign-in to an AI Employee in the cloud.",
+    "putSkillsManifest": "Choose which of the AI Employee's skills are switched on.",
+    "removeAgentCustomIntegration": "Remove an outside app from this AI Employee.",
+    "removeCustomIntegration": "Remove an outside app you added yourself.",
+    "removeOrgMember": "Remove this person from the space.",
+    "renameAgent": "Rename this AI Employee.",
+    "resumeRoutines": "Resume routines that paused while you were away.",
+    "revokeApiKey": "Revoke this API key for good. Anything still using it stops working.",
+    "runRoutineNow": "Run this routine right now instead of waiting for its next scheduled time.",
+    "saveSharedSkill": "Save changes to a skill shared with the workspace, for everyone who uses it.",
+    "saveSkill": "Save changes to this skill's instructions.",
+    "setAgentAssignments": "Choose who may use this AI Employee, and at what access level.",
+    "setAgentDelegation": "Choose which AI Employees this one may give missions to and whether it accepts new missions from others.",
+    "setAgentModelChoice": "Change which AI model this AI Employee uses.",
+    "startFirstDay": "Start this AI Employee's first day: it introduces itself and works out with you how to help.",
+    "setAgentSettings": "Choose which apps and AI models this AI Employee is allowed to use.",
+    "setContext": "Replace the background notes the AI Employee gets in every conversation.",
+    "setOrgMemberRole": "Change what this person is allowed to do in this space.",
+    "submitAgentCustomIntegrationCredential": "Save the secret that finishes setting up this app for this AI Employee.",
+    "submitCustomIntegrationCredential": "Save the secret that finishes setting up this app.",
+    "updateActivity": "Update this mission's details or status.",
+    "updateRoutine": "Update this routine's schedule or instructions.",
+    "writeAgentFile": "Replace the contents of one of the AI Employee's saved data files."
+  },
+  "arguments": {
+    "agentId": "AI Employee",
+    "agentPath": "AI Employee",
+    "agentSlugOrId": "AI Employee",
+    "assignments": "access",
+    "body": "details",
+    "choice": "model",
+    "color": "color",
+    "content": "contents",
+    "credentialJson": "sign in",
+    "email": "email",
+    "githubUrl": "GitHub link",
+    "id": "id",
+    "input": "details",
+    "interval": "billing period",
+    "inviteId": "invitation",
+    "kind": "kind",
+    "manifest": "skills",
+    "name": "name",
+    "newName": "new name",
+    "patch": "changes",
+    "policy": "teamwork settings",
+    "provider": "AI account",
+    "relPath": "file",
+    "role": "role",
+    "routineId": "routine",
+    "runId": "run",
+    "seed": "starting instructions",
+    "settings": "settings",
+    "slug": "name",
+    "toDir": "destination folder",
+    "toSlug": "space",
+    "updates": "changes",
+    "url": "link",
+    "userId": "person",
+    "values": "values",
+    "workspaceId": "workspace"
+  },
+  "argumentsByOperation": {
+    "conversations.delete": {
+      "id": "chat"
+    },
+    "deleteActivity": {
+      "id": "mission"
+    },
+    "deleteAgent": {
+      "id": "AI Employee"
+    },
+    "deleteOrg": {
+      "slug": "space"
+    },
+    "deleteRoutine": {
+      "id": "routine"
+    },
+    "deleteSharedSkill": {
+      "slug": "skill"
+    },
+    "deleteSkill": {
+      "slug": "skill"
+    },
+    "disconnectChannel": {
+      "connectionId": "Slack account"
+    },
+    "integrations.disconnect": {
+      "toolkit": "app"
+    },
+    "keepRoutine": {
+      "key": "routine"
+    },
+    "promoteSharedSkill": {
+      "slug": "skill"
+    },
+    "removeAgentCustomIntegration": {
+      "slug": "app"
+    },
+    "removeCustomIntegration": {
+      "slug": "app"
+    },
+    "renameAgent": {
+      "id": "AI Employee"
+    },
+    "revokeApiKey": {
+      "id": "key"
+    },
+    "runRoutineNow": {
+      "id": "routine"
+    },
+    "saveSharedSkill": {
+      "slug": "skill"
+    },
+    "saveSkill": {
+      "slug": "skill"
+    },
+    "submitAgentCustomIntegrationCredential": {
+      "slug": "app"
+    },
+    "submitCustomIntegrationCredential": {
+      "slug": "app"
+    },
+    "updateActivity": {
+      "id": "mission"
+    },
+    "updateRoutine": {
+      "id": "routine"
+    }
+  }
+}

@@ -1,0 +1,175 @@
+import { AIBoard } from "@houston-ai/board";
+import { useCallback, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { perfSpans } from "../../lib/perf-spans";
+import { useUIStore } from "../../stores/ui";
+import { FirstDayLead } from "../first-day/first-day-banner";
+import { FirstDayHero } from "../first-day/first-day-cta";
+import {
+  buildMissionBoardColumns,
+  MISSION_APPROVE_STATUSES,
+  MISSION_ARCHIVE_STATUSES,
+} from "../mission-board-columns";
+import { useIsActiveView } from "../shell/keep-alive-views";
+import { useShellDetailPanel } from "../shell/use-shell-detail-panel";
+import type { BoardSource } from "./board-source";
+import { PanelBackToBoard, PanelWidthToggle } from "./panel-width-controls";
+import { useBoardChatWiring } from "./use-board-chat-wiring";
+import { useBoardKeyboard } from "./use-board-keyboard";
+import { useBoardSelectionUI } from "./use-board-selection-ui";
+
+/**
+ * The one board every mission surface renders (Mission Control and each team
+ * board, which is the same source narrowed by a scope). It owns the
+ * board-shaped concerns — columns, the multi-select UI, keyboard navigation,
+ * the shell panel portal, and the AIBoard prop spread — and pulls the chat
+ * half from the shared {@link useBoardChatWiring} (the same wiring the
+ * phone's pushed mission-chat screen binds) and the divergent pieces (data,
+ * active agent, new-mission flow, bulk routing, toolbar, dialogs) from
+ * `source`.
+ *
+ * Desktop only: the phone's tasks live on the employee's task list
+ * (`agents-home/agent-missions-screen.tsx`), and the employee screen never
+ * mounts a board below md (`team-view/agent-view.tsx`).
+ */
+export function MissionBoard({ source }: { source: BoardSource }) {
+  const { t } = useTranslation(["dashboard", "board"]);
+  // A mission chat may go wide (PRODUCT-1722): the board is a place to come
+  // back to, not a form the chat is helping to fill in.
+  const { panelContainer, setPanelOpen } = useShellDetailPanel({ wide: true });
+  const chatWide = useUIStore((s) => s.chatWide);
+  // Every board is the whole of a kept-alive top-level screen, so the
+  // screen-level signal alone says whether this one is on the glass. It gates
+  // the keyboard nav and the shell detail panel: a hidden-but-mounted screen
+  // must stop portaling its panel, or two screens stack their panels into the
+  // one shared slot and the chat renders "split in half" (HOU-1165).
+  const isActive = useIsActiveView();
+  const missionPanelOpen = useUIStore((s) => s.missionPanelOpen);
+
+  const wiring = useBoardChatWiring(source);
+
+  // Columns: base layout (single source of truth for status→section) plus the
+  // Done "archive all" / Needs-you "select all" header actions when the source
+  // supports multi-select.
+  const baseColumns = useMemo(
+    () =>
+      buildMissionBoardColumns(
+        {
+          running: t("dashboard:columns.running"),
+          needsYou: t("dashboard:columns.needsYou"),
+          done: t("dashboard:columns.done"),
+          newMission: t("dashboard:empty.newMission"),
+        },
+        source.openNewMission,
+      ),
+    [t, source.openNewMission],
+  );
+  const closeOpenChat = useCallback(
+    () => source.setSelectedId(null),
+    [source.setSelectedId],
+  );
+  const { columns, selectionProps } = useBoardSelectionUI({
+    baseColumns,
+    allItems: source.allItems,
+    selection: source.selection,
+    openChatId: source.selectedId,
+    onCloseOpenChat: closeOpenChat,
+  });
+
+  // AIBoard's closer, kept here as well as in the keyboard hook: the wide
+  // header's "Back to tasks" must close the empty new-task composer too,
+  // whose open state lives inside AIBoard and is unreachable by selection.
+  const closerRef = useRef<(() => void) | null>(null);
+  const { handleCloserReady } = useBoardKeyboard({
+    isActive,
+    items: source.items,
+    columns,
+    selectedId: source.selectedId,
+    setSelectedId: source.setSelectedId,
+    highlightedId: source.highlightedId,
+    setHighlightedId: source.setHighlightedId,
+    missionPanelOpen,
+    setPanelOpen,
+    isLoaded: source.isLoaded,
+    hasSearchQuery: source.hasSearchQuery,
+    openerReady: source.openerReady,
+    autoOpenKey: source.autoOpenKey,
+    autoOpenItemCount: source.autoOpenItemCount,
+    autoOpenBlocked: source.autoOpenBlocked,
+    onAutoOpenEmpty: source.onAutoOpenEmpty,
+  });
+
+  const handleCloserReadyWide = useCallback(
+    (close: () => void) => {
+      closerRef.current = close;
+      handleCloserReady(close);
+    },
+    [handleCloserReady],
+  );
+  const backToBoard = useCallback(() => {
+    closerRef.current?.();
+    source.setSelectedId(null);
+  }, [source.setSelectedId]);
+
+  const handleSelect = useCallback(
+    (id: string | null) => {
+      // Card-open perf mark (HOU-1011): completed when the opened
+      // conversation's messages paint (use-agent-board-data).
+      if (id) perfSpans.cardClicked();
+      source.setSelectedId(id);
+    },
+    [source.setSelectedId],
+  );
+
+  const firstDay = source.firstDay;
+  return (
+    <>
+      {source.toolbar}
+      <FirstDayLead placement={firstDay} />
+      <div className="flex-1 min-h-0">
+        <AIBoard
+          items={source.items}
+          columns={columns}
+          selectedId={source.selectedId}
+          highlightedId={source.highlightedId}
+          onSelect={handleSelect}
+          onDelete={source.onDelete}
+          onApprove={source.onApprove}
+          approveStatuses={MISSION_APPROVE_STATUSES}
+          onArchive={source.onArchive}
+          archiveStatuses={MISSION_ARCHIVE_STATUSES}
+          onRename={source.onRename}
+          onNewPanelOpenerReady={source.registerOpener}
+          onPanelCloserReady={handleCloserReadyWide}
+          // Wide: the board is gone from the layout, so the header leads with
+          // the way back to it and drops the X (one exit, as on the phone).
+          hidePanelClose={chatWide}
+          panelLeading={
+            chatWide ? (
+              <PanelBackToBoard
+                label={t("board:panel.backToTasks")}
+                onClick={backToBoard}
+              />
+            ) : undefined
+          }
+          panelTrailing={<PanelWidthToggle />}
+          emptyState={
+            firstDay.kind === "hero" ? (
+              <FirstDayHero agent={firstDay.agent} />
+            ) : (
+              source.emptyState
+            )
+          }
+          panelContainer={panelContainer}
+          onPanelOpenChange={setPanelOpen}
+          onItemMove={source.onItemMove}
+          canDropItem={source.canDropItem}
+          {...(selectionProps ?? {})}
+          {...wiring.chatProps}
+        />
+      </div>
+      {wiring.dialogs}
+      {source.dialogs}
+    </>
+  );
+}

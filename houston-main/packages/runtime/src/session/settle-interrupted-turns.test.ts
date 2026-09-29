@@ -1,0 +1,414 @@
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { describe, expect, it, vi } from "vitest";
+import { RESUME_MAX_AGE_MS } from "./resume-request";
+import {
+  EngineRestartedMidTurnError,
+  fenceBypassed,
+  settleInterruptedTurns,
+} from "./settle-interrupted-turns";
+import {
+  listInflightMarkers,
+  writeInflightMarker,
+} from "./turn-inflight-marker";
+
+function seed() {
+  const dataDir = mkdtempSync(join(tmpdir(), "houston-settle-"));
+  const conversations = join(dataDir, "conversations");
+  mkdirSync(conversations, { recursive: true });
+  const write = (id: string, messages: unknown[]) =>
+    writeFileSync(
+      join(conversations, `${encodeURIComponent(id)}.json`),
+      JSON.stringify({
+        id,
+        title: id,
+        createdAt: 1,
+        updatedAt: 1,
+        messages,
+      }),
+    );
+  const read = (id: string) =>
+    JSON.parse(
+      readFileSync(
+        join(conversations, `${encodeURIComponent(id)}.json`),
+        "utf8",
+      ),
+    ) as { messages: Record<string, unknown>[] };
+  return { dataDir, write, read };
+}
+
+describe("settleInterruptedTurns", () => {
+  it("reports what the dead turn had to load: the transcript and its pi session files", () => {
+    // A restart that recurs a few seconds into every turn with no tool
+    // running (HOUSTON-APP-5DX) is a load blow-up, not an eviction; the sizes
+    // tell the two apart without parsing anything.
+    const { dataDir, write } = seed();
+    write("big", [
+      {
+        role: "user",
+        content: "x".repeat(3 * 1024 * 1024),
+        ts: 1,
+        turnId: "t",
+      },
+    ]);
+    const sessions = join(dataDir, "sessions", "big");
+    mkdirSync(sessions, { recursive: true });
+    writeFileSync(join(sessions, "2026-a.jsonl"), "y".repeat(1024 * 1024));
+    writeFileSync(join(sessions, "2026-b.jsonl"), "y".repeat(512 * 1024));
+    writeFileSync(join(sessions, "harness.json"), "z".repeat(1024 * 1024));
+    writeInflightMarker(dataDir, {
+      conversationId: "big",
+      turnId: "t",
+      startedAt: 1_000,
+      fenced: true,
+    });
+    const report = vi.fn();
+    settleInterruptedTurns({
+      dataDir,
+      report,
+      settleMission: () => {},
+      now: () => 13_000,
+    });
+    const error = report.mock.calls[0]?.[0] as EngineRestartedMidTurnError;
+    expect(error.message).toContain("ran=12s tool=none");
+    expect(error.message).toContain("transcript=3.0MiB session=1.5MiB");
+    expect(error.footprint.sessionBytes).toBe(1536 * 1024);
+  });
+
+  it("writes the interrupted reply for the dead turn, reports once, clears the marker", () => {
+    const { dataDir, write, read } = seed();
+    write("chat", [
+      { role: "user", content: "export it", ts: 1, turnId: "t-9" },
+    ]);
+    writeInflightMarker(dataDir, {
+      conversationId: "chat",
+      turnId: "t-9",
+      startedAt: 10_000,
+      tool: "bash",
+      fenced: true,
+    });
+    const report = vi.fn();
+    const settleMission = vi.fn();
+    const { settled, resumable } = settleInterruptedTurns({
+      dataDir,
+      report,
+      settleMission,
+      now: () => 73_000,
+    });
+
+    expect(settled.map((m) => m.turnId)).toEqual(["t-9"]);
+    // No `resume` payload on the marker: an older engine wrote it, so the turn
+    // settles exactly as it always did and is never run again.
+    expect(resumable).toEqual([]);
+    const last = read("chat").messages.at(-1);
+    expect(last).toMatchObject({
+      role: "assistant",
+      content: "",
+      turnId: "t-9",
+      interrupted: { cause: "engine_restart", tool: "bash" },
+    });
+    expect(settleMission).toHaveBeenCalledWith("chat");
+    expect(report).toHaveBeenCalledTimes(1);
+    const error = report.mock.calls[0]?.[0] as EngineRestartedMidTurnError;
+    expect(error).toBeInstanceOf(EngineRestartedMidTurnError);
+    expect(error.name).toBe("EngineRestartedMidTurnError");
+    expect(error.ranForMs).toBe(63_000);
+    expect(error.message).toContain("conversation=chat");
+    expect(error.message).toContain("turn=t-9");
+    expect(error.message).toContain("ran=63s");
+    expect(error.message).toContain("tool=bash");
+    expect(error.message).toContain("fenced=true");
+    expect(error.message).toContain("memory fence");
+    // The transcript is a few hundred bytes and no pi session exists yet.
+    expect(error.message).toContain("transcript=0.0MiB session=0.0MiB");
+    expect(listInflightMarkers(dataDir)).toEqual([]);
+  });
+
+  it("a marker without a tool settles without one, and the report names no fence bypass", () => {
+    const { dataDir, write, read } = seed();
+    write("idle", [{ role: "user", content: "hi", ts: 1, turnId: "t-1" }]);
+    writeInflightMarker(dataDir, {
+      conversationId: "idle",
+      turnId: "t-1",
+      startedAt: 0,
+      fenced: true,
+    });
+    const report = vi.fn();
+    settleInterruptedTurns({ dataDir, report, settleMission: () => {} });
+    const last = read("idle").messages.at(-1);
+    expect(last?.interrupted).toEqual({ cause: "engine_restart" });
+    const error = report.mock.calls[0]?.[0] as EngineRestartedMidTurnError;
+    expect(error.message).toContain("tool=none");
+    expect(error.message).not.toContain("memory fence");
+  });
+
+  it("a marker whose conversation is gone still clears and reports", () => {
+    const { dataDir } = seed();
+    writeInflightMarker(dataDir, {
+      conversationId: "deleted",
+      turnId: "t-d",
+      startedAt: 0,
+      fenced: false,
+    });
+    const report = vi.fn();
+    const { settled } = settleInterruptedTurns({
+      dataDir,
+      report,
+      settleMission: () => {},
+    });
+    expect(settled).toHaveLength(1);
+    expect(report).toHaveBeenCalledTimes(1);
+    expect(listInflightMarkers(dataDir)).toEqual([]);
+  });
+
+  it("a quiet boot settles nothing and reports nothing", () => {
+    const { dataDir } = seed();
+    const report = vi.fn();
+    expect(
+      settleInterruptedTurns({ dataDir, report, settleMission: () => {} }),
+    ).toEqual({ settled: [], resumable: [] });
+    expect(report).not.toHaveBeenCalled();
+  });
+
+  it("a marker re-delivered for a turn already settled writes no second reply and reports nothing (PRODUCT-1778)", () => {
+    const { dataDir, write, read } = seed();
+    // The replacement pod settled this turn on its first boot; the evicted pod,
+    // still draining the same turn, then re-shipped the marker through the
+    // store sync. The next boot finds the marker AND the reply it already wrote.
+    write("moved", [
+      { role: "user", content: "render it", ts: 1, turnId: "t-moved" },
+      {
+        role: "assistant",
+        content: "",
+        ts: 2,
+        turnId: "t-moved",
+        interrupted: { cause: "engine_restart", tool: "read" },
+      },
+    ]);
+    writeInflightMarker(dataDir, {
+      conversationId: "moved",
+      turnId: "t-moved",
+      startedAt: 0,
+      tool: "bash",
+      fenced: true,
+    });
+    const report = vi.fn();
+    const settleMission = vi.fn();
+    const { settled } = settleInterruptedTurns({
+      dataDir,
+      report,
+      settleMission,
+    });
+    expect(settled).toEqual([]);
+    expect(report).not.toHaveBeenCalled();
+    expect(settleMission).not.toHaveBeenCalled();
+    expect(
+      read("moved").messages.filter((m) => m.interrupted !== undefined),
+    ).toHaveLength(1);
+    expect(listInflightMarkers(dataDir)).toEqual([]);
+  });
+
+  it("a marker for a NEW turn on a conversation with an older interrupted reply still settles", () => {
+    const { dataDir, write, read } = seed();
+    write("again", [
+      { role: "user", content: "first", ts: 1, turnId: "t-old" },
+      {
+        role: "assistant",
+        content: "",
+        ts: 2,
+        turnId: "t-old",
+        interrupted: { cause: "engine_restart" },
+      },
+      { role: "user", content: "continue", ts: 3, turnId: "t-new" },
+    ]);
+    writeInflightMarker(dataDir, {
+      conversationId: "again",
+      turnId: "t-new",
+      startedAt: 0,
+      fenced: false,
+    });
+    const report = vi.fn();
+    settleInterruptedTurns({ dataDir, report, settleMission: () => {} });
+    expect(report).toHaveBeenCalledTimes(1);
+    expect(read("again").messages.at(-1)).toMatchObject({
+      role: "assistant",
+      turnId: "t-new",
+      interrupted: { cause: "engine_restart" },
+    });
+  });
+
+  it("a second boot after the settle is quiet (idempotent)", () => {
+    const { dataDir, write, read } = seed();
+    write("once", [{ role: "user", content: "go", ts: 1, turnId: "t-once" }]);
+    writeInflightMarker(dataDir, {
+      conversationId: "once",
+      turnId: "t-once",
+      startedAt: 0,
+      fenced: false,
+    });
+    const report = vi.fn();
+    settleInterruptedTurns({ dataDir, report, settleMission: () => {} });
+    settleInterruptedTurns({ dataDir, report, settleMission: () => {} });
+    expect(report).toHaveBeenCalledTimes(1);
+    expect(
+      read("once").messages.filter((m) => m.interrupted !== undefined),
+    ).toHaveLength(1);
+  });
+});
+
+describe("settleInterruptedTurns resume decisions (PRODUCT-1785)", () => {
+  it("marks a resumable turn `resumed`, returns its request, and leaves the mission card alone", () => {
+    const { dataDir, write, read } = seed();
+    write("chat", [
+      {
+        role: "user",
+        content: "build the deck",
+        displayText: "build the deck",
+        ts: 1,
+        turnId: "t-1",
+      },
+    ]);
+    writeInflightMarker(dataDir, {
+      conversationId: "chat",
+      turnId: "t-1",
+      startedAt: 0,
+      tool: "bash",
+      fenced: false,
+      resume: { pin: { provider: "anthropic", model: "opus" } },
+    });
+    const report = vi.fn();
+    const settleMission = vi.fn();
+    const { settled, resumable } = settleInterruptedTurns({
+      dataDir,
+      report,
+      settleMission,
+      now: () => 60_000,
+    });
+
+    expect(settled).toHaveLength(1);
+    expect(read("chat").messages.at(-1)?.interrupted).toEqual({
+      cause: "engine_restart",
+      tool: "bash",
+      resumed: true,
+    });
+    expect(resumable).toEqual([
+      {
+        conversationId: "chat",
+        turnId: "t-1",
+        text: "build the deck",
+        pin: { provider: "anthropic", model: "opus" },
+      },
+    ]);
+    // The host applies at most one mission settle: reporting `error` now would
+    // be the card's last word, and the resumed turn's settle would be dropped.
+    expect(settleMission).not.toHaveBeenCalled();
+    // The restart is still reported — the fleet count is the point.
+    expect(report).toHaveBeenCalledTimes(1);
+  });
+
+  it("never resumes a resume: a marker with `resumeOf` settles as the plain restart", () => {
+    const { dataDir, write, read } = seed();
+    write("loop", [{ role: "user", content: "again", ts: 1, turnId: "t-2" }]);
+    writeInflightMarker(dataDir, {
+      conversationId: "loop",
+      turnId: "t-2",
+      startedAt: 0,
+      fenced: false,
+      resume: {},
+      resumeOf: "t-1",
+    });
+    const settleMission = vi.fn();
+    const { resumable } = settleInterruptedTurns({
+      dataDir,
+      report: () => {},
+      settleMission,
+    });
+    expect(resumable).toEqual([]);
+    expect(read("loop").messages.at(-1)?.interrupted).toEqual({
+      cause: "engine_restart",
+    });
+    expect(settleMission).toHaveBeenCalledWith("loop");
+  });
+
+  it("a marker whose user message is gone is not resumable", () => {
+    const { dataDir, write, read } = seed();
+    write("gone", [{ role: "user", content: "old", ts: 1, turnId: "t-other" }]);
+    writeInflightMarker(dataDir, {
+      conversationId: "gone",
+      turnId: "t-missing",
+      startedAt: 0,
+      fenced: false,
+      resume: {},
+    });
+    const { resumable } = settleInterruptedTurns({
+      dataDir,
+      report: () => {},
+      settleMission: () => {},
+    });
+    expect(resumable).toEqual([]);
+    expect(read("gone").messages.at(-1)?.interrupted).toEqual({
+      cause: "engine_restart",
+    });
+  });
+
+  it("carries the persisted acting scope, never an acting-as token", () => {
+    const { dataDir, write } = seed();
+    write("team", [{ role: "user", content: "run it", ts: 1, turnId: "t-3" }]);
+    writeInflightMarker(dataDir, {
+      conversationId: "team",
+      turnId: "t-3",
+      startedAt: 0,
+      fenced: false,
+      resume: {
+        acting: { actingUser: "sub-9", credentialScopeKey: "u:sub-9" },
+      },
+    });
+    const { resumable } = settleInterruptedTurns({
+      dataDir,
+      report: () => {},
+      settleMission: () => {},
+      now: () => 60_000,
+    });
+    expect(resumable[0]?.acting).toEqual({
+      actingUser: "sub-9",
+      credentialScopeKey: "u:sub-9",
+    });
+    expect(JSON.stringify(resumable)).not.toContain("actingAs");
+  });
+});
+
+describe("fenceBypassed", () => {
+  const base = { conversationId: "c", turnId: "t", startedAt: 0 };
+  it("is a shell tool under the fence, nothing else", () => {
+    expect(fenceBypassed({ ...base, fenced: true, tool: "bash" })).toBe(true);
+    expect(fenceBypassed({ ...base, fenced: true, tool: "Bash" })).toBe(true);
+    expect(fenceBypassed({ ...base, fenced: false, tool: "bash" })).toBe(false);
+    expect(fenceBypassed({ ...base, fenced: true, tool: "read" })).toBe(false);
+    expect(fenceBypassed({ ...base, fenced: true })).toBe(false);
+  });
+
+  it("does not resume a turn older than the resume window; the user decides", () => {
+    const { dataDir, write, read } = seed();
+    write("chat", [
+      { role: "user", content: "build the deck", ts: 1, turnId: "t-1" },
+    ]);
+    writeInflightMarker(dataDir, {
+      conversationId: "chat",
+      turnId: "t-1",
+      startedAt: 0,
+      fenced: false,
+      resume: {},
+    });
+    const { resumable } = settleInterruptedTurns({
+      dataDir,
+      report: () => {},
+      settleMission: () => {},
+      now: () => RESUME_MAX_AGE_MS + 1,
+    });
+    expect(resumable).toEqual([]);
+    expect(read("chat").messages.at(-1)?.interrupted).toEqual({
+      cause: "engine_restart",
+    });
+  });
+});

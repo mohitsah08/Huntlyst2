@@ -1,0 +1,170 @@
+import type { IncomingMessage, ServerResponse } from "node:http";
+import {
+  applyActivityUpdate,
+  createActivity,
+  loadActivities,
+  removeById,
+  saveActivities,
+  type TextStore,
+  upsertById,
+} from "@houston/domain";
+import type {
+  Activity,
+  ActivityContributor,
+  HoustonEvent,
+  NewActivity,
+} from "@houston/protocol";
+import { activityUpdateSchema } from "@houston/protocol";
+import { hostOwnedApprovalCards } from "./activity-approval-cards";
+import { withDocLock } from "./doc-lock";
+import { json, methodNotAllowed, readJson } from "./http";
+
+/**
+ * The fields a create DECIDES. A repeat of the same create (HOU-693: the app
+ * posts the card optimistically against a warming engine and re-posts when the
+ * first attempt is lost) matches on every one of them and is answered with the
+ * row already on the board. Anything else with that id is a DIFFERENT mission
+ * asking to take an existing one's place, which would reset its status and
+ * erase its provenance, so it is refused.
+ *
+ * `status` is not compared: the board owns it after the create, and a retry
+ * that lands behind an agent's first status write is still the same mission.
+ */
+const CREATE_FIELDS = [
+  "title",
+  "description",
+  "agent",
+  "worktree_path",
+  "provider",
+  "model",
+] as const satisfies readonly (keyof Activity)[];
+
+function sameCreate(stored: Activity, incoming: Activity): boolean {
+  return CREATE_FIELDS.every((field) => stored[field] === incoming[field]);
+}
+
+export async function handleActivitiesData(
+  store: TextStore,
+  root: string,
+  agentId: string,
+  method: string,
+  itemId: string | null,
+  req: IncomingMessage,
+  res: ServerResponse,
+  emit?: (event: HoustonEvent) => void,
+  // The verified acting human (C2), server-stamped onto the mission as
+  // `created_by` + a contributor entry on create, and upserted as a contributor
+  // on PATCH. Null/absent on desktop/self-host (non-gateway-fronted), so a
+  // single-player activity.json stays byte-identical (no attribution keys).
+  author?: ActivityContributor,
+): Promise<void> {
+  const fireChange = () =>
+    emit?.({ type: "ActivityChanged", agentPath: agentId });
+  const nowIso = new Date().toISOString();
+  // Every mutation below is a load→save over the whole activity doc;
+  // serialize them per agent so concurrent requests can't drop each other's
+  // entries (see doc-lock.ts). Reads stay lock-free.
+  const locked = <T>(fn: () => Promise<T>) =>
+    withDocLock(`${root}#activity`, fn);
+
+  // Every row that leaves here goes through the host's approval substitution:
+  // `pending_interaction` is agent-writable file content (activity-approval-cards.ts).
+  const served = (payload: unknown) => hostOwnedApprovalCards(payload, agentId);
+
+  if (method === "GET" && !itemId) {
+    json(res, 200, served(await loadActivities(store, root)));
+    return;
+  }
+
+  if (method === "POST" && !itemId) {
+    const body = await readJson(req);
+    if (!body.title || typeof body.title !== "string") {
+      json(res, 400, { error: "missing 'title'" });
+      return;
+    }
+    // Optional client-generated id (optimistic creation against a warming
+    // engine, HOU-693). A repeated id must never overwrite the existing card.
+    if (
+      body.id !== undefined &&
+      (typeof body.id !== "string" ||
+        body.id.trim() === "" ||
+        body.id.length > 64)
+    ) {
+      json(res, 400, { error: "invalid 'id'" });
+      return;
+    }
+    // `origin_session_key` marks a mission the AGENT started for itself and is
+    // stamped only by the missions sandbox route — never trusted from a client
+    // create, or any client could dress a mission up as agent-started.
+    delete body.origin_session_key;
+    const activity = createActivity(
+      body as unknown as NewActivity,
+      (body.id as string | undefined) ?? crypto.randomUUID(),
+      nowIso,
+      author ?? undefined,
+    );
+    const landed = await locked(async () => {
+      const { items } = await loadActivities(store, root);
+      const existing = items.find((item) => item.id === activity.id);
+      if (existing) return { created: false, activity: existing };
+      await saveActivities(store, root, [...items, activity]);
+      return { created: true, activity };
+    });
+    if (!landed.created && !sameCreate(landed.activity, activity)) {
+      json(res, 409, {
+        error: "a different mission already has that id",
+        code: "activity_exists",
+      });
+      return;
+    }
+    // A retry answers with the STORED row, never the one just built: the card
+    // may have moved on (a status the agent settled, contributors it gained)
+    // and the caller must read what is really on the board.
+    if (landed.created) fireChange();
+    json(res, 201, served(landed.activity));
+    return;
+  }
+
+  if (method === "PATCH" && itemId) {
+    const parsed = activityUpdateSchema.safeParse(await readJson(req));
+    if (!parsed.success) {
+      json(res, 400, { error: "invalid activity update" });
+      return;
+    }
+    const update = parsed.data;
+    const next = await locked(async () => {
+      const { items } = await loadActivities(store, root);
+      const current = items.find((a) => a.id === itemId);
+      if (!current) return null;
+      const applied = applyActivityUpdate(
+        current,
+        update,
+        nowIso,
+        author ?? undefined,
+      );
+      await saveActivities(store, root, upsertById(items, applied));
+      return applied;
+    });
+    if (!next) {
+      json(res, 404, { error: "activity not found" });
+      return;
+    }
+    fireChange();
+    json(res, 200, served(next));
+    return;
+  }
+
+  if (method === "DELETE" && itemId) {
+    const removed = await locked(async () => {
+      const { items } = await loadActivities(store, root);
+      const result = removeById(items, itemId);
+      if (result.removed) await saveActivities(store, root, result.items);
+      return result.removed;
+    });
+    if (removed) fireChange();
+    json(res, 200, { ok: true, deleted: removed });
+    return;
+  }
+
+  methodNotAllowed(res);
+}

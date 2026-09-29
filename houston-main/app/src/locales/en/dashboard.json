@@ -1,0 +1,48 @@
+{
+  "filter": {
+    "allAgents": "All AI Employees"
+  },
+  "peopleFilter": {
+    "label": "Filter by person",
+    "everyone": "Everyone",
+    "mine": "My tasks",
+    "inviteTeaser": "Invite your team to see who's working on what"
+  },
+  "search": {
+    "placeholder": "Search tasks",
+    "placeholderShort": "Search...",
+    "clear": "Clear search",
+    "clearCta": "Clear search",
+    "searchingText": "Searching task text",
+    "searchingTitle": "Searching task text",
+    "searchingDescription": "Looking through older messages now.",
+    "emptyTitle": "No matching tasks",
+    "emptyDescription": "Try a different search or clear the current one.",
+    "historyErrorTitle": "Couldn't search every task",
+    "historyErrorDescription": "Some older task text could not be loaded."
+  },
+  "columns": {
+    "running": "Running",
+    "needsYou": "Needs you",
+    "done": "Done"
+  },
+  "empty": {
+    "boardTitle": "No conversations yet",
+    "boardDescription": "Start a new conversation to delegate work to an AI Employee.",
+    "newMission": "New task"
+  },
+  "errors": {
+    "noAgentForMission": "Pick an AI Employee before starting a task.",
+    "partialMissionLoad": "Some tasks could not load. We are trying again."
+  },
+  "agentPicker": {
+    "title": "Which AI Employee should run this?",
+    "description": "Pick an AI Employee to open a fresh conversation."
+  },
+  "skillPicker": {
+    "title": "Pick a skill",
+    "descriptionWithAgent": "Browse the skills {{name}} already knows how to do.",
+    "empty": "No skills yet.",
+    "skillsLoading": "Loading skills..."
+  }
+}

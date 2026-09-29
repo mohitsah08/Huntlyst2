@@ -1,0 +1,775 @@
+import {
+  createRoutine,
+  createRoutineRun,
+  loadActivities,
+  loadRoutineRuns,
+  saveRoutineRuns,
+  saveRoutines,
+} from "@houston/domain";
+import type { Activity, Routine, RoutineRun } from "@houston/protocol";
+import { expect, test, vi } from "vitest";
+import { CloudPaths } from "../paths";
+import { workspaceRoot } from "../routes/agent-data";
+import { MemoryWorkspaceStore } from "../store/memory";
+import { MemoryTurnBus } from "../turn/bus";
+import { conversationKey, prefixFor } from "../turn/deps";
+import { MemoryVfs } from "../vfs";
+import { reconcileAgentRuns } from "./reconcile";
+
+/**
+ * Reconciliation completes a 'running' routine run by reading its conversation:
+ * silent (ROUTINE_OK + suppress) vs surfaced (→ board Activity) vs timed-out.
+ * Pins parity with engine/.../routines/runner.rs.
+ */
+
+const STARTED = new Date("2026-06-12T12:00:00.000Z");
+const NOW = new Date("2026-06-12T12:02:00.000Z");
+
+async function setup(routine: Routine) {
+  const store = new MemoryWorkspaceStore();
+  const vfs = new MemoryVfs();
+  const ws = await store.getOrCreatePersonalWorkspace("alice");
+  const agent = await store.createAgent({ workspaceId: ws.id, name: "A" });
+  await saveRoutines(vfs, workspaceRoot(ws, agent), [routine]);
+  const run = createRoutineRun(routine, "run-1", STARTED.toISOString());
+  await saveRoutineRuns(vfs, workspaceRoot(ws, agent), [run]);
+  return { vfs, ws, agent, run };
+}
+
+/** Drop an assistant reply into the run's conversation at ts. */
+async function seedReply(
+  vfs: MemoryVfs,
+  ws: { id: string },
+  agent: { id: string },
+  cid: string,
+  content: string,
+  ts: number,
+  providerError?: unknown,
+) {
+  await vfs.writeText(
+    conversationKey(prefixFor(ws as never, agent as never), cid),
+    JSON.stringify({
+      messages: [
+        { role: "user", content: "go", ts: ts - 1 },
+        {
+          role: "assistant",
+          content,
+          ts,
+          ...(providerError ? { providerError } : {}),
+        },
+      ],
+    }),
+  );
+}
+
+const deps = (vfs: MemoryVfs, now: Date) => ({
+  vfs,
+  paths: new CloudPaths(),
+  lock: new MemoryTurnBus(),
+  now: () => now,
+  newId: () => "act-1",
+});
+
+const routine = (over: Partial<Routine> = {}): Routine => ({
+  ...createRoutine(
+    { name: "Daily", prompt: "check", schedule: "0 9 * * *" },
+    "r1",
+    STARTED.toISOString(),
+  ),
+  ...over,
+});
+
+test("silent: suppress_when_silent + ROUTINE_OK → run silent, no activity", async () => {
+  const r = routine({ suppress_when_silent: true });
+  const env = await setup(r);
+  await seedReply(
+    env.vfs,
+    env.ws,
+    env.agent,
+    env.run.session_key,
+    "all quiet\nROUTINE_OK",
+    STARTED.getTime() + 1000,
+  );
+
+  await reconcileAgentRuns(deps(env.vfs, NOW), env.ws, env.agent);
+
+  const { items } = await loadRoutineRuns(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  expect((items[0] as RoutineRun).status).toBe("silent");
+  expect((items[0] as RoutineRun).summary).toBe("all quiet");
+  expect(
+    (await loadActivities(env.vfs, workspaceRoot(env.ws, env.agent))).items,
+  ).toHaveLength(0);
+});
+
+test("configured dual-write reconcile reads reply-after instead of the transcript file", async () => {
+  const env = await setup(routine());
+  const convKey = conversationKey(
+    prefixFor(env.ws as never, env.agent as never),
+    env.run.session_key,
+  );
+  const originalRead = env.vfs.readText.bind(env.vfs);
+  env.vfs.readText = async (key: string) => {
+    if (key === convKey) throw new Error("file transcript must not be read");
+    return originalRead(key);
+  };
+  const calls: unknown[] = [];
+
+  await reconcileAgentRuns(
+    {
+      ...deps(env.vfs, NOW),
+      replyReader: {
+        async replyAfter(conversationId, sinceMs) {
+          calls.push({ conversationId, sinceMs });
+          return {
+            role: "assistant",
+            content: "remote reply",
+            ts: STARTED.getTime() + 1000,
+          };
+        },
+      },
+    },
+    env.ws,
+    env.agent,
+  );
+
+  expect(calls).toEqual([
+    { conversationId: env.run.session_key, sinceMs: STARTED.getTime() },
+  ]);
+  const { items } = await loadRoutineRuns(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  expect(items[0]).toMatchObject({
+    status: "surfaced",
+    summary: "remote reply",
+  });
+});
+
+test("a failed reply-after shadow lookup falls back to the authoritative file", async () => {
+  const env = await setup(routine());
+  await seedReply(
+    env.vfs,
+    env.ws,
+    env.agent,
+    env.run.session_key,
+    "file reply",
+    STARTED.getTime() + 1000,
+  );
+
+  await reconcileAgentRuns(
+    {
+      ...deps(env.vfs, NOW),
+      replyReader: {
+        async replyAfter() {
+          throw new Error("gateway unavailable");
+        },
+      },
+    },
+    env.ws,
+    env.agent,
+  );
+
+  const { items } = await loadRoutineRuns(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  expect(items[0]).toMatchObject({
+    status: "surfaced",
+    summary: "file reply",
+  });
+});
+
+test("a shadow miss falls back to a reply in the authoritative file", async () => {
+  const env = await setup(routine());
+  await seedReply(
+    env.vfs,
+    env.ws,
+    env.agent,
+    env.run.session_key,
+    "file reply after shadow miss",
+    STARTED.getTime() + 1000,
+  );
+
+  await reconcileAgentRuns(
+    {
+      ...deps(env.vfs, new Date(STARTED.getTime() + 16 * 60 * 1000)),
+      replyReader: {
+        async replyAfter() {
+          return null;
+        },
+      },
+    },
+    env.ws,
+    env.agent,
+  );
+
+  const { items } = await loadRoutineRuns(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  expect(items[0]).toMatchObject({
+    status: "surfaced",
+    summary: "file reply after shadow miss",
+  });
+});
+
+test("reply-after reads for running runs start in parallel", async () => {
+  const firstRoutine = routine({ suppress_when_silent: true });
+  const secondRoutine = routine({
+    id: "r2",
+    suppress_when_silent: true,
+  });
+  const env = await setup(firstRoutine);
+  const secondRun = createRoutineRun(
+    secondRoutine,
+    "run-2",
+    STARTED.toISOString(),
+  );
+  const root = workspaceRoot(env.ws, env.agent);
+  await saveRoutines(env.vfs, root, [firstRoutine, secondRoutine]);
+  await saveRoutineRuns(env.vfs, root, [env.run, secondRun]);
+
+  let releaseReads!: () => void;
+  const readsReleased = new Promise<void>((resolve) => {
+    releaseReads = resolve;
+  });
+  const calls: string[] = [];
+  const reconciling = reconcileAgentRuns(
+    {
+      ...deps(env.vfs, NOW),
+      replyReader: {
+        async replyAfter(conversationId) {
+          calls.push(conversationId);
+          await readsReleased;
+          return {
+            role: "assistant",
+            content: "ROUTINE_OK",
+            ts: STARTED.getTime() + 1000,
+          };
+        },
+      },
+    },
+    env.ws,
+    env.agent,
+  );
+
+  await vi.waitFor(() => expect(calls).toHaveLength(2));
+  releaseReads();
+  await reconciling;
+
+  const { items } = await loadRoutineRuns(env.vfs, root);
+  expect(items.map((run) => run.status)).toEqual(["silent", "silent"]);
+});
+
+test("surfaced: a real finding → run surfaced + a needs_you board activity linked to the run", async () => {
+  const r = routine({ suppress_when_silent: true, name: "Deploy watch" });
+  const env = await setup(r);
+  await seedReply(
+    env.vfs,
+    env.ws,
+    env.agent,
+    env.run.session_key,
+    "Staging deploy failed.",
+    STARTED.getTime() + 1000,
+  );
+
+  await reconcileAgentRuns(deps(env.vfs, NOW), env.ws, env.agent);
+
+  const { items: runs } = await loadRoutineRuns(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  expect((runs[0] as RoutineRun).status).toBe("surfaced");
+  expect((runs[0] as RoutineRun).activity_id).toBe("act-1");
+
+  const { items: activities } = await loadActivities(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  expect(activities).toHaveLength(1);
+  expect(activities[0] as Activity).toMatchObject({
+    id: "act-1",
+    title: "Deploy watch",
+    status: "needs_you",
+    session_key: env.run.session_key,
+    routine_id: "r1",
+    routine_run_id: "run-1",
+  });
+});
+
+test("a reply BEFORE the run started is ignored (shared-conversation prior turns don't complete it)", async () => {
+  const r = routine();
+  const env = await setup(r);
+  // An assistant message from a previous run, before this run's started_at.
+  await seedReply(
+    env.vfs,
+    env.ws,
+    env.agent,
+    env.run.session_key,
+    "old answer",
+    STARTED.getTime() - 5000,
+  );
+
+  await reconcileAgentRuns(deps(env.vfs, NOW), env.ws, env.agent);
+  const { items } = await loadRoutineRuns(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  expect((items[0] as RoutineRun).status).toBe("running"); // still in flight
+});
+
+test("a failed turn's typed provider error surfaces as the run's error immediately", async () => {
+  const r = routine();
+  const env = await setup(r);
+  // A provider failure persists an EMPTY assistant message carrying the typed
+  // error (exec-turn). The run must error NOW with the real reason — not sit
+  // out the 15-minute timeout and report a vague "timed out".
+  await seedReply(
+    env.vfs,
+    env.ws,
+    env.agent,
+    env.run.session_key,
+    "",
+    STARTED.getTime() + 1000,
+    {
+      kind: "unauthenticated",
+      provider: "anthropic",
+      cause: "token_expired",
+      message: "Your Claude session expired. Reconnect to continue.",
+    },
+  );
+
+  await reconcileAgentRuns(deps(env.vfs, NOW), env.ws, env.agent);
+  const { items } = await loadRoutineRuns(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  expect((items[0] as RoutineRun).status).toBe("error");
+  // The row names WHOSE account needs the fix, not the provider's generic
+  // sentence: the reader may have their own Claude connected (PRODUCT-1475).
+  expect((items[0] as RoutineRun).failure).toEqual({
+    code: "creator_needs_reconnect",
+    provider: "anthropic",
+  });
+  expect((items[0] as RoutineRun).summary).toBe(
+    "Claude needs to be reconnected by the routine's creator.",
+  );
+});
+
+/**
+ * Every credential-level wall a routine can hit, mapped to the honest row a
+ * non-technical reader can act on (PRODUCT-1475). The routine runs on its
+ * CREATOR's credential scope, so a personal-scope (or unattributed) failure is
+ * the creator's account and a team-scope one is the space's shared account.
+ */
+test.each([
+  [
+    "creator has never connected",
+    {
+      kind: "unauthenticated",
+      provider: "anthropic",
+      cause: "no_credentials",
+      message: "No provider connected.",
+    },
+    "creator_not_connected",
+    "The routine's creator has no Claude account connected.",
+  ],
+  [
+    "the team has never connected",
+    {
+      kind: "unauthenticated",
+      provider: "anthropic",
+      cause: "no_credentials",
+      message: "No provider connected.",
+      credential: { scope: "team" },
+    },
+    "team_not_connected",
+    "This team has no Claude account connected.",
+  ],
+  [
+    "the creator's own credential died",
+    {
+      kind: "unauthenticated",
+      provider: "openai-codex",
+      cause: "token_revoked",
+      message: "Your session has ended.",
+      credential: { scope: "personal" },
+    },
+    "creator_needs_reconnect",
+    "ChatGPT / Codex needs to be reconnected by the routine's creator.",
+  ],
+  [
+    "the team credential died",
+    {
+      kind: "unauthenticated",
+      provider: "anthropic",
+      cause: "invalid_api_key",
+      message: "invalid x-api-key",
+      credential: { scope: "team" },
+    },
+    "team_needs_reconnect",
+    "Claude needs to be reconnected for this team.",
+  ],
+  [
+    "the account ran out of credits",
+    {
+      kind: "quota_exhausted",
+      provider: "minimax",
+      model: null,
+      scope: "paid_plan",
+      resets_at: null,
+      message: "Insufficient balance",
+    },
+    "out_of_credits",
+    "The MiniMax account is out of credits.",
+  ],
+])("a run that failed because %s reports the typed failure and an honest summary", async (_case, providerError, code, summary) => {
+  const env = await setup(routine());
+  await seedReply(
+    env.vfs,
+    env.ws,
+    env.agent,
+    env.run.session_key,
+    "",
+    STARTED.getTime() + 1000,
+    providerError,
+  );
+
+  await reconcileAgentRuns(deps(env.vfs, NOW), env.ws, env.agent);
+  const { items } = await loadRoutineRuns(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  const run = items[0] as RoutineRun;
+  expect(run.status).toBe("error");
+  expect(run.failure).toEqual({
+    code,
+    provider: (providerError as { provider: string }).provider,
+  });
+  expect(run.summary).toBe(summary);
+});
+
+test("a non-credential provider failure keeps the verbatim reason and stays untyped", async () => {
+  const env = await setup(routine());
+  await seedReply(
+    env.vfs,
+    env.ws,
+    env.agent,
+    env.run.session_key,
+    "",
+    STARTED.getTime() + 1000,
+    {
+      kind: "rate_limited",
+      provider: "anthropic",
+      model: null,
+      retry_after_seconds: 60,
+      message: "You have hit your usage limit.",
+    },
+  );
+
+  await reconcileAgentRuns(deps(env.vfs, NOW), env.ws, env.agent);
+  const { items } = await loadRoutineRuns(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  const run = items[0] as RoutineRun;
+  expect(run.summary).toBe("You have hit your usage limit.");
+  expect(run.failure).toBeUndefined();
+});
+
+test("an empty successful reply completes the run (surfaced 'Nothing to report'), not a timeout", async () => {
+  const r = routine();
+  const env = await setup(r);
+  await seedReply(
+    env.vfs,
+    env.ws,
+    env.agent,
+    env.run.session_key,
+    "",
+    STARTED.getTime() + 1000,
+  );
+
+  await reconcileAgentRuns(deps(env.vfs, NOW), env.ws, env.agent);
+  const { items } = await loadRoutineRuns(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  // Parity with runner.rs: an empty response classifies (extract_run_summary →
+  // "Nothing to report"), it does not read as "still in flight".
+  expect((items[0] as RoutineRun).status).toBe("surfaced");
+  expect((items[0] as RoutineRun).summary).toBe("Nothing to report");
+});
+
+test("no reply past the 15-min timeout → run errored, never stuck running", async () => {
+  const r = routine();
+  const env = await setup(r);
+  const late = new Date(STARTED.getTime() + 16 * 60 * 1000);
+
+  await reconcileAgentRuns(deps(env.vfs, late), env.ws, env.agent);
+  const { items } = await loadRoutineRuns(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  expect((items[0] as RoutineRun).status).toBe("error");
+  expect((items[0] as RoutineRun).summary).toContain("timed out");
+});
+
+test("surfaced run reuses the same activity across runs (keyed by session_key)", async () => {
+  const r = routine({ name: "Watcher" });
+  const env = await setup(r);
+  await seedReply(
+    env.vfs,
+    env.ws,
+    env.agent,
+    env.run.session_key,
+    "finding one",
+    STARTED.getTime() + 1000,
+  );
+  await reconcileAgentRuns(deps(env.vfs, NOW), env.ws, env.agent);
+
+  // A second run of the SAME routine (shared conversation), later reply.
+  const run2 = createRoutineRun(
+    r,
+    "run-2",
+    new Date(NOW.getTime() + 1000).toISOString(),
+  );
+  const { items: afterFirst } = await loadRoutineRuns(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  await saveRoutineRuns(env.vfs, workspaceRoot(env.ws, env.agent), [
+    run2,
+    ...afterFirst,
+  ]);
+  await seedReply(
+    env.vfs,
+    env.ws,
+    env.agent,
+    run2.session_key,
+    "finding two",
+    NOW.getTime() + 2000,
+  );
+
+  const later = new Date(NOW.getTime() + 3000);
+  await reconcileAgentRuns(
+    { ...deps(env.vfs, later), newId: () => "act-2" },
+    env.ws,
+    env.agent,
+  );
+
+  const { items: activities } = await loadActivities(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  expect(activities).toHaveLength(1); // reused, not a second card
+  expect((activities[0] as Activity).routine_run_id).toBe("run-2"); // points at the latest run
+});
+
+test("a cancel landing mid-sweep wins — reconcile never resurrects the cancelled row", async () => {
+  const r = routine();
+  const env = await setup(r);
+  await seedReply(
+    env.vfs,
+    env.ws,
+    env.agent,
+    env.run.session_key,
+    "found something",
+    STARTED.getTime() + 1000,
+  );
+
+  // Simulate the user's Stop landing while this sweep awaits I/O: the moment
+  // reconcile reads the run's conversation, flip the row terminal underneath
+  // it (exactly what schedule/cancel.ts does). Reconcile has already loaded
+  // its runs snapshot with the row `running` — the stale snapshot must NOT be
+  // saved over the cancel.
+  const root = workspaceRoot(env.ws, env.agent);
+  const convKey = conversationKey(
+    prefixFor(env.ws as never, env.agent as never),
+    env.run.session_key,
+  );
+  const origRead = env.vfs.readText.bind(env.vfs);
+  let flipped = false;
+  env.vfs.readText = async (key: string) => {
+    const text = await origRead(key);
+    if (!flipped && key === convKey) {
+      flipped = true;
+      const { items } = await loadRoutineRuns(env.vfs, root);
+      await saveRoutineRuns(
+        env.vfs,
+        root,
+        items.map((run) =>
+          run.id === env.run.id
+            ? {
+                ...run,
+                status: "cancelled" as const,
+                summary: "Stopped by user",
+                completed_at: NOW.toISOString(),
+              }
+            : run,
+        ),
+      );
+    }
+    return text;
+  };
+
+  await reconcileAgentRuns(deps(env.vfs, NOW), env.ws, env.agent);
+
+  const { items } = await loadRoutineRuns(env.vfs, root);
+  expect((items[0] as RoutineRun).status).toBe("cancelled");
+  expect((items[0] as RoutineRun).summary).toBe("Stopped by user");
+});
+
+/** Write a run's conversation verbatim — the interrupted replies carry fields
+ *  `seedReply` has no shape for. */
+async function seedMessages(
+  vfs: MemoryVfs,
+  ws: { id: string },
+  agent: { id: string },
+  cid: string,
+  messages: unknown[],
+) {
+  await vfs.writeText(
+    conversationKey(prefixFor(ws as never, agent as never), cid),
+    JSON.stringify({ messages }),
+  );
+}
+
+const interruptedReply = (ts: number, resumed?: true) => ({
+  role: "assistant",
+  content: "",
+  ts,
+  interrupted: { cause: "engine_restart", ...(resumed ? { resumed } : {}) },
+});
+
+test("a resumed interruption keeps the run running and records the restart (PRODUCT-1785)", async () => {
+  const r = routine();
+  const env = await setup(r);
+  await seedMessages(env.vfs, env.ws, env.agent, env.run.session_key, [
+    { role: "user", content: "go", ts: STARTED.getTime() },
+    interruptedReply(STARTED.getTime() + 1000, true),
+  ]);
+
+  await reconcileAgentRuns(deps(env.vfs, NOW), env.ws, env.agent);
+  const { items } = await loadRoutineRuns(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  expect((items[0] as RoutineRun).status).toBe("running");
+  expect((items[0] as RoutineRun).resumed).toBe(true);
+  expect((items[0] as RoutineRun).completed_at).toBeUndefined();
+});
+
+test("the resumed flag merges onto the fresh row — a concurrent pause survives it", async () => {
+  const r = routine();
+  const env = await setup(r);
+  await seedMessages(env.vfs, env.ws, env.agent, env.run.session_key, [
+    { role: "user", content: "go", ts: STARTED.getTime() },
+    interruptedReply(STARTED.getTime() + 1000, true),
+  ]);
+
+  // A writer touches the STILL-RUNNING row while this sweep awaits I/O (a
+  // usage-limit pause, an activity id). The resumed flag is a one-field write:
+  // applying the sweep's pre-await snapshot instead would revert both.
+  const root = workspaceRoot(env.ws, env.agent);
+  const convKey = conversationKey(
+    prefixFor(env.ws as never, env.agent as never),
+    env.run.session_key,
+  );
+  const origRead = env.vfs.readText.bind(env.vfs);
+  let paused = false;
+  env.vfs.readText = async (key: string) => {
+    const text = await origRead(key);
+    if (!paused && key === convKey) {
+      paused = true;
+      const { items } = await loadRoutineRuns(env.vfs, root);
+      await saveRoutineRuns(
+        env.vfs,
+        root,
+        items.map((run) =>
+          run.id === env.run.id
+            ? { ...run, paused_until: "in 2 hours", activity_id: "act-7" }
+            : run,
+        ),
+      );
+    }
+    return text;
+  };
+
+  await reconcileAgentRuns(deps(env.vfs, NOW), env.ws, env.agent);
+
+  const { items } = await loadRoutineRuns(env.vfs, root);
+  const run = items[0] as RoutineRun;
+  expect(run.status).toBe("running");
+  expect(run.resumed).toBe(true);
+  expect(run.paused_until).toBe("in 2 hours");
+  expect(run.activity_id).toBe("act-7");
+});
+
+test("the resumed turn's real reply settles the run on a later sweep", async () => {
+  const r = routine();
+  const env = await setup(r);
+  await seedMessages(env.vfs, env.ws, env.agent, env.run.session_key, [
+    { role: "user", content: "go", ts: STARTED.getTime() },
+    interruptedReply(STARTED.getTime() + 1000, true),
+    {
+      role: "assistant",
+      content: "picked up and finished",
+      ts: STARTED.getTime() + 2000,
+    },
+  ]);
+
+  await reconcileAgentRuns(deps(env.vfs, NOW), env.ws, env.agent);
+  const { items } = await loadRoutineRuns(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  expect((items[0] as RoutineRun).status).toBe("surfaced");
+  expect((items[0] as RoutineRun).summary).toContain("picked up and finished");
+});
+
+test("a resumed run is timed out from the RESTART, not the original start", async () => {
+  const r = routine();
+  const env = await setup(r);
+  const interruptedAt = STARTED.getTime() + 10 * 60 * 1000;
+  await seedMessages(env.vfs, env.ws, env.agent, env.run.session_key, [
+    { role: "user", content: "go", ts: STARTED.getTime() },
+    interruptedReply(interruptedAt, true),
+  ]);
+
+  // 20 minutes past the original start — past the budget on the old clock, but
+  // only 10 minutes into the resumed turn's own window.
+  const midResume = new Date(STARTED.getTime() + 20 * 60 * 1000);
+  await reconcileAgentRuns(deps(env.vfs, midResume), env.ws, env.agent);
+  let items = (await loadRoutineRuns(env.vfs, workspaceRoot(env.ws, env.agent)))
+    .items;
+  expect((items[0] as RoutineRun).status).toBe("running");
+
+  // 16 minutes past the restart: the resume is gone too, and the run must not
+  // sit on `running` forever.
+  const late = new Date(interruptedAt + 16 * 60 * 1000);
+  await reconcileAgentRuns(deps(env.vfs, late), env.ws, env.agent);
+  items = (await loadRoutineRuns(env.vfs, workspaceRoot(env.ws, env.agent)))
+    .items;
+  expect((items[0] as RoutineRun).status).toBe("error");
+  expect((items[0] as RoutineRun).summary).toContain("timed out");
+});
+
+test("an interruption with NO resume keeps today's behaviour: the empty reply classifies", async () => {
+  const r = routine();
+  const env = await setup(r);
+  await seedMessages(env.vfs, env.ws, env.agent, env.run.session_key, [
+    { role: "user", content: "go", ts: STARTED.getTime() },
+    interruptedReply(STARTED.getTime() + 1000),
+  ]);
+
+  await reconcileAgentRuns(deps(env.vfs, NOW), env.ws, env.agent);
+  const { items } = await loadRoutineRuns(
+    env.vfs,
+    workspaceRoot(env.ws, env.agent),
+  );
+  expect((items[0] as RoutineRun).status).toBe("surfaced");
+  expect((items[0] as RoutineRun).resumed).toBeUndefined();
+});

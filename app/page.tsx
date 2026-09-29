@@ -133,6 +133,8 @@ export default function HomePage() {
   const [savedLeads, setSavedLeads] = useState<CompanyRecord[]>([]);
   const [runHistory, setRunHistory] = useState<RunHistoryItem[]>([]);
   const [settings, setSettings] = useState<SettingsConfig>(loadSettings());
+  const [currentStrategy, setCurrentStrategy] = useState<string>('');
+  const [duplicatesFiltered, setDuplicatesFiltered] = useState<number>(0);
 
   // Filtering & Sorting on Results
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -301,6 +303,8 @@ export default function HomePage() {
 
     setStatusMessage(`Initializing hunt: ${targetDisplay} (${activeCfg.targetLeads} leads)...`);
     setLogs([]);
+    setCurrentStrategy('');
+    setDuplicatesFiltered(0);
     setCurrentProgressIndex(1);
     setPipelineStats({
       discovered: 0,
@@ -358,12 +362,23 @@ export default function HomePage() {
               setPipelineStats(event.stats);
             }
 
-            if (event.type === 'log') {
-              setLogs((prev) => [
-                ...prev,
-                { time: timestamp(), text: event.message, stage: event.stageName },
-              ]);
+            if (event.type === 'log' || event.type === 'candidate_found' || event.type === 'company_qualified') {
+              if (event.type === 'log') {
+                setLogs((prev) => [
+                  ...prev,
+                  { time: timestamp(), text: event.message, stage: event.stageName },
+                ]);
+              }
               setStatusMessage(event.message);
+
+              if (event.message?.includes('Strategy ') || event.message?.includes('Executing Strategy')) {
+                const stratMatch = event.message.match(/(Strategy \d+:[^.(]+)/i) || event.message.match(/Executing (Strategy [^.(]+)/i);
+                if (stratMatch) setCurrentStrategy(stratMatch[1].trim());
+              }
+              if (event.message?.includes('duplicates filtered') || event.message?.includes('duplicates prevented')) {
+                const dupeMatch = event.message.match(/(\d+)\s+duplicates/i);
+                if (dupeMatch) setDuplicatesFiltered((prev) => Math.max(prev, parseInt(dupeMatch[1], 10)));
+              }
 
               if (event.stage) {
                 // Strictly monotonic progression: never rewind backwards
@@ -1224,6 +1239,8 @@ export default function HomePage() {
                   config={activeHuntConfig}
                   currentStep={currentProgressIndex}
                   currentMessage={statusMessage}
+                  currentStrategy={currentStrategy}
+                  duplicatesFiltered={duplicatesFiltered}
                   candidatesFound={pipelineStats?.discovered || totalDiscovered}
                   qualifiedCount={totalQualified}
                   researchedCount={pipelineStats?.extracted}
@@ -1238,6 +1255,8 @@ export default function HomePage() {
                   config={activeHuntConfig}
                   currentStep={currentProgressIndex}
                   currentMessage={statusMessage}
+                  currentStrategy={currentStrategy}
+                  duplicatesFiltered={duplicatesFiltered}
                   candidatesFound={pipelineStats?.discovered || totalDiscovered}
                   qualifiedCount={totalQualified}
                   researchedCount={pipelineStats?.extracted}

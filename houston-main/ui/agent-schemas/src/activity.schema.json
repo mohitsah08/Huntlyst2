@@ -1,0 +1,197 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Activity",
+  "description": "List of board items for a Houston agent.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["id", "title", "description", "status"],
+    "properties": {
+      "id": { "type": "string" },
+      "title": { "type": "string" },
+      "description": { "type": "string" },
+      "status": {
+        "type": "string",
+        "enum": ["running", "needs_you", "done", "error", "archived"]
+      },
+      "claude_session_id": { "type": ["string", "null"] },
+      "session_key": { "type": "string" },
+      "agent": { "type": "string" },
+      "worktree_path": { "type": ["string", "null"] },
+      "routine_id": { "type": "string" },
+      "routine_run_id": { "type": "string" },
+      "skill_slug": {
+        "type": "string",
+        "description": "The installed skill (directory slug) this setup chat belongs to. Set by Houston, not by the agent."
+      },
+      "updated_at": { "type": "string", "format": "date-time" },
+      "provider": { "type": "string" },
+      "model": { "type": "string" },
+      "origin_session_key": {
+        "type": "string",
+        "description": "The conversation this mission was started from, present only when the agent created the mission itself. Set by Houston, not by the agent."
+      },
+      "created_by": {
+        "type": "string",
+        "description": "The human who created this mission. Set by Houston, not by the agent."
+      },
+      "contributors": {
+        "type": "array",
+        "description": "Humans who started or collaborated on this mission. Set by Houston, not by the agent.",
+        "items": {
+          "type": "object",
+          "required": ["user_id"],
+          "additionalProperties": false,
+          "properties": {
+            "user_id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        }
+      },
+      "mentioned": {
+        "type": "array",
+        "description": "Teammates @mentioned in this mission's chat, latest per person. Set by Houston, not by the agent.",
+        "items": {
+          "type": "object",
+          "required": ["user_id", "at"],
+          "additionalProperties": false,
+          "properties": {
+            "user_id": { "type": "string" },
+            "at": { "type": "string" },
+            "by": { "type": "string" }
+          }
+        }
+      },
+      "pending_interaction": {
+        "type": "object",
+        "description": "The ordered steps a settled turn left for the user. The BLOCKING steps are what the mission is waiting on, walked one at a time: question steps first (at most 3), then at most one signin step, then connect steps, then approval steps (last, since approving happens after connecting). The suggest_actions / suggest_reusable steps are OPTIONAL clean-finish offers, not things the mission waits on: they render beside a live composer and survive the user's move to done, which strips every blocking step.",
+        "required": ["steps"],
+        "properties": {
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["kind", "id"],
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "question",
+                    "signin",
+                    "connect",
+                    "credential",
+                    "provider_connect",
+                    "hands_on",
+                    "plan_ready",
+                    "suggest_reusable",
+                    "suggest_actions",
+                    "approval"
+                  ]
+                },
+                "id": { "type": "string" },
+                "question": { "type": "string" },
+                "options": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "label"],
+                    "properties": {
+                      "id": { "type": "string" },
+                      "label": { "type": "string" },
+                      "description": { "type": "string" },
+                      "recommended": { "type": "boolean" }
+                    }
+                  }
+                },
+                "toolkit": { "type": "string" },
+                "provider": { "type": "string", "minLength": 1 },
+                "surface": {
+                  "type": "string",
+                  "enum": [
+                    "apiKeys",
+                    "billing",
+                    "files",
+                    "routineWebhook",
+                    "orgDanger"
+                  ]
+                },
+                "reason": { "type": "string" },
+                "summary": { "type": "string" },
+                "reusableKind": {
+                  "type": "string",
+                  "enum": ["skill", "routine", "learning"]
+                },
+                "title": { "type": "string" },
+                "rationale": { "type": "string" },
+                "actions": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 4,
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "label", "message"],
+                    "properties": {
+                      "id": { "type": "string" },
+                      "label": { "type": "string" },
+                      "message": { "type": "string" }
+                    }
+                  }
+                },
+                "action": { "type": "string" },
+                "params": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" }
+                },
+                "paramsOmitted": { "type": "number" },
+                "paramsHash": { "type": "string" }
+              },
+              "oneOf": [
+                {
+                  "properties": { "kind": { "const": "question" } },
+                  "required": ["question"]
+                },
+                {
+                  "properties": { "kind": { "const": "signin" } }
+                },
+                {
+                  "properties": { "kind": { "const": "connect" } },
+                  "required": ["toolkit"]
+                },
+                {
+                  "properties": { "kind": { "const": "credential" } },
+                  "required": ["toolkit"]
+                },
+                {
+                  "properties": { "kind": { "const": "provider_connect" } },
+                  "required": ["provider"]
+                },
+                {
+                  "properties": { "kind": { "const": "hands_on" } },
+                  "required": ["surface"]
+                },
+                {
+                  "properties": { "kind": { "const": "plan_ready" } },
+                  "required": ["summary"]
+                },
+                {
+                  "properties": { "kind": { "const": "suggest_reusable" } },
+                  "required": ["reusableKind", "title", "rationale"]
+                },
+                {
+                  "properties": { "kind": { "const": "suggest_actions" } },
+                  "required": ["actions"]
+                },
+                {
+                  "properties": { "kind": { "const": "approval" } },
+                  "required": ["toolkit", "action", "paramsHash"]
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "additionalProperties": false
+  }
+}

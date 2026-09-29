@@ -1,0 +1,734 @@
+import type { ChatMessage } from "@houston/runtime-client";
+import { expect, test } from "vitest";
+import type { FeedOutput, PendingInteraction } from "./feed-output";
+import { settleFromHistory, TURN_DIED_MESSAGE } from "./settle-from-history";
+import { ENGINE_RESTART_MESSAGE, ENGINE_RESUMED_MESSAGE } from "./turn-errors";
+import {
+  finishErr,
+  finishOk,
+  newTurnState,
+  settleProviderErrorCard,
+  type TurnState,
+} from "./turn-settle";
+
+/**
+ * settleFromHistory — the "terminal frame was lost" settle. With a turnId the
+ * match is exact; without one it falls back to the legacy trailing-reply +
+ * guard heuristic. It must NEVER render an empty "completed" turn.
+ */
+
+type Item = { feed_type?: string; data?: unknown; fails_pending?: boolean };
+
+/** A FeedOutput that records every push for assertions. */
+function recorder(): {
+  items: Item[];
+  statuses: Array<[string, string?]>;
+  output: FeedOutput;
+} {
+  const items: Item[] = [];
+  const statuses: Array<[string, string?]> = [];
+  const output: FeedOutput = {
+    pushFeedItem: (_a, _s, item) => {
+      items.push(item as Item);
+    },
+    sessionStatus: (_a, _s, status, error) => {
+      statuses.push([status, error]);
+    },
+    persistBoardStatus: async () => {},
+  };
+  return { items, statuses, output };
+}
+
+function run(
+  messages: ChatMessage[] | null,
+  turnId: string | undefined,
+  opts: { streamed?: string; guard?: boolean } = {},
+): { s: TurnState; items: Item[]; statuses: Array<[string, string?]> } {
+  const { items, statuses, output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity-settle", output);
+  s.text = opts.streamed ?? "";
+  // settleFromHistory is only ever reached AFTER the turn was seen live (a
+  // boundary / resync), so the send always landed — model that so a dead turn
+  // keeps its bubble confirmed rather than falsely flagged undelivered.
+  s.delivered = true;
+  settleFromHistory(s, messages, turnId, () => opts.guard ?? false);
+  return { s, items, statuses };
+}
+
+const usage = { context_tokens: 42, output_tokens: 7, cached_tokens: 0 };
+
+// ── finishErr: a send that never landed must fail the optimistic bubble ───────
+// The clock→tick mapping is boolean; a settle that clears `pending` without
+// evidence flips the bubble to a "Sent" check that contradicts the error the
+// same turn surfaces. A genuine send failure must instead FAIL the pending
+// bubble (`fails_pending` on the settle push), while a delivered-then-stopped
+// turn keeps its confirmation — the message DID reach the agent.
+
+test("a not-connected refusal fails the optimistic bubble (the send never landed)", () => {
+  const { items, output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity", output, { prompt: "hi" });
+  finishErr(s, "No provider connected. Log in with Claude or Codex first.");
+  const card = items.find((i) => i.feed_type === "provider_error");
+  expect(card?.fails_pending).toBe(true);
+});
+
+test("a genuine turn error fails the optimistic bubble", () => {
+  const { items, output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity", output);
+  finishErr(
+    s,
+    "Your message didn't reach the agent. Check your connection and send it again.",
+  );
+  const line = items.find((i) => i.feed_type === "system_message");
+  expect(line?.fails_pending).toBe(true);
+});
+
+test("a user Stop keeps the optimistic bubble confirmed (the message WAS delivered)", () => {
+  const { items, output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity", output);
+  finishErr(s, "Stopped by user");
+  const line = items.find((i) => i.feed_type === "system_message");
+  expect(line?.fails_pending).toBeUndefined();
+});
+
+test("matches the assistant reply by turnId and adopts its text + usage", () => {
+  const { s, items, statuses } = run(
+    [
+      { role: "user", content: "hi", ts: 1, turnId: "t-1" },
+      { role: "assistant", content: "Full reply", ts: 2, turnId: "t-1", usage },
+      // A LATER turn's messages must not be adopted.
+      { role: "user", content: "next", ts: 3, turnId: "t-2" },
+    ],
+    "t-1",
+  );
+  expect(s.settled).toBe(true);
+  // A clean settle with NO pending interaction still lands on `needs_you` —
+  // the engine never writes `done`.
+  expect(s.terminal).toBe("needs_you");
+  // The settle's pushes carry the adopted identity (HOU-1214 dedup).
+  expect(items).toContainEqual({
+    feed_type: "assistant_text",
+    data: "Full reply",
+    turnId: "t-1",
+  });
+  const final = items.find((i) => i.feed_type === "final_result")?.data as {
+    result: string;
+    usage: typeof usage;
+  };
+  expect(final.result).toBe("Full reply");
+  expect(final.usage).toEqual(usage);
+  expect(statuses).toEqual([["completed", undefined]]);
+});
+
+test("a persisted pendingInteraction recovers on reload: needs_you + the interaction", () => {
+  const interaction: PendingInteraction = {
+    steps: [
+      {
+        kind: "question",
+        id: "q1",
+        question: "Which date?",
+        options: [{ id: "a", label: "Fri" }],
+      },
+    ],
+  };
+  const { s, statuses } = run(
+    [
+      { role: "user", content: "book it", ts: 1, turnId: "t-1" },
+      {
+        role: "assistant",
+        content: "which date?",
+        ts: 2,
+        turnId: "t-1",
+        pendingInteraction: interaction,
+      },
+    ],
+    "t-1",
+  );
+  expect(s.settled).toBe(true);
+  // The live `done` was missed; recovering the persisted interaction carries it
+  // onto the terminal needs_you persist — the machinery reads
+  // s.pendingInteraction from here, so the card renders the question.
+  expect(s.terminal).toBe("needs_you");
+  expect(s.pendingInteraction).toEqual(interaction);
+  expect(statuses).toEqual([["completed", undefined]]);
+});
+
+test("an empty-summary plan_ready settles to needs_you like every blocking interaction", () => {
+  const interaction: PendingInteraction = {
+    steps: [{ kind: "plan_ready", id: "p1", summary: "" }],
+  };
+  const { s } = run(
+    [
+      { role: "user", content: "plan it", ts: 1, turnId: "t-1" },
+      {
+        role: "assistant",
+        content: "Here is the plan.",
+        ts: 2,
+        turnId: "t-1",
+        pendingInteraction: interaction,
+      },
+    ],
+    "t-1",
+  );
+  expect(s.terminal).toBe("needs_you");
+  expect(s.pendingInteraction).toEqual(interaction);
+});
+
+test("a legacy pre-step pendingInteraction on a persisted reply is ignored, not adopted", () => {
+  // Written by an older build: no `steps`. Adopting it would crash every
+  // consumer that reads interaction.steps ("undefined is not an object").
+  const legacy = {
+    kind: "question",
+    question: "which date?",
+    options: [{ id: "a", label: "Fri" }],
+  } as unknown as PendingInteraction;
+  const { s } = run(
+    [
+      { role: "user", content: "book it", ts: 1, turnId: "t-1" },
+      {
+        role: "assistant",
+        content: "which date?",
+        ts: 2,
+        turnId: "t-1",
+        pendingInteraction: legacy,
+      },
+    ],
+    "t-1",
+  );
+  expect(s.settled).toBe(true);
+  expect(s.pendingInteraction).toBeNull();
+  expect(s.terminal).toBe("needs_you");
+});
+
+test("a persisted providerError for our turn settles as the typed card", () => {
+  const providerError = {
+    kind: "rate_limited",
+    provider: "anthropic",
+    message: "slow down",
+  } as ChatMessage["providerError"];
+  const { s, items } = run(
+    [
+      { role: "user", content: "hi", ts: 1, turnId: "t-1" },
+      { role: "assistant", content: "", ts: 2, turnId: "t-1", providerError },
+    ],
+    "t-1",
+  );
+  expect(s.settled).toBe(true);
+  expect(items.some((i) => i.feed_type === "provider_error")).toBe(true);
+});
+
+// ── The card is the transcript's LAST word (PRODUCT-1578) ─────────────────────
+// A turn that streamed work before failing must finalize that work and put the
+// typed card BELOW it — a card above a bubble still marked streaming read as
+// "the agent is still going" with the failure buried mid-transcript.
+
+test("a live provider-error settle finalizes the streamed reply BEFORE the card", () => {
+  const { items, output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity", output);
+  s.delivered = true;
+  s.text = "partial reply";
+  s.thinking = "some reasoning";
+  settleProviderErrorCard(s, {
+    kind: "rate_limited",
+    provider: "anthropic",
+    model: null,
+    retry_after_seconds: null,
+    message: "slow down",
+  });
+  expect(items.map((i) => i.feed_type)).toEqual([
+    "thinking",
+    "assistant_text",
+    "provider_error",
+    "final_result",
+  ]);
+  expect(items[1].data).toBe("partial reply");
+});
+
+test("a history settle of a failed turn adopts the persisted partial reply below-the-card too", () => {
+  const providerError = {
+    kind: "rate_limited",
+    provider: "anthropic",
+    message: "slow down",
+  } as ChatMessage["providerError"];
+  const { items } = run(
+    [
+      { role: "user", content: "hi", ts: 1, turnId: "t-1" },
+      {
+        role: "assistant",
+        content: "got halfway",
+        ts: 2,
+        turnId: "t-1",
+        providerError,
+      },
+    ],
+    "t-1",
+  );
+  const textAt = items.findIndex((i) => i.feed_type === "assistant_text");
+  const cardAt = items.findIndex((i) => i.feed_type === "provider_error");
+  expect(textAt).toBeGreaterThanOrEqual(0);
+  expect(items[textAt].data).toBe("got halfway");
+  expect(cardAt).toBeGreaterThan(textAt);
+});
+
+test("a persisted stopped reply settles needs_you with the standard stop line, not a plain finish", () => {
+  const { s, items, statuses } = run(
+    [
+      { role: "user", content: "do it", ts: 1, turnId: "t-1" },
+      // The runtime never publishes a clean `done` for a stopped turn; adopting
+      // it as a plain reply would render the interruption as a normal finish.
+      {
+        role: "assistant",
+        content: "working on",
+        ts: 2,
+        turnId: "t-1",
+        stopped: true,
+      },
+    ],
+    "t-1",
+  );
+  expect(s.settled).toBe(true);
+  // Mirrors the LIVE stop settle recovered from history: needs_you, the standard
+  // "Stopped by user" line, an `error` status with no text — same code path.
+  expect(s.terminal).toBe("needs_you");
+  expect(items).toContainEqual({
+    feed_type: "system_message",
+    data: "Stopped by user",
+    turnId: "t-1",
+  });
+  expect(items.some((i) => i.feed_type === "provider_error")).toBe(false);
+  expect(statuses).toEqual([["error", undefined]]);
+});
+
+test("a stopped reply with an (illegal) pendingInteraction: stopped wins, no card is rendered", () => {
+  const interaction: PendingInteraction = {
+    steps: [{ kind: "question", id: "q1", question: "which date?" }],
+  };
+  const { s, items } = run(
+    [
+      { role: "user", content: "do it", ts: 1, turnId: "t-1" },
+      {
+        role: "assistant",
+        content: "",
+        ts: 2,
+        turnId: "t-1",
+        stopped: true,
+        pendingInteraction: interaction,
+      },
+    ],
+    "t-1",
+  );
+  // Precedence: `stopped` wins — a stopped turn must never render a card, so the
+  // interaction is never adopted onto the board.
+  expect(s.terminal).toBe("needs_you");
+  expect(s.pendingInteraction).toBeNull();
+  expect(items.some((i) => i.feed_type === "provider_error")).toBe(false);
+  expect(items).toContainEqual({
+    feed_type: "system_message",
+    data: "Stopped by user",
+    turnId: "t-1",
+  });
+});
+
+test("an `interrupted` reply for our turnId settles as the ENGINE RESTART error, never a completed render", () => {
+  const { s, items, statuses } = run(
+    [
+      { role: "user", content: "export it", ts: 1, turnId: "t-1" },
+      {
+        role: "assistant",
+        content: "",
+        ts: 2,
+        turnId: "t-1",
+        interrupted: { cause: "engine_restart", tool: "bash" },
+      },
+    ],
+    "t-1",
+    { streamed: "half a repl" },
+  );
+  expect(s.settled).toBe(true);
+  expect(s.terminal).toBe("error");
+  // The reply's turnId is adopted first, so the settle push carries it.
+  expect(items).toContainEqual({
+    feed_type: "system_message",
+    data: ENGINE_RESTART_MESSAGE,
+    notice: "engine_restart",
+    turnId: "t-1",
+  });
+  expect(items.some((i) => i.feed_type === "final_result")).toBe(false);
+  expect(items.some((i) => i.feed_type === "provider_error")).toBe(false);
+  expect(statuses).toEqual([["error", ENGINE_RESTART_MESSAGE]]);
+});
+
+test("a RESUMED interruption settles neutrally: the pause line, no error, no terminal card", () => {
+  const { s, items, statuses } = run(
+    [
+      { role: "user", content: "export it", ts: 1, turnId: "t-1" },
+      {
+        role: "assistant",
+        content: "",
+        ts: 2,
+        turnId: "t-1",
+        interrupted: { cause: "engine_restart", tool: "bash", resumed: true },
+      },
+    ],
+    "t-1",
+    { streamed: "half a repl" },
+  );
+  expect(s.settled).toBe(true);
+  // No board persist at all: the engine is already running the turn again, so
+  // the card keeps its `running` status (PRODUCT-1785).
+  expect(s.terminal).toBeNull();
+  expect(items).toContainEqual({
+    feed_type: "system_message",
+    data: ENGINE_RESUMED_MESSAGE,
+    notice: "engine_resumed",
+    turnId: "t-1",
+  });
+  expect(items.some((i) => i.feed_type === "provider_error")).toBe(false);
+  expect(statuses).toEqual([["completed", undefined]]);
+});
+
+test("our user message with NO assistant reply for our turnId settles as the dead-turn ERROR", () => {
+  const { s, items, statuses } = run(
+    [{ role: "user", content: "hi", ts: 1, turnId: "t-1" }],
+    "t-1",
+    { streamed: "half a repl" },
+  );
+  expect(s.settled).toBe(true);
+  expect(s.terminal).toBe("error");
+  expect(items).toContainEqual({
+    feed_type: "system_message",
+    data: TURN_DIED_MESSAGE,
+  });
+  // NEVER the old empty "completed" render.
+  expect(items.some((i) => i.feed_type === "final_result")).toBe(false);
+  expect(statuses).toEqual([["error", TURN_DIED_MESSAGE]]);
+});
+
+test("legacy (no turnIds): the guard admits the trailing reply", () => {
+  const { items } = run(
+    [
+      { role: "user", content: "hi", ts: 1 },
+      { role: "assistant", content: "Old-world reply", ts: 2 },
+    ],
+    undefined,
+    { guard: true },
+  );
+  expect(items).toContainEqual({
+    feed_type: "assistant_text",
+    data: "Old-world reply",
+  });
+});
+
+test("legacy: a rejected guard settles the streamed accumulation as completed", () => {
+  const { s, items } = run(
+    [
+      { role: "user", content: "hi", ts: 1 },
+      { role: "assistant", content: "someone else's reply", ts: 2 },
+    ],
+    undefined,
+    { guard: false, streamed: "what we streamed" },
+  );
+  expect(s.terminal).toBe("needs_you"); // clean settle: never `done`
+  expect(items).toContainEqual({
+    feed_type: "assistant_text",
+    data: "what we streamed",
+  });
+});
+
+test("legacy: a rejected guard with NOTHING streamed settles as the dead-turn error, not an empty completed", () => {
+  const { s, items, statuses } = run(
+    [{ role: "user", content: "hi", ts: 1 }],
+    undefined,
+    { guard: false },
+  );
+  expect(s.terminal).toBe("error");
+  expect(items).toContainEqual({
+    feed_type: "system_message",
+    data: TURN_DIED_MESSAGE,
+  });
+  expect(statuses).toEqual([["error", TURN_DIED_MESSAGE]]);
+});
+
+test("a failed history reload (null) still settles: streamed text as completed, nothing as error", () => {
+  const withText = run(null, "t-1", { streamed: "partial tail" });
+  expect(withText.s.terminal).toBe("needs_you"); // clean settle: never `done`
+  expect(withText.items).toContainEqual({
+    feed_type: "assistant_text",
+    data: "partial tail",
+  });
+
+  const withoutText = run(null, "t-1");
+  expect(withoutText.s.terminal).toBe("error");
+});
+
+/**
+ * finishOk — the clean-settle board status. There is NO split any more: every
+ * clean finish lands `needs_you`, because the engine never writes `done` (only
+ * the user moves a card there). What the captured pending interaction decides is
+ * what the card RENDERS, and it must ride the settle untouched — blocking steps
+ * or offer-only ones alike. The session status is `completed` in every case.
+ */
+
+test("finishOk without a captured interaction settles the card to needs_you", () => {
+  const { statuses, output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity-clean", output);
+  s.text = "all set";
+  finishOk(s);
+  expect(s.settled).toBe(true);
+  expect(s.terminal).toBe("needs_you");
+  expect(s.pendingInteraction).toBe(null);
+  expect(statuses).toEqual([["completed", undefined]]);
+});
+
+test("finishOk with a blocking interaction settles needs_you and keeps the interaction", () => {
+  const { statuses, output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity-ask", output);
+  s.text = "which one?";
+  const interaction: PendingInteraction = {
+    steps: [
+      {
+        kind: "question",
+        id: "q1",
+        question: "Pick a flight?",
+        options: [{ id: "a", label: "Morning" }],
+      },
+    ],
+  };
+  // The `done` frame stashes the interaction before finishOk (turn-frames.ts).
+  s.pendingInteraction = interaction;
+  finishOk(s);
+  expect(s.terminal).toBe("needs_you");
+  expect(s.pendingInteraction).toEqual(interaction);
+  expect(statuses).toEqual([["completed", undefined]]);
+});
+
+test("finishOk with a LONE suggest_reusable step settles needs_you and persists the offer", () => {
+  const { statuses, output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity-suggest", output);
+  s.text = "Done. Sales summary is ready.";
+  // The mission IS finished, but finishing is not the engine's call to close:
+  // the card parks on needs_you and the offer rides along so it renders there
+  // (and survives the user's later move to done).
+  const interaction: PendingInteraction = {
+    steps: [
+      {
+        kind: "suggest_reusable",
+        id: "r1",
+        reusableKind: "skill",
+        title: "Weekly sales summary",
+        rationale: "Saves you rebuilding it every Monday.",
+      },
+    ],
+  };
+  s.pendingInteraction = interaction;
+  finishOk(s);
+  expect(s.terminal).toBe("needs_you");
+  expect(s.pendingInteraction).toEqual(interaction);
+  expect(statuses).toEqual([["completed", undefined]]);
+});
+
+test("finishOk keeps BOTH suggestion offers on the needs_you settle", () => {
+  const { output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity-actions", output);
+  const interaction: PendingInteraction = {
+    steps: [
+      {
+        kind: "suggest_actions",
+        id: "a1",
+        actions: [
+          { id: "draft", label: "Draft", message: "Draft it." },
+          { id: "share", label: "Share", message: "Share it." },
+        ],
+      },
+      {
+        kind: "suggest_reusable",
+        id: "r1",
+        reusableKind: "skill",
+        title: "Weekly summary",
+        rationale: "Useful every week.",
+      },
+    ],
+  };
+  s.pendingInteraction = interaction;
+  finishOk(s);
+  expect(s.terminal).toBe("needs_you");
+  expect(s.pendingInteraction).toEqual(interaction);
+});
+
+test("finishOk with a lone suggest_actions step settles needs_you and persists the bubbles", () => {
+  const { output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity-actions-only", output);
+  const interaction: PendingInteraction = {
+    steps: [
+      {
+        kind: "suggest_actions",
+        id: "a1",
+        actions: [
+          { id: "draft", label: "Draft", message: "Draft it." },
+          { id: "share", label: "Share", message: "Share it." },
+        ],
+      },
+    ],
+  };
+  s.pendingInteraction = interaction;
+  finishOk(s);
+  expect(s.terminal).toBe("needs_you");
+  expect(s.pendingInteraction).toEqual(interaction);
+});
+
+test("finishOk with suggest_actions beside a question settles needs_you with both steps", () => {
+  const { output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity-actions-question", output);
+  const interaction: PendingInteraction = {
+    steps: [
+      { kind: "question", id: "q1", question: "Which account?" },
+      {
+        kind: "suggest_actions",
+        id: "a1",
+        actions: [
+          { id: "draft", label: "Draft", message: "Draft it." },
+          { id: "share", label: "Share", message: "Share it." },
+        ],
+      },
+    ],
+  };
+  s.pendingInteraction = interaction;
+  finishOk(s);
+  expect(s.terminal).toBe("needs_you");
+  expect(s.pendingInteraction).toEqual(interaction);
+});
+
+test("finishOk with suggest_reusable co-occurring with a question settles needs_you", () => {
+  const { output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity-suggest-mixed", output);
+  s.text = "which one?";
+  s.pendingInteraction = {
+    steps: [
+      { kind: "question", id: "q1", question: "Which week?" },
+      {
+        kind: "suggest_reusable",
+        id: "r1",
+        reusableKind: "skill",
+        title: "Weekly sales summary",
+        rationale: "Saves you rebuilding it every Monday.",
+      },
+    ],
+  };
+  finishOk(s);
+  expect(s.terminal).toBe("needs_you");
+});
+
+test("finishOk with a single branded question step settles needs_you (confirmations are BLOCKING)", () => {
+  const { statuses, output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity-confirm", output);
+  s.text = "Ready to send the email?";
+  s.pendingInteraction = {
+    steps: [
+      {
+        kind: "question",
+        id: "q1",
+        question: "Should I send the draft?",
+        toolkit: "gmail",
+      },
+    ],
+  };
+  finishOk(s);
+  expect(s.terminal).toBe("needs_you");
+  expect(statuses).toEqual([["completed", undefined]]);
+});
+
+test("finishOk with a plan_ready step settles needs_you and keeps the plan", () => {
+  const { output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity-plan", output);
+  const interaction: PendingInteraction = {
+    steps: [{ kind: "plan_ready", id: "p1", summary: "Three steps." }],
+  };
+  s.pendingInteraction = interaction;
+  finishOk(s);
+  expect(s.terminal).toBe("needs_you");
+  expect(s.pendingInteraction).toEqual(interaction);
+});
+
+/**
+ * finishErr — the not-connected refusal (HOU-676). A logged-out send is
+ * refused BEFORE the message reaches the engine, so it must settle as the
+ * persistent typed reconnect card (which survives the reconnect and offers
+ * "Send again" with the original text) — never as the raw system message
+ * that only fed the auto-dismissing store-driven card.
+ */
+
+const NOT_CONNECTED = "No provider connected. Connect an AI provider first.";
+
+test("a not-connected refusal settles as the typed card carrying provider + failed prompt", () => {
+  const { items, statuses, output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity-nc", output, {
+    provider: "openai",
+    prompt: "hey",
+  });
+  finishErr(s, NOT_CONNECTED);
+  expect(s.settled).toBe(true);
+  expect(s.terminal).toBe("needs_you");
+  expect(items).toContainEqual({
+    feed_type: "provider_error",
+    // The refused send never landed → its optimistic bubble is failed.
+    fails_pending: true,
+    data: {
+      kind: "unauthenticated",
+      provider: "openai",
+      cause: "no_credentials",
+      message: NOT_CONNECTED,
+      failed_prompt: "hey",
+    },
+  });
+  // The card IS the surface: no raw system_message duplicate, and the
+  // invisible final_result stops the progress line.
+  expect(items.some((i) => i.feed_type === "system_message")).toBe(false);
+  expect(items.some((i) => i.feed_type === "final_result")).toBe(true);
+  // Status clears the loading flag with NO text — text would re-synthesize
+  // the "Session error:" echo that fed the auto-dismissing card.
+  expect(statuses).toEqual([["error", undefined]]);
+});
+
+test("a not-connected refusal without send context still cards (surface resolves the provider)", () => {
+  const { items, output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity-nc", output);
+  finishErr(s, "No provider connected. Connect your subscription first.");
+  const card = items.find((i) => i.feed_type === "provider_error")?.data as {
+    provider: string;
+    failed_prompt?: string;
+  };
+  expect(card.provider).toBe("");
+  expect("failed_prompt" in card).toBe(false);
+});
+
+test("a real turn failure still settles as system_message + red error", () => {
+  const { items, statuses, output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity-boom", output, {
+    provider: "openai",
+    prompt: "hey",
+  });
+  s.delivered = true; // a REAL turn failure: the turn ran, so the send landed
+  finishErr(s, "upstream exploded");
+  expect(s.terminal).toBe("error");
+  expect(items).toContainEqual({
+    // Delivered-then-errored: the red error is about the turn, so the bubble
+    // stays confirmed — no undelivered flag.
+    feed_type: "system_message",
+    data: "upstream exploded",
+  });
+  expect(items.some((i) => i.feed_type === "provider_error")).toBe(false);
+  expect(statuses).toEqual([["error", "upstream exploded"]]);
+});
+
+test("a user stop still settles as the neutral needs_you, never a card", () => {
+  const { items, statuses, output } = recorder();
+  const s = newTurnState("Houston/Bo", "activity-stop", output);
+  finishErr(s, "Stopped by user");
+  expect(s.terminal).toBe("needs_you");
+  expect(items).toContainEqual({
+    feed_type: "system_message",
+    data: "Stopped by user",
+  });
+  expect(items.some((i) => i.feed_type === "provider_error")).toBe(false);
+  expect(statuses).toEqual([["error", undefined]]);
+});

@@ -1,0 +1,93 @@
+import { ASSISTANT_UNAVAILABLE_HERE } from "@houston/domain/assistant-deployment";
+import type { AssistantError } from "./assistant-result";
+
+/**
+ * Reading the host's answer when it is not a success.
+ *
+ * `houston_call` reports failures as RESULTS with a named code, never throws,
+ * so the model can tell "I addressed this wrong" from "the user has to decide"
+ * from "the server refused". These translate the host's own named codes into
+ * that taxonomy; an unnamed failure keeps its status and reads as a refusal.
+ */
+
+/** Read the host's error body, preferring its named `code` over the status. */
+export async function errorFromResponse(
+  res: Response,
+): Promise<AssistantError> {
+  const text = await res.text().catch(() => "");
+  let code: string | undefined;
+  let message: string | undefined;
+  try {
+    const body: unknown = JSON.parse(text);
+    if (typeof body === "object" && body !== null) {
+      const fields = body as { code?: unknown; error?: unknown };
+      if (typeof fields.code === "string") code = fields.code;
+      if (typeof fields.error === "string") message = fields.error;
+    }
+  } catch {
+    // A non-JSON body (a proxy's HTML error page) still carries the status.
+  }
+  const detail = message ?? text.slice(0, 300);
+  // The host enforces plan mode itself (routes/assistant-operate.ts), and its
+  // refusal has to reach the model as a NAMED state rather than a server error:
+  // "the gateway refused" reads as something to retry, and retrying is the one
+  // thing that cannot work here - only the user can leave plan mode.
+  if (code === "plan_mode") {
+    return { code: "plan_mode", status: res.status, message: detail };
+  }
+  // Same reasoning, other direction: the host recorded no live turn for this
+  // chat, so nothing happened and nothing will if the call is repeated. Named,
+  // so the model acts inside a turn instead of retrying a "gateway error".
+  if (code === "not_in_turn") {
+    return { code: "not_in_turn", status: res.status, message: detail };
+  }
+  // The chat is the assistant's own, or a card's (routes/
+  // assistant-protected-chat.ts). Named for the same reason: the host's
+  // answer already says which other thing to act on, and a "gateway error"
+  // would read as a call worth making again.
+  if (code === "protected_conversation") {
+    return {
+      code: "protected_conversation",
+      status: res.status,
+      message: detail,
+    };
+  }
+  // The host's own deployment gate (routes/assistant-operation-guards.ts). The
+  // runtime normally refuses these before the round trip, so reaching here
+  // means the host knows something this process was not told — its answer is
+  // already the sentence the model must act on, verbatim.
+  if (code === ASSISTANT_UNAVAILABLE_HERE) {
+    return {
+      code: ASSISTANT_UNAVAILABLE_HERE,
+      status: res.status,
+      message: detail,
+    };
+  }
+  if (code === "operation_not_supported") {
+    return {
+      code: "operation_not_supported",
+      status: res.status,
+      message: `This Houston install cannot perform that operation yet. Tell the user plainly and offer what you can do instead. (${detail})`,
+    };
+  }
+  return {
+    code: "gateway_error",
+    status: res.status,
+    message: `The operation was refused (HTTP ${res.status})${detail ? `: ${detail}` : ""}.`,
+  };
+}
+
+/** The host's named refusal for an unapproved call, when it gave one. */
+export async function approvalCode(res: Response): Promise<string | undefined> {
+  if (res.status !== 403) return undefined;
+  try {
+    const body: unknown = JSON.parse(await res.text());
+    if (typeof body !== "object" || body === null) return undefined;
+    const code = (body as { code?: unknown }).code;
+    return code === "approval_required" || code === "approval_denied"
+      ? code
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}

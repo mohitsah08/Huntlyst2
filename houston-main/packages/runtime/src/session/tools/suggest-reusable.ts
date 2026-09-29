@@ -1,0 +1,103 @@
+import { defineTool } from "@earendil-works/pi-coding-agent";
+import { type Static, Type } from "typebox";
+import { currentTurnFinish, recordSuggestReusable } from "../interaction";
+
+/**
+ * The reusable-suggestion tool — the model's end-of-task REFLECTION STEP,
+ * available in execute AND auto. When the model has FINISHED a task whose work
+ * is clearly worth keeping (genuinely reusable, multi-step work, or a stable
+ * fact worth remembering), it calls `suggest_reusable` right before its final message
+ * INSTEAD OF asking the user about it in plain text or via `ask_user`. Executing
+ * it records the single suggest-reusable step of this turn's interaction sequence
+ * (carried on the terminal `done` frame + the persisted assistant message), and
+ * Houston shows the user a dismissible card offering to save the work as a Skill,
+ * a scheduled Routine, or a Learning the agent remembers for future sessions.
+ *
+ * CRITICALLY, this is NOT a turn-ending block like `plan_ready`: the task is
+ * genuinely DONE, so the model wraps up its final message to the user as usual.
+ * The suggestion is an optional offer, never something blocking completion: it
+ * renders above the composer instead of replacing it (see `interaction.ts`'s
+ * fallback-only precedence). It does not drive the board status — every settled
+ * turn lands `needs_you` (`turn-settle.ts`'s `finishOk`) and only the user moves
+ * a card to done, which the offer survives.
+ *
+ * It holds no credential and makes no network call, and it is name-gated OUT of
+ * plan mode by `session/tool-selection.ts` (plan is read-only planning, not a
+ * finished task). It reaches execute and auto because it never blocks the turn.
+ */
+
+const SuggestReusableParams = Type.Object({
+  reusableKind: Type.Union(
+    [Type.Literal("skill"), Type.Literal("routine"), Type.Literal("learning")],
+    {
+      description:
+        'What kind of reusable thing this work should be saved as. Use "skill" for a reusable procedure the user runs on demand, "routine" for work that should run automatically on a schedule, or "learning" for a stable fact or preference that emerged from this task and is worth remembering for future sessions.',
+    },
+  ),
+  title: Type.String({
+    description:
+      'A short, plain-language name for the suggested Skill, Routine, or Learning, in the user\'s language. A few words at most (e.g. "Weekly sales summary").',
+  }),
+  rationale: Type.String({
+    description:
+      "One short sentence, in the user's language, explaining why saving this is useful: what it will save them next time. The user sees this on the card.",
+  }),
+});
+type SuggestReusableParams = Static<typeof SuggestReusableParams>;
+
+/** The result once the closing message is written: the offer ends the turn
+ *  together with `suggest_actions` (both carry pi's terminate hint). */
+const ENDED_INSTRUCTION =
+  "Your suggestion was recorded. The app shows the user a dismissible card offering to save this work, under the message you already wrote. This ended your turn.";
+
+/** The result when the model called the tool before writing anything visible. */
+const NEEDS_MESSAGE_INSTRUCTION =
+  "Your suggestion was recorded. The app will show the user a dismissible card offering to save this work. Do not repeat the suggestion in plain text and do not ask about it again. You called this before writing anything the user can read, so this did NOT end your turn: write your closing message now, with suggest_actions, then end.";
+
+/** The reusable-suggestion tool (execute + auto; never plan). */
+export function makeSuggestReusableTool() {
+  return defineTool({
+    name: "suggest_reusable",
+    label: "Suggest saving as reusable",
+    description:
+      "Suggest saving the just-completed work as a reusable Skill, a scheduled Routine, or a Learning to remember. Call this when you finish a task and the work is clearly worth keeping (a genuinely reusable multi-step procedure, work that should recur on a schedule, or a stable fact worth remembering - not a simple or one-off request), in your final message after your closing text and together with suggest_actions, INSTEAD OF asking about it in plain text or via ask_user. The app shows the user a dismissible card offering to save it. Call it at most once per turn. Like suggest_actions it ends your turn, so put nothing after it.",
+    promptSnippet:
+      "Suggest saving the completed work as a Skill, Routine, or Learning",
+    parameters: SuggestReusableParams,
+    executionMode: "sequential",
+    async execute(_id: string, params: SuggestReusableParams) {
+      const title = params.title?.trim();
+      const rationale = params.rationale?.trim();
+      if (!title) {
+        throw new Error("suggest_reusable needs a non-empty title.");
+      }
+      if (!rationale) {
+        throw new Error("suggest_reusable needs a non-empty rationale.");
+      }
+      recordSuggestReusable({
+        reusableKind: params.reusableKind,
+        title,
+        rationale,
+      });
+      const details = { reusableKind: params.reusableKind, title, rationale };
+      // Same finish contract as suggest_actions (see its module comment): the
+      // offer ends the turn once the closing message is written, so the two
+      // offers in one final message end it together on both backends.
+      const finish = currentTurnFinish();
+      if (!finish?.closingMessageSeen)
+        return {
+          content: [{ type: "text" as const, text: NEEDS_MESSAGE_INSTRUCTION }],
+          details,
+        };
+      finish.turnEndedByTool = true;
+      return {
+        content: [{ type: "text" as const, text: ENDED_INSTRUCTION }],
+        details,
+        terminate: true,
+      };
+    },
+  });
+}
+
+/** The tool name — pi's allowlist needs it alongside the object. */
+export const SUGGEST_REUSABLE_TOOL_NAME = "suggest_reusable";

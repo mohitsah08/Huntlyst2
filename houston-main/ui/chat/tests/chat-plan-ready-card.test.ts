@@ -1,0 +1,101 @@
+import { strict as assert } from "node:assert";
+import { describe, it } from "node:test";
+import {
+  type ChatPlanReadyLabels,
+  DEFAULT_PLAN_READY_LABELS,
+  hasPlanReadySummary,
+  resolvePlanReadyActions,
+} from "../src/chat-plan-ready-card-model.ts";
+
+const LABELS: ChatPlanReadyLabels = {
+  title: "Plan ready",
+  collapse: "Collapse plan approval",
+  expand: "Expand plan approval",
+  askFirstTitle: "Continue in Ask first mode",
+  askFirstDescription: "Gets things done, asks before sensitive actions.",
+  autopilotTitle: "Continue in Autopilot mode",
+  autopilotDescription: "Finishes it on its own. No questions asked.",
+  dismiss: "Dismiss",
+  feedbackPlaceholder: "Give feedback on the plan...",
+  send: "Send",
+};
+
+describe("resolvePlanReadyActions", () => {
+  it("resolves the two actions in render order", () => {
+    const actions = resolvePlanReadyActions(LABELS, false);
+    assert.deepEqual(
+      actions.map((a) => a.key),
+      ["startWorking", "runAutopilot"],
+    );
+  });
+
+  it("maps each action to its localized title and description", () => {
+    const actions = resolvePlanReadyActions(LABELS, false);
+    assert.deepEqual(actions, [
+      {
+        key: "startWorking",
+        title: "Continue in Ask first mode",
+        description: "Gets things done, asks before sensitive actions.",
+        disabled: false,
+      },
+      {
+        key: "runAutopilot",
+        title: "Continue in Autopilot mode",
+        description: "Finishes it on its own. No questions asked.",
+        disabled: false,
+      },
+    ]);
+  });
+
+  it("gates every action uniformly when disabled", () => {
+    const actions = resolvePlanReadyActions(LABELS, true);
+    assert.ok(actions.every((a) => a.disabled));
+  });
+
+  it("leaves every action enabled when not disabled", () => {
+    const actions = resolvePlanReadyActions(LABELS, false);
+    assert.ok(actions.every((a) => !a.disabled));
+  });
+});
+
+describe("DEFAULT_PLAN_READY_LABELS", () => {
+  it("ships the English fallback copy with no em dashes", () => {
+    assert.equal(DEFAULT_PLAN_READY_LABELS.title, "Plan ready");
+    assert.equal(DEFAULT_PLAN_READY_LABELS.collapse, "Collapse plan approval");
+    assert.equal(
+      DEFAULT_PLAN_READY_LABELS.askFirstTitle,
+      "Continue in Ask first mode",
+    );
+    assert.equal(
+      DEFAULT_PLAN_READY_LABELS.autopilotTitle,
+      "Continue in Autopilot mode",
+    );
+    assert.equal(
+      DEFAULT_PLAN_READY_LABELS.feedbackPlaceholder,
+      "Give feedback on the plan...",
+    );
+    assert.equal(DEFAULT_PLAN_READY_LABELS.send, "Send");
+    for (const value of Object.values(DEFAULT_PLAN_READY_LABELS)) {
+      assert.ok(!value.includes("—"), `"${value}" must not use an em dash`);
+    }
+  });
+});
+
+describe("plan-ready lede contract", () => {
+  it("uses the default continuation model when callers supply no alternate copy", () => {
+    const actions = resolvePlanReadyActions(DEFAULT_PLAN_READY_LABELS, false);
+    assert.deepEqual(
+      actions.map(({ key, title }) => ({ key, title })),
+      [
+        { key: "startWorking", title: "Continue in Ask first mode" },
+        { key: "runAutopilot", title: "Continue in Autopilot mode" },
+      ],
+    );
+  });
+
+  it("omits the lede and collapsed hint for an empty fallback summary", () => {
+    assert.equal(hasPlanReadySummary(""), false);
+    assert.equal(hasPlanReadySummary("  \n\t"), false);
+    assert.equal(hasPlanReadySummary("Ready to start."), true);
+  });
+});

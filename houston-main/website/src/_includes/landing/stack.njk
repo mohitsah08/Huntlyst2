@@ -1,0 +1,23 @@
+{# Works-with-your-stack, in four dark tiles: integrations + models get real
+   logo walls (monochrome white marks, per the B/W system), the subscription
+   and local-model claims close the grid. Every logo renders through the ONE
+   mark() component below, fed from landing.stack.marks (the single source of
+   the brand path data), so placement/size/tone can never drift. Jan ships no
+   vector mark in the icon set, so it appears as a wordmark chip. #}
+{%- macro mark(id) %}{% set m = landing.stack.marks[id] %}<svg class="st-mark" viewBox="0 0 24 24" role="img" aria-label="{{ m.label }}"><path d="{{ m.d }}"/></svg>{% endmacro -%}
+<section id="stack" class="section is-dark">
+  <div class="mp-head reveal">
+    <h2 class="sec-title">{{ t.stack.title }}</h2>
+  </div>
+
+  <div class="stack-grid reveal reveal-d1">
+{%- for tile in landing.stack.tiles %}{% set txt = t.stack.tiles[loop.index0] %}
+    <div class="stack-tile">
+      <span class="st-n">{{ txt.n }}</span>
+      <p class="st-l">{{ txt.l }}</p>
+      <div class="st-logos">{% for id in tile.logos %}{{ mark(id) }}{% endfor %}{% if tile.word %}<span class="st-word">{{ tile.word }}</span>{% endif %}</div>
+      <span class="st-more">{{ txt.more }}</span>
+    </div>
+{%- endfor %}
+  </div>
+</section>

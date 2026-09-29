@@ -1,0 +1,136 @@
+/**
+ * ToolBlock — collapsible tool call display (AI Element).
+ *
+ * Visually identical to Reasoning: same Collapsible, same trigger layout,
+ * same animations. The only differences are the icon (tool-specific instead
+ * of BrainIcon) and the label text.
+ *
+ * - Auto-opens when the tool is active (running, no result yet)
+ * - Auto-collapses ~800ms after the result arrives
+ * - Shimmer animation while active (matches "Thinking..." treatment)
+ *
+ * Exception: Bash. The terminal output is noisy and most users don't want
+ * to read shell stdout, so Bash blocks stay collapsed by default. Click the
+ * chevron to inspect.
+ */
+
+"use client";
+
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+  cn,
+} from "@houston-ai/core";
+import { ChevronDownIcon } from "lucide-react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
+import type { ToolEntry } from "../feed-to-messages";
+import {
+  getToolDetail,
+  getToolEntryIcon,
+  ToolContent,
+} from "../tool-formatters";
+import { getToolActionLabel, toolShortName } from "../tool-labels";
+import { Shimmer } from "./shimmer";
+
+// ---------------------------------------------------------------------------
+// ToolBlock
+// ---------------------------------------------------------------------------
+
+const AUTO_CLOSE_DELAY = 800;
+
+export interface ToolBlockProps {
+  tool: ToolEntry;
+  /** True when this is the currently executing tool. */
+  isActive: boolean;
+  toolLabels?: Record<string, string>;
+}
+
+export const ToolBlock = memo(
+  ({ tool, isActive, toolLabels }: ToolBlockProps) => {
+    // Bash output is shell stdout — opt out of the auto-open-while-active
+    // behavior so the chat stays clean. The user can still click to expand.
+    // (Two dialects: Claude's "Bash", pi's "bash".)
+    const autoOpenWhileActive =
+      toolShortName(tool.name).toLowerCase() !== "bash";
+
+    const initialAutoOpen = autoOpenWhileActive && isActive;
+    const [isOpen, setIsOpen] = useState(initialAutoOpen);
+    const wasActiveRef = useRef(isActive);
+    // Auto-close is armed ONLY while the pane is open from an AUTO open. A
+    // manual open must stay open until the user closes it — closing a row the
+    // user just expanded is the HOU-717 "dropdown keeps closing" bug.
+    const autoOpenedRef = useRef(initialAutoOpen);
+
+    // Auto-open when becoming active (unless this tool opted out).
+    useEffect(() => {
+      if (!autoOpenWhileActive) return;
+      if (isActive && !wasActiveRef.current) {
+        setIsOpen(true);
+        autoOpenedRef.current = true;
+      }
+      wasActiveRef.current = isActive;
+    }, [isActive, autoOpenWhileActive]);
+
+    // Auto-close after the result arrives — only an auto-opened pane.
+    useEffect(() => {
+      if (tool.result && !isActive && isOpen && autoOpenedRef.current) {
+        const timer = setTimeout(() => {
+          setIsOpen(false);
+          autoOpenedRef.current = false;
+        }, AUTO_CLOSE_DELAY);
+        return () => clearTimeout(timer);
+      }
+    }, [tool.result, isActive, isOpen]);
+
+    const handleOpenChange = useCallback((open: boolean) => {
+      setIsOpen(open);
+      // Any user toggle takes ownership: never auto-close a manual open.
+      autoOpenedRef.current = false;
+    }, []);
+
+    const Icon = getToolEntryIcon(tool);
+    const detail = getToolDetail(tool.name, tool.input);
+    const isDone = !!tool.result;
+
+    return (
+      <Collapsible
+        className="not-prose"
+        open={isOpen}
+        onOpenChange={handleOpenChange}
+      >
+        <CollapsibleTrigger className="flex w-full items-start gap-2 text-ink-muted text-sm transition-colors hover:text-ink">
+          <Icon className="size-4 mt-0.5 shrink-0" />
+          {isActive ? (
+            <Shimmer duration={1}>
+              {`${getToolActionLabel(tool.name, false, toolLabels)}...`}
+            </Shimmer>
+          ) : (
+            <p className="min-w-0 truncate">
+              {getToolActionLabel(tool.name, isDone, toolLabels)}
+              {detail && <span className="text-ink-muted/50"> — {detail}</span>}
+            </p>
+          )}
+          <ChevronDownIcon
+            className={cn(
+              "size-4 mt-0.5 shrink-0 transition-transform",
+              isOpen ? "rotate-180" : "rotate-0",
+            )}
+          />
+        </CollapsibleTrigger>
+        <CollapsibleContent
+          className={cn(
+            "mt-4 text-sm",
+            "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2",
+            "data-[state=open]:slide-in-from-top-2",
+            "text-ink-muted outline-none",
+            "data-[state=closed]:animate-out data-[state=open]:animate-in",
+          )}
+        >
+          <ToolContent tool={tool} />
+        </CollapsibleContent>
+      </Collapsible>
+    );
+  },
+);
+ToolBlock.displayName = "ToolBlock";

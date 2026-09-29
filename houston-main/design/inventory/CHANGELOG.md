@@ -1,0 +1,2032 @@
+# Inventory changelog
+
+Every `version` bump in `inventory.yaml` needs a matching entry here (enforced by
+`pnpm check:parity`). Newest first. Use `## vN` headings.
+
+## v112 - 2026-09-28
+
+AI Employee settings add Teamwork on phone and desktop: one card with two
+dropdowns for outgoing and incoming mission policies, plus a nested pick list
+of other employees with avatar and switch rows.
+
+## v111 - 2026-09-28
+
+The rail is the team and nothing else. Its top line carries Search and
+Create (`sidebar-top-line`); its foot is the account (`sidebar-account-menu`):
+the person's portrait and name over the workspace, opening one menu with the
+workspaces, Admin, AI Models, Integrations, the Academy and Settings. There
+is no band over the list, no destination run above it, no New AI Employee
+row closing it and no Skills row anywhere (`sidebar-teams-band` and
+`sidebar-nav-band` are retired). AI Employee rows are message-list rows:
+64px around a 40px portrait, a semibold name over the mission they are on
+(or a first-day invitation with a New badge), and hairlines between rows.
+The phone's More card is headed by the same account row. There is no Skills
+screen: an AI Employee's skills live in its settings, whose skill editor
+offers the space's owner Share to workspace, Enable for all and Delete for
+all.
+
+## v110 - 2026-09-27
+
+The AI Manager's display name is Houston; AI Manager is its role. The
+pinned rows of `sidebar-teams-band` and `agents-home` read Houston with Your
+AI Manager as the second line, and `manager-avatar`, `manager-onboarding`,
+`connect-ai-card` and `sidebar-nav-band` name it Houston, the AI Manager.
+
+## v109 - 2026-09-26
+
+Admin lands on the Org chart, which its "Workspace" identity lozenge stands
+for, followed by People, Billing where allowed, and Activity in a team space;
+a personal space keeps the Org chart alone. There is no Usage or Time worked
+section. Company context is not a section: a pill in the Admin header opens
+its editor in a sheet (right side on the desktop, bottom on the phone) in
+every space. The org chart (`org-chart`, replacing `org-chart-folders`) is a
+ledger: a hero band with the last 30 days of hours worked, messages and a
+daily chart, then every AI Employee ranked by hours worked, the #1 featured
+on its own card, each line with its hours bar, messages and its Manages and
+Uses faces. Dense ledgers split into two columns when wide; the phone stacks
+each line. An owner's chart is the organization's; an admin's is scoped to
+their own AI Employees.
+
+## v108 - 2026-09-26
+
+The rail footer lists Academy, gated Admin, and Settings, with no help
+control. Admin opens its own screen; Settings holds only personal setup.
+The phone More card mirrors these destinations beneath the workspace
+switcher, with Settings as a row, and has no Help rows.
+
+## v107 - 2026-09-26
+
+New `manager-avatar`: the AI Manager's mark, the agent avatar's helmet on a
+squircle of the filled primary Button's own material (its `cta` fill, a 1px
+`cta-rim` and the helmet in `cta-text`), flat, and switching with the theme
+and the palette exactly as the Button does. The AI Manager leaves the rail's top-level run (`sidebar-nav-band`) and leads
+`sidebar-teams-band` as its pinned first person row, selected like an agent
+and first on the collapsed rail.
+`agents-home` pins it above the roster on the phone, and the More menu no
+longer lists it.
+New `manager-onboarding`: first-run onboarding and the owed profile questions
+run inside the AI Manager's chat as a scripted conversation: the Manager's
+hello, one short message at a time, then Connect your AI, the survey and the
+team. The survey asks the person's industry and role with the create sheet's
+own two steps, addressed to them (the role led by the leadership positions,
+which a hire's role step never offers), how big their company is with one tap
+on the create sheet's chips, and which task they would love to hand off to an
+AI Employee, as free text; every step wears the create sheet's frame. The team
+opens straight on the "Build your team" card's starter team, every name, job
+and color editable, with "Hire one more" to add a card and Remove on each
+draft; "Hire my team" hires everyone and the Manager closes. Every
+create step carries the create sheet's Back while the answer before it can
+change, the same move as that answer's "Change answer". The closing tells
+what the Manager does as far as the deployment reaches (never inviting
+teammates to someone who works alone), then offers to start
+on the person's goal with "Yes, let's do it" (the real chat's first turn) or
+"Not now"; with no goal, the real chat takes over by itself. The profile
+questions end on one primary "Continue" button. `connect-ai-card` is the
+conversation's first step, in the create sheet's frame;
+`build-team-card` lives only in the New workspace dialog, and its first hire's
+job opens on the person's survey role. `survey-industry-picker` is gone: the
+industry is one of the conversation's questions. The in-app legal agreement
+step is gone.
+`conversation-feed`: a log held at its latest message stays there when its
+viewport resizes (a card in the composer slot, the phone keyboard), and each
+answer in a scripted conversation brings the latest line into view the way a
+send does.
+`employee-card`: a new hire's name arrives as its job ("Chief of Staff",
+numbered when taken) and follows the job until the person types one, so
+naming is one press. The name field shows an always-visible pencil and
+selects the name whole when reached; the dice is gone. The badge turns
+horizontal at about half its height: the engraved metal becomes a photo panel
+down its left edge, and beside it the name (its label inside the field), then
+Role, Industry and Color as flat labelled rows, stacked on a narrow badge and
+side by side on a wide one. The pencil and chevrons carry the edit hint, whose
+separate line is gone. A team of badges sits three across only where the deck
+is 1024px wide and stacks full width elsewhere, a phone included, where the
+carousel and its dots are gone. On desktop the naming screen focuses its
+primary, and a phone focuses nothing.
+
+## v106 - 2026-09-26
+
+The AI Employees rail interleaves ungrouped employees with personal groups.
+Group headings fold and expose their actions, while employees open their own
+Tasks, Routines, Files and Settings screens. Dragging moves
+employees within groups, between groups and the root, and reorders root entries.
+The New AI Employee row sits at the root after the other entries. The org chart
+uses the caller's groups and one ungrouped card. The phone's nav bar holds AI
+Employees and More: the AI Employees list is where the phone manages groups,
+with New group in its title row and the picked group's menu (Rename, Icon &
+color, Move to another space, Delete group) beside the "All groups" selector.
+An employee's task list menu opens its Routines, Files and Settings. The
+separate phone groups tree (`teams-home`) is removed. The phone has one task
+list per employee, on the AI Employees tab: every way into an employee's
+Tasks lands there, an archived task opens as the same pushed chat an active
+one does, and a notification about a task opens its chat above the list. An
+employee's Routines list never asks which employee a new routine is for, and
+the routine row has no owner chip or cross-agent variant. Alt+Arrow keys move
+a focused rail row the same ways a drag does.
+
+## v105 - 2026-09-26
+
+The launch announcement becomes a dark mission briefing with a desktop astronaut
+panel, responsive Free, Plus, and Teams panels, live countdown, plan-derived
+launch prices and offer, and one persistent dismissal across every close path.
+
+## v104 - 2026-09-26
+
+The plan dialogs add a one-time launch announcement after routine prompts.
+Billing adds preview usage, an early offer, and a struck-through comparison
+price with an accessible spoken price on phone and desktop.
+
+## v103 - 2026-09-26
+
+The personal Billing screen shows Free and Plus plan cards, weekly usage,
+routine actions, and recent invoices on phone and desktop. Checkout return
+pages provide public web entry points back to Settings.
+
+## v102 - 2026-09-26
+
+The chat composer shows personal weekly usage near its limit and yields to a
+plan limit card at 100%. The card offers the Plan section. Free plan routine
+choices open as focus-managed dialogs on phone and desktop.
+
+## v101 - 2026-09-25
+
+First-run onboarding is the survey (its industry question asked from the hire
+catalog's industries), a Connect AI card (two subscription cards over "View
+more") and a Build your team card, which the New workspace dialog also uses.
+Every AI Employee is named on one portrait ID badge: a 160px metal header,
+seeded fine engraving, light-edge helmet relief and corner Paintbrush above
+the labeled required 16px Name
+input with dice, Role and Industry. Color opens the existing keyboard palette
+in a desktop popover or phone sheet, two rows of five 44px targets. Color
+crossfades across the badge and portrait in 200ms; reduced motion is instant.
+The old bottom color section is removed. Long brief labels wrap and narrow
+name fields use a short localized example. Progress and recovery stay on the
+badge. Team frames widen to 1152px for three comfortable columns; phones keep
+288px snap slides with peek and dots. Solo badges center at 320px in the create
+dialog. No drop shadows in either theme. Every AI Employee avatar wears the badge's
+metal: a deep 135deg disc of the employee's color, the helmet in light relief
+and a faint light line along its top, from the same recipe as the badge.
+Keyboard order remains name, dice,
+color, role, industry, and Escape returns focus from the palette. New
+AI Employees wait on their board for the person
+to start their first day. The Academy path lists chapters of lessons,
+and the help control and the phone's More menu keep only "Report a problem":
+the guided tour is two Academy lessons.
+The sidebar's rows are 28px tall around a 20px glyph column: destination
+marks at 16px and team marks at 14px, the label 6px past the column. Each AI
+Employee is a person row instead: a 32px avatar in a 44px row, the name in
+semibold at 13px over its role in muted 12px, read live from its job
+description; no role keeps the height. On the collapsed icon rail an AI
+Employee is a 24px avatar in the 36px square, so its running ring fits, with
+the needs-you chip on the avatar's shoulder.
+Every avatar is the employee metal disc with the helmet in relief at 65%,
+centered on whole pixels.
+
+## v100 - 2026-09-23
+
+The composer lists its attachments as chips, and a chip's icon slot carries the
+shared file-type glyph: the bare mark in its file-type tone, the same one the
+Files list rows and chat's file chips wear. A folder keeps the monochrome folder
+glyph.
+
+## v99 - 2026-09-23
+
+A skill row opens that skill's full-page editor in place of the list: no
+modal, and no Store / Custom tab strip. The workspace library's rows carry
+the holders' stack and the shared chip; an employee's own scoped list carries
+neither. The same row, with one "Add" action, is the add-an-existing-skill
+list that loads a workspace skill onto an employee.
+
+## v98 - 2026-09-23
+
+The skill workflow panel has one home: the skill's own page, which opens on it.
+The raw markdown is the page's other reading, reached from the header's
+Workflow / Text control, and a skill with no parsed procedure opens on the text.
+
+## v97 - 2026-09-23
+
+A mission card wears a tag pill for work the user did not type: a routine's
+run, a mission the agent started for itself, and the agent's own set-up
+mission. At most one pill per card, and a mission the user asked for wears
+none.
+
+## v96 - 2026-09-23
+
+The interaction card's in-progress state is a draft: the step it stands on, the
+answers already given, what each connect / sign-in / key / errand step ended up
+as, and the free-text typed into any step's row are parked per conversation, so
+switching missions and coming back restores the card as it was. An approval step
+is always re-confirmed after a return rather than replayed. The parked card is
+forgotten once a turn actually runs on that conversation, whoever started it
+(this person, a routine, a teammate or another device), or the card is
+dismissed. A send the server refuses keeps it.
+
+## v95 - 2026-09-23
+
+Every dialog closes with one X: the dialog's own control, an 8px squircle
+with a visible keyboard focus ring, in the corner of a compact dialog and in
+the header row of a wide flow sheet. The launch update screen, the Academy
+lesson panel and the AI Models detail stand on the shared dialog frame: the
+AI Models detail takes the wide flow sheet's width and the frame's entrance,
+and the lesson panel is modal. A wide cap keeps the phone gutter inside its
+own `min()` until the viewport can pay for both.
+
+## v94 - 2026-09-16
+
+Settings includes Channels: Slack OAuth connection, an expiring copyable DM
+command, connected account labels, and confirmed disconnection. Returning from
+Slack redeems a one-time ticket from the signed-in app, with a finishing status
+and authored copy when the link is refused. Phone and desktop share the same
+personal assistant conversation. Public assistant links resolve the authorized
+space; channel handoffs cancel when the user switches it.
+
+## v93 - 2026-09-15
+
+The flow choice row is a rectangular button: a glyph and a title, in the
+chip's fill with the input's radius. Its description line, chevron and the
+hairline between rows are gone; the list stacks the buttons with a small gap.
+
+## v92 - 2026-09-15
+
+The flow sheet gains a size per STEP. A step with a short answer -- a two-row
+choice, a name and a colour, a team's form -- wears the confirm dialog's
+hand-sized frame and states its own question as the dialog title; a catalog to
+scan keeps the tall surface. The size switches as the flow walks without
+animating the box, and the compact frame holds no scrolling box of its own:
+it is sized by the step, and past its cap the whole dialog scrolls as one.
+
+## v91 - 2026-09-15
+
+Two dialog recipes end the per-dialog frame. A form dialog carries the delete
+confirm's settled look for anything that asks for input -- one of two widths,
+one header, one footer, and an async primary that holds the surface open while
+it works and keeps the typing when it fails. A flow sheet is the one multi-step
+surface: a header of three slots that never move, the body as the only
+scrolling part, and a bottom bar that clears the home indicator. The choice
+row and the hairline-parted list it stacks in are the grammar a flow opens
+with.
+
+## v90 - 2026-09-14
+
+The shared skills library hangs off the connected-apps destination as its
+second tab, beside the apps catalog: one screen for everything a person's
+agents can reach outside themselves. The rail and the phone's More menu carry
+one row for both, and the standing-setup screen keeps only the space
+administration.
+
+## v89 - 2026-09-12
+
+A workflow step says which connected app it acts on: the app's mark and name
+sit on the step's title row with the action it runs ("Gmail - Send email"),
+wrapping under the title on a phone. A step that touches no app carries no
+chip.
+
+## v88 - 2026-09-12
+
+The rail's top-level destinations are ONE unlabelled run: the assistant, the AI
+accounts and the connected apps. What the space is made of leaves the rail --
+administering it and the shared skills library are sections of Settings -- so
+"Your teams" is the rail's only heading, and the nav run carries no band label,
+no fold and no count badge.
+
+## v87 - 2026-09-12
+
+A skill Houston wrote now reads as its numbered workflow -- an index chip, the
+short action, the detail underneath -- in the skill's manage dialog and in the
+preview a row opens. Its raw SKILL.md moves behind an always-visible
+disclosure, which is also how an imported skill's instructions have always
+been reached. An imported skill has no parsed steps and keeps its instructions
+as the body.
+
+## v86 - 2026-09-12
+
+The Agent Store leaves the product app. Its ten inventoried components -- store
+navigation, catalog controls, agent and creator cards, the detail layout, the
+skill list, the creator block, and the home / agent-detail / creator-profile
+screens -- are no longer cross-surface: they are drawn only by the public
+agents.gethouston.ai site, which is outside this contract.
+
+## v85 - 2026-09-14
+The interaction card gains a hands-on step: an errand the person finishes on a
+Houston screen themselves (billing, a key shown once, files from their device,
+destroying a shared space). It opens the screen for them and asks whether they
+finished or skipped, since nothing can observe the outcome.
+## v84 - 2026-09-14
+The interaction card supports AI provider connections through the existing
+secure sign-in and key-entry flows. The personal assistant can request app
+and provider connections, with automatic continuation after confirmed success.
+
+## v83 - 2026-09-10
+
+The open chat's header moves the people stack to the left, beside the agent's
+name and task line, and makes it a button that opens the full roster (it was a
+hover-only tooltip, dead on touch). The stack is absent while nobody but the
+viewer is on the task. The right edge is now only panel controls: the chat
+actions menu, the expand toggle, and close.
+
+## v82 - 2026-09-10
+
+Custom integration details gain a name and website editor on desktop and phone
+web. Edits preserve the connection. Declared websites provide their conventional
+favicon, with curated logos and the existing initial fallback retained.
+
+## v81 - 2026-09-07
+
+The composer's attach menu carries the conversation commands under its file
+entries: compact context, and clear context. The chat feed gains a cleared-
+context boundary alongside the compaction and provider-switch dividers, and a
+compaction divider now says whether the user asked for it.
+
+## v80 - 2026-09-04
+
+The per-agent task list takes the Agents home's chat-list grammar: every row
+wears the agent's large avatar (its running ring while that task runs), the
+title with the relative time trailing, the preview line, and a small status
+tag beneath (Needs you / Running / Done / Archived) in the status's own tone,
+in place of the status glyph. The phone task lists' segmented status control
+(agent's and team's alike) becomes a status filter: a pill naming the current
+choice, "All" by default, dropping a radio menu of the four choices.
+
+## v79 - 2026-09-04
+
+The Agents home row's preview line says "Typing" while the agent has a task
+running, ahead of the latest task's title, the way a chat list announces a
+correspondent mid-message.
+
+## v78 - 2026-09-04
+
+The phone's Agents home becomes a chat list. The team-grouped tree is gone:
+every agent is one flat row with a LARGE avatar on the left -- the helmet
+fanned into a stack of three cards when the agent holds two or more tasks, a
+single mark otherwise -- the name with the latest movement's time trailing,
+and a preview line under it quoting the agent's most recently moved task
+(or "No tasks yet"), with the needs-you chip at its end. Where the workspace
+has more than one team, a team selector under the title (a pill dropping a
+menu of every team, "All teams" by default) narrows the list; the choice is a
+preference, not a navigation level. The Teams home tree now draws the desktop
+strip's own four rows -- Tasks, Routines, Files, Team Settings -- and Team
+Settings lands on the drilled level exactly as the desktop's door does, with
+Context / Agents / People / Settings as that level's tabs on the phone instead
+of rows of the tree.
+
+## v77 - 2026-09-03
+
+The phone loses the board pager. Below the one breakpoint a team's Tasks
+section is a LIST, the same grammar the per-agent list got in v76: the board's
+missions grouped Needs you / Running / Done as bands of shared `task-row`s,
+under the SAME segmented All / Needs you / Running / Done control (one
+component now, bound by both lists), each row trailing its owning agent's
+helmet because a team's list mixes agents. The segmented pager, the swipe-paged
+columns, the empty-page hints, the phone control row and its "All agents" chip
+bar are all gone; the `mission-board` is desktop-only chrome from here. Search
+moves behind the drilled header's "..." menu and drives the same query the
+desktop toolbar types into; the menu also holds Archived and, for a caller who
+may configure the team, Team settings. The phone's one New task control is the
+nav bar's, which is now also the guided setup's anchor for that step.
+
+## v76 - 2026-09-03
+
+The phone's two lists become one grammar. The Agents home is a tree that
+mirrors the Teams tree: each team that has agents is a bold, non-tappable row
+with its agents indented under a guide line, and a workspace with only its
+default team keeps the rows flat. An agent row is one line -- name, running
+ring, needs-you chip -- with no task preview, no timestamp and no name filter,
+since the agent's own list is one tap below. That list gains the drilled phone
+header (back chip to the Agents home, the agent, its live task count) and two
+controls: a segmented All / Needs you / Running / Done filter, and a "..."
+menu holding the inline title search and the archive, which resets the
+segments, expands the archived group and scrolls to it. Its rows are the new
+shared `task-row`: a status glyph (alert / spinning ring / check / box), the
+title over the task's own description, and the movement's relative time
+trailing, grouped by a `task-list-group` heading with its count. The archive is
+a collapsible group at the bottom of the unfiltered list.
+
+## v75 - 2026-09-03
+
+The phone shell becomes a floating pill. Below the one breakpoint the top bar
+(hamburger, title slot, compose) and the sidebar drawer are gone; a rounded
+bottom pill holds Agents, Teams and More, with a separate round new-task
+control beside it, and the active item widens to show its label. The phone
+gets one flat background instead of the gutter frame and floating screen
+card. More opens a floating card with every destination the desktop rail
+lists (Inbox, About me, Academy, Agent Store, Integrations, AI Models, Admin,
+Skills, Settings, Guide me, Report a problem) in the rail's bands. Teams roots
+on a new Teams home: a tree of every team with its sections (Tasks, Routines,
+Context, People, Files, Settings) indented beneath it, each a push into the
+team's screen, which on the phone wears a floating back chip and a large
+title instead of the section strip. The Agents home gains a New agent control
+in its title row. The new-task control is scoped to where the user stands
+(an agent's list, a team, or everyone). The guided setup re-anchors on the
+More item, the More rows and the Agents item instead of the hamburger and the
+drawer rows. `mobile-tab-bar` is retired in favour of `mobile-nav-bar`.
+
+## v74 - 2026-09-03
+
+The phone composer fits the phone. Its footer row keeps one line below the
+one breakpoint: the mode and model pills stay named, effort is its gauge
+icon, the context ring stays pinned right, and Skills moves into the attach
+menu. Each of those pickers opens as a bottom sheet instead of a popover
+anchored to a 28px pill (which went edge to edge and landed on the composer),
+and the context ring opens on tap. Nothing but the safe area or the keyboard
+inset sits under the row, and opening a chat no longer focuses the textarea,
+so the keyboard waits for the user's own tap.
+
+## v73 - 2026-09-02
+
+The phone board loses its second chrome row. Below the one breakpoint every
+page header's identity cluster (the team lozenge, a drilled back chip) rides
+the phone top bar between the drawer control and the compose control, so the
+screen card opens straight on the board's control row. That row drops its
+compose: the top bar's compose and the Running page's own "+" are the phone's
+two, and the "+" now LEADS its page, above the cards or the empty hint, and
+composes the phone way (a pushed draft chat scoped to the board's agents).
+The pager becomes the one place a section is named -- a paged column draws no
+header and sits flat on the screen instead of in a tinted column.
+
+## v72 - 2026-08-28
+
+The board gets its phone presentation and chat becomes a place. Below the one
+breakpoint the mission board is a swipeable pager: each status column is one
+full-width page, a segmented control above them names the three sections with
+live counts and stays in sync with the swipe both ways, an empty page says so
+in words, and a phone control row holds the search field, the archived
+toggle, the compose control and -- on multi-agent boards -- an agent filter
+bar defaulting to "All agents" that writes the same pin the desktop
+breadcrumb does. Tapping a card no longer opens the desktop side panel over a
+squeezed board: it pushes a new mission-chat-screen, a first-class
+navigation level rendered full-screen with its own back chevron, the same
+shared chat the desktop panel renders. Agents-home mission rows push the same
+screen, so back pops from the chat straight to the list that opened it. Both
+mobile bars hide while a chat is up (chat is a push, not a tab), the mobile
+tab bar's contract changing accordingly. Composing on the phone is a bottom
+sheet naming the agent roster; picking an agent pushes an empty draft chat
+that creates its mission on first send and replaces itself in place so back
+never lands on a blank composer. The composer stays above the on-screen
+keyboard by the visual viewport's occluded bottom and pads against the home
+indicator.
+
+## v71 - 2026-08-28
+
+The Agents tab gets its real home. The phone now lands on an Agents home
+screen: one two-line cell per agent, sorted by who needs attention first
+(missions waiting on the user, then running work, then recency), each cell
+carrying the same needs-you chip and running ring the rail draws, a preview of
+the most recently moved mission with its relative time, and a name filter for
+long rosters. Tapping an agent drills into a per-agent missions list -- the
+board's own sections (Needs you, Running, Done) as a phone list, with the
+archive folded behind a trailing count row -- and tapping a mission opens its
+chat full-screen, every step a navigation-stack level the hardware back button
+pops in order. Both screens read the same conversation sweep and per-agent
+summaries every existing badge surface reads, so nothing on them can disagree
+with the numbers that led the user there. Empty states are honest: no agents
+yet, no missions yet, and a filter that matched nobody each say so.
+
+## v70 - 2026-08-28
+
+The phone gets a real shell. Below 768px a bottom tab bar holds the app's three
+places -- Agents (the landing tab), the Tasks board, and Settings -- and
+switching tabs resets the navigation trail to the tapped tab's root, the way
+native tab bars do, so hardware back stays on the new tab. The Tasks tab wears
+the same needs-you count badge the rail's rows do (the cross-agent sum of
+missions waiting on the user, nothing at zero), and the bar pads itself against
+the phone's home indicator. A new task starts from a compose control in the
+mobile top bar, beside the hamburger; chat is deliberately not a tab, and the
+long tail stays in the drawer.
+
+## v69 - 2026-08-21
+
+A routine now says which AI account it runs on, and whether that account works,
+before it runs. The model row stopped saying "Agent's model" -- a label that
+named neither the provider nor the model -- and always shows the resolved pair,
+with the quiet line about following the agent kept for the unpinned case. Beside
+it sits a connection badge: connected, not connected, needs reconnect, out of
+credits, or checking, with a connect action on the two states connecting can
+fix.
+
+Whose account that badge describes is the whole difficulty. A fired routine runs
+on its CREATOR's account, while the connection answer any surface can get
+describes the VIEWER's. So the badge is shown only for a routine the viewer
+created; every other routine gets a sentence saying it runs on the creator's
+account, which is true and answerable, rather than a badge quietly answering a
+different question.
+
+The same warning rides the list rows, because a list is where a person notices a
+broken automation, and the run history now explains a run that never reached the
+agent instead of leaving "Failed" as the whole story. Nothing here blocks
+anything: saving and enabling a routine stay allowed, the surface only stops
+being silent about what will happen.
+
+## v68 - 2026-08-08
+
+The rail names TEAMS and nothing else. A team block is a header row and its
+agents; the four destination rows every block carried are gone from the rail and
+live on the team's own screen, as tabs over its work. Four rows per team spent
+most of the rail on the same four words repeated, and the rail's job is to say
+which team, not which of its surfaces.
+
+That leaves one hit target per team, and it answers four questions. From
+anywhere else, clicking a team's name opens that team, unfolds it, and folds
+every other block: an accordion, because a rail of eight expanded teams is a
+list of agents with headings in it. From another of the same team's surfaces it
+comes back to the team's work. On the team's own work it folds the block, and
+unfolds it on the next click. Folding is the only one of the four that leaves
+the screen where it is, which is deliberate and user-invoked. The caret beside
+the name became an indicator: what the row does depends on where the user
+already is, so a caret claiming to be the fold button would promise an outcome
+it does not own.
+
+A folded team stops hiding things. Its header keeps the selected pill whenever
+the team's work is on screen, and it picks up a rollup of what its hidden agent
+rows were saying: the sum of their waiting work as a badge, and the same running
+treatment an agent's mark wears if any member is working. Both only while
+folded, since an open block's rows say it themselves.
+
+Drag was demoted to reordering. An agent moves inside its own team, a team block
+moves among its siblings, and an agent dragged over any other block is refused:
+no block offers to receive it, and the lifted copy dims. A drop across blocks
+was the one gesture in the rail that changed what a team HOLDS, which is a
+decision worth reading before taking, so it became a named action on the team's
+own screen instead.
+
+## v67 - 2026-08-08
+
+Teams got a face. A team now carries an icon and a colour, both optional, picked
+from one popover behind its "..." menu: a grid of solid marks from a curated set
+and a row of swatches. The swatches are not a new palette, they are the same
+ones an agent's avatar wears, so one vocabulary of colour carries identity
+everywhere in the product and a team can never mean a different purple than the
+agents inside it. The marks are a fixed set rather than an upload or an open
+icon library, because a fixed set is the only way every mark still reads at
+14px in the rail, and it costs the user a choice instead of a design task.
+
+That bends one rail rule on purpose. A row's glyph never pinned a colour before,
+so an active row brightened as one object; the team's mark now does, because it
+is identity a person chose rather than decoration a component invented. A team
+that has picked neither keeps the neutral people mark inheriting the row's own
+ink, which is what every block looked like yesterday and is still what most of
+them look like. Every pick applies immediately and puts itself back if the
+server refuses.
+
+The rail's three bands finally sit on ONE left edge. Two of them were inset
+twice -- once by the container, once by the band component -- so their labels
+hung 8px right of "Your teams" while all of their child rows lined up
+correctly. The inset is one exported value now, spent once per heading, and a
+test holds the three of them together.
+
+The rail also changed what it files where. "Guide me" left the Agent Store's
+chrome and became a row in the leading run, beside the store a new user opens
+first: being walked through the app is a destination people go looking for, not
+a control hiding on one screen. The Workspace band became what the SPACE is made
+of and who runs it -- Admin, Permissions, Skills, Time worked -- and is hidden
+entirely from anyone who is not one of those people; Admin and Permissions
+stopped being pages inside Settings and are top-level screens again, one click
+from the rail. Settings itself moved to the rail's FOOTER, permanent and visible
+to everyone: it belongs to the person rather than to the space, and it has to be
+reachable in the deployments where the Workspace band does not exist at all.
+
+## v66 - 2026-08-08
+
+The general Mission Control is gone. It was a board spanning every agent in the
+workspace, sitting above a rail whose every other board belongs to a team, and
+it answered a question nobody was asking twice: users work in a team, and the
+cross-agent view of everything was a second place for the same cards to live.
+The app now opens on the FIRST team's board, and every fallback in the product
+lands there too, so there is one home instead of one home and one board.
+
+Its Mentions inbox was the one thing on it that had nowhere else to go, so it
+was promoted rather than dropped: the inbox is now a top-level screen of its
+own, with a real page heading instead of a mode pill on a board toolbar, and its
+rail row carries the unread count that used to sit on that pill. It is also the
+only destination in the rail that needs no team, which is why it is where the
+app waits while the teams are still arriving.
+
+The rail's top-level rows are now filed. Two lead it with no heading, because
+they are the two a user heads for without being asked: the inbox, where work
+arrives, and the store, where agents come from. The rest sit under a band that
+says whose they are. "My accounts" holds what belongs to the PERSON, the apps
+they authorised and the AI accounts their turns run on. "Workspace" holds what
+the whole space is made of, its skills and its settings, and its skills row
+belongs to whoever owns the space rather than to the manager who runs it.
+
+Those two bands are the SAME band as "Your teams" below them, not lookalikes.
+There is now one band component owning the type step, the caret placement, the
+fold, the aria wiring and the gap under the heading, and the three headings are
+three instances of it. Three headings in one rail that folded or sat differently
+would have been three rules for one row shape. Each remembers its own fold, per
+machine, exactly as the team list already did.
+
+Joining a team is gone, and with it the submenu that listed the ones you had not
+joined. A member now sees only the teams they are part of, and people are added
+to a team from its settings, so the rail's "+" is New agent and New team and
+nothing else. Browsing a directory of teams you had already passed over was
+never the working surface it was shaped like.
+
+## v65 - 2026-08-08
+
+The rail's team blocks were three stacked lists pretending to be one. A team
+header, its destination rows and its agent rows each had their own height, their
+own indent and their own type size, and the eye read every seam. They are now
+ONE ladder: a single fixed row height, a single glyph column every child row
+indents into, one type size, one rounded hover fill, and an active state that is
+a clearly-defined pill instead of a faint tint. Hierarchy is carried by the
+indent INSIDE the row, so the pills line up in one clean column down the left
+edge rather than stepping in and out with their contents, and a row's glyph
+inherits its label's colour so an active row brightens as one object.
+
+The team row became one control. It used to be a caret, a name and a menu
+sharing a single job, which gave a keyboard user three stops to reach one
+disclosure and gave a screen reader no aria-expanded at all. It is now a single
+button carrying the glyph, the name and the caret, announcing whether the block
+is open and naming the region it folds. The menu stays beside it rather than
+inside it, because a button may not nest inside a button.
+
+Collapsing a team now hides everything under it, destination rows included. The
+old behaviour kept them on the theory that they are how you get back to the
+team, but that made a collapsed block a half-closed thing still costing four
+rows of rail, and it is not what a disclosure means anywhere else in the
+product. The hole it leaves is answered where the row went: when the collapsed
+team owns the open view, its header wears the selected pill on the hidden row's
+behalf, so the rail never goes dark on the question of where you are. The block
+stays a drop target throughout, so folding it hides rows and not behaviour.
+
+The workspace's own team stopped being an exception. It renders and folds
+exactly like a named team, remembered through an additive field of its own
+because the block is virtual and has no stored record to live in. A block that
+folded everywhere except there would have made the one team everybody has the
+one row in the rail that answers a click differently. What it still does not get
+is what the container itself lacks: no rename, no delete, no leave, no menu, and
+no drag handle.
+
+Team glyphs are deliberately monochrome. A colour per team was the obvious move
+and the wrong one: the identity colour in that column belongs to the agent
+avatars directly below it, and a second palette stacked on top would compete
+with the one that carries real meaning.
+
+Above the blocks, the band naming the list became a component in its own right
+and the rail's only list-level control. Its label is the toggle, with the caret
+right after the words instead of pinned to the far edge, because a phrase you
+click is a different thing from a label with a detached arrow; folding it puts
+the whole list away and the rail remembers. Beside it, one "+" menu now carries
+everything the rail can create or acquire: New agent, New team, and a Join a
+team submenu. That replaces three affordances for one idea, the third of which
+was the "other teams" disclosure at the foot of the rail, and stacking every
+team you never open underneath the few you live in was a directory pretending to
+be a working surface. Unjoined teams live in the submenu now, each named with
+how many people are in it.
+
+New agent is also a row at the foot of the list, not only a menu entry. Creating
+an agent is the rail's primary action, a primary action may not live one level
+deep inside a menu, and the row wears the same child-row geometry as everything
+above it so the list ends on the ladder it was drawn on.
+
+And then the same row went everywhere else. The top-level destinations above the
+list and the agent rows inside the blocks were the last two places still drawing
+their own line -- their own height, their own padding, their own glyph size,
+their own idea of what selected looks like -- which is why a nav entry never
+quite sat on the same optical column as the team glyph twenty pixels below it.
+Every interactive line in the rail is now literally the same component: the nav
+destinations, the band, each team header, each destination row, each agent, and
+the New agent row. One indent step between a row that heads something and a row
+that hangs under one, and weight states that depth rather than the selection, so
+clicking a row no longer re-measures its label and moves where a long agent name
+truncates. The two exceptions are deliberate and small: the collapsed icon rail
+is a different anatomy rather than a narrower row, and inline rename swaps the
+row for a field, because a text field is not a state of a button.
+
+## v64 - 2026-08-08
+
+Teams stopped being a private filing habit and became something a space SHARES.
+Where the deployment owns them, a team is a named group of agents AND of people,
+the same team for everyone in the space, which forces the rail to answer a
+question it never had before: what about the teams that exist but are not yours?
+
+The answer is a split. YOUR TEAMS are the blocks, in full, exactly as they were.
+Every other team in the space collapses into one quiet disclosure at the foot of
+the rail, closed by default, naming each team and how many people are in it,
+with a Join beside it. The rail is a working surface, not a directory, and
+putting nine teams you never look at above the four you live in would have made
+it neither.
+
+Joining is sidebar PINNING, not a grant. It moves a team into the rail and
+changes nothing else. Who may see a team's agents was already settled by the
+space's roles, long before this rail existed, and a Join button that implied
+otherwise would be selling permission it does not hold. That is the whole reason
+Leaving is safe to offer as casually as it is: nothing is lost, the team simply
+stops taking up room. It sits at the BOTTOM of the block's menu behind a
+separator, because everything above it edits the TEAM and this one edits the
+caller's relationship to it, and those are not the same kind of act.
+
+Which entries a block offers is now decided PER TEAM rather than once for the
+whole rail. The caller may own one team and merely belong to the next, and the
+old model -- one set of callbacks, every block wearing the same menu -- could
+only lie about that in one direction or the other. A block that ends up offering
+nothing shows no menu at all, rather than a trigger that opens onto emptiness.
+
+Creating a team now asks for the name FIRST. The new block is a local draft, not
+a team, until a name is committed; abandoning the field takes the row away
+again. Naming after the fact was fine when the group was yours alone, but a
+team called "New team" appearing in four other people's rails while its author
+thinks about it is not a state worth being able to reach.
+
+And Team Settings gained the other half of what a shared team is: its PEOPLE. A
+members card under the agents, listing explicit memberships only, which is a
+narrower thing than it looks and the card says so -- owners and admins of the
+space manage every team without appearing in it, and the space's catch-all team
+holds no rows at all because everybody is already in it. Only a team's owner
+sees the controls that write. It is also the one door to renaming the catch-all
+team, whose rail block deliberately has no menu to rename it from.
+
+## v63 - 2026-08-07
+
+The team screen gained the two sections its rail already promised: ROUTINES and
+FILES. Both are every member's, not an admin's -- they show the team's WORK,
+and only Team Settings configures anything, so only Team Settings stays gated.
+
+Routines is ONE list of every team agent's routines. Routines are flat rows, so
+aggregating them is honest, and each row now carries an OWNER CHIP beside its
+name -- the owning agent's avatar and name -- because in a cross-agent list
+"whose routine is this" is as load-bearing as what it is called. The chip never
+truncates; the routine's name does. A single-agent list omits the chip
+entirely, since every row there would name the same owner, so the per-agent
+Routines tab is unchanged. Every row action still reaches the agent that owns
+that routine: the toggle, run now, stop, delete and the inline schedule popover
+all write to that agent, and the setup chat opens in the ONE shell panel, only
+while the team screen is the screen on the glass.
+
+Files made the opposite call, deliberately. Folders are not flat, and merging
+several agents' trees would invent a filesystem nobody has, with no honest
+answer to where an upload lands or what a rename means. So the section picks
+ONE agent from the same dropdown the board uses and shows that agent's REAL
+tree, in the same browser the per-agent tab renders, with every action it
+offers. Arriving from an agent row starts on that agent; otherwise it starts on
+the team's first.
+
+Routines being BUILT in chat are rows in that list too, wearing the same owner
+chip and resumable or discardable from it, because a half-built routine is the
+one thing a list of "what runs on its own" must not lose track of.
+
+Both sections read the very same per-agent caches the per-agent surfaces read,
+so an event that refreshes one refreshes the other and no second cross-agent
+sweep exists to go stale. And when some agents answer while others do not, the
+section says so: a strip names the agents that failed, offers to retry just
+those, and carries the standard Report-bug pill, instead of presenting a short
+list as the whole truth. When NOTHING answered, it stops making the claim
+altogether: an empty list is not evidence of an idle team, and the copy says
+which of the two it is. That strip is now the per-agent Files tab's too -- an
+empty tree and a broken tree look identical, and only one of the two surfaces
+used to say which.
+
+One more thing the rail learned: it fills an agent row only under a section that
+actually narrows by that agent. Team Settings lists the whole team whatever the
+pin says, so a lit row there was claiming something nothing on screen was doing.
+
+## v62 - 2026-08-07
+
+The navigation rail is a list of TEAMS, not a list of agents. "Your agents"
+became "Your teams", the folder affordance became "New team", and every block in
+the rail now draws the same anatomy: a name, the destinations that team offers,
+then the agents that belong to it. The agents that were in no group are no
+longer an anonymous remainder at the bottom -- they are the DEFAULT team, the
+workspace itself, wearing the workspace's name. It is virtual: nothing new is
+written to the stored layout to make it exist, which is also why it carries no
+caret and no rename / delete menu. Each block gained SECTION ROWS above its
+agents (Mission Control always, Team Settings for a caller whose role allows it,
+Routines and Files as they land). They are destinations, not members: never
+draggable, never a drop target. Selecting an agent now opens its team's Mission
+Control filtered to that agent rather than the agent's own tab, so the rail and
+the open view can never disagree about where the user is. Dragging is unchanged
+-- agents move within and between teams, headers reorder teams.
+
+Behind those destination rows is the TEAM SCREEN. One screen serves every team,
+so a team can be renamed, reordered or deleted without leaving a dead view
+behind. Its Mission Control is the same board the global one is, narrowed to the
+team's agents and titled with the team's name, and it reads the one cross-agent
+sweep instead of starting its own. Its agent filter is the rail's: selecting an
+agent row filters the board, and picking one in the board's own filter menu
+moves the lit row back. An empty team says why it is empty rather than showing a
+board with nobody to run it. Team Settings lists the team's agents and opens the
+ONE canonical agent settings page, the same surface Settings > Permissions
+opens, so an agent is configured in one place whichever door the user came
+through.
+
+## v61 - 2026-08-08
+
+New `chat-parent-mission-link` (PRODUCT-1244): on a mission the agent started,
+one bar above the composer ("Go to main mission" + the parent's title) linking
+back to the chat that started it — the child-side twin of the child-mission
+drawer, mutually exclusive with it.
+
+## v60 - 2026-08-07
+
+`chat-mission-list` becomes a drawer: open by default, the title row (with a
+count and chevron) collapses it to just the title and expands it again. Anatomy
+and states updated accordingly.
+
+## v59 - 2026-08-07
+
+Agent-started missions (PRODUCT-1244). New `chat-mission-list`: the missions a
+chat started, listed above its composer with each one's live board status and
+opening to that mission's own chat. It stands in for the suggested-action
+bubbles on a coordinating chat, where reviewing what was handed out is the real
+next step.
+
+## v58 - 2026-08-08
+
+Add `routine-details` (PRODUCT-1208): a routine's own screen, replacing the
+routines list in the MAIN content when its row is clicked — the name, an
+editable description (the prompt IS what the routine does), an editable run
+frequency (the rows' schedule builder), the model pin (over the existing
+provider/model override fields), and the persisted execution history behind a
+Runs MODAL, n8n-style, where clicking an entry opens that run's chat (its
+result) in the shell panel. Web ships the run list in `@houston-ai/routines`
+(`RoutineRunList`) but the screen composition and the model row ride
+app-locked pieces (`ChatModelSelector`), so it lands as `partial` -- extract
+before mobile.
+
+## v57 - 2026-08-08
+
+Edit a previous message + copy any message (PRODUCT-1217), no new
+components. Settled rows gain a per-message action row under the bubble,
+revealed while the row is hovered or holds keyboard focus (ChatGPT's
+grammar; a sanctioned owner-decided exception to the no-hover-gating
+default). The viewer's own plain-text `user-message` rows carry an Edit
+action there while the conversation is idle: choosing it swaps the bubble
+for an in-place full-width editor card holding the message's text with
+Cancel / Send (Enter sends, Escape cancels; the composer is never touched).
+Send rewinds the conversation to that message and continues from the edited
+version, leaving every earlier turn untouched. Marker-encoded sends
+(skills, attachments, interaction answers), channel relays, teammates'
+messages, and pre-turn-id transcripts are not editable. Rows on BOTH sides
+also carry a Copy action in the same row -- `assistant-message` always
+specced `copy-action`; the web surface now ships it -- copying the row's
+verbatim text (an agent turn's markdown source) with a brief check-mark
+confirm. Marker-encoded rows are not copyable.
+
+## v56 - 2026-08-07
+
+Added the conversation map search inside the chat's compact three-dot actions
+menu, alongside status-aware Move to done and confirmation-gated Delete
+actions. The trigger lives in the chat panel header, left of the people stack
+and close control. Find opens an unfiltered map of prior messages by default, then narrows
+it with a case- and accent-insensitive text filter. Results jump to and
+highlight the selected message, while the footer returns to the latest reply.
+
+## v55 - 2026-08-07
+
+Chat status messages rework (PRODUCT-1226), no new components. The
+thinking-indicator's pre-token wait now renders as the turn-status line itself
+(one component, one size) and the rotating phrase deck plays only while
+connecting; an executing agent's header always names the concrete task,
+folding consecutive identical activities into an "xN" repeat counter.
+
+## v54 - 2026-08-06
+
+A workspace file named in an agent's prose stops dressing as a web link. It
+previously rendered two different ways depending on how the agent happened to
+write the markdown -- a filled button pill with an external-link arrow for
+`[Perfil](perfil.md)`, the blue autolink chip for `[plan.md](plan.md)` -- so one
+action had two looks, and both borrowed the vocabulary of a destination that
+leaves the app. The affordance now follows the DESTINATION KIND before the label
+shape: a file is one chip, carrying the per-extension glyph in its reserved
+filetype tint on the recessed chip surface, the same mark the Files tab and the
+turn summary already use. Link blue stays reserved for the web, which is the
+point -- the reader can finally tell from the chip whether a click leaves
+Houston. File-type classification and iconography moved from `ui/agent` to
+`@houston-ai/core` so both surfaces draw the same file.
+
+## v53 - 2026-07-31
+
+Promoted the Agent Store Home, agent detail, and creator profile compositions
+into shared screen contracts. Website and app now supply only data, navigation,
+actions, translations, and rich-content seams, so screen structure cannot drift.
+
+## v52 - 2026-07-31
+
+Registered the shared Agent Store family used by both the public website and
+the in-app Store: navigation, catalog controls, agent and creator cards, the
+full detail layout, skill list, and creator identity block. Navigation,
+installation, translated labels, and rich-content rendering stay
+surface-owned seams while the structure remains shared.
+
+## v51 - 2026-07-31
+
+The mission card loses its unread dot. The mark shipped in v39 as the per-card
+half of the shell's unread signal, and on a real board it did not earn its place:
+a filled dot trailing the agent name on a card that already carries a status, a
+running glow, a people stack and three icon actions reads as one more thing to
+decode, not as "there is something new here". The signal is being redesigned from
+the mission card outward, so the dot comes out cleanly rather than sitting in the
+codebase as a shape the redesign has to work around.
+
+Gone from `mission-card`: the `unread-dot` anatomy part, the `unread` state, the
+behavior paragraph describing when it paints, and its a11y clause. `KanbanItem`
+drops the optional `unread` flag and `KanbanCardLabels` drops the `unread` label,
+so `@houston-ai/board` no longer has an unread vocabulary at all.
+
+What STAYS, deliberately: the agent sidebar's unread dot and its per-agent count
+(`agent-list-item`), the Mentions inbox row dot and the toolbar pill's
+outstanding-mention count (`mentions-inbox`), and the per-device read cursors all
+three are measured against. Only the board card's copy of the signal is removed —
+the `mentions-inbox` wording is updated to point at the sidebar rather than at a
+card dot that no longer exists.
+
+## v50 - 2026-07-30
+
+The board's loop had one click at the start and a menu at the end. A finished
+mission reaches Done with a single tap of the checkmark, and then the only move
+left, getting it out of the way, cost a multi-select: tick the card, wait for
+the bulk bar, press Archive, confirm. Four steps to do the thing the column is
+for.
+
+The mission card now carries at most ONE status-gated primary action, chosen by
+the column it sits in. Needs you keeps the checkmark. Done gets an archive box,
+same 24px hit target, same resting weight, same one click. The status sets are
+disjoint by construction, so the two never appear together and the action row
+never has to fit a second same-weight glyph beside rename and delete; a running
+card gets neither, because there is nothing to sign off yet and nothing to file
+away.
+
+What separates them is colour and nothing else. The checkmark warms to `success`
+on hover because signing a mission off is a win; the archive box stays neutral
+(`ink` on `hover`) because filing one away is housekeeping. Neither is `danger`:
+the trash can beside them is still the only control that destroys anything, and
+archiving remains fully reversible from the archived list. There is no confetti
+on archive either. The mission was already celebrated when it was checked off,
+and cheering the same work twice cheapens the first burst.
+
+One consequence worth naming: `archived` is the only status with no board
+column, so archiving a card removes it from the board rather than moving it.
+A mission archived while its chat panel is open therefore closes that panel,
+matching what a delete and a bulk archive already do instead of leaving a panel
+pointed at a card that is no longer on screen.
+
+`KanbanCard` gains `archiveStatuses` + `onArchive`, mirroring the approve pair
+exactly and threaded through the same `KanbanColumn` / `KanbanBoard` / `AIBoard`
+cascade, plus an `archiveTooltip` label. Both actions now read their render rule
+from one pure gate (`kanban-card-actions.ts`) instead of two inline conditions,
+so "which action does this card show" is a single tested decision rather than a
+pattern to be repeated by hand next time.
+
+## v49 - 2026-07-29
+
+The connected provider row stops pretending to be a row. It carries a brand
+mark, a plan chip, a whole second tier of live meters, and it opens the account:
+that is a card, and a card has to look pressable before anyone touches it. It was
+transparent at rest and only painted on hover, which is a hover-gated
+affordance — the thing our own rules forbid.
+
+`CatalogRow` gains ONE props-only knob, `surface`. The default `plane` is the
+flat catalog row every browse list still uses, unchanged. `card` paints the
+`card` surface plus a 1px `line` hairline ring at rest and answers a press with
+`scale(0.98)`; the hover wash is untouched and now enhances a surface instead of
+being the only evidence the row exists. Depth is surface + hairline, never a drop
+shadow, so dark mode needs no exception. Only the AI hub's Connected strip opts
+in.
+
+Three things follow from being a card. The trailing chevron is gone: a chevron
+says "this line drills in", which is row language, and a card that already reads
+as pressable does not need the glyph (the Integrations, Skills and permissions
+rows are still planes and keep theirs). The focus ring moves to the card: the
+focusable element is still the body button, but a ring around the body alone drew
+a box inside a box that stopped short of the plan chip and the meters, so the
+card surface hoists the ring to the whole card, keyed on that button's own
+`:focus-visible` — the indicator now matches the target it describes. And the
+`below` tier is aligned to the row's OWN padding rather than indented to the text
+column, so the meters start at the brand mark's left edge and run to the card's
+right edge; indented, they read as a paragraph hanging off a row rather than as
+the card's own content. That tier had exactly one consumer, so the indent is
+replaced, not made optional.
+
+Two extractions came out of it, both export-compatible: `CatalogAddButton` moved
+to `catalog-add-button.tsx`, and the surface vocabulary itself (what a `plane`
+and a `card` each paint, and why the focus ring has to follow the surface) to
+`catalog-row-surface.ts` — so the row component reads as structure and the
+surface module as look, with every file inside the 200-line limit.
+
+## v48 - 2026-07-28
+
+Two corrections to the connected provider row v43 shipped, both from using it.
+
+A card must end where its content ends. The usage tier reserved a fixed height
+(two window bars) in every state so the loading skeleton could not shift the row.
+That was right for the common two-window subscription and wrong for everyone
+else: an account with a single window drew one bar and then a bar's worth of
+empty card. The tier is now sized by its content in every loaded state. What
+keeps the strip still is not a reservation but the data: the skeleton is drawn
+ONCE, in the shape of the most common account, and readings are retained across
+background refetches, so a row can only ever settle once, on its first reading,
+and polls never re-enter the skeleton. The two-window row still lands at exactly
+the height it loaded at; the one-window row now ends flush after its meter.
+
+A card is one target. Only the row body was clickable, so a click on the meters
+inside the row's own hover wash did nothing, which reads as a broken card rather
+than a deliberate boundary. `CatalogRow` moves `onClick` from the body button to
+the row's outer element: the whole card opens the item, cursor included, from
+any tier. The body stays a real button and the row's ONE focusable element, so
+it still owns the accessible name and the focus ring, and its keyboard
+activation dispatches the very click the card's handler reads, which is what
+makes pointer and keyboard each fire exactly once. The right-edge `action` is
+excluded by its marker attribute: the ghost + still connects or installs without
+also opening the row. The prop is now typed as the row's open action
+(`() => void`) rather than a raw button handler, matching every call site.
+
+## v47 - 2026-07-28
+
+HOU-789 and HOU-790 collapse the Usage screen. An AI account and how much of it
+is left are one thing, so `provider-usage-card` stops being a card on a screen of
+its own and becomes `connected-provider-usage`: the plan chip rides the connected
+provider row's trailing edge in the AI models hub, and the account's meters
+(rate-limit windows, prepaid balance, or Houston's own token metering) indent to
+that row's text column. Every honest non-ok state survives the move: an account
+with no usage surface, one that needs a re-sign-in, and a probe that failed all
+say so rather than showing a blank meter, and a failed fetch says THAT rather
+than letting each row claim it is simply unmetered.
+
+Making that one row required two new slots on the shared `CatalogRow` primitive
+(`@houston-ai/core`), both props-only: `below`, a second tier under the row body
+that lives INSIDE the row's hover/focus surface — so the wash covers the meters
+too and the pair reads as one row, not a card stapled under one — and `aside`,
+quiet trailing content OUTSIDE the row button. The plan chip rides `aside`
+because a button's descendants are presentational: inside the button the plan was
+either noise in the accessible name or invisible to assistive tech. The row body
+keeps its own name (provider plus how it is connected) and its single click
+target.
+
+Two rules keep the strip still. The usage tier reserves a fixed height (two
+window bars) in every state, and the plan chip's slot is held open while the
+reading loads, so rows do not resize or reflow as readings arrive. And a row
+whose connection is only unconfirmed shows no usage tier at all: Houston makes no
+metering claim, not even "not measured yet", about an account it could not read,
+and the fetch is gated on at least one CONFIRMED account rather than on the
+strip's mount.
+
+What remains of the old screen is the per-agent running-time analytics, whose
+user-facing identity is now Time worked, a Settings section that exists only
+where the deployment meters it. No surface says "Usage" or "Compute usage" to a
+user any more.
+
+One deliberate consequence: Time worked rides `capabilities.computeUsage`, not
+the AI-models Teams gate the old Usage screen inherited, so plain members of a
+hosted-cloud team now see Settings > Time worked where they previously saw
+nothing. That is intended and safe — the server scopes `GET /v1/org/compute-usage`
+to the agents the caller can already reach, so a member sees only their own
+agents' time.
+
+## v46 - 2026-07-29
+
+`plan-ready-card` now accepts the runtime's deterministic empty-summary
+backstop. The optional lede and its collapsed hint are absent when no summary is
+available; the title, two continuation choices, header dismiss X, and integrated
+feedback input remain fully actionable. The dismiss X locally returns the
+composer without sending, and the input now explicitly invites plan feedback.
+
+## v45 - 2026-07-28
+
+The plan-ready card now belongs fully to the shared interaction-card family. Its
+two-line plan lede and three choices live in the common modal shell, with the
+same fixed trailing free-text row used by sign-in, connection, and credential
+cards. The card replaces the external composer while pending, so its row is the
+only text input; submitting it creates a visible plan-mode user follow-up and
+retires the card.
+
+## v44 - 2026-07-28
+
+HOU-974 and HOU-766 make blocked interaction cards collapsible without hiding
+their state. Only the body scrolls under the 40vh cap; footer actions and the
+trailing free-text row remain reachable. The chevron stays usable while a turn
+is running, and collapsed cards retain a muted one-line context hint. The
+complete plan now stays in the transcript; the floating plan approval card above
+the always-mounted composer carries only a two-line lede and three next-step
+choices.
+
+## v43 - 2026-07-28
+
+HOU-773 adds `suggest-actions`, optional follow-up bubbles above the completed
+mission composer. A selected pill sends its concrete message as a visible user
+follow-up; dismissal is available without hover.
+
+## v42 - 2026-07-28
+
+HOU-762 through HOU-764 unify the chat skill picker with the Skills catalog's
+installed row. The picker now searches, sorts by displayed title, and selects
+from the same row anatomy rather than presenting a separate card and category
+tab treatment.
+
+## v41 - 2026-07-28
+
+HOU-831 clarifies the required action in in-chat integration steps. A connect
+title now reads "Connect {app}" beside the app logo, and the body keeps only the
+agent's reason: the redundant catalog description is gone. The action footer
+keeps Skip left and the filled Connect CTA right; the free-text escape row moves
+into the modal's trailing region below those actions. Sign-in and credential
+steps share that trailing-row structure, so every actionable card presents its
+primary choice before its alternate instruction.
+
+## v40 - 2026-07-27
+
+HOU-960, chat sender presentation rebuilt on the semantics of a group chat. A
+group chat labels the people you are talking TO and never you: your own messages
+are identified by the side they sit on, everyone else's by a face and a name.
+And a name is an answer to "who is talking now", a question that only needs
+answering when the answer changes, so it prints once per speaker rather than
+once per message. v37 gave every turn in a shared conversation its own sender
+line above the bubble, which answered "who wrote this" for each message in
+isolation: a fast exchange became a column of repeated names, with the reader's
+own name printed back at them. This is the same information, arranged the way
+readers already know how to read it.
+
+There are three row anatomies now, all on the incoming-bubble geometry of a
+group chat (12px corners, the corner nearest the sender's face squared, compact
+12/8 padding). A `user-message` written by a TEAMMATE mirrors to the left: their
+32px face top-aligned in a fixed column beside the bubble, their name the
+bubble's first line, small and semibold in that person's own tone, the bubble
+the recessed chip fill with a hairline rather than the viewer's near-ink one,
+because a left-hand bubble in the reader's own colour reads as something the
+reader said. An `assistant-message` in a shared conversation is one more group
+member: the same incoming bubble (wider, for prose), the agent's 32px mark in
+the face column, its name the bubble's first line in the agent's own avatar
+colour; solo it stays bare left-aligned prose. The VIEWER'S OWN message keeps
+the right-aligned near-ink bubble with no face and no name at all, adopting the
+compact mirrored geometry only in an attributed thread. The "You" line is gone
+from the screen; the consumer's "you" string is announced to screen readers
+instead, because alignment is a cue only a sighted reader gets.
+
+Run grouping ties the three together. A name and a face print on the first
+message of a run from one sender and nowhere else in it, while the avatar column
+stays reserved on the rest so consecutive bubbles line up under the face instead
+of stepping sideways. A run breaks when the speaker changes, and a system
+divider (a context compaction, say) always breaks one, because after a divider
+the reader has lost the thread and the next speaker has to reintroduce
+themselves. An agent's tool and reasoning blocks are transparent to the rule:
+they neither start nor break a run, so "you asked, the agent worked, the agent
+answered" still introduces the agent on its answer, while "answer, work, answer"
+correctly stays one run.
+
+The colours needed new tokens. A person's tone is a property of the person,
+hashed from their stable id, so their name and their avatar are the same hue on
+the board and in chat alike. But the five `person.*` fills were tuned as avatar
+backgrounds carrying white initials, and as name text on the bubble they measure
+2.90 to 3.14 in dark mode, well under the 4.5:1 floor for body text. So
+`--ht-person-name-{slate,sage,mauve,taupe,indigo}` joins them in both themes:
+the same five hue families retuned for text, a darker light-mode tone paired
+with a lighter dark-mode one, so the identity reads the same while the text
+stays legible. On the composited bubble surface (light rgb(244,244,244), dark
+rgb(41,41,43)) they measure, light over dark, slate 6.06 / 5.18, sage 5.83 /
+5.48, mauve 6.07 / 4.95, taupe 6.29 / 4.94 and indigo 6.34 / 5.03, and a token
+test re-measures them against the real surfaces on every build rather than
+trusting a pinned number. The agent palette needed no retuning but is checked
+the same way: every agent colour is measured against its theme's chat surface,
+and one that cannot carry 4.5:1 as text falls back to plain ink in that theme.
+All seven pass in both themes today, the tightest being golden at 4.80 in light
+and crimson at 6.02 in dark.
+
+Single player is untouched to the pixel. Attribution still appears only where
+the deployment is multiplayer, or where the old heuristic finds two distinct
+authors in one thread; a solo transcript renders no name, no face, and reserves
+no column for either, exactly as before.
+
+## v39 - 2026-07-27
+
+HOU-945, relevance-scoped notifications: a shared workspace only works if you can
+tell, at a glance, which of it moved while you were away. Four surfaces land
+together — a mark on the mission, a mark on the agent, an inbox of the missions
+where somebody typed your name, and the pill that opens it. All four are
+multiplayer-only: read state is per person and per device (local, never a write
+to the server on every mission open), so without a signed-in identity there is no
+"you" for anything to be unread FOR. Single player and the desktop app gain no
+new chrome at all, and reserve no space for any of it.
+
+`mission-card` gains an `unread-dot` (and the matching `unread` state) — the
+per-mission half. A mission card now carries a quiet mark when that mission has
+moved, or somebody typed your name in it, since you last opened it. The mark is
+a small filled dot in the semantic action tone, trailing the card's agent name:
+"there is something new here for you", never "act now" (which stays the needs-you
+status and its count chip). It is a mark, never a number, and it disappears the
+moment you open the mission.
+
+It sits in the card's identity line rather than among the approve / rename /
+delete icons (where a filled dot would read as a fourth button) and well clear of
+the contributors' faces in the body's bottom-right corner. A card with nothing
+new renders no dot AND reserves no space for one, so single player, a
+signed-out surface, and every legacy mission look exactly as they did.
+
+`agent-list-item` gains the matching `unread` state — the same dot, rolled up to
+the agent. A sidebar row now marks the agent when ANY of its missions has moved,
+or named you, since you last looked. It appears next to the needs-you chip, dot
+first, never in place of it: an agent can perfectly well have something urgent
+AND something new, and hiding one behind the other would make the rail lie about
+what is waiting. The dot never shows a number, but its label does ("3 unread
+updates"), so a screen reader and a hover both get the count without turning the
+rail into a wall of digits.
+
+Add `mentions-inbox`: a new Mission Control mode holding every mission where a
+teammate typed your name, newest first. Deliberately not a board — there is no
+column to move a mention between and no status to read off one, only who pinged
+you, where, and how long ago. So each row is a flat line: their face, "Ana
+mentioned you in Finance", the mission title, and how long ago, and clicking it
+lands you in that mission's chat exactly the way a completion notification does.
+A row that still has something new keeps the same quiet dot, on a rail that is
+always reserved so read and unread rows stay optically aligned. A mention we
+cannot attribute drops the face for an at-sign and says only that you were
+mentioned. Nobody has mentioned you yet: "No mentions yet".
+
+The way in is a Mentions pill in the Mission Control toolbar, beside Archived
+(`mission-board` gains it as an anatomy part). It highlights while the inbox is
+showing, collapses to its at-sign when a chat panel squeezes the board, and
+carries the number of mentions still outstanding — a mention of you newer than
+where you last read, NOT ambient mission movement, because a number the size of
+your whole workspace's activity is a number nobody clicks. Past ninety-nine it
+reads "99+"; the exact figure past that changes nothing you would do. The count
+is in the control's accessible name too, not just next to the glyph.
+
+## v38 - 2026-07-27
+
+Add `mention-autocomplete` + `mention-chip` (HOU-944): in a shared chat you can
+now tag a teammate. Typing "@" in the composer raises a picker over the space's
+co-members, filtered as you type (accent- and case-insensitive, yourself
+excluded); Arrow keys move, Enter or Tab accepts, Escape closes. Accepting types
+the plain text "@Name" into the message and remembers who that is, so the model
+reads ordinary prose while the message carries the identities alongside it. With
+no roster (single player, a personal space, or a host that predates the
+directory) the picker never opens and "@" is just a character.
+
+Both sides of the conversation render those names as chips: a human message
+chips the mentions stored on the message itself, and the agent's prose is matched
+against the known people of the space, since an agent writes a name as plain text
+when it needs someone specific to confirm something. A mention of the reader is
+emphasized, so an ask aimed at you stands out in a busy thread.
+
+Behind it the conversation view-model carries `mentions` end to end beside
+`author` (protocol `ChatMessage.mentions` + the `user` wire frame, runtime
+persistence, `packages/sdk`: `TurnSendInput` / `StreamTurnOptions` /
+`FeedFrame` / `FeedItemVM`), which is what a notification and inbox layer will
+read to tell someone they were tagged.
+
+## v37 - 2026-07-27
+
+Refine `user-message` + `assistant-message` (no new component, no `since`
+change): in a SHARED conversation every turn now carries a **sender line** --
+the writer's face + name above a human bubble, the agent's mark + name above its
+prose (HOU-943). Attribution follows the DEPLOYMENT: a multiplayer client
+attributes every turn from the first message (the old "label only once two
+people have written" heuristic left a shared chat looking single-player until a
+second person spoke, and never named the agent; it still governs outside
+multiplayer, so legacy attributed transcripts keep their labels). Single-player
+is untouched -- no line, no faces, byte-identical transcript.
+
+Behind it, the conversation view-model now carries a message's `author` end to
+end (`packages/sdk`: `FeedItemVM.author`, folded by `seedHistory` /
+`prependHistory` and stamped on the optimistic send via
+`StreamTurnOptions.author`), which is what makes a teammate's bubble keep its
+identity across reload, scroll-up paging, and the live send. Web ships it in
+`ui/chat` (`ChatSenderHeader`, threaded through `ChatPanel`/`ChatMessages` as
+`showSenders` + `agentLabel` + `renderSenderAvatar`); the app resolves faces
+through the batched org-profiles lookup the mission face stacks already use.
+
+## v36 - 2026-07-27
+
+Refine `mission-card` (no new component, no `since` change): its anatomy gains
+`people-face-stack` + `people-overflow-chip` and an `attributed` state -- the
+multi-contributor signal on the shared board (HOU-947). Every human on a mission
+renders as an overlapping ringed avatar over the card body's bottom-right
+corner: a photo when the profile has one, otherwise initials on an OPAQUE
+desaturated person tone (`person.*` design tokens: slate / sage / mauve / taupe
+/ indigo, plus an initials colour and a solid overflow-chip fill/text pair, both
+themes) chosen deterministically from the person's stable id, so one person
+keeps one tone on every card and in the expansion popover. Past five faces the
+rest collapse into a solid, high-contrast "+N" chip that opens the full roster,
+and the card body reserves a right gutter sized to the stack so no text runs
+underneath it. Three rendering defects went with it: the initials fill was
+`chip-subtle` (~96% transparent, so overlapped faces and card text showed
+through the letters), the "+N" chip wore the same translucent fill (it read as a
+hole in the stack), and `TooltipTrigger asChild` was overwriting the avatar's
+`data-slot`, which silently disabled `AvatarGroup`'s 2px ring contract so the
+faces collided edge to edge with no cutout. The stack also takes the surface it
+sits on, so the mission detail panel rings its faces in the panel colour instead
+of the card colour.
+
+## v35 - 2026-07-26
+
+Refine the shared `CatalogRow` (no new component, no `since` change): its
+`description` slot takes a node, not just a string, so a row can put its
+SITUATION on that one secondary line instead of its blurb. Integrations uses it
+for the in-place recovery model -- an app whose connection is pending or errored
+is no longer lifted out of the catalog into a separate recovery section at the
+top of the pane; it keeps its own category rows and wears a `status-badge`
+(dot + label, warning/danger) where its description would be, its `+` retries
+the connect from that row, and its detail modal carries Reconnect + Remove. A
+live connect outranks the at-rest status line, so a row never reports the same
+connection twice.
+
+## v34 - 2026-07-23
+
+Refine `conversation-feed` (no new component, no `since` change): the transcript
+now opens on its TAIL window instead of the full history, and gains a
+`load-older-trigger` at the top of the scroll viewport plus a `loading-older`
+state (HOU-819). When the view-model reports messages beyond the loaded window
+(`historyWindow.earliestLoaded > 0` on the conversation VM), scrolling the top
+of the feed into view fetches the previous page and prepends it, scroll-anchored
+(same distance from the bottom) so on-screen content never jumps; a quiet
+spinner shows while the page loads and the trigger retires at the transcript
+start. Web ships it in `ui/chat` (`ConversationLoadOlder`, threaded through
+`ChatPanel`/`ChatMessages` as `onLoadOlder` + `hasOlderMessages` and through
+`AIBoard` as `onLoadOlderMessages` + `hasOlderMessages`); the windowed reads
+ride the additive protocol params (`?limit`/`?before` on the runtime's
+messages route) and the SDK VM's additive `historyWindow` + `prependHistory`.
+
+## v33 - 2026-07-22
+
+Add `status-badge`: the shared connected/live-status indicator (a colored dot,
+alone or with a label) that conveys connected / pending / error state beside an
+item name. Web ships it as a props-only, i18n-agnostic `ui/` piece
+(`@houston-ai/core` `StatusBadge` / `StatusDot`, mapping each status to a
+semantic color token), so it lands `implemented`. The app's
+`ConnectionStatusBadge` (Integrations) and `LiveStatus` (AI hub) are now thin
+i18n wrappers over it, so "connected" reads identically everywhere.
+
+Also a refinement to the shared `CatalogRow` (no new component, no `since`
+change; the catalog surfaces stay app/-locked, web `partial`): the row gains an
+optional `statusDot` slot rendered immediately LEFT of the title —
+presence-style, "● Asana" — always visible (no hover gating). The three catalog
+surfaces use it so connected/installed state no longer rides on section
+placement alone: Integrations (green/amber/red per connection status, with an
+sr-only status label), the AI-models hub (green, sr-only "Connected"), and the
+Skills marketplace's installed rows (green, beside the quiet installed check in
+the `action` slot), contrasting with the not-installed `+`.
+
+## v32 - 2026-07-21
+
+Add `verified-badge`: the verified-creator indicator glyph shown beside a creator
+handle on Agent Store cards, creator chips, and the profile pane (part of the
+creator-profiles surface). Web ships it as a shared, props-only `ui/` piece
+(`@houston-ai/core` `VerifiedBadge`), so it lands `implemented`.
+
+## v31 - 2026-07-20
+
+The catalog shell's two-section grammar gets three refinements, all in the shared
+CatalogShell composition (no new component, no `since` change; the surfaces stay
+app/-locked, web `partial`).
+
+The `controls` row is now STICKY: it pins to the top of the surface's scroll
+container so the search field (plus the Integrations category combobox) stays
+reachable through a long catalog, sitting transparent at rest and fading in an
+opaque `popover` fill with a rounded bottom only while rows pass BEHIND it. The
+scroll-stuck detection is the generic `useStuckOnScroll` hook, hoisted into
+`@houston-ai/core` (`hooks/use-stuck-on-scroll.ts`) as the single source of truth
+— the shell and the app's provider filter bar both consume it, and the app's
+former copy (`app/src/hooks/use-stuck-on-scroll.ts`) is deleted.
+
+The Installed section (Connected on the AI hub, Your skills on Skills) is now a
+quiet CONTAINED panel — a rounded, hairline-bordered `card` surface — so "yours"
+reads as its own thing above the flat "available" browse below. The
+InstalledSkeleton and the "Show all N" expander sit inside the panel padding with
+no doubled framing.
+
+The Integrations category sections now order MAINSTREAM-FIRST: a curated
+`CATEGORY_PRIORITY` list floats the everyday categories ahead of the long tail,
+with Featured pinned first, the remaining non-curated categories by size DESC, and
+Uncategorized last (the category dropdown stays A-Z). The available count chip now
+accepts a preformatted STRING for catalogs whose true total isn't cheaply known —
+the Skills store chip reads `"9000+"` rather than a live count.
+
+## v30 - 2026-07-20
+
+The catalog surfaces adopt a two-section grammar. ONE search field — plus, on
+Integrations, a category combobox — sits on top via the shell's new `controls`
+row and filters everything below it, over two titled sections: Installed
+(Connected on the AI hub, Your skills on Skills) and Available. Each section
+carries an `lg` CatalogSectionHeader with a live count chip (the shown count
+while filtering, the total at rest). A section is OMITTED entirely when the
+active filter matches nothing in it, so a heading never sits over an empty list.
+The preview cap stays 6 rows behind a "Show all N" expander at rest and shows
+every match uncapped while filtering.
+
+This retires the per-strip installed search field added in v29 — there is no
+"above 8 installed items" threshold anymore — and unifies each pane's own
+internal search box into the one page query: the Integrations CatalogPane is now
+controlled (query + category props), and the AI Models directory drops its search
+box (the provider modal keeps its local one). All four surfaces (global
+Integrations, per-agent Integrations, AI Models hub, Skills) read identically.
+
+`ai-model-row` behavior updated: the directory-grid-row variant's control row is
+now the facet comboboxes alone (free-text search is the AI hub's one page field);
+the provider-modal-list-row variant keeps its own search box + facets. `skill-row`
+and `ai-provider-card` keep their v29 CatalogRow strips, now driven by the page
+query rather than a per-strip field. No new component and no `since` change; the
+compositions stay app/-locked (web `partial`).
+
+## v29 - 2026-07-20
+
+The catalog "Installed" strips converge onto the shared CatalogRow grammar. The
+Integrations, AI Models, and Skills surfaces previously rendered their installed
+items as compact icon TILES (the ui/core `CatalogTile`); they now render the SAME
+`CatalogRow` used by their browse grids — a full-width row with name, description,
+and a quiet trailing chevron — laid out in the responsive two-column `CatalogGrid`.
+`CatalogTile` is DELETED from `@houston-ai/core` (no compat re-export). Each strip
+gains a preview cap of 6 rows behind a "Show all N" expander (CatalogShowMore) at
+rest, and, above 8 installed items, an installed search field that filters the
+strip in place. Integrations additionally gain a Featured section and a
+total-count subtitle on the strip header.
+
+`skill-row` restructured: `installed-tile` variant becomes `installed-row` (the
+installed strip is now CatalogRow grammar behind the Show-all expander, a row
+opening the edit modal); anatomy/a11y drop the tile framing. `ai-provider-card`'s
+Connected strip likewise moves from a tile strip to the CatalogRow strip (quiet
+trailing chevron, preview cap + Show-all expander). No new component and no `since`
+change; web stays `partial` for both (`installed-skills-strip.tsx`,
+`connected-providers-strip.tsx`, `installed-strip.tsx` are app/-locked). Manifest
+refs updated (CatalogTile -> CatalogShowMore).
+
+## v28 - 2026-07-16
+
+`composer` gains a `replaced-by-override` state: the existing override card
+(previously always rendered ABOVE the input, both visible) can now REPLACE the
+input while present (`composerOverrideMode="replace"` on ChatPanel). Used by
+onboarding's watch-your-agent step, where the "send an email to myself" offer
+is the only intended action and a live reply input competed with it. Default
+behavior is unchanged ("above": typing abandons the pending card).
+
+## v27 - 2026-07-16
+
+`interaction-approval-card` sheds its technical body. The two-column param
+rows (and the "+N more settings" overflow line) are GONE — the wire payload
+still carries `params`/`paramsOmitted`, but no surface renders them; the
+approval keeps covering the exact call via `paramsHash`. Everything else is
+unchanged: the '(icon) NAME' header lockup, the "Allow {app} to {action}?"
+question, the three-decision footer, and the decided states. Anatomy drops
+`param-rows`; states drop `with-params`/`no-params`.
+
+## v26 - 2026-07-13
+
+New component `provider-usage-card`: a new top-level Usage page (its own
+sidebar item, sharing the AI Models hub's Teams gate) shows each CONNECTED
+provider account's live limits, one card per account (brand mark + name +
+plan chip). Subscription providers render a labeled meter per rolling
+rate-limit window (percent used + localized reset note, warning tint at >=
+90%); prepaid API-key providers render their remaining balance. Data is the
+engine's new `GET /providers/usage` (protocol `ProviderUsage`): the runtime
+reads each provider's own usage API with the already-linked credential
+(Anthropic OAuth usage, ChatGPT/Codex rate limits, Copilot quota snapshots,
+OpenRouter credits, DeepSeek balance); providers with no readable surface
+report an honest `unsupported` row. Web-only today, app/-locked
+(`app/src/components/usage-view/`), so the web manifest lands it `partial`.
+
+## v25 - 2026-07-12
+
+The Routines/Reactions tab split is merged into ONE "Automations" tab, and the
+wake mechanism becomes a choice INSIDE the routine editor. `routine-row`'s
+inline edit panel gains a "When should this happen?" choice rendered as two
+option cards (Clock / Zap icon chip + label + one-line example hint: "On a
+schedule — every morning, once a week, you choose" / "When something happens —
+a new email, a message, a change in an app"), shown only where the deployment
+supports event triggers (`capabilities.triggers`) — the tab set no longer
+varies by deployment. The trigger picker's no-connected-apps empty state gains
+a "Connect an app" CTA (dashed panel) that jumps to the Integrations surface.
+The list surface converged on the v24 catalog grammar: `routine-row` is now a
+flat transparent row with the full-row `hover` fill (the bg-chip slab card and
+hairline dividers are gone), the list splits into Active / Paused sections
+under `CatalogSectionHeader` count chips (headers render only when both groups
+exist), the local new-draft editor sits in its own bordered `input` panel, and
+the empty state is the pure catalog shape (title + description + one filled
+CTA — the three-step walkthrough is gone; the editor's wake choice teaches
+itself). CONTRACT change: `RoutineRowLabels` gains `whenTitle`,
+`whenSchedule`, `whenScheduleHint`, `whenEvent`, `whenEventHint`;
+`TriggerLabels` gains `connectApp`; `TriggerPicker` gains `onConnectApp`;
+`RoutinesGridLabels` gains `sectionActive` / `sectionPaused` and DROPS
+`emptyStepsTitle` / `emptySteps` (with `RoutineHowItWorksStep`);
+`RoutinesGrid`'s `newDraftVariant` prop is replaced by `allowEventWake` (the
+new-draft editor always starts on the schedule side and the user switches).
+No new component; `routine-row` anatomy gains `wake-choice` inside its edit
+panel.
+
+## v24 - 2026-07-12
+
+The AI models hub moved to the shared catalog grammar (the ui/ CatalogShell +
+CatalogRow family, shared with the Integrations page).
+
+`ai-provider-card` restructured: the hub row is now a split CatalogRow (body
+opens the provider detail modal, a ghost round + connects, Cancel pill while in
+flight), and connected providers moved out of the browse grid into the
+consolidated "Connected" tile strip above the tabs. The onboarding / migration
+/ workspace-setup connect card keeps the previous static shape as the
+connect-flow-card variant; its info button (the old one open affordance) is
+gone with the hub grid.
+
+`ai-model-row` restyled to the same CatalogRow: flat transparent row (no more
+bg-chip slab), no trailing "See more" cue, two-column CatalogGrid in the
+directory / single column in the provider modal.
+
+`skill-row` converged too: the Skills surface is now the CatalogShell (installed
+tiles above Store / Custom skills tabs), community rows are CatalogRows with the
+ghost + install, and the old installed row (pen/trash) is gone — edit opens from
+a tile, delete moved into the edit modal footer.
+
+## v23 - 2026-07-12
+
+`provider-error-card` gains a `context-overflow` state. The engine taxonomy
+(protocol `ProviderError`, mirrored in `ui/chat`) adds `context_overflow`: the
+provider rejected the request because the conversation no longer fits the
+model's context window (llama.cpp/Jan `exceed_context_size_error`, OpenAI
+`context_length_exceeded`, Anthropic "prompt is too long"). Previously this
+fell through to the generic `unknown` card. The card names the model that ran
+out of room and offers the model picker as its CTA (a larger-window model, or
+the user starts a fresh mission). Wire fields carry the provider's own numbers
+(`context_window_tokens`, `prompt_tokens`); the runtime also uses the reported
+window to correct an over-assumed custom-endpoint window so autocompact fires
+at the real boundary on later turns.
+
+## v22 - 2026-07-12
+
+`suggest-reusable-card` gains a third variant: `learning`. The agent's
+end-of-mission REFLECTION STEP (the `suggest_reusable` tool, fired only on a
+clean `done` finish, never on `needs_you`) can now offer to keep the
+just-completed work as a reusable Skill, a scheduled Routine, OR a Learning (a
+stable fact/preference saved to `.houston/learnings/learnings.json`). Same
+card, same two rows; the save row's label and icon name the kind (Sparkles /
+CalendarClock / Lightbulb), and accepting sends the same follow-up-message
+flow (an execute turn asking the agent to write the Skill/Routine/Learning).
+Protocol `InteractionStep` kind=suggest_reusable widens `reusableKind` with
+`"learning"` — additive, no anatomy/state change, no new component.
+
+## v21 - 2026-07-12
+
+Two changes: the interaction stepper gains an ACTION-APPROVAL step, and its
+dismiss X is now a durable user interruption.
+
+New `interaction-approval-card`. Connected-app actions are no longer pre-asked
+via `ask_user`; instead the host GATES the integration `execute` (the sandbox
+route answers 409 `approval_required` with a display-ready `{toolkit, action,
+params, paramsHash}` payload) and the runtime records an `approval` step
+(protocol `InteractionStep` kind=approval) on the turn holder (`recordApproval`,
+deduped by paramsHash, ids `a1..aN`), landing LAST in the sequence (questions →
+signin → connects → approvals — approving follows connecting). It rides the SAME
+shared `InteractionModal` shell as signin/connect, app-supplied via a new
+`renderApproval` prop (ui/chat stays Composio-unaware). The card asks "Allow
+{app} to {action}?" over a two-column param block and offers THREE footer
+decisions — **Always allow** (outline, left), **Deny** (outline, Esc), **Allow
+once** (filled, Enter). Unlike a connect/signin "Not now", Deny is a real
+decision the model HEARS: allow-once writes a one-shot ticket (keyed by
+paramsHash, TTL 15 min, consume-once), always-allow appends the action slug, and
+the composed reply names the RAW action slug ("Approved: go ahead with
+{ACTION}." / "I chose not to allow {ACTION}. ..."). Autopilot auto-approves the
+gate (`x-houston-turn-mode: auto`), so the card never appears on an auto turn.
+The store is per-agent `<agent>/.houston/action-approvals.json`, kept pod-side in
+v1 (NOT gated on gatewayFronted; per-user Teams scoping is a cloud follow-up).
+Web `partial` (the composed card is app/-locked + Composio-coupled, like the
+connect/signin bodies).
+
+`interaction-card` dismiss = user interruption. The dismiss X (and typing a fresh
+message) no longer just drops the card locally: it persists a durable `stopped`
+marker on the assistant turn AND clears the pending interaction, so the sequence
+retires and the MODEL LEARNS NOTHING from the abandonment. A reload now renders
+the standard "Stopped by user" line and settles `needs_you` through the SAME
+`finishErr` stop path live and from history (fixing the old divergence where a
+stopped turn re-derived as `done`). The mid-turn race is refused (409).
+Tokens/prose only for `interaction-card`; the step-kind enumeration adds
+approvals and the family '(icon) NAME' note goes present-tense (the approval card
+adopts it).
+
+## v20 - 2026-07-12
+
+`interaction-card`: "treat it like a modal." The card family's chrome is now a
+shared shell — `InteractionModal` (with `InteractionModalTitle`) in `ui/chat` —
+that owns the surface, the HEADER row (title left; `‹ N of M ›` pager + dismiss X
+top-right), a body that fades on step swap, and a right-aligned FOOTER row. The
+question stepper, the sign-in step, and the connect step all compose it, so every
+consumer is structurally identical; the signin/connect bodies (app-supplied, so
+ui/chat stays auth/Composio-unaware) render their OWN `InteractionModal` wired
+with the `StepChrome` the stepper hands them (pager + dismiss). This replaces the
+old split where `ui/chat` drew the header/surface and the app drew a headerless
+body via the removed `InteractionFooter`.
+
+Header carries the identity. The signin/connect `(icon) NAME` lockup ("Google
+Sheets" / "Houston") moved OUT of the body and UP into the modal title, on the
+SAME row as the pager + X — fixing the complaint that the title sat below an
+empty header strip.
+
+Weight restraint, for real. The modal title and the option / identity labels drop
+from `font-medium` to REGULAR; color tone (foreground vs muted) now carries the
+hierarchy. `font-medium` survives only where it earns it: the Recommended chip,
+the number-badge digit, the filled CTA label.
+
+Option rows lose their inline description. Rows show label + Recommended chip
+only. `description` stays TOLERATED on the wire (protocol unchanged) but is no
+longer rendered, and the `ask_user` tool schema + Houston prompt (TS host + Rust
+mirror) drop their per-option description guidance so the model stops spending
+tokens on it (the `recommended` guidance stays).
+
+Unified decline in the footer. The question's old inline Skip pill left the
+free-text escape field (which keeps its honest-input treatment, now pill-free) and
+became a card-wide footer action. "Skip" and connect/sign-in's "Not now" unify
+into ONE label everywhere — **"Not now"** + an Esc keycap hint (owner-voice, warm
+deferral not a technical "skip"; already shipped in en/es/pt as `interaction.
+notNow`, so no new copy). A question footer is that decline ALONE (options advance
+on click); signin/connect place it beside the CTA. Esc now declines a question
+step too. Copy: `questionCard.skip` removed; `suggestReusable.notNow` folded into
+the shared `interaction.notNow`. Anatomy swaps `stepper-header`/`step-identity-row`/
+`option-description`/`skip-pill` for `modal-shell`/`modal-header`/`step-title-icon`/
+`footer-row`/`unified-decline`/`decline-esc-hint`; drops the `with-description`
+state; tokens only.
+
+Family note (judgment call): `suggest-reusable` and `plan-ready` were considered
+for the shell and deliberately NOT migrated — they are composer REPLACEMENTS
+(grey secondary surface, composer shape, a stacked menu of equal-weight action
+rows), a different family from this floating white modal, and the shell's
+header/body/footer does not fit plan-ready's three-way mode menu. They keep their
+own headers; only `suggest-reusable`'s dismiss word was unified onto
+`interaction.notNow`.
+
+## v19 - 2026-07-11
+
+`interaction-card`: three refinements from live use of the v17 Coworker cards.
+
+Weight restraint: the family used `font-semibold` on the question title, option
+labels, AND the connect/sign-in titles at once (competing bolds). It now holds
+to ONE medium step of hierarchy — titles and option/identity labels drop to
+`font-medium`, everything else is regular; no `font-semibold`/`font-bold`
+anywhere in the card family.
+
+Free-text escape row -> escape FIELD: the flat pencil + grey text + Skip row
+read as a static row, not an input. It becomes an honest field — a hairline
+`border-input bg-transparent` border on the row (the composer/`Input`
+vocabulary), `cursor-text` over the whole surface (click anywhere focuses the
+textarea), placeholder-toned text, a `border-ring` focus state, a leading pencil
+adornment, and the inline Skip pill. Its resting look now promises the text
+input it always became on focus.
+
+Connect/sign-in restructure: the reason was a bold title with the app
+description stacked under it (wrong hierarchy). Now the title row is `(icon)
+integration NAME` at medium weight (the identity line — "Google Sheets" /
+"Houston"), and the body is TWO fields: the agent's REASON in foreground tone
+(the prominent-but-not-bold "why") over the app description / sign-in explainer
+muted. This '(icon) name' pattern is documented as the family convention for any
+card with an app/brand icon (the future action-approval card adopts it; the
+icon-less suggest-reusable / plan-ready cards are untouched). Copy: `interaction.
+connectTitle` -> `connectReasonFallback` ("Connect {app} to continue."); new
+`interaction.signinAppName` ("Houston"); `signinTitle` now the sign-in reason
+fallback (en/es/pt).
+
+Decline consistency: "Not now" was hidden on a revisited/reconsidered
+signin/connect step (shown only on the live frontier), leaving a reconsidered
+step with only a Connect button. "Not now" now travels WITH the CTA — present
+wherever connecting/signing-in is offered — so skipping is consistently
+available everywhere it is legal. Anatomy swaps `step-identity-lockup`/
+`benefit-line`/`pencil-badge`/`free-text-escape-row` for `step-identity-row`/
+`integration-name`/`reason-line`/`app-description`/`pencil-adornment`/
+`free-text-escape-field`; tokens only.
+
+## v18 - 2026-07-11
+
+Routines can now wake on an external event, not only a cron schedule (C9).
+
+`routine-row` gains an event-driven variant: alongside the schedule-driven row
+(schedule summary + next fire), an event routine shows a humanized event summary
+("Wakes on an event in Gmail") and a live trigger-status badge -- active,
+setting up, reconnect-needed (with a one-click reconnect to the integrations
+surface), access-turned-off, or needs-attention. New render states
+`trigger-active` / `trigger-pending` / `trigger-paused` / `trigger-error`. The
+authoring surface (the wake-mechanism choice, app + event picker, and the
+schema-generated config form) stays desktop-only chrome, excluded like the
+schedule/cron editor.
+
+## v17 - 2026-07-11
+
+`interaction-card`: the whole family adopts the reference "Coworker card" look
+and feel (compact, left-aligned, white-card-on-page).
+
+Chrome: the grey `bg-secondary` surface (with raised white chips) becomes a
+white `bg-background` card set apart by a hairline border + soft shadow; radius
+tightens to `rounded-2xl`. The header drops the "Step N of M" eyebrow: the title
+goes bold and left, and a compact "N of M" pager sits top-right whose chevrons
+ARE the Back/Forward navigation (replacing the footer nav), beside the dismiss X.
+
+Question step: the right-edge keycaps move to a LEFT circular number badge (the
+digit still the keyboard shortcut); options gain a soft "Recommended" chip and a
+muted INLINE description (new additive protocol fields `InteractionOption.
+description` / `recommended`, tolerant/additive). The free-text row becomes the
+escape row — a pencil badge + muted placeholder + inline Skip pill — and the
+separate footer (Back / Skip / Next) is gone: actions live in the rows and the
+pager, Enter submits the free text.
+
+Signin/connect step: REVERSES the v16 centered identity hero. The body is now a
+COMPACT left-aligned lockup — brand logo (size-6) inline with a bold title (the
+reason, else "Connect {app}?" / "Sign in to Houston"), one muted benefit line —
+with a footer of a quiet "Not now" + Esc hint beside a filled CTA carrying a
+return-key glyph. Enter fires the CTA, Esc declines (capture-phase, pre-empts the
+global Escape-closes-panel shortcut). Navigation is the header pager for every
+kind, so `StepFooterApi` simplifies to `{ revisited, onSkip }` (Back node +
+onForward removed); a revisited completed step shows the connected state with no
+footer (pager forward is onward), a revisited skipped step keeps its CTA
+(reconsider survives). Anatomy swaps `progress-label`/`keycap-hint`/`footer-nav`/
+`step-identity-hero` for `pager`/`number-badge`/`recommended-chip`/
+`option-description`/`free-text-escape-row`/`step-identity-lockup`/
+`not-now-esc-hint`; tokens only.
+
+## v16 - 2026-07-10
+
+`interaction-card` signin & connect steps: the step body becomes a CENTERED
+identity hero, and a skipped step is reconsiderable.
+
+Design: the app-supplied body was a flat left row (bare logo leading name +
+description). It is now a composed vertical lockup — the brand logo sits BARE
+and large ON TOP (size-14, up from the size-10 leading slot; new `xl` AppLogo
+size), the app name centered beneath it, one muted one-line description centered
+under that. The sign-in step gives the Houston helmet the same centered slot.
+The connected state integrates into the lockup: the description swaps for a calm
+check + "Connected" line under the name. The family chrome is unchanged — the
+eyebrow + reason-title header stays left, the Back/Skip/CTA footer stays the
+shared right-aligned row — so the centered hero reads as the step BODY between
+them. New anatomy `step-identity-hero` / `connected-check` (replacing
+`step-app-row`); tokens only.
+
+Bug fix (reconsider a skipped step): a revisited signin/connect step used to
+show only Forward, which is right for a COMPLETED step (its card can't re-fire
+completion) but stranded a SKIPPED one — no way to change your mind and connect.
+Now a revisited step splits by its FINAL state: completed → bare filled Forward
+(the only way on); skipped → the full actionable state returns, a ghost Forward
+("keep it skipped") beside a fresh filled Connect / Sign in, never two filled
+pills. Connecting / signing in there COMMITS (the earlier skip is undone), and
+the completion reply derives from each step's FINAL outcome — a step skipped
+then reconsidered reports "Connected {app}." (never a stale "Skipped connecting
+{app}."), and no step is named twice. New state `reconsider`; ui/chat's
+`StepFooterApi` replaces the pre-styled `forward` node with an `onForward`
+callback (the body owns the forward button so it can pick filled vs ghost from
+the connection/auth state only it knows). Auto-continue stays gated to the live
+frontier, so the revisit-bounce fix does not regress.
+
+## v15 - 2026-07-10
+
+`interaction-card` signin & connect steps: the icon integrates into the card and
+every step becomes skippable. The step's app row dropped its hairline border and
+its boxed thumbnail — the brand logo now sits BARE on the card surface (size-10,
+rounded; its own art carries the brand), leading the identity stack (name +
+one-line description), so the step reads as a purpose-built connect card rather
+than a chip inside a card; the sign-in step gives the bare Houston helmet the
+same size-10 slot. The calm connected check keeps its trailing position beside
+the identity stack. Skip generalizes from questions to ALL step kinds: a
+signin/connect step renders a ghost Skip between Back and its filled CTA (live
+frontier only — a revisited completed step still shows Forward), and a skipped
+signin/connect is a recorded FACT in the completed reply ("Skipped connecting
+{app}." / "Skipped signing in.", visible in the structured answers bubble when
+the sequence had questions, hidden auto-continue otherwise) so the agent hears
+the decline instead of re-requesting forever. New state `skipped`; ui/chat's
+`StepFooterApi` gains `onSkip` (the generalized `skipStep` transition replaces
+`skipQuestion`).
+
+Also fixes the production connect-step logo regression: the shared `AppLogo`
+now keys its failure latch to the failing URL (the pre-catalog favicon guess
+404'd and permanently shadowed the real Composio logo) and the in-chat connect
+surfaces hold the favicon-guess fallback until the toolkits catalog settles.
+
+## v14 - 2026-07-10
+
+`interaction-card` brings the signin & connect steps into the Mercury system —
+they were the last hold-outs still drawing a card-inside-a-card. Before, the
+app-supplied body floated a nested `bg-background` rounded surface (logo, name,
+truncated description, AND a filled Connect pill) INSIDE the grey interaction
+card, with the reason as loose text above it. Now the step body draws NO surface
+of its own: the reason routes through the SAME header slot as a question's title
+(anatomy `question-title` -> `step-title`, now shared by every kind; a labelled
+"Connect {app}" / sign-in fallback covers a reason-less step), the app renders a
+hairline Mercury row (app logo + name + one-line clamped description, the
+option-row grammar; new anatomy `step-app-row`), and the single filled CTA
+("Connect" / "Sign in") moves into the shared footer beside the Back node,
+exactly like a question step's Next (new anatomy `step-cta`). A connecting
+hand-off shows a spinner CTA plus a quiet muted line above the footer (new
+anatomy `waiting-note`, new state `connecting`); an already-connected app shows
+a calm check in the row (new state `connected`).
+
+CONTRACT change (additive): `renderConnect`/`renderSignin` now receive the
+shared `StepFooterApi` (`back`/`forward` nav nodes) alongside their completion
+callback, so the app composes the footer without re-implementing navigation;
+ui/chat exports `InteractionFooter` (the footer row's chrome) so the app's CTA
+sits in the exact same spacing. `StepperHeaderProps.questionText` ->
+`title`. ui/chat stays auth/Composio-unaware; the reactive connect/OAuth logic
+is shared by the inline `#houston_toolkit` card and the stepper step via one
+app-side hook, so only their presentation forks. New locale key
+`chat:interaction.connectTitle` (en/es/pt).
+
+## v13 - 2026-07-10
+
+The interaction-card family adopts the Mercury settings-modal discipline:
+one title, one quiet micro-label, one filled CTA, hairline rows.
+
+`interaction-card` restructure: the header's "current/total" pill + inline
+question row becomes a quiet "Step N of M" progress micro-label (anatomy
+`progress-pill` -> `progress-label`) above the question rendered as the card's
+real title (`question-text` -> `question-title`); a single-step sequence shows
+the bare title, so screenshot states (b)/(c) look designed, not stripped. The
+option row's right-aligned bare position number becomes a keycap-style hint (a
+small bordered rounded square, anatomy `position-number` -> `keycap-hint`) so
+it reads as the keyboard shortcut it is, never a list marker; a lone option
+hides the keycap entirely (new state `single-option`). Rows tighten to the
+hairline treatment (border-border/60, rounded-xl, roomier py-3), the free-text
+escape hatch joins the same row group and rhythm, and the footer re-weights:
+Back/Skip become ghost text buttons and Next the single filled pill (its
+corner-down-left glyph is gone). Default progress copy is now "Step {n} of
+{m}" (locales updated en/es/pt).
+
+`interaction-answers-message` becomes a receipt: pairs separated by hairline
+dividers (new anatomy `pair-divider`, new state `single-pair`), answers drop
+from bold to medium so the bubble sits quieter than the interaction card; a
+lone pair reads as a deliberate compact receipt.
+
+`plan-ready-card` + `suggest-reusable-card` inherit the same row treatment
+(hairline border, py-3, no shadow, shared focus ring) so the in-chat card
+family reads as one system. No contract changes anywhere; labels props are
+unchanged in shape.
+
+## v12 - 2026-07-10
+
+Interaction cards stop replacing the composer, and two new chat surfaces land.
+
+`interaction-card` redesign: the card now floats ABOVE the always-mounted
+composer; typing a fresh message there (or the new header dismiss X) abandons
+the whole pending sequence. The header becomes a "current/total" pill plus the
+question text; option rows show a right-aligned position number (1, 2, 3...)
+selectable by that number key when focus is outside a text field, replacing the
+check-on-selected indicator; the free-text field reads as the "something else"
+escape hatch so option lists never need an "Other" row. ALL navigation moves to
+one footer row, Back leftmost: Back / Skip (advance past a question unanswered,
+omitted from the reply) / Next (commit), with a bare Forward for revisited
+signin/connect steps. The old header back/forward chevrons and the collapse
+toggle are gone. `plan-ready-card` inherits the composer-visible behavior
+unchanged otherwise.
+
+New `suggest-reusable-card`: on a clean mission finish the agent may call
+`suggest_reusable`; a dismissible offer proposes saving the work as a Skill
+(Sparkles) or Routine (CalendarClock). Uniquely, its lone step keeps the board
+status at `done` — nothing is waiting on the user. Save sends an execute-mode
+follow-up asking the agent to write the Skill/Routine; "Not now" dismisses
+locally.
+
+New `interaction-answers-message`: a completed question sequence now sends a
+marker-encoded user message rendered as structured question/answer pairs (muted
+question, bold answer) instead of a flat text blob; the plain-text body the
+model reads is unchanged.
+
+## v11 - 2026-07-09
+
+`routine-row` grows a state icon and quick actions. The 8px status dot becomes
+a leading `status-icon` that names the state by shape, not color alone: a clock
+while the routine waits for its schedule (and while disabled, dimmed with the
+row), a pulsing filled bolt while a run is in flight, an amber pause badge
+while the in-flight run sleeps on a usage-limit window, a red alert when the
+last run errored. On the trailing edge, next to the enabled toggle, a new
+always-visible `quick-actions-menu` (three-dot trigger, same overflow idiom as
+the routine editor header) offers Rename and Delete: Rename swaps the title
+into an inline input (Enter/blur commits, Escape cancels — the board card's
+rename pattern), Delete confirms in a dialog before calling back (the board
+card's delete pattern). New states `paused` and `renaming`; anatomy `run-status`
+is renamed `status-icon` and `quick-actions-menu` added. This is a labels
+CONTRACT change: `RoutineRowLabels` gains `moreActions`, `rename`, `delete`,
+`deleteTitle` (`{name}` token), `deleteDescription`, `deleteConfirm`,
+`deleteCancel`; `RoutinesGrid` gains optional `onRename(routineId, name)` /
+`onDelete(routineId)` and `RoutineRow` optional `onRename(name)` / `onDelete`
+— all optional, so existing callers render unchanged minus the dot.
+
+## v10 - 2026-07-08
+
+Revamp `plan-ready-card`'s three options into the composer mode-menu idiom.
+The stacked pill buttons (filled "Start working", outline "Run on Autopilot",
+ghost "Keep planning") become full-width mode-menu rows: each row shows its
+icon inline with the title (Handshake / Rocket / ListTodo, matching the
+`ChatModeSelector` icons, in the title's foreground color) and a one-line
+description on its own line below, with a rounded-xl hover background and
+nothing hover-gated. Copy is now "Continue in Coworker mode", "Continue in
+Autopilot mode", and "Keep planning". Primary emphasis comes from row order +
+title weight, so there is no filled primary button anymore. The card surface
+(rounded-[28px] bg-secondary), the "PLAN READY" title, and the plan summary are
+unchanged; callbacks (`onStartWorking` / `onRunAutopilot` / `onKeepPlanning`)
+and the `disabled`-gates-all-three behavior are unchanged. This is a labels
+CONTRACT change: `ChatPlanReadyCardProps.labels` drops the flat button strings
+and instead carries `{ title, coworkerTitle, coworkerDescription,
+autopilotTitle, autopilotDescription, keepPlanningTitle, keepPlanningDescription
+}` (`DEFAULT_PLAN_READY_LABELS` + the pure model updated to match); icons are
+internal to the component. Web-only; native surfaces still defer plan mode.
+
+## v9 - 2026-07-08
+
+Add `plan-ready-card`, the composer-replacing surface shown when the agent
+finishes planning (plan mode) and calls `plan_ready`. A pending interaction
+carrying a single `plan_ready` step (its plan `summary`) reaches the frontend
+exactly like `ask_user`; the card presents the drafted plan above three
+always-visible actions: "Start working" (starts a normal execute turn
+confirming the plan), "Run on Autopilot" (starts an autopilot turn), and "Keep
+planning" (dismisses the card locally so the composer returns with the Mode pill
+still on plan; a later, different plan re-shows it). The first two flip the
+composer Mode pill to match and send a visible user message; the third sends
+nothing. `disabled` gates all three actions. New `@houston-ai/chat`
+`ChatPlanReadyCard` (props-only, i18n-agnostic with a `DEFAULT_PLAN_READY_LABELS`
+fallback), so Web ships `implemented`; native surfaces defer it (plan-mode flow
+is not in mobile v1). No change to `interaction-card`: the app defensively
+filters any `plan_ready` step out of the stepper.
+
+## v8 - 2026-07-08
+
+Rebuild `ai-model-row` from the multi-column Mercury ledger into a compact card,
+matching the allowed-models editor's idiom. The Models tab is now a `sm:grid-cols-2`
+grid of cards (lab glyph + model name + lab name + an always-visible "See more"
+cue), above a control row of a pill search box and four facet comboboxes: AI
+provider (self-hides at one lab), Good at, Cost, Memory. The whole card is one
+button that opens the model detail modal (no nested buttons, nothing hover-gated).
+The comboboxes are a shared `ai-hub/filter-combobox.tsx` (Popover + cmdk) that the
+teams allowed-models `lab-filter.tsx` also reuses; Cost/Memory are pure
+`costBucket` / `memoryBucket` helpers (cost reuses the meter's `costTier`
+thresholds plus a `$0` "Free" bucket, memory splits at 200K / 1M). The old ledger
+(`models-ledger.tsx`, `model-row.tsx`, the sticky `LedgerHeader`, and
+`model-directory-filters.tsx`) plus the dead `CostMeter` / `MemoryLabel` badges
+are deleted. `ModelsBrowser` backs both the directory and the provider modal, so
+they still read identically. Stays web `partial` (app/-locked).
+
+## v7 - 2026-07-08
+
+Add a `signin` step to `interaction-card`. The pending-interaction sequence now
+orders question steps, THEN at most one signin step, THEN connect steps. A signin
+step appears when Houston reports the user must sign in before a tool call can run
+(the runtime queues it alongside any connect steps in the same flow). Like a
+connect step it carries no answer text and advances only when the app reports the
+user signed in; ui/chat stays auth-unaware via a required `renderSignin` prop
+(mirrors `renderConnect`), and the app supplies the sign-in card driving the
+existing sign-in machinery. It counts in "N of X" and supports back/forward like
+any other step (a revisited signin step relies on the stepper's forward chevron
+since its card never re-fires once signed in). Completion contributes a
+"Signed in to Houston." line before any connected lines. No design/surface change
+to the card chrome. Web keeps `@houston-ai/chat` `ChatInteractionCard`, so it
+stays `implemented`.
+
+## v6 - 2026-07-07
+
+Rename `question-card` to `interaction-card` and rebuild it as a one-step-at-a-time
+stepper. The card now walks the user through a `steps[]` sequence (1-3 question
+steps THEN connect steps) one step at a time, with a quiet "N of X" progress
+indicator (shown only when total > 1) and a back chevron from step 2 on.
+Question steps keep the vertical single-select option rows and an always-visible
+free-text escape hatch; clicking an option or submitting typed text answers the
+current step and advances. Connect steps render an app-supplied connect card
+(ui/chat stays Composio-unaware via a `renderConnect` prop) and advance only on
+`onConnected`. Revisiting a step pre-selects its prior answer; re-answering
+replaces it. A single question-with-options step keeps the one-tap feel. The card
+collects `ChatInteractionAnswer[]` and hands them to `onComplete`; the app formats
+the resume message. Surface flips `bg-card` to `bg-secondary` (the product's grey
+card token) so the white option rows and free-text input read as raised, distinct
+chips in light and inset wells in dark. Batching (all questions at once) is gone.
+Web ships `@houston-ai/chat` `ChatInteractionCard`, so it stays `implemented`;
+`ChatQuestionCard` and its logic/parts/tests are deleted with no compat re-export.
+
+## v5 - 2026-07-06
+
+Redesign `question-card` to the composer family and batch questions. `ask_user`
+now asks 1-3 questions in one call (protocol `question` variant carries
+`questions[]`). The card stacks questions vertically, each with vertical
+single-select option rows (role=radio, toggle on re-click), and a free-text
+field that is ALWAYS visible at the bottom (the "own-answer-toggle" is removed,
+satisfying no-hover-only-affordances directly). The surface adopts the
+composer's exact vocabulary — `rounded-[28px]` `bg-card`, soft shadow with a
+focus-within lift, a borderless inline textarea, and the round `PromptInputSubmit`
+send — so card and composer read as one family. Fast path: a single question
+with options and empty input sends on option click. Send otherwise composes one
+`"<question>: <label>"` line per answered question plus appended free text.
+Still shared web (`@houston-ai/chat` `ChatQuestionCard`), so it stays
+`implemented`.
+
+## v4 - 2026-07-06
+
+Add `question-card`: the in-chat surface shown when the agent pauses mid-turn to
+ask the user a question (protocol `PendingInteraction` kind=question). Replaces
+the composer until answered; prominent prompt, always-visible option buttons, a
+quiet toggle to an inline free-text answer (shown directly when there are no
+options). Web ships it as a shared `ui/` piece (`@houston-ai/chat`
+`ChatQuestionCard`), so it lands `implemented`.
+
+## v3 - 2026-07-05
+
+Add `agent-provisioning-card` (HOU-693): the in-chat notice (and its
+blocked-write-dialog variant) shown while a just-created agent's hosted engine
+warms up. Web ships it app/-locked (`agent-provisioning-card.tsx` +
+`agent-warming-dialog.tsx`), so it lands as `partial` -- extract before mobile.
+
+## v2 - 2026-07-03
+
+Add the AI models hub's reusable content components: `ai-provider-card`,
+`ai-model-row`, and `ai-model-offer-row`. The hub is a new top-level marketplace
+surface (browse hundreds of models, connect a provider); its navigation shell
+is surface-specific idiom and stays uninventoried. Web implements all three but
+app/-locked (in `app/src/components/ai-hub/`, not a shared `ui/` package), so
+they land as `partial`.
+
+## v1 - 2026-07-03
+
+Initial component inventory. 22 components derived from an audit of the `ui/`
+packages — the shared components of the web/desktop tree. Establishes the
+structural-parity contract and the `web` manifest.
+
+Components: agent-avatar, agent-list-item, conversation-feed, assistant-message,
+user-message, thinking-indicator, tool-call-chip, provider-error-card,
+system-message, skill-invocation-message, composer, turn-status, progress-panel,
+approval-surface, deliverable-card, mission-card, mission-board,
+mission-status-chip, routine-row, skill-row, empty-state, toast.
+
+Surfaces: web (enforced, inventoryVersion 1).
+
+## vN` headings.

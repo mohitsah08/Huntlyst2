@@ -1,0 +1,261 @@
+//! Drive `claude auth login --claudeai` for the user — browser approve, zero
+//! terminal.
+//!
+//! The installed `claude` CLI's `auth login --claudeai` is a plain readline
+//! stdio flow (NOT an Ink TUI): it prints `Opening browser to sign in…` then a
+//! line `If the browser didn't open, visit: <AUTHORIZE_URL>`, auto-opens the
+//! browser, and waits. The authorize URL carries `code=true` with the redirect
+//! aimed at platform.claude.com (no localhost redirect): after the user
+//! approves, that callback page tries to hand the authorization code to the
+//! CLI's local listener automatically — the seamless path — and when the
+//! hand-off is blocked (firewalls, strict browsers; common on Windows) it shows
+//! the user a code instead, which the CLI awaits on stdin
+//! (`Paste code here if prompted >`; relayed via [`code_input`]). Either way
+//! the CLI caches the credential, prints `Login successful`, and exits 0. On
+//! failure it exits non-zero.
+//!
+//! We run it as a piped child so the app can (1) surface the authorize URL to
+//! the webview (as a copy/paste fallback when the auto-open browser doesn't
+//! fire) and (2) report success/failure back to the UI — the terminal is never
+//! shown. The cached credential is SCOPED BY the `CLAUDE_CONFIG_DIR` env var, so
+//! the login MUST run with that pointed at Houston's shared login dir; the
+//! engine (which reads the same dir) then sees the credential.
+//!
+//! Two Tauri events carry the flow to the webview:
+//!   * `claude-login://url`  — payload is the authorize URL `String` (emitted at
+//!     most once, when the CLI prints its `visit:` line).
+//!   * `claude-login://done` — payload `{ success: bool, error: string | null,
+//!     helperUnavailable?: bool, shellUnavailable?: bool }`.
+//!     A `null` error on `success: false` is a benign CANCEL (the frontend
+//!     treats it as a silent dismissal, not a failure to toast).
+//!     `helperUnavailable: true` means the helper binary cannot run on this
+//!     machine at all (pre-AVX2 CPU, signal death) — the frontend degrades a
+//!     remote-engine login to the runtime's paste flow instead of toasting.
+//!     `shellUnavailable: true` means the CLI started but refused its Windows
+//!     shell gate (no runnable Git Bash / PowerShell; [`shell_gate`]) — same
+//!     degrade path, and a co-located engine gets install-Git copy.
+//!     `networkUnavailable: true` means the CLI could not reach
+//!     `platform.claude.com` (offline, DNS; [`network_gate`]) — the frontend
+//!     shows its connectivity toast instead of the raw CLI text.
+//!
+//! Cancel + child kill run through `ClaudeLoginState`; the background task that
+//! owns the child polls a shared cancel flag and tears the child down when set.
+//!
+//! Split across submodules to stay under the 200-line file limit:
+//!   * [`resolve`] — binary/config-dir resolution, command building, URL parse.
+//!   * [`runner`] — the spawn/stream/wait state machine (`run_login_child`).
+//!   * [`exit_report`] — classify a non-zero exit into flags + log level.
+//!   * [`shell_gate`] — classify the CLI's Windows shell-gate refusal.
+//!   * [`network_gate`] — classify an offline / unreachable-host failure.
+//!   * [`credential`] — extract the cached credential to PUSH to a remote pod.
+
+// `pub(crate)` so `generate_handler!` in `lib.rs` can name the command at its
+// defining path (`claude_login::credential::read_claude_credential`) — the macro
+// resolves the sibling `__cmd__*` items in the module where the command lives, so
+// a re-export of just the fn would not carry them.
+pub(crate) mod code_input;
+mod cpu;
+pub(crate) mod credential;
+pub(crate) mod discard;
+mod exit_report;
+mod network_gate;
+mod resolve;
+mod runner;
+mod shell_gate;
+
+use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+
+use serde_json::Value;
+use tauri::{AppHandle, Emitter, State};
+
+use resolve::{build_login_command, resolve_claude_binary};
+use runner::run_login_child;
+
+/// Tauri event carrying the authorize URL to the webview (copy/paste fallback).
+const EVENT_URL: &str = "claude-login://url";
+
+/// Tauri event carrying the terminal result to the webview.
+/// Payload: `{ success: bool, error: string | null }`.
+const EVENT_DONE: &str = "claude-login://done";
+
+/// Houston's shared Claude login dir, used as `CLAUDE_CONFIG_DIR` for both a
+/// CO-LOCATED login AND the engine so the cached credential is visible to the
+/// engine. The engine reads ONLY this dir — never the handoff dir below.
+pub(super) fn claude_login_config_dir() -> PathBuf {
+    crate::houston_dir().join("claude-login")
+}
+
+/// Config dir for a REMOTE-engine login (`handoff: true`): the minted
+/// credential's refresh-token family will be owned and rotated by the gateway
+/// alone, so it must never land in the engine-shared dir — a co-located engine
+/// reading it later would put a second rotator on the family, and Anthropic's
+/// refresh-token-reuse detection then revokes the whole family (HOU-950). The
+/// credential lives here only between `Login successful` and the push; the
+/// frontend destroys it afterwards (`discard`). Fixed (not per-login random)
+/// so the macOS Keychain item it maps to is stable: each login overwrites it,
+/// and a failed discard leaves at most one inert, never-rotated credential
+/// behind for the next login to overwrite.
+pub(super) fn claude_handoff_config_dir() -> PathBuf {
+    crate::houston_dir().join("claude-login-handoff")
+}
+
+/// The login's `CLAUDE_CONFIG_DIR` for the given topology.
+pub(super) fn config_dir_for(handoff: bool) -> PathBuf {
+    if handoff {
+        claude_handoff_config_dir()
+    } else {
+        claude_login_config_dir()
+    }
+}
+
+/// Managed state so `cancel_claude_login` can tear down an in-flight login.
+/// Holds only the shared cancel flag — the child itself lives in the background
+/// task, which polls the flag and kills the child when it flips.
+#[derive(Default)]
+pub struct ClaudeLoginState(pub tokio::sync::Mutex<Option<ClaudeLoginHandle>>);
+
+/// The cancel + code-relay side of one in-flight login. `start_claude_login`
+/// overwrites this on each fresh attempt; a stale handle left after a completed
+/// login is benign (nothing polls the flag once the task has finished, and a
+/// late code write fails loudly on the closed pipe).
+pub struct ClaudeLoginHandle {
+    cancel: Arc<AtomicBool>,
+    /// The child's piped stdin, for `submit_claude_login_code` — the CLI's
+    /// `Paste code here if prompted >` fallback (see `code_input`).
+    stdin: code_input::StdinSlot,
+}
+
+/// Start the native Claude sign-in. `handoff: true` (remote engine) mints into
+/// the throwaway handoff dir instead of the engine-shared one — see
+/// [`claude_handoff_config_dir`]. Returns `Err` (→ frontend toast) only for
+/// the up-front, user-visible failures: the config dir can't be created, or the
+/// helper can't be spawned. Once the child is up, the flow reports its result
+/// through the `claude-login://done` event instead.
+#[tauri::command(rename_all = "snake_case")]
+pub async fn start_claude_login(
+    app: AppHandle,
+    state: State<'_, ClaudeLoginState>,
+    handoff: bool,
+) -> Result<(), String> {
+    // Don't spawn a binary that dies instantly with SIGILL: Bun-compiled
+    // helpers need AVX2 on x86-64, and a pre-2013 CPU produced only an
+    // inscrutable "exit signal" toast users retried in vain
+    // (HOUSTON-APP-543). Report through the `done` event — not `Err` — so
+    // the frontend's one failure router can degrade a remote-engine login
+    // to the runtime's paste flow.
+    if let Some(reason) = cpu::unsupported_reason() {
+        let error = format!("Claude sign-in helper cannot run: {reason}");
+        // WARN, not error: an unsupported CPU is an environmental fact with a
+        // designed degrade path (paste flow), not something in Houston
+        // breaking — same reasoning as the signal-death arm in `runner`.
+        tracing::warn!("[claude-login] {error}");
+        app.emit(
+            EVENT_DONE,
+            serde_json::json!({ "success": false, "error": error, "helperUnavailable": true }),
+        )
+        .map_err(|e| format!("Could not report the sign-in result: {e}"))?;
+        return Ok(());
+    }
+
+    let config_dir = config_dir_for(handoff);
+    // The CLI writes the cached credential here; it must exist first.
+    std::fs::create_dir_all(&config_dir).map_err(|e| {
+        format!(
+            "Could not prepare the Claude sign-in directory ({}): {e}",
+            config_dir.display()
+        )
+    })?;
+
+    // Cancel any still-running login before starting a fresh one: flipping the
+    // previous attempt's flag makes its background task kill that child. Without
+    // this, a retry (or a Connect click after a card-level Cancel) would leave two
+    // `claude auth login` children racing their loopbacks and two live done
+    // listeners firing conflicting completions.
+    {
+        let guard = state.0.lock().await;
+        if let Some(prev) = guard.as_ref() {
+            prev.cancel.store(true, Ordering::SeqCst);
+        }
+    }
+
+    let bin = resolve_claude_binary();
+    // Spawn synchronously so a launch failure surfaces as a toast (Err) rather
+    // than an async `done` event.
+    let mut child = build_login_command(&bin, &config_dir)
+        .spawn()
+        .map_err(|e| format!("Could not start the Claude sign-in helper: {e}"))?;
+    tracing::info!(
+        "[claude-login] spawned {} with CLAUDE_CONFIG_DIR={}",
+        bin.display(),
+        config_dir.display()
+    );
+
+    // Publish the cancel flag + stdin slot before the task starts so a Cancel
+    // or a pasted code racing the spawn is honored.
+    let cancel = Arc::new(AtomicBool::new(false));
+    let stdin: code_input::StdinSlot = Arc::new(tokio::sync::Mutex::new(child.stdin.take()));
+    {
+        let mut guard = state.0.lock().await;
+        *guard = Some(ClaudeLoginHandle {
+            cancel: cancel.clone(),
+            stdin,
+        });
+    }
+
+    let app_for_task = app.clone();
+    tokio::spawn(async move {
+        run_login_child(child, cancel, move |name, payload| {
+            // Resurface the app when the browser approve lands (mirrors the
+            // OAuth loopback's snap-back).
+            if name == EVENT_DONE && payload.get("success").and_then(Value::as_bool) == Some(true) {
+                crate::window_focus::bring_to_front(&app_for_task);
+            }
+            // Emitting is fallible, but this task already outlived the command
+            // that returned to the UI — there is no Result left to toast. This
+            // is the documented event-callback exception to the
+            // no-silent-failure rule; the frontend's retry is the safety net.
+            if let Err(e) = app_for_task.emit(name, payload) {
+                tracing::error!("[claude-login] failed to emit {name}: {e}");
+            }
+        })
+        .await;
+    });
+
+    Ok(())
+}
+
+/// Cancel an in-flight login. Idempotent and benign when nothing is running
+/// (no handle → no-op). Flipping the flag makes the background task's wait loop
+/// kill the child and emit `claude-login://done { success: false, error: null }`
+/// — a silent dismissal, not a failure.
+#[tauri::command(rename_all = "snake_case")]
+pub async fn cancel_claude_login(state: State<'_, ClaudeLoginState>) -> Result<(), String> {
+    let guard = state.0.lock().await;
+    if let Some(handle) = guard.as_ref() {
+        handle.cancel.store(true, Ordering::SeqCst);
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn config_dir_lives_under_houston_home() {
+        // The shared login dir hangs off the Houston data root.
+        assert!(claude_login_config_dir().ends_with("claude-login"));
+    }
+
+    #[test]
+    fn handoff_dir_is_distinct_from_the_engine_shared_dir() {
+        // The whole point: a remote-engine mint must never be visible to a
+        // co-located engine, or two rotators share one refresh-token family.
+        assert!(claude_handoff_config_dir().ends_with("claude-login-handoff"));
+        assert_ne!(claude_handoff_config_dir(), claude_login_config_dir());
+        assert_eq!(config_dir_for(true), claude_handoff_config_dir());
+        assert_eq!(config_dir_for(false), claude_login_config_dir());
+    }
+}

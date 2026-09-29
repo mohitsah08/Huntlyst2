@@ -1,0 +1,337 @@
+import { expect, test, vi } from "vitest";
+import { canonicalJSON, HttpDocShadow } from "./http-shadow";
+
+test("doc shadow seeds and advances If-Match with fencing headers", async () => {
+  const requests: RequestInit[] = [];
+  const fetchImpl = vi.fn(async (_url: string | URL, init?: RequestInit) => {
+    requests.push(init ?? {});
+    if (!init?.method || init.method === "GET") {
+      return Response.json({ doc: [], revision: 4 });
+    }
+    return Response.json({ revision: 5 });
+  });
+  const shadow = new HttpDocShadow({
+    gateway: {
+      baseUrl: "https://store.example",
+      orgSlug: "acme",
+      agentSlug: "helper",
+      podToken: "pod-token",
+      bootId: "boot-1",
+      fence: { token: "51" },
+    },
+    fetchImpl: fetchImpl as typeof fetch,
+  });
+
+  await shadow.seed();
+  await shadow.put("learnings", [{ id: "l1" }]);
+
+  const headers = new Headers(requests.at(-1)?.headers);
+  expect(headers.get("if-match")).toBe("4");
+  expect(headers.get("x-houston-fencing-token")).toBe("51");
+  expect(headers.get("x-houston-boot-id")).toBe("boot-1");
+  expect(requests.at(-1)?.body).toBe('{"doc":[{"id":"l1"}]}');
+});
+
+test("adopts a conflict revision and retries the PUT once", async () => {
+  const requests: RequestInit[] = [];
+  const fetchImpl = vi.fn(async (_url: string | URL, init?: RequestInit) => {
+    requests.push(init ?? {});
+    if (!init?.method) return Response.json({ doc: [], revision: 4 });
+    if (requests.filter((request) => request.method === "PUT").length === 1) {
+      return Response.json({ revision: 7 }, { status: 409 });
+    }
+    return Response.json({ revision: 8 });
+  });
+  const shadow = new HttpDocShadow({
+    gateway: {
+      baseUrl: "https://store.example",
+      orgSlug: "acme",
+      agentSlug: "helper",
+      podToken: "pod-token",
+      bootId: "boot-1",
+      fence: {},
+    },
+    fetchImpl: fetchImpl as typeof fetch,
+  });
+
+  await expect(shadow.put("activity", [{ id: "m1" }])).resolves.toBeUndefined();
+
+  const puts = requests.filter((request) => request.method === "PUT");
+  expect(puts).toHaveLength(2);
+  expect(new Headers(puts[0]?.headers).get("if-match")).toBe("4");
+  expect(new Headers(puts[1]?.headers).get("if-match")).toBe("7");
+});
+
+test("a conflict without a revision clears the cache and lazily re-seeds", async () => {
+  const requests: RequestInit[] = [];
+  let getRevision = 4;
+  let conflict = true;
+  const fetchImpl = vi.fn(async (_url: string | URL, init?: RequestInit) => {
+    requests.push(init ?? {});
+    if (!init?.method) return Response.json({ doc: [], revision: getRevision });
+    if (conflict) {
+      conflict = false;
+      getRevision = 9;
+      return new Response("conflict", { status: 409 });
+    }
+    return Response.json({ revision: 10 });
+  });
+  const shadow = new HttpDocShadow({
+    gateway: {
+      baseUrl: "https://store.example",
+      orgSlug: "acme",
+      agentSlug: "helper",
+      podToken: "pod-token",
+      bootId: "boot-1",
+      fence: {},
+    },
+    fetchImpl: fetchImpl as typeof fetch,
+  });
+
+  await shadow.put("activity", [{ id: "a0" }]);
+  await shadow.put("activity", [{ id: "a1" }]);
+
+  expect(requests.map((request) => request.method ?? "GET")).toEqual([
+    "GET",
+    "PUT",
+    "GET",
+    "PUT",
+  ]);
+  expect(new Headers(requests[3]?.headers).get("if-match")).toBe("9");
+});
+
+test("a failed boot seed stays unseeded and the next PUT lazily fetches", async () => {
+  const requests: RequestInit[] = [];
+  let bootSeeding = true;
+  const fetchImpl = vi.fn(async (_url: string | URL, init?: RequestInit) => {
+    requests.push(init ?? {});
+    if (bootSeeding) throw new Error("gateway unavailable");
+    if (!init?.method) return Response.json({ doc: [], revision: 12 });
+    return Response.json({ revision: 13 });
+  });
+  const shadow = new HttpDocShadow({
+    gateway: {
+      baseUrl: "https://store.example",
+      orgSlug: "acme",
+      agentSlug: "helper",
+      podToken: "pod-token",
+      bootId: "boot-1",
+      fence: {},
+    },
+    fetchImpl: fetchImpl as typeof fetch,
+    retryDelaysMs: [],
+  });
+
+  await shadow.seed();
+  bootSeeding = false;
+  await shadow.put("activity", [{ id: "fresh" }]);
+
+  const afterSeed = requests.slice(-2);
+  expect(afterSeed.map((request) => request.method ?? "GET")).toEqual([
+    "GET",
+    "PUT",
+  ]);
+  expect(new Headers(afterSeed[1]?.headers).get("if-match")).toBe("12");
+});
+
+test("an unchanged doc costs one GET and no PUT, even key-reordered", async () => {
+  const requests: RequestInit[] = [];
+  const fetchImpl = vi.fn(async (_url: string | URL, init?: RequestInit) => {
+    requests.push(init ?? {});
+    if (!init?.method) {
+      // jsonb returns keys in its own order; content is identical.
+      return Response.json({
+        doc: [{ title: "Say Hi", id: "m1", status: "needs_you" }],
+        revision: 6,
+      });
+    }
+    return Response.json({ revision: 7 });
+  });
+  const shadow = new HttpDocShadow({
+    gateway: {
+      baseUrl: "https://store.example",
+      orgSlug: "acme",
+      agentSlug: "helper",
+      podToken: "pod-token",
+      bootId: "boot-1",
+      fence: {},
+    },
+    fetchImpl: fetchImpl as typeof fetch,
+  });
+
+  await shadow.put("activity", [
+    { id: "m1", title: "Say Hi", status: "needs_you" },
+  ]);
+  expect(requests.filter((request) => request.method === "PUT")).toHaveLength(
+    0,
+  );
+
+  await shadow.put("activity", [
+    { id: "m1", title: "Renamed", status: "needs_you" },
+  ]);
+  expect(requests.filter((request) => request.method === "PUT")).toHaveLength(
+    1,
+  );
+});
+
+test("canonicalJSON keeps a parsed __proto__ key as content", () => {
+  // JSON.parse creates "__proto__" as an OWN property; the canonicalizer must
+  // not lose it to the prototype setter, else two docs differing only in that
+  // key compare equal and the skip-if-equal check suppresses a required PUT.
+  const withProto = JSON.parse('{"__proto__":{"a":1},"b":2}') as unknown;
+  const withoutProto = JSON.parse('{"b":2}') as unknown;
+  expect(canonicalJSON(withProto)).not.toBe(canonicalJSON(withoutProto));
+  expect(canonicalJSON(withProto)).toContain("__proto__");
+});
+
+const GATEWAY = {
+  baseUrl: "https://store.example",
+  orgSlug: "acme",
+  agentSlug: "helper",
+  podToken: "pod-token",
+  bootId: "boot-1",
+  fence: {},
+};
+
+test("an unknown-family 400 latches that family only, at warning level", async () => {
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  const requests: RequestInit[] = [];
+  const fetchImpl = vi.fn(async (url: string | URL, init?: RequestInit) => {
+    requests.push(init ?? {});
+    if (String(url).endsWith("/skills")) {
+      return Response.json(
+        { error: "invalid document family" },
+        { status: 400 },
+      );
+    }
+    if (!init?.method) return Response.json({ doc: [], revision: 1 });
+    return Response.json({ revision: 2 });
+  });
+  const shadow = new HttpDocShadow({
+    gateway: GATEWAY,
+    fetchImpl: fetchImpl as typeof fetch,
+    retryDelaysMs: [],
+  });
+
+  await expect(shadow.put("skills", [{ id: "s1" }])).resolves.toBeUndefined();
+  await shadow.put("skills", [{ id: "s2" }]);
+  const skillsRequests = requests.length;
+  // A family the gateway does know keeps projecting.
+  await shadow.put("activity", [{ id: "a1" }]);
+
+  expect(skillsRequests).toBe(1);
+  expect(requests.length).toBe(3);
+  expect(warn).toHaveBeenCalledWith(
+    expect.stringContaining("does not know family skills"),
+  );
+  expect(error).not.toHaveBeenCalled();
+  warn.mockRestore();
+  error.mockRestore();
+});
+
+test("a 503 PUT retries on the ladder and succeeds", async () => {
+  const requests: RequestInit[] = [];
+  let failures = 1;
+  const fetchImpl = vi.fn(async (_url: string | URL, init?: RequestInit) => {
+    requests.push(init ?? {});
+    if (!init?.method) return Response.json({ doc: [], revision: 4 });
+    if (failures-- > 0) {
+      return Response.json(
+        { error: "transcript store unavailable" },
+        { status: 503 },
+      );
+    }
+    return Response.json({ revision: 5 });
+  });
+  const shadow = new HttpDocShadow({
+    gateway: GATEWAY,
+    fetchImpl: fetchImpl as typeof fetch,
+    retryDelaysMs: [0],
+  });
+
+  await shadow.put("activity", [{ id: "a1" }]);
+
+  expect(requests.filter((request) => request.method === "PUT")).toHaveLength(
+    2,
+  );
+});
+
+test("an exhausted 503 defers at warning and the next publish retries", async () => {
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  const requests: RequestInit[] = [];
+  let unavailable = true;
+  const fetchImpl = vi.fn(async (_url: string | URL, init?: RequestInit) => {
+    requests.push(init ?? {});
+    if (!init?.method) return Response.json({ doc: [], revision: 4 });
+    if (unavailable) {
+      return Response.json(
+        { error: "transcript store unavailable" },
+        { status: 503 },
+      );
+    }
+    return Response.json({ revision: 5 });
+  });
+  const shadow = new HttpDocShadow({
+    gateway: GATEWAY,
+    fetchImpl: fetchImpl as typeof fetch,
+    retryDelaysMs: [],
+  });
+
+  await expect(shadow.put("activity", [{ id: "a1" }])).resolves.toBeUndefined();
+  expect(warn).toHaveBeenCalledWith(
+    expect.stringContaining("activity PUT deferred"),
+  );
+  expect(error).not.toHaveBeenCalled();
+
+  unavailable = false;
+  await shadow.put("activity", [{ id: "a1" }]);
+  // The cached revision survived the deferral: no re-seed, straight to PUT.
+  expect(requests.map((request) => request.method ?? "GET")).toEqual([
+    "GET",
+    "PUT",
+    "PUT",
+  ]);
+  warn.mockRestore();
+  error.mockRestore();
+});
+
+test("a 503 seed defers at warning, never a Sentry error", async () => {
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  const fetchImpl = vi.fn(async () =>
+    Response.json({ error: "transcript store unavailable" }, { status: 503 }),
+  );
+  const shadow = new HttpDocShadow({
+    gateway: GATEWAY,
+    fetchImpl: fetchImpl as typeof fetch,
+    retryDelaysMs: [],
+  });
+
+  await shadow.put("activity", [{ id: "a1" }]);
+
+  expect(warn).toHaveBeenCalledWith(
+    expect.stringContaining("activity seed deferred"),
+  );
+  expect(error).not.toHaveBeenCalled();
+  warn.mockRestore();
+  error.mockRestore();
+});
+
+test("put with an undefined doc throws instead of silently skipping", async () => {
+  const shadow = new HttpDocShadow({
+    gateway: {
+      baseUrl: "https://store.example",
+      orgSlug: "acme",
+      agentSlug: "helper",
+      podToken: "pod-token",
+      bootId: "boot-1",
+      fence: {},
+    },
+    fetchImpl: (async () => Response.json({ revision: 1 })) as typeof fetch,
+  });
+  await expect(shadow.put("activity", undefined)).rejects.toThrow(
+    /without a document/,
+  );
+});

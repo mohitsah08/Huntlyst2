@@ -1,0 +1,270 @@
+# Houston PR CI Gate
+#
+# Fast, hermetic, secret-free TypeScript gate that runs on every pull request
+# targeting `main`. pnpm owns every JS/TS package and Vitest owns unit/contract
+# tests. Bun is deliberately absent from this workflow; it remains only for the
+# host-sidecar binary compile workflow (`scripts/build-host-sidecar.sh`).
+
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: TS checks (lint · typecheck · contract tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Biome check
+        run: pnpm check
+
+      - name: Boundary check
+        run: pnpm check:boundaries
+
+      - name: AppImage sidecar repair regression test
+        run: scripts/test/repair-linux-appimage-sidecar.test.sh
+
+      - name: Parity check (cross-surface component inventory)
+        run: pnpm check:parity
+
+      - name: Typecheck (pnpm workspace)
+        run: pnpm -r typecheck
+
+      # The engine pods run the BUNDLED host/runtime, and bundling can fail in
+      # ways nothing above can see: an import that pulls a module into esbuild's
+      # async-init subgraph makes it emit `await init_x()` inside a non-async
+      # wrapper, and the bundle dies at startup with `SyntaxError: Unexpected
+      # reserved word`. That shipped once (HOU-952) — typecheck and 1,984 tests
+      # were green, and the only build that would have caught it runs AFTER
+      # merge. Bundling takes ~50ms; parse the output here instead.
+      - name: Engine bundle parses (host + runtime)
+        run: |
+          set -euo pipefail
+          node selfhost/bundle.mjs
+          node --check dist/runtime/main.mjs
+          node --check dist/host/main.mjs
+
+      - name: Unit + contract tests (Vitest)
+        run: |
+          set -euo pipefail
+          pnpm --filter @houston/domain test
+          pnpm --filter @houston/host test
+          pnpm --filter @houston/runtime test
+          pnpm --filter @houston/code-sandbox test
+          pnpm --filter @houston/engine-adapter test
+          pnpm --filter @houston/wire-types test
+          pnpm exec vitest run scripts/check-parity.test.mjs scripts/publish-starter-agents.test.mjs scripts/lib/release-train.test.mjs scripts/gen-manychat-openapi.test.mjs scripts/sdk-parity scripts/assistant-catalog/tests
+
+  web:
+    # The UI suite is split across runners with Playwright's native --shard,
+    # ONE worker per runner: the shards run concurrently, so the wall clock is
+    # one shard's slice of the suite instead of the whole serial run, while
+    # each test still executes in the exact single-worker environment the
+    # suite has always been stable in on this hardware. Higher density was
+    # tried and starves renders on the 4-vCPU runner (one single-threaded vite
+    # dev process serves every worker's page boots): 4 workers blew expect
+    # budgets outright (run 30596416439), and even 2 workers left the heavy
+    # signed-in specs flaking on animation transients (run 30597930896).
+    # Typecheck + unit tests ride shard 1 only.
+    name: Web (typecheck + unit + UI tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # No apt in this job. `playwright install --with-deps` ran apt-get on
+      # every shard, and each mirror has now taken the whole 30-minute job
+      # in turn: azure.archive.ubuntu.com on 2026-08-19 (the fix pinned
+      # archive.ubuntu.com), then archive.ubuntu.com itself on 2026-09-11
+      # (run 34598755800: one package every 4-5 minutes, three shards timed
+      # out on three attempts). The runner image already ships every
+      # library Chromium needs - that run's apt transcript installed NINE
+      # packages, all fonts (fonts-freefont-ttf, fonts-ipafont-gothic,
+      # fonts-wqy-zenhei, xfonts-*...), which these functional shards do
+      # not depend on; the pixel-exact visual suite runs inside the pinned
+      # Playwright image below. The browser itself comes from Playwright's
+      # CDN and is cached per Playwright version, so a warm shard downloads
+      # nothing. A library the image stops shipping fails the smoke launch
+      # in seconds with Playwright's own missing-dependency list, never a
+      # silent 30-minute stall.
+      - name: Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('./packages/web/package.json').devDependencies['@playwright/test']")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright Chromium
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      - name: Install Playwright Chromium
+        if: ${{ steps.playwright-cache.outputs.cache-hit != 'true' }}
+        timeout-minutes: 5
+        run: pnpm --filter houston-web exec playwright install chromium
+
+      - name: Smoke-launch Chromium (host dependency check)
+        timeout-minutes: 2
+        run: pnpm --filter houston-web exec node -e "require('@playwright/test').chromium.launch().then((b) => b.close())"
+
+      - name: Typecheck (web)
+        if: ${{ matrix.shard == 1 }}
+        run: pnpm --filter houston-web typecheck
+
+      - name: Typecheck (e2e harness)
+        if: ${{ matrix.shard == 1 }}
+        run: pnpm --filter houston-web typecheck:e2e
+
+      - name: Unit tests (web)
+        if: ${{ matrix.shard == 1 }}
+        run: pnpm --filter houston-web test
+
+      - name: UI tests (Playwright)
+        run: pnpm --filter houston-web test:e2e --shard=${{ matrix.shard }}/6
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        # The report is a debugging aid; a GitHub artifact-service hiccup
+        # (403 on FinalizeArtifact, seen on green shards) must not fail the job.
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-shard-${{ matrix.shard }}
+          path: packages/web/playwright-report/
+          retention-days: 14
+
+  visual:
+    name: Visual regression (Playwright screenshots)
+    # Runs INSIDE the pinned Playwright image so the render matches the committed
+    # `-linux` baselines pixel-for-pixel (same browser build, same fonts). The
+    # image tag MUST track `@playwright/test` in packages/web/package.json — bump
+    # both together, then regenerate baselines in the same image (see
+    # packages/web/e2e/README.md → Visual regression → Platforms).
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.1-noble
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Browsers ship in the image (PLAYWRIGHT_BROWSERS_PATH) — no install step.
+      - name: Visual tests (Playwright)
+        run: pnpm --filter houston-web test:visual
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        # The report is a debugging aid; a GitHub artifact-service hiccup
+        # (403 on FinalizeArtifact, seen on green shards) must not fail the job.
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-visual-report
+          path: packages/web/playwright-report/
+          retention-days: 14
+
+  app:
+    name: App (node:test unit tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Unit tests (app)
+        run: pnpm --filter houston-app test
+
+      # The desktop bundle resolves the engine adapter through a Vite alias
+      # that cannot see `@houston/app/*`. Only this build catches an adapter
+      # import the web build resolves fine (every Tauri release build failed on
+      # one while PR CI stayed green).
+      - name: Desktop bundle (typecheck + vite build)
+        run: pnpm --filter houston-app build
+
+  agentstore:
+    name: Agent Store (contract + app typecheck · tests · DB-less build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck (contract)
+        run: pnpm --filter @houston/agentstore-contract typecheck
+
+      - name: Unit + contract tests (contract)
+        run: pnpm --filter @houston/agentstore-contract test
+
+      - name: Typecheck (agentstore)
+        run: pnpm --filter houston-agentstore typecheck
+
+      - name: Unit tests (agentstore)
+        run: pnpm --filter houston-agentstore test
+
+      - name: Build (agentstore, no database)
+        run: pnpm --filter houston-agentstore build

@@ -1,0 +1,58 @@
+{
+  "import": {
+    "eyebrow": "De un amigo",
+    "flagged": "Marcado para revisarlo con cuidado.",
+    "step1": {
+      "title": "Trae un empleado de IA que alguien te compartió",
+      "body": "Abre un archivo que te enviaron, o pega un enlace para compartir. Lo leemos y te mostramos qué contiene antes de instalar nada.",
+      "pickFile": "Elegir archivo",
+      "uploadedFrom": "Compartido por {{name}}",
+      "anonymous": "tu amigo",
+      "counts": "{{skills}} skills, {{routines}} rutinas, {{learnings}} aprendizajes",
+      "anonymizedFlag": "Anonimizado antes de compartir.",
+      "scanChoiceLabel": "¿Quieres una revisión rápida de seguridad primero?",
+      "scanYesTitle": "Sí, que lo revise",
+      "scanYesBody": "Buscamos riesgos evidentes. No es garantía, es una lectura atenta.",
+      "scanNoTitle": "No, confío",
+      "scanNoBody": "Saltar la revisión y continuar.",
+      "scanning": "Revisando el paquete.",
+      "scanClean": "No se marcó nada.",
+      "scanFlagged": "Se marcaron {{count}} elemento(s). Revísalos mientras continúas.",
+      "scanDisclaimer": "Este paquete se revisó automáticamente. Es posible que la revisión no haya detectado todo. Abre cualquier cosa que parezca inusual antes de instalar."
+    },
+    "step2": {
+      "title": "Nombra a tu empleado de IA",
+      "placeholderName": "Tu empleado de IA",
+      "tagline": "Listo para ayudarte"
+    },
+    "step3": {
+      "title": "Elige qué skills traer",
+      "body": "Desmarca lo que no quieres traer."
+    },
+    "step4": {
+      "title": "Elige qué rutinas traer",
+      "body": "Las rutinas corren en horario. Esperan hasta que sus integraciones estén conectadas."
+    },
+    "step5": {
+      "title": "Elige qué aprendizajes conservar",
+      "body": "Los aprendizajes son notas que el empleado de IA usa como contexto. Puedes dejar afuera los personales."
+    },
+    "actions": {
+      "back": "Atrás",
+      "next": "Continuar",
+      "install": "Traer empleado de IA",
+      "installing": "Trayéndolo.",
+      "selectAll": "Seleccionar todo",
+      "clearAll": "Limpiar"
+    },
+    "errors": {
+      "uploadFailed": "No pude leer ese archivo.",
+      "installFailed": "No pude instalar el empleado de IA.",
+      "nameRequired": "Dale un nombre al empleado de IA."
+    },
+    "toasts": {
+      "installedTitle": "Empleado de IA listo",
+      "installedDescription": "{{name}} ya está en tu espacio."
+    }
+  }
+}

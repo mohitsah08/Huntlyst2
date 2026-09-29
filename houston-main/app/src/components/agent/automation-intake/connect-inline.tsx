@@ -1,0 +1,159 @@
+import { Button } from "@houston-ai/core";
+import { ArrowLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import {
+  useAgentCustomIntegrations,
+  useSubmitCustomCredential,
+} from "../../../hooks/queries";
+import { ConnectFlowInline } from "../../integrations/connect-flow-inline";
+import { CustomCredentialForm } from "../../integrations/custom-credential-form";
+import {
+  customAuthMethod,
+  isPendingCredential,
+} from "../../integrations/custom-integrations-model";
+import { useConnectFlow } from "../../integrations/use-connect-flow";
+
+interface ConnectInlineProps {
+  toolkit: string;
+  appName: string;
+  agentId: string;
+  /** The connection landed / the key was saved — advance to event picking. */
+  onConnected: () => void;
+  /** Return to the app grid. */
+  onBack: () => void;
+}
+
+/**
+ * The inline connect panel shown after the user picks a not-yet-connected app.
+ * Most apps hand off to the browser OAuth / hosted-key page via {@link
+ * useConnectFlow} (same page collects an API key for key-based Composio apps);
+ * a user-added custom (API / MCP) integration still waiting on its secret takes
+ * the in-app {@link CustomCredentialForm} instead — detected the same way the
+ * in-chat credential card decides. Either way, on success the connection view
+ * refetches and we continue to picking the event. A back affordance always
+ * returns to the app grid so this is never a dead end.
+ */
+export function ConnectInline(props: ConnectInlineProps) {
+  // Per-agent surface (HOU-823): this intake runs on managed cloud (triggers
+  // are cloud-only), where the top-level custom-integrations read 404s at the
+  // gateway — only the agent-scoped form reaches the pod.
+  const list = useAgentCustomIntegrations(props.agentId);
+  const view = list.data?.find((v) => v.slug === props.toolkit);
+  const needsKey = !!view && isPendingCredential(view);
+
+  return needsKey ? (
+    <CredentialConnect {...props} />
+  ) : (
+    <OAuthConnect {...props} />
+  );
+}
+
+function OAuthConnect({
+  toolkit,
+  appName,
+  agentId,
+  onConnected,
+  onBack,
+}: ConnectInlineProps) {
+  const { t } = useTranslation("routines");
+  const connectFlow = useConnectFlow({ agentId });
+  // Per-slug flow states (main's multi-connect API): this card only ever drives
+  // ONE toolkit, so "busy" is scoped to it rather than any in-flight connect.
+  const busy = toolkit in connectFlow.states;
+  // The inline block covers the whole flow, settled outcome included — but a
+  // settled notice must never gate the retry: the Connect button stays up
+  // whenever no flow is LIVE, so a failed attempt can be retried immediately
+  // while its outcome line is still visible above the button.
+  const showFlow =
+    toolkit in connectFlow.states || toolkit in connectFlow.notices;
+
+  const start = async () => {
+    const { outcome } = await connectFlow.connect(toolkit, `intake:${toolkit}`);
+    if (outcome === "active") onConnected();
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-balance text-ink text-sm leading-snug">
+        {t("triggerStep.connectReason", { app: appName })}
+      </p>
+      {showFlow && (
+        <ConnectFlowInline
+          appName={appName}
+          connectFlow={connectFlow}
+          toolkit={toolkit}
+        />
+      )}
+      {!busy && (
+        <Button
+          className="gap-1.5 self-start"
+          onClick={() => void start()}
+          size="sm"
+          type="button"
+        >
+          {t("triggerStep.connect")}
+        </Button>
+      )}
+      <BackButton disabled={busy} onBack={onBack} />
+    </div>
+  );
+}
+
+function CredentialConnect({
+  toolkit,
+  appName,
+  agentId,
+  onConnected,
+  onBack,
+}: ConnectInlineProps) {
+  const { t } = useTranslation("routines");
+  const list = useAgentCustomIntegrations(agentId);
+  const submit = useSubmitCustomCredential(agentId);
+  const view = list.data?.find((v) => v.slug === toolkit);
+  const authMethod = view ? customAuthMethod(view) : null;
+
+  const onSubmit = (values: Record<string, string>) => {
+    submit.mutate(
+      { slug: toolkit, values },
+      { onSuccess: () => onConnected() },
+    );
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-balance text-ink text-sm leading-snug">
+        {t("triggerStep.connectKeyReason", { app: appName })}
+      </p>
+      <CustomCredentialForm
+        authMethod={authMethod}
+        submitting={submit.isPending}
+        onSubmit={onSubmit}
+        submitLabel={t("triggerStep.saveKey")}
+        submittingLabel={t("triggerStep.savingKey")}
+        autoFocus
+      />
+      <BackButton disabled={submit.isPending} onBack={onBack} />
+    </div>
+  );
+}
+
+function BackButton({
+  disabled,
+  onBack,
+}: {
+  disabled: boolean;
+  onBack: () => void;
+}) {
+  const { t } = useTranslation("routines");
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onBack}
+      className="inline-flex items-center gap-1 self-start text-ink-muted text-xs transition-colors hover:text-ink focus-visible:text-ink focus-visible:outline-none disabled:opacity-60"
+    >
+      <ArrowLeft className="size-3.5" />
+      {t("triggerStep.back")}
+    </button>
+  );
+}

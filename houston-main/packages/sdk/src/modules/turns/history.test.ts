@@ -1,0 +1,410 @@
+import { AUTO_CONTINUE_MARKER } from "@houston/protocol";
+import type { ChatMessage } from "@houston/runtime-client";
+import { describe, expect, it } from "vitest";
+import { historyToFeed } from "./history";
+
+describe("historyToFeed", () => {
+  it("folds a user + assistant turn into user_message, assistant_text, final_result", () => {
+    const messages: ChatMessage[] = [
+      { role: "user", content: "hi", ts: 1 },
+      {
+        role: "assistant",
+        content: "hello",
+        ts: 2,
+        usage: { context_tokens: 10, output_tokens: 2, cached_tokens: 0 },
+      },
+    ];
+    expect(historyToFeed(messages)).toEqual([
+      { feed_type: "user_message", data: "hi", author: undefined, ts: 1 },
+      { feed_type: "assistant_text", data: "hello", ts: 2 },
+      {
+        feed_type: "final_result",
+        data: {
+          result: "hello",
+          cost_usd: null,
+          duration_ms: null,
+          usage: { context_tokens: 10, output_tokens: 2, cached_tokens: 0 },
+        },
+        ts: 2,
+      },
+    ]);
+  });
+
+  it("folds away a hidden auto-continue prompt — no surface renders the marker", () => {
+    const feed = historyToFeed([
+      { role: "user", content: "render the deck", ts: 1, turnId: "t-1" },
+      {
+        role: "user",
+        content: `${AUTO_CONTINUE_MARKER}\n\nA restart interrupted your reply`,
+        ts: 2,
+        turnId: "t-2",
+      },
+      { role: "assistant", content: "done", ts: 3, turnId: "t-2" },
+    ]);
+    expect(feed.filter((f) => f.feed_type === "user_message")).toEqual([
+      {
+        feed_type: "user_message",
+        data: "render the deck",
+        author: undefined,
+        mentions: undefined,
+        ts: 1,
+        turnId: "t-1",
+      },
+    ]);
+    expect(feed.some((f) => f.feed_type === "assistant_text")).toBe(true);
+  });
+
+  it("renders displayText as the user bubble when the stored prompt carried hidden text", () => {
+    const feed = historyToFeed([
+      {
+        role: "user",
+        content: "HIDDEN directive + /abs/path/to/file.pdf",
+        displayText: "Summarize my file",
+        ts: 1,
+      },
+    ]);
+    expect(feed[0]).toEqual({
+      feed_type: "user_message",
+      data: "Summarize my file",
+      author: undefined,
+      ts: 1,
+    });
+  });
+
+  it("falls back to content for a plain user message with no displayText", () => {
+    const feed = historyToFeed([{ role: "user", content: "hi", ts: 1 }]);
+    expect(feed[0]).toEqual({
+      feed_type: "user_message",
+      data: "hi",
+      author: undefined,
+      ts: 1,
+    });
+  });
+
+  it("replays a /clear marker as its own boundary, keeping the chat around it", () => {
+    const feed = historyToFeed([
+      { role: "user", content: "my flight is on the 4th", ts: 1 },
+      { role: "user", content: "/clear", ts: 2 },
+      { role: "assistant", content: "", ts: 3, contextCleared: true },
+      { role: "user", content: "hello again", ts: 4 },
+    ]);
+    expect(feed.find((f) => f.feed_type === "context_cleared")).toEqual({
+      feed_type: "context_cleared",
+      data: null,
+      ts: 3,
+    });
+    // A reload shows the user everything they said, on both sides of the line.
+    expect(feed.filter((f) => f.feed_type === "user_message")).toHaveLength(3);
+  });
+
+  it("replays a manual compaction with its trigger intact", () => {
+    const feed = historyToFeed([
+      {
+        role: "assistant",
+        content: "",
+        ts: 1,
+        compaction: { trigger: "manual", pre_tokens: 900 },
+      },
+    ]);
+    expect(feed.find((f) => f.feed_type === "context_compacted")?.data).toEqual(
+      {
+        trigger: "manual",
+        pre_tokens: 900,
+      },
+    );
+  });
+
+  it("carries the pi provider id through unchanged by default (identity map)", () => {
+    const feed = historyToFeed([
+      {
+        role: "assistant",
+        content: "on codex now",
+        ts: 1,
+        providerSwitch: { provider: "openai-codex", summarized: false },
+      },
+    ]);
+    expect(feed.find((f) => f.feed_type === "provider_switched")?.data).toEqual(
+      {
+        provider: "openai-codex",
+        summarized: false,
+        pre_tokens: undefined,
+      },
+    );
+  });
+
+  it("applies a caller's provider map to switch dividers and error cards", () => {
+    const map = (id: string) => (id === "openai-codex" ? "openai" : id);
+    const feed = historyToFeed(
+      [
+        {
+          role: "assistant",
+          content: "",
+          ts: 1,
+          providerError: {
+            kind: "unauthenticated",
+            provider: "openai-codex",
+            cause: "token_revoked",
+            message: "Your session has ended. Please log in again.",
+          },
+        },
+      ],
+      map,
+    );
+    expect(feed.find((f) => f.feed_type === "provider_error")?.data).toEqual({
+      kind: "unauthenticated",
+      provider: "openai",
+      cause: "token_revoked",
+      message: "Your session has ended. Please log in again.",
+    });
+  });
+
+  it("replays the provider-error card AFTER the turn's work, mirroring the live settle (PRODUCT-1578)", () => {
+    const feed = historyToFeed([
+      { role: "user", content: "go", ts: 1, turnId: "t-1" },
+      {
+        role: "assistant",
+        content: "got halfway",
+        thinking: "planning",
+        tools: [{ name: "shell" }],
+        ts: 2,
+        turnId: "t-1",
+        providerError: {
+          kind: "rate_limited",
+          provider: "anthropic",
+          model: null,
+          retry_after_seconds: null,
+          message: "slow down",
+        },
+      },
+    ]);
+    const types = feed.map((f) => f.feed_type);
+    // The card is the turn's LAST frame — a reload must show the failure at
+    // the bottom of the turn, never above its mission log and streamed text.
+    expect(types).toEqual([
+      "user_message",
+      "thinking",
+      "tool_call",
+      "tool_result",
+      "assistant_text",
+      "provider_error",
+    ]);
+  });
+
+  it("replays tool calls and preserves a multiplayer author on user messages", () => {
+    const feed = historyToFeed([
+      {
+        role: "user",
+        content: "run it",
+        ts: 1,
+        author: { userId: "u1", name: "Ada" },
+      },
+      {
+        role: "assistant",
+        content: "done",
+        ts: 2,
+        tools: [{ name: "shell", isError: true }],
+      },
+    ]);
+    expect(feed[0]).toEqual({
+      feed_type: "user_message",
+      data: "run it",
+      author: { userId: "u1", name: "Ada" },
+      ts: 1,
+    });
+    expect(feed).toContainEqual({
+      feed_type: "tool_call",
+      data: { name: "shell", input: {} },
+      ts: 2,
+    });
+    expect(feed).toContainEqual({
+      feed_type: "tool_result",
+      data: { content: "", is_error: true },
+      ts: 2,
+    });
+  });
+
+  it("folds a user message's @mentions onto its user_message frame", () => {
+    const feed = historyToFeed([
+      {
+        role: "user",
+        content: "@Ada Lovelace please confirm the renewals",
+        ts: 1,
+        author: { userId: "u1", name: "Bo" },
+        mentions: [{ userId: "u2", name: "Ada Lovelace" }],
+      },
+      { role: "assistant", content: "on it", ts: 2 },
+    ]);
+    expect(feed[0]).toEqual({
+      feed_type: "user_message",
+      data: "@Ada Lovelace please confirm the renewals",
+      author: { userId: "u1", name: "Bo" },
+      mentions: [{ userId: "u2", name: "Ada Lovelace" }],
+      ts: 1,
+    });
+    // Assistant prose is never structured: its @Names stay plain text.
+    expect(feed[1]).not.toHaveProperty("mentions");
+  });
+
+  it("leaves a user message that mentions nobody without mentions", () => {
+    const [frame] = historyToFeed([{ role: "user", content: "hi", ts: 1 }]);
+    expect(frame?.mentions).toBeUndefined();
+  });
+
+  it("replays persisted reasoning before the tool calls, with their inputs (HOU-717)", () => {
+    const feed = historyToFeed([
+      { role: "user", content: "run it", ts: 1 },
+      {
+        role: "assistant",
+        content: "done",
+        ts: 2,
+        thinking: "first list the files, then decide",
+        tools: [
+          {
+            name: "bash",
+            input: { cmd: "ls" },
+            result: "file-a\nfile-b",
+            isError: false,
+          },
+        ],
+      },
+    ]);
+    const thinkingIdx = feed.findIndex((f) => f.feed_type === "thinking");
+    const toolIdx = feed.findIndex((f) => f.feed_type === "tool_call");
+    expect(feed[thinkingIdx]).toEqual({
+      feed_type: "thinking",
+      data: "first list the files, then decide",
+      ts: 2, // additive: every frame carries its source message's epoch-ms ts
+    });
+    expect(thinkingIdx).toBeLessThan(toolIdx);
+    expect(feed[toolIdx]).toEqual({
+      feed_type: "tool_call",
+      data: { name: "bash", input: { cmd: "ls" } },
+      ts: 2,
+    });
+    // The persisted output preview replays as the tool's result.
+    expect(feed[toolIdx + 1]).toEqual({
+      feed_type: "tool_result",
+      data: { content: "file-a\nfile-b", is_error: false },
+      ts: 2,
+    });
+  });
+
+  it("replays a persisted file-change summary after the assistant text", () => {
+    const feed = historyToFeed([
+      { role: "user", content: "make a report", ts: 1 },
+      {
+        role: "assistant",
+        content: "Report ready.",
+        ts: 2,
+        fileChanges: { created: ["report.pdf"], modified: ["notes.md"] },
+      },
+    ]);
+    const textIdx = feed.findIndex((f) => f.feed_type === "assistant_text");
+    const changesIdx = feed.findIndex((f) => f.feed_type === "file_changes");
+    expect(changesIdx).toBeGreaterThan(textIdx);
+    expect(feed[changesIdx].data).toEqual({
+      created: ["report.pdf"],
+      modified: ["notes.md"],
+    });
+  });
+
+  it("replays the standard stop line for a persisted stopped turn, after the text", () => {
+    const feed = historyToFeed([
+      { role: "user", content: "do it", ts: 1 },
+      { role: "assistant", content: "working on it", ts: 2, stopped: true },
+    ]);
+    const textIdx = feed.findIndex((f) => f.feed_type === "assistant_text");
+    const stopIdx = feed.findIndex((f) => f.feed_type === "system_message");
+    // Same copy + position the live stop settle produces (after the text/tools).
+    expect(stopIdx).toBeGreaterThan(textIdx);
+    expect(feed[stopIdx]).toEqual({
+      feed_type: "system_message",
+      data: "Stopped by user",
+      ts: 2,
+    });
+  });
+
+  it("replays the RESUMED line for an interruption the engine is already picking up", () => {
+    const feed = historyToFeed([
+      { role: "user", content: "export it", ts: 1, turnId: "t-1" },
+      {
+        role: "assistant",
+        content: "",
+        ts: 2,
+        turnId: "t-1",
+        interrupted: { cause: "engine_restart", resumed: true },
+      },
+    ]);
+    expect(feed).toContainEqual({
+      feed_type: "system_message",
+      data: "Your agent was interrupted by a restart and is picking up where it left off.",
+      notice: "engine_resumed",
+      ts: 2,
+      turnId: "t-1",
+    });
+  });
+
+  it("replays the engine-restart line for a persisted interrupted turn", () => {
+    const feed = historyToFeed([
+      { role: "user", content: "export it", ts: 1, turnId: "t-1" },
+      {
+        role: "assistant",
+        content: "",
+        ts: 2,
+        turnId: "t-1",
+        interrupted: { cause: "engine_restart", tool: "bash" },
+      },
+    ]);
+    expect(feed).toEqual([
+      {
+        feed_type: "user_message",
+        data: "export it",
+        author: undefined,
+        ts: 1,
+        turnId: "t-1",
+      },
+      {
+        feed_type: "system_message",
+        data: "Your agent had to restart. Say continue and it will pick up where it left off.",
+        notice: "engine_restart",
+        ts: 2,
+        turnId: "t-1",
+      },
+    ]);
+  });
+
+  it("omits the stop line for a turn that ran to completion (no regression)", () => {
+    const feed = historyToFeed([
+      { role: "user", content: "do it", ts: 1 },
+      { role: "assistant", content: "all done", ts: 2 },
+    ]);
+    expect(feed.some((f) => f.feed_type === "system_message")).toBe(false);
+  });
+
+  it("stamps every frame with its source ChatMessage.ts (epoch ms)", () => {
+    const feed = historyToFeed([
+      { role: "user", content: "go", ts: 1000 },
+      {
+        role: "assistant",
+        content: "did it",
+        ts: 2000,
+        tools: [{ name: "shell", isError: false }],
+        fileChanges: { created: ["a.txt"], modified: [] },
+        usage: { context_tokens: 5, output_tokens: 1, cached_tokens: 0 },
+      },
+    ]);
+    // The user frame carries the user message's ts.
+    expect(feed.find((f) => f.feed_type === "user_message")?.ts).toBe(1000);
+    // Every frame folded from the assistant message carries ITS ts — including
+    // the tool, file-change, and final_result frames, not just the text bubble.
+    for (const type of [
+      "tool_call",
+      "tool_result",
+      "assistant_text",
+      "file_changes",
+      "final_result",
+    ]) {
+      expect(feed.find((f) => f.feed_type === type)?.ts).toBe(2000);
+    }
+  });
+});

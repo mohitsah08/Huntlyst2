@@ -1,0 +1,592 @@
+{
+  "agentAdmin": {
+    "title": "Configuración",
+    "rows": {
+      "knowledge": {
+        "title": "Aprendizajes"
+      },
+      "model": {
+        "title": "Modelos de IA"
+      },
+      "people": {
+        "title": "Personas"
+      },
+      "integrations": {
+        "title": "Integraciones"
+      }
+    },
+    "values": {
+      "allModels": "Cualquier modelo",
+      "modelCount_one": "solo {{count}} modelo",
+      "modelCount_other": "solo {{count}} modelos",
+      "allApps": "Cualquier app",
+      "appCount_one": "solo {{count}} app",
+      "appCount_other": "solo {{count}} apps"
+    },
+    "models": {
+      "question": "¿Qué modelos de IA puede usar este empleado de IA?",
+      "policyHelper": "Tú decides con qué modelos puede ejecutarse este empleado de IA. Las personas con acceso eligen su propio modelo entre los que permitas.",
+      "anyLabel": "Permitir todos los modelos",
+      "anyDesc": "Las personas con acceso pueden ejecutar este empleado de IA con cualquier modelo disponible.",
+      "pickedLabel": "Solo los modelos que elijas",
+      "pickedDesc": "Las personas con acceso solo pueden usar los modelos que permitas abajo.",
+      "allowModel": "Permitir {{name}}",
+      "searchModels": "Buscar modelos",
+      "clearSearch": "Borrar búsqueda",
+      "labFilter": "Filtrar por laboratorio",
+      "allLabs": "Todos los laboratorios",
+      "searchLabs": "Buscar laboratorios",
+      "noLabs": "No se encontraron laboratorios",
+      "noModels": "No se encontraron modelos",
+      "allowedHeading": "Modelos permitidos",
+      "allowedEmpty": "Aún no eliges modelos. Agrega modelos abajo.",
+      "allowedEmptyLab": "Aún no eliges modelos de este laboratorio.",
+      "addHeading": "Agregar modelos"
+    },
+    "integrations": {
+      "unavailable": "Los límites de integraciones no están disponibles aquí."
+    },
+    "heroes": {
+      "people": "Personas permitidas",
+      "integrations": "Integraciones permitidas",
+      "models": "Modelos de IA permitidos"
+    }
+  },
+  "agentSettings": {
+    "railLabel": "Secciones de la configuración",
+    "manage": {
+      "sectionTitle": "Configuración",
+      "identity": "Cambiar color y nombre",
+      "identityTitle": "Cambiar color y nombre de {{name}}",
+      "moveTeam": "Mover a grupo",
+      "chooseTeam": "Elegir un grupo",
+      "moveOrganization": "Mover a otra organización",
+      "moveOrganizationDescription": "Mueve este empleado de IA a una organización para que un equipo pueda trabajar con él.",
+      "delete": "Eliminar a {{name}}",
+      "noTeam": "Sin grupo"
+    },
+    "people": {
+      "helper": "Elige si todo tu equipo puede usar este empleado de IA o solo las personas que tú elijas.",
+      "anyLabel": "Todo tu equipo",
+      "anyDesc": "Cualquier persona del equipo puede usar este empleado de IA, incluidas las que se sumen después.",
+      "pickedLabel": "Solo personas específicas",
+      "pickedDesc": "Solo las personas que elijas abajo pueden usar este empleado de IA.",
+      "everyoneNote": "Todo tu equipo puede usar este empleado de IA, así que no hay nada que definir persona por persona. Cambia a Solo personas específicas para gestionar el acceso individualmente.",
+      "confirmEveryone": {
+        "title": "¿Dar acceso a todo el equipo?",
+        "description": "Esto reemplaza la lista actual. Todo tu equipo podrá usar este empleado de IA y se quitará el acceso de Manager que hayas dado aquí.",
+        "confirm": "Sí, dar acceso a todos",
+        "cancel": "Cancelar"
+      },
+      "confirmSpecific": {
+        "title": "¿Cambiar a personas específicas?",
+        "description_one": "La {{count}} persona que puede usar este empleado de IA hoy conserva el acceso. Las personas que se sumen después no se agregarán automáticamente.",
+        "description_other": "Las {{count}} personas que pueden usar este empleado de IA hoy conservan el acceso. Las personas que se sumen después no se agregarán automáticamente.",
+        "confirm": "Sí, elegir personas",
+        "cancel": "Cancelar"
+      }
+    }
+  },
+  "delegation": {
+    "sectionTitle": "Trabajo en equipo",
+    "outgoing": {
+      "label": "Asigna misiones a",
+      "aria": "{{name}} asigna misiones a",
+      "everyone": "Todos",
+      "picked": "Solo los que yo elija",
+      "none": "Nadie"
+    },
+    "picker": {
+      "rowAria": "Permitir que {{name}} trabaje con {{other}}",
+      "empty": "Aún no hay otros empleados de IA en este espacio."
+    },
+    "incoming": {
+      "label": "Recibe misiones de",
+      "aria": "{{name}} recibe misiones de",
+      "everyone": "Todos",
+      "none": "Nadie"
+    },
+    "loadError": {
+      "title": "No se pudo cargar esta configuración",
+      "retry": "Intentar de nuevo"
+    }
+  },
+  "agentTeams": {
+    "create": {
+      "title": "Crear un grupo",
+      "submit": "Crear grupo"
+    },
+    "form": {
+      "iconAndName": "Ícono y nombre",
+      "nameLabel": "Nombre del grupo",
+      "namePlaceholder": "p. ej., Marketing",
+      "tooLong": "Usa hasta {{max}} caracteres."
+    }
+  },
+  "integrations": {
+    "allowlist": {
+      "question": "¿Qué integraciones puede usar este empleado de IA?",
+      "policyHelper": "Tú decides qué integraciones puede usar este empleado de IA. Las personas con acceso igual conectan sus propias cuentas para cada integración que permitas.",
+      "anyLabel": "Permitir todas las integraciones",
+      "anyDesc": "Las personas con acceso pueden conectar este empleado de IA a cualquiera de más de 1000 integraciones.",
+      "pickedLabel": "Solo integraciones que elijas",
+      "pickedDesc": "Las personas con acceso solo pueden usar las integraciones que permitas abajo.",
+      "allowApp": "Permitir {{name}}",
+      "allowedHeading": "Integraciones permitidas",
+      "allowedEmpty": "Aún no elegiste integraciones. Agrega integraciones abajo.",
+      "allowedEmptyCategory": "Aún no hay integraciones permitidas en esta categoría.",
+      "addHeading": "Agregar integraciones"
+    }
+  },
+  "org": {
+    "title": "Espacio de trabajo",
+    "tabs": {
+      "label": "Secciones del espacio de trabajo",
+      "people": "Personas",
+      "billing": "Facturación",
+      "activity": "Actividad",
+      "orgChart": "Organigrama"
+    },
+    "companyContext": {
+      "title": "Contexto de la empresa",
+      "description": "Lo que todos tus empleados de IA saben en cada tarea y rutina que ejecutan."
+    },
+    "loading": "Cargando tu espacio de trabajo...",
+    "unavailable": "No pudimos cargar tu espacio de trabajo."
+  },
+  "permissions": {
+    "agentPeople": {
+      "none": "Sin acceso",
+      "noneHint": "No puede usar este empleado de IA.",
+      "changeAccess": "Cambiar acceso de {{name}}",
+      "viewerOnly": "Puedes usar este empleado de IA. Alguien que lo administre puede cambiar quién tiene acceso.",
+      "empty": {
+        "title": "Aún no hay personas",
+        "body": "Invita a tu equipo desde Administración para gestionar su acceso aquí."
+      }
+    }
+  },
+  "share": {
+    "title": "Compartir {{name}}",
+    "subtitle": "Elige quién puede usar este empleado de IA.",
+    "button": "Compartir",
+    "viewTitle": "Quién tiene acceso a {{name}}",
+    "viewSubtitle": "Estas personas pueden usar este empleado de IA compartido.",
+    "sectionTitle": "Compartir este empleado de IA",
+    "sectionHelper": "Agrega compañeros que puedan usar este empleado de IA y elige quién puede gestionarlo.",
+    "peopleCount_one": "{{count}} persona con acceso",
+    "peopleCount_other": "{{count}} personas con acceso",
+    "overflow": "+{{count}}",
+    "addPeople": "Agregar personas",
+    "searchPeople": "Busca por nombre o correo",
+    "noPeople": "No queda nadie por agregar.",
+    "empty": {
+      "title": "Nadie más tiene acceso todavía",
+      "body": "Agrega a un compañero para que pueda chatear con este empleado de IA."
+    },
+    "conversationNote": "Todos los que tienen acceso comparten la conversación de este empleado de IA.",
+    "you": "Tú",
+    "ownerAccess": "Propietario, siempre tiene acceso",
+    "remove": "Quitar",
+    "changeAccessFor": "Cambiar el acceso de {{name}}",
+    "selfNote": "Cambiar tu propio acceso aquí puede quitarte la capacidad de gestionar este empleado de IA.",
+    "managerRequiresSeat": "Solo los compañeros con un puesto de Manager pueden gestionar empleados de IA.",
+    "levels": {
+      "manager": "Manager",
+      "user": "Puede usar",
+      "managerHint": "Puede usar y reconfigurar este empleado de IA.",
+      "userHint": "Puede chatear con este empleado de IA, pero no cambiarlo."
+    },
+    "selfLockout": {
+      "title": "¿Cambiar tu propio acceso?",
+      "description": "Estás a punto de quitarte la capacidad de gestionar este empleado de IA. Es posible que no puedas deshacerlo por tu cuenta.",
+      "confirm": "Sí, cambiarlo",
+      "cancel": "Cancelar"
+    }
+  },
+  "people": {
+    "createOrganization": {
+      "title": "Crea una organización para invitar personas",
+      "body": "Para invitar a otras personas, crea una organización.",
+      "cta": "Crear organización"
+    },
+    "adminNotice": "Puedes ver a tu equipo. Solo el propietario puede agregar o quitar personas.",
+    "add": {
+      "title": "Agregar a alguien",
+      "subtitle": "Invita a un compañero por correo. Si aún no tiene Houston, le enviaremos una invitación.",
+      "emailLabel": "Correo",
+      "emailPlaceholder": "nombre@empresa.com",
+      "roleLabel": "Rol",
+      "submit": "Agregar",
+      "added": "{{email}} se agregó a tu equipo.",
+      "invited": "Invitación enviada a {{email}}. Se unirá cuando inicie sesión."
+    },
+    "roles": {
+      "owner": "Propietario",
+      "admin": "Manager",
+      "user": "Miembro"
+    },
+    "roleHelp": {
+      "owner": "Los propietarios tienen control total de la organización, incluidas las personas y la facturación.",
+      "admin": "Los managers crean y ejecutan empleados de IA.",
+      "user": "Los miembros usan los empleados de IA que se comparten con ellos."
+    },
+    "invites": {
+      "title": "Invitaciones pendientes",
+      "empty": "No hay invitaciones pendientes.",
+      "invitedBy": "Invitado por {{name}}",
+      "revoke": "Revocar",
+      "revokeLabel": "Revocar la invitación de {{email}}"
+    },
+    "roster": {
+      "title": "Equipo",
+      "you": "(tú)",
+      "changeRole": "Cambiar el rol de {{name}}",
+      "remove": "Quitar",
+      "removeLabel": "Quitar a {{name}}"
+    },
+    "removeConfirm": {
+      "title": "¿Quitar a {{name}}?",
+      "description": "Perderá el acceso a todos los empleados de IA que se le compartieron. Puedes volver a agregarla más tarde.",
+      "confirm": "Quitar",
+      "cancel": "Cancelar"
+    },
+    "makeOwnerConfirm": {
+      "title": "¿Hacer a {{name}} propietario?",
+      "description": "Los propietarios tienen control total de esta organización: personas, empleados de IA y facturación. Puedes cambiarlo más tarde siempre que la organización conserve al menos un propietario.",
+      "confirm": "Hacer propietario"
+    },
+    "lastOwner": {
+      "title": "La organización necesita un propietario",
+      "body": "No puedes quitar ni degradar al único propietario. Primero haz propietario a alguien más."
+    }
+  },
+  "activityTab": {
+    "error": "No pudimos cargar la actividad.",
+    "empty": {
+      "title": "Aún no hay actividad",
+      "body": "Los cambios en tu equipo, empleados de IA y apps aparecen aquí."
+    },
+    "loading": "Cargando...",
+    "showMore": "Mostrar más",
+    "roles": {
+      "owner": "Propietario",
+      "admin": "Manager",
+      "user": "Miembro"
+    },
+    "actions": {
+      "memberAdd": "{{actor}} agregó a {{name}} como {{role}}",
+      "memberRemove": "{{actor}} eliminó a {{name}}",
+      "memberRole": "{{actor}} cambió el rol de {{name}} a {{role}}",
+      "inviteCreate": "{{actor}} invitó a {{email}} como {{role}}",
+      "inviteRevoke": "{{actor}} canceló la invitación para {{email}}",
+      "inviteAccept": "{{actor}} se unió como {{role}}",
+      "agentCreate": "{{actor}} creó {{agent}}",
+      "agentRename": "{{actor}} renombró {{from}} a {{to}}",
+      "agentDelete": "{{actor}} eliminó {{agent}}",
+      "agentAssignments": "{{actor}} cambió quién puede usar {{agent}}",
+      "agentShared_one": "{{actor}} compartió {{agent}} con {{count}} persona",
+      "agentShared_other": "{{actor}} compartió {{agent}} con {{count}} personas",
+      "agentSettings": "{{actor}} cambió qué apps puede usar {{agent}}",
+      "orgSettings": "{{actor}} cambió la configuración de apps de tu organización",
+      "grantsSet": "{{actor}} permitió {{apps}} para {{agent}}",
+      "agentConfigure": "{{actor}} actualizó la configuración de {{agent}}",
+      "unknown": "{{actor}} hizo un cambio ({{action}})"
+    }
+  },
+  "createTeam": {
+    "trigger": "Crear organización",
+    "title": "Crear una organización",
+    "description": "Las organizaciones te permiten compartir empleados de IA y trabajar en conjunto. Puedes invitar a personas una vez que exista.",
+    "nameLabel": "Nombre de la organización",
+    "namePlaceholder": "p. ej. Marketing",
+    "submit": "Crear organización",
+    "creating": "Creando…",
+    "tooLong": "Usa un nombre de menos de {{max}} caracteres.",
+    "successTitle": "Organización \"{{name}}\" creada",
+    "successBody": "Invita a otras personas para trabajar juntos.",
+    "successAction": "Invita a tu equipo"
+  },
+  "shareViaTeam": {
+    "sectionHelper": "Este empleado de IA está en tu espacio personal. Muévelo a un equipo para compartirlo con tus compañeros.",
+    "button": "Invita a tu equipo",
+    "title": "Compartir {{name}} con un equipo",
+    "pick": {
+      "subtitle": "Elige un equipo al que mover este empleado de IA, o crea uno nuevo.",
+      "empty": "Aún no tienes un equipo. Crea uno para compartir este empleado de IA.",
+      "createTrigger": "Crear un equipo nuevo",
+      "namePlaceholder": "p. ej. Marketing",
+      "nameLabel": "Nombre del equipo",
+      "create": "Crear",
+      "creating": "Creando…",
+      "failed": "No pudimos crear el equipo. Inténtalo de nuevo."
+    },
+    "confirm": {
+      "body": "{{agent}} se moverá a {{team}}. Tú y tus compañeros lo encontrarán ahí.",
+      "downtime": "El empleado de IA se reinicia durante el traslado, así que puede no estar disponible por un momento.",
+      "cancel": "Cancelar",
+      "move": "Mover empleado de IA"
+    },
+    "moving": {
+      "heading": "Moviendo {{agent}} a {{team}}",
+      "body": "Esto puede tardar un momento. Mantén esta ventana abierta."
+    },
+    "switching": {
+      "heading": "Preparando {{team}}"
+    },
+    "switchFailed": {
+      "body": "Tu empleado de IA se movió a {{team}}, pero no pudimos cambiar a ese equipo. Reintenta para continuar con las invitaciones.",
+      "retry": "Reintentar",
+      "close": "Cerrar"
+    },
+    "moveFailed": {
+      "unsupported_move": "Este empleado de IA no se puede mover a ese equipo.",
+      "unmovable_volume": "El almacenamiento de este empleado de IA todavía no se puede mover automáticamente. Contacta con soporte.",
+      "needs_upgrade": "Este equipo necesita una mejora de plan antes de poder mover empleados de IA a él.",
+      "unknown": "Algo salió mal durante el traslado.",
+      "timeout": "El traslado está tardando más de lo esperado. Puede que termine en segundo plano. Puedes reintentar o cerrar.",
+      "retry": "Reintentar",
+      "close": "Cerrar"
+    },
+    "invite": {
+      "subtitle": "{{agent}} ya está en {{team}}. Invita a personas para usarlo contigo.",
+      "emailPlaceholder": "nombre@empresa.com",
+      "add": "Agregar",
+      "send": "Enviar invitaciones",
+      "sending": "Enviando…",
+      "done": "Listo",
+      "status": {
+        "pending": "Pendiente",
+        "sending": "Enviando…",
+        "sent": "Invitado"
+      },
+      "error": {
+        "already_member": "Ya está en el equipo",
+        "generic": "No se pudo invitar. Inténtalo de nuevo."
+      }
+    },
+    "done": {
+      "heading": "Compartido con {{team}}"
+    }
+  },
+  "moveResume": {
+    "done": "{{agent}} terminó de moverse a {{team}}.",
+    "failed": "{{agent}} no pudo terminar de moverse a {{team}}. Lo intentaremos de nuevo la próxima vez que se abra la app."
+  },
+  "moveTeam": {
+    "title": "Mover {{team}} a otro espacio",
+    "pick": {
+      "subtitle": "Elige un espacio al que mover este grupo, o crea uno nuevo.",
+      "empty": "Aún no tienes otro espacio. Crea uno para mover este grupo.",
+      "createTrigger": "Crear un espacio nuevo",
+      "namePlaceholder": "p. ej. Marketing",
+      "nameLabel": "Nombre del espacio",
+      "create": "Crear",
+      "creating": "Creando…",
+      "failed": "No pudimos crear el espacio. Inténtalo de nuevo."
+    },
+    "confirm": {
+      "body_one": "¿Mover {{team}} y su {{count}} empleado de IA a {{destination}}?",
+      "body_other": "¿Mover {{team}} y sus {{count}} empleados de IA a {{destination}}?",
+      "downtime": "Los empleados de IA se pausan mientras se mueven.",
+      "move": "Mover grupo"
+    },
+    "moving": "Moviendo {{name}} ({{index}} de {{total}})",
+    "movingBody": "Los empleados de IA se mueven uno a la vez. Mantén esta ventana abierta.",
+    "createTarget": "Creando el grupo en el espacio de destino",
+    "cleanupSource": "Quitando el grupo de este espacio",
+    "switching": "Cambiando al espacio",
+    "moveFailedFirst_one": "No se pudo mover el empleado de IA.",
+    "moveFailedFirst_other": "No se movió ninguno de los {{count}} empleados de IA. El primero no se pudo mover.",
+    "moveFailedNext": "Se movieron {{moved}} de {{total}} empleados de IA. El siguiente no se pudo mover.",
+    "postscriptFailed_one": "El empleado de IA se movió, pero la configuración no terminó.",
+    "postscriptFailed_other": "Se movieron los {{count}} empleados de IA, pero la configuración no terminó.",
+    "postscriptFailedEmpty": "El grupo no pudo terminar de moverse.",
+    "retry": "Intentar de nuevo",
+    "close": "Cerrar"
+  },
+  "moveTeamResume": {
+    "done": "{{team}} terminó de moverse a su nuevo espacio.",
+    "failed": "{{team}} no pudo terminar de moverse. Lo intentaremos de nuevo la próxima vez que se abra la app."
+  },
+  "billing": {
+    "unavailable": "No pudimos cargar la facturación de este equipo.",
+    "status": {
+      "free": "Gratis",
+      "trialing": "Prueba gratis",
+      "trialingDays_one": "Prueba gratis, queda {{count}} día",
+      "trialingDays_other": "Prueba gratis, quedan {{count}} días",
+      "active": "Activa",
+      "past_due": "Pago pendiente",
+      "expired": "Prueba terminada"
+    },
+    "seats_one": "{{count}} asiento",
+    "seats_other": "{{count}} asientos",
+    "interval": {
+      "monthly": "Facturación mensual",
+      "annual": "Facturación anual"
+    },
+    "pickPlan": "Elige un plan para sumar a todo tu equipo.",
+    "checkoutMonthly": "Mejorar, mensual",
+    "checkoutAnnual": "Mejorar, anual",
+    "manage": "Gestionar facturación",
+    "askOwner": "Solo el propietario puede cambiar la facturación. Pídele que mejore tu equipo.",
+    "trialPill_one": "Queda {{count}} día de prueba",
+    "trialPill_other": "Quedan {{count}} días de prueba"
+  },
+  "degrade": {
+    "owner": "La prueba de tu equipo terminó. Mejora el plan para que todos sigan trabajando.",
+    "member": "La prueba de tu equipo terminó. Pídele al propietario que mejore el plan.",
+    "upgrade": "Mejorar",
+    "writeBlockedTitle": "Necesitas mejorar el plan",
+    "writeBlockedBody": "La prueba de tu equipo terminó. Pídele al propietario que mejore el plan para hacer cambios."
+  },
+  "personalSpace": {
+    "inviteBlockedTitle": "Este es tu espacio personal",
+    "inviteBlockedBody": "Tu espacio personal es solo para ti. Crea un equipo para invitar a otras personas."
+  },
+  "inviteInbox": {
+    "title": "Invitaciones",
+    "headline": "Te invitaron a unirte a {{team}}",
+    "headlineFrom": "{{name}} te invitó a {{team}}",
+    "asRole": "Te unirás como {{role}}.",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "acceptLabel": "Aceptar la invitación a {{team}}",
+    "declineLabel": "Rechazar la invitación a {{team}}",
+    "railLabel_one": "{{count}} invitación pendiente",
+    "railLabel_other": "{{count}} invitaciones pendientes",
+    "joinedTitle": "Te uniste a {{team}}",
+    "joinedBody": "Cambia a ese espacio cuando quieras desde el menú de espacios, arriba en la barra lateral.",
+    "joinedBodyUnconfirmed": "No pudimos actualizar tus espacios en este momento. Abre el menú de espacios en un momento para encontrarlo.",
+    "errors": {
+      "needsUpgradeTitle": "Este equipo necesita mejorar su plan",
+      "needsUpgradeBody": "Su prueba terminó, así que no puede sumar personas ahora. Pídele a quien te invitó que mejore el plan y vuelve a aceptar.",
+      "alreadyMemberTitle": "Ya estás en este equipo",
+      "alreadyMemberBody": "No hay nada que hacer. Encuéntralo en el menú de espacios, arriba en la barra lateral.",
+      "goneTitle": "Esta invitación ya no está disponible",
+      "goneBody": "Se canceló o ya se usó. Pídele a tu equipo que te envíe una nueva."
+    }
+  },
+  "teamView": {
+    "tabs": {
+      "missionControl": "Tareas",
+      "routines": "Rutinas",
+      "files": "Archivos",
+      "label": "Secciones del empleado de IA"
+    },
+    "agentTabs": {
+      "settings": "Configuración"
+    },
+    "archive": {
+      "open": "Archivadas",
+      "back": "Volver a tareas"
+    },
+    "move": {
+      "confirmTitle": "¿Mover {{agent}} a {{team}}?",
+      "confirmBody": "{{agent}} pasa a {{team}}.",
+      "confirm": "Mover empleado de IA",
+      "cancel": "Cancelar"
+    },
+    "agentMenu": {
+      "delete": "Eliminar empleado de IA"
+    },
+    "routines": {
+      "newRoutine": "Nueva rutina",
+      "unreadable": {
+        "title": "No se pudieron cargar las rutinas de este empleado de IA",
+        "body": "Vuelve a intentarlo para ver las rutinas de este empleado de IA."
+      }
+    }
+  },
+  "orgChart": {
+    "caption": "Organización",
+    "captionPersonal": "Espacio personal",
+    "captionYours": "Tus empleados de IA",
+    "crew": "<strong>{{agents}}</strong> y <strong>{{people}}</strong>.",
+    "crewPersonal": "<strong>{{agents}}</strong>.",
+    "crewYours_one": "Tu <strong>{{agents}}</strong>.",
+    "crewYours_other": "Tus <strong>{{agents}}</strong>.",
+    "workBoth": "<strong>{{messages}}</strong> y <strong>{{hours}}</strong> de trabajo en los últimos 30 días.",
+    "workBothManaged": "<strong>{{messages}}</strong> a los empleados de IA que gestionas y <strong>{{hours}}</strong> de trabajo en los últimos 30 días.",
+    "workHours": "<strong>{{hours}}</strong> de trabajo en los últimos 30 días.",
+    "workMessages": "<strong>{{messages}}</strong> en los últimos 30 días.",
+    "workMessagesManaged": "<strong>{{messages}}</strong> a los empleados de IA que gestionas en los últimos 30 días.",
+    "agentCount_one": "{{count}} empleado de IA",
+    "agentCount_other": "{{count}} empleados de IA",
+    "peopleCount_one": "{{count}} persona",
+    "peopleCount_other": "{{count}} personas",
+    "messagesAmount_one": "{{value}} mensaje",
+    "messagesAmount_other": "{{value}} mensajes",
+    "hoursAmount_one": "{{value}} hora",
+    "hoursAmount_other": "{{value}} horas",
+    "minutesAmount_one": "{{value}} minuto",
+    "minutesAmount_other": "{{value}} minutos",
+    "messagesUnit_one": "mensaje",
+    "messagesUnit_other": "mensajes",
+    "hoursUnit_one": "hora",
+    "hoursUnit_other": "horas",
+    "minutesUnit_one": "minuto",
+    "minutesUnit_other": "minutos",
+    "unitHours": "h",
+    "unitMinutes": "min",
+    "heroHours": "Horas de trabajo",
+    "heroMessages": "Mensajes",
+    "heroMessagesManaged": "Mensajes a los empleados de IA que gestionas",
+    "chartHours": "Horas trabajadas · últimos 30 días",
+    "chartMessages": "Mensajes · últimos 30 días",
+    "chartMessagesManaged": "Mensajes a los empleados de IA que gestionas · últimos 30 días",
+    "chartHoursLabel": "Horas trabajadas cada día en los últimos 30 días",
+    "chartMessagesLabel": "Mensajes de cada día en los últimos 30 días",
+    "chartMessagesManagedLabel": "Mensajes a los empleados de IA que gestionas cada día de los últimos 30 días",
+    "today": "Hoy",
+    "statMessages_one": "<strong>{{value}}</strong> mensaje",
+    "statMessages_other": "<strong>{{value}}</strong> mensajes",
+    "statMessagesManaged_one": "<strong>{{value}}</strong> mensaje a los empleados de IA que gestionas",
+    "statMessagesManaged_other": "<strong>{{value}}</strong> mensajes a los empleados de IA que gestionas",
+    "statAgents_one": "<strong>{{value}}</strong> empleado de IA",
+    "statAgents_other": "<strong>{{value}}</strong> empleados de IA",
+    "statPeople_one": "<strong>{{value}}</strong> persona",
+    "statPeople_other": "<strong>{{value}}</strong> personas",
+    "ledgerLabel": "Empleados de IA, por posición",
+    "rankedByHours": "Por horas",
+    "rankedByMessages": "Por mensajes",
+    "rankedByName": "Empleados de IA",
+    "colAgent": "Empleado de IA",
+    "colHours": "Horas trabajadas",
+    "colMessages": "Mensajes",
+    "manages": "Gestiona",
+    "uses": "Usa",
+    "legendManages": "Gestiona · puede cambiarlo",
+    "legendUses": "Usa · puede hablarle",
+    "none": "Nadie",
+    "everyone": "Todos",
+    "peopleHidden": "Personas ocultas",
+    "notCounted": "Sin contar",
+    "openBoardFor": "Abrir el tablero de {{name}}",
+    "openPerson": "Abrir a {{name}} en Personas",
+    "more": "+{{count}}",
+    "hoursUnavailable": "Horas trabajadas no disponibles.",
+    "messagesUnavailable": "Mensajes no disponibles.",
+    "retry": "Intentar de nuevo",
+    "loading": "Cargando tu organigrama...",
+    "empty": "Todavía no hay empleados de IA",
+    "emptyBody": "Contrata tu primer empleado de IA y aparecerá aquí, con las personas que lo gestionan y lo usan."
+  },
+  "phoneEmployee": {
+    "emptyGroup": {
+      "title": "No hay Empleados de IA en este grupo",
+      "description": "Abre un Empleado de IA, toca su menú ⋯ y elige Mover a grupo."
+    }
+  },
+  "groupDelete": {
+    "title": "¿Eliminar \"{{name}}\"?",
+    "description": "Los Empleados de IA de este grupo se quedan. Solo salen del grupo, nada más cambia.",
+    "confirm": "Eliminar grupo",
+    "cancel": "Cancelar"
+  },
+  "agentNav": {
+    "settingsUnavailable": "No pudimos abrir la configuración de este Empleado de IA",
+    "settingsUnavailableBody": "Este Empleado de IA ya no está en este espacio. Puede que lo hayan eliminado o movido."
+  }
+}

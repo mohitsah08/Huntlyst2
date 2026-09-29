@@ -1,0 +1,322 @@
+import { deepStrictEqual, strictEqual } from "node:assert";
+import { describe, it } from "node:test";
+import type { Capabilities, OrgRole } from "@houston/engine-adapter";
+import { encodeModelPickerId } from "../src/lib/chat-model-picker-ids.ts";
+import {
+  hiddenModelCount,
+  isModelAllowed,
+  modelSelectorDecision,
+  resolvePersonalModelPin,
+} from "../src/lib/model-selector-lock.ts";
+
+const caps = (over: Partial<Capabilities> = {}): Capabilities => ({
+  profile: "cloud",
+  revealInOs: false,
+  terminal: false,
+  tunnel: false,
+  codeExecution: "remote-sandbox",
+  providers: [],
+  openaiCompatible: false,
+  integrations: [],
+  ...over,
+});
+
+/** A multiplayer host with the Teams v2 surface (per-user model choice). */
+const teams = (role: OrgRole): Capabilities =>
+  caps({ multiplayer: true, role, teams: true });
+
+/** A multiplayer host predating Teams (no per-user model-choice route). */
+const preTeams = (role: OrgRole): Capabilities =>
+  caps({ multiplayer: true, role });
+
+// The wire type lives on `Agent.access` (`@houston/wire-types`); the helpers
+// only read
+// that field, so the fixtures pass a minimal `{ access }` shape.
+const agent = (access?: "manager" | "user") => ({ access });
+
+describe("modelSelectorDecision", () => {
+  it("shows shared (never personal) when no agent scope is threaded", () => {
+    // A free-standing picker (routine editor with no agent, create wizard) is
+    // always shown and never wired to a per-user choice, even for a member.
+    for (const c of [
+      teams("user"),
+      preTeams("user"),
+      caps(),
+      null,
+      undefined,
+    ]) {
+      deepStrictEqual(modelSelectorDecision(c, null), {
+        show: true,
+        personal: false,
+      });
+      deepStrictEqual(modelSelectorDecision(c, undefined), {
+        show: true,
+        personal: false,
+      });
+    }
+  });
+
+  it("shows shared in single-player / self-host, whatever the access", () => {
+    for (const access of ["manager", "user", undefined] as const) {
+      for (const c of [caps(), null, undefined]) {
+        deepStrictEqual(modelSelectorDecision(c, agent(access)), {
+          show: true,
+          personal: false,
+        });
+      }
+    }
+  });
+
+  it("shows PERSONAL for EVERYONE on a Teams host (members included)", () => {
+    for (const role of ["owner", "admin", "user"] as const) {
+      for (const access of ["manager", "user", undefined] as const) {
+        deepStrictEqual(modelSelectorDecision(teams(role), agent(access)), {
+          show: true,
+          personal: true,
+        });
+      }
+    }
+  });
+
+  it("falls back to the E7 manager gate on a pre-Teams multiplayer host", () => {
+    // Owner + any manager see it (shared); a plain member is hidden.
+    deepStrictEqual(modelSelectorDecision(preTeams("owner"), agent("user")), {
+      show: true,
+      personal: false,
+    });
+    for (const role of ["admin", "user"] as const) {
+      deepStrictEqual(modelSelectorDecision(preTeams(role), agent("manager")), {
+        show: true,
+        personal: false,
+      });
+      deepStrictEqual(modelSelectorDecision(preTeams(role), agent("user")), {
+        show: false,
+        personal: false,
+      });
+      deepStrictEqual(modelSelectorDecision(preTeams(role), agent(undefined)), {
+        show: false,
+        personal: false,
+      });
+    }
+  });
+});
+
+describe("isModelAllowed", () => {
+  it("treats null / undefined ceiling as no ceiling (all models allowed)", () => {
+    strictEqual(isModelAllowed(null, "gpt-6-astra"), true);
+    strictEqual(isModelAllowed(undefined, "gpt-6-astra"), true);
+  });
+
+  it("gates on membership when a ceiling is set", () => {
+    strictEqual(isModelAllowed(["gpt-6-astra", "claude"], "gpt-6-astra"), true);
+    strictEqual(isModelAllowed(["gpt-6-astra"], "claude"), false);
+    strictEqual(isModelAllowed([], "gpt-6-astra"), false);
+  });
+});
+
+describe("resolvePersonalModelPin", () => {
+  const fallback = { provider: "anthropic", model: "claude", effort: "high" };
+  /** A resolver that knows nothing: no catalog, nothing connected. */
+  const blind = { offers: () => false, providerFor: () => null, connected: [] };
+
+  it("uses the user's stored choice when present", () => {
+    deepStrictEqual(
+      resolvePersonalModelPin(
+        { provider: "openai", model: "gpt-6-astra", effort: "low" },
+        ["gpt-6-astra"],
+        fallback,
+        null,
+        blind,
+      ),
+      { provider: "openai", model: "gpt-6-astra", effort: "low" },
+    );
+  });
+
+  it("drops a stored choice the ceiling no longer allows, keeping its effort (PRODUCT-1734)", () => {
+    // A manager narrowed the ceiling after the choice was stored: the gateway
+    // hands the stale pick back unclamped. The composer must not show it (the
+    // next turn cannot run it) nor re-send it on an effort click.
+    const resolver = {
+      offers: (provider: string, model: string) =>
+        provider === "anthropic" && model === "claude-opus-5",
+      providerFor: () => "anthropic",
+      connected: ["anthropic"],
+    };
+    deepStrictEqual(
+      resolvePersonalModelPin(
+        { provider: "openai", model: "gpt-6-astra", effort: "low" },
+        ["claude-opus-5"],
+        fallback,
+        null,
+        resolver,
+      ),
+      { provider: "anthropic", model: "claude-opus-5", effort: "low" },
+    );
+  });
+
+  it("keeps an in-ceiling fallback over an out-of-ceiling stored choice", () => {
+    deepStrictEqual(
+      resolvePersonalModelPin(
+        { provider: "openai", model: "gpt-6-astra", effort: "low" },
+        ["claude"],
+        fallback,
+        null,
+        blind,
+      ),
+      { provider: "anthropic", model: "claude", effort: "low" },
+    );
+  });
+
+  it("keeps a stored choice when there is no ceiling", () => {
+    deepStrictEqual(
+      resolvePersonalModelPin(
+        { provider: "openai", model: "gpt-6-astra", effort: "low" },
+        null,
+        fallback,
+        null,
+        blind,
+      ),
+      { provider: "openai", model: "gpt-6-astra", effort: "low" },
+    );
+  });
+
+  it("keeps the fallback when there is no ceiling", () => {
+    deepStrictEqual(
+      resolvePersonalModelPin(null, null, fallback, null, blind),
+      fallback,
+    );
+    deepStrictEqual(
+      resolvePersonalModelPin(undefined, undefined, fallback, null, blind),
+      fallback,
+    );
+  });
+
+  it("keeps the fallback when its model is inside the ceiling", () => {
+    deepStrictEqual(
+      resolvePersonalModelPin(
+        null,
+        ["claude", "gpt-6-astra"],
+        fallback,
+        null,
+        blind,
+      ),
+      fallback,
+    );
+  });
+
+  it("snaps to the ceiling model's owning provider", () => {
+    deepStrictEqual(
+      resolvePersonalModelPin(null, ["gpt-6-astra", "gemini"], fallback, null, {
+        ...blind,
+        providerFor: (model) => (model === "gpt-6-astra" ? "openai" : null),
+      }),
+      { provider: "openai", model: "gpt-6-astra", effort: "high" },
+    );
+  });
+
+  it("snaps to the ceiling id the fallback provider can run, not the first entry (PRODUCT-1657)", () => {
+    // "Claude Opus 5" as the ceiling editor writes it: OpenRouter's id sorts
+    // first. A Claude-connected user stays on Claude.
+    deepStrictEqual(
+      resolvePersonalModelPin(
+        null,
+        ["anthropic/claude-opus-5", "claude-opus-5"],
+        fallback,
+        null,
+        {
+          offers: (provider, model) =>
+            provider === "anthropic" && model === "claude-opus-5",
+          providerFor: () => "openrouter",
+          connected: ["anthropic"],
+        },
+      ),
+      { provider: "anthropic", model: "claude-opus-5", effort: "high" },
+    );
+  });
+
+  it("keeps the fallback provider when the snapped model is unknown", () => {
+    deepStrictEqual(
+      resolvePersonalModelPin(null, ["unknown"], fallback, null, blind),
+      { provider: "anthropic", model: "unknown", effort: "high" },
+    );
+  });
+
+  it("keeps the fallback for an empty ceiling (no model to snap to)", () => {
+    deepStrictEqual(
+      resolvePersonalModelPin(null, [], fallback, null, blind),
+      fallback,
+    );
+  });
+
+  it("uses an in-ceiling mission pin while keeping personal effort", () => {
+    deepStrictEqual(
+      resolvePersonalModelPin(
+        { provider: "openai", model: "gpt-6-astra", effort: "low" },
+        ["claude", "gpt-6-astra"],
+        fallback,
+        { provider: "anthropic", model: "claude" },
+        blind,
+      ),
+      { provider: "anthropic", model: "claude", effort: "low" },
+    );
+  });
+
+  it("ignores an out-of-ceiling mission pin", () => {
+    deepStrictEqual(
+      resolvePersonalModelPin(
+        { provider: "openai", model: "gpt-6-astra", effort: "low" },
+        ["gpt-6-astra"],
+        fallback,
+        { provider: "anthropic", model: "claude" },
+        blind,
+      ),
+      { provider: "openai", model: "gpt-6-astra", effort: "low" },
+    );
+  });
+});
+
+describe("hiddenModelCount", () => {
+  // Picker rows carry an opaque `provider::model` id; the fixture builds them
+  // from (provider, model) pairs the same way the container does.
+  const rows = (...pairs: [string, string][]) =>
+    pairs.map(([provider, model]) => ({
+      id: encodeModelPickerId(provider, model),
+    }));
+
+  const universe = rows(
+    ["anthropic", "claude"],
+    ["openai", "gpt-6-astra"],
+    ["google", "gemini"],
+  );
+
+  it("hides nothing when there is no ceiling", () => {
+    strictEqual(hiddenModelCount(universe, null), 0);
+  });
+
+  it("hides nothing when the ceiling allows every model", () => {
+    strictEqual(
+      hiddenModelCount(universe, ["claude", "gpt-6-astra", "gemini"]),
+      0,
+    );
+  });
+
+  it("counts exactly the models the ceiling turns off", () => {
+    strictEqual(hiddenModelCount(universe, ["claude"]), 2);
+    strictEqual(hiddenModelCount(universe, ["claude", "gpt-6-astra"]), 1);
+  });
+
+  it("counts a model offered by two providers once", () => {
+    // Same bare model id from two providers is one hidden model, not two.
+    const dupes = rows(
+      ["openrouter", "gpt-6-astra"],
+      ["openai", "gpt-6-astra"],
+      ["anthropic", "claude"],
+    );
+    strictEqual(hiddenModelCount(dupes, ["claude"]), 1);
+  });
+
+  it("hides nothing for an empty universe", () => {
+    strictEqual(hiddenModelCount([], ["claude"]), 0);
+    strictEqual(hiddenModelCount([], null), 0);
+  });
+});

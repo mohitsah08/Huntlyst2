@@ -1,0 +1,262 @@
+{
+  "title": "Integraciones",
+  "loading": {
+    "title": "Cargando tus integraciones",
+    "body": "Verificando tu proveedor de integraciones…"
+  },
+  "unavailable": "Las integraciones no están disponibles en esta configuración.",
+  "signin": {
+    "title": "Inicia sesión para conectar aplicaciones",
+    "body": "Inicia sesión en Houston para conectar tus aplicaciones. Tus cuentas siguen siendo tuyas; el empleado de IA actúa en tu nombre.",
+    "button": "Iniciar sesión en Houston",
+    "failed": "No se pudo iniciar sesión. Inténtalo de nuevo."
+  },
+  "reconnectNotice": "Mejoramos la forma en que se conectan las aplicaciones para hacerla más segura. Reconecta tus aplicaciones una sola vez; ya no guardamos ninguna clave de larga duración.",
+  "reconnectDismiss": "Entendido",
+  "connected": {
+    "disconnect": {
+      "cancel": "Cancelar"
+    }
+  },
+  "browse": {
+    "allCategories": "Todas las categorías",
+    "searchCategories": "Buscar categorías...",
+    "noCategoryResults": "No hay categorías que coincidan.",
+    "loadMoreWithRemaining": "Cargar más ({{count}} restantes)"
+  },
+  "connectResult": {
+    "connected": "{{app}} está conectada",
+    "timeoutTitle": "Seguimos esperando {{app}}",
+    "timeout": "Dejamos de revisar por ahora. Cuando termines de iniciar sesión, conecta {{app}} de nuevo.",
+    "unavailableTitle": "Aún no se puede conectar {{app}}",
+    "unavailable": "El equipo de Houston todavía necesita terminar de configurar esta app. Vuelve a intentarlo pronto.",
+    "noAuthTitle": "Ya puedes usar {{app}}",
+    "noAuth": "Esta app funciona sin cuenta, así que no hay nada que conectar.",
+    "failedTitle": "No se pudo conectar {{app}}",
+    "failed": "Algo salió mal al iniciar sesión. Inténtalo de nuevo."
+  },
+  "grants": {
+    "disconnect": {
+      "confirmTitle": "¿Desconectar {{name}} en todas partes?",
+      "confirmBody": "Esto quita {{name}} de todos tus empleados de IA, no solo de este. Puedes volver a conectarla cuando quieras.",
+      "confirmAction": "Desconectar en todas partes"
+    }
+  },
+  "status": {
+    "active": "Conectada",
+    "pending": "Terminando",
+    "error": "Necesita reconexión"
+  },
+  "waiting": {
+    "opening": "Abriendo {{app}} en tu navegador",
+    "title": "Termina de conectar {{app}}",
+    "body": "Abrimos {{app}} en tu navegador. Inicia sesión ahí y luego vuelve aquí.",
+    "blockedTitle": "Tu navegador bloqueó la pestaña de {{app}}",
+    "blockedBody": "No pudimos abrir {{app}} por ti. Ábrela tú para iniciar sesión y luego vuelve aquí.",
+    "open": "Abrir {{app}}",
+    "reopen": "Volver a abrir en el navegador",
+    "check": "Ya terminé",
+    "cancel": "Cancelar",
+    "connected": "Conectada",
+    "failed": "No se pudo conectar",
+    "cancelled": "Conexión cancelada",
+    "stopped": "Dejamos de revisar {{app}}. Conéctala de nuevo cuando hayas acabado."
+  },
+  "pendingRecovery": {
+    "body": "Empezaste a conectar {{app}} pero no terminaste de iniciar sesión.",
+    "finish": "Terminar de conectar",
+    "remove": "Quitar"
+  },
+  "errorRecovery": {
+    "body": "{{app}} necesita conectarse de nuevo.",
+    "reconnect": "Reconectar",
+    "remove": "Quitar"
+  },
+  "picker": {
+    "searchPlaceholder": "Buscar apps...",
+    "connected": "Conectada",
+    "noResults": "No hay apps que coincidan.",
+    "loading": "Cargando apps..."
+  },
+  "home": {
+    "tabs": {
+      "catalog": "Integraciones"
+    },
+    "searchPlaceholder": "Buscar integraciones",
+    "clearSearch": "Borrar búsqueda",
+    "allCategories": "Todas las categorías",
+    "customCategory": "Personalizadas",
+    "categoryFilter": "Filtrar por categoría",
+    "connect": "Conectar",
+    "connectApp": "Conectar {{name}}",
+    "installedTitle": "Instaladas",
+    "availableTitle": "Disponibles",
+    "mostUsed": "Más usadas",
+    "otherCategory": "Otras",
+    "showAllApps": "Ver las {{count}} aplicaciones"
+  },
+  "detail": {
+    "reconnect": "Reconectar",
+    "disconnect": "Desconectar"
+  },
+  "accounts": {
+    "title": "Cuentas",
+    "add": "Agregar otra cuenta",
+    "count_one": "{{count}} cuenta",
+    "count_other": "{{count}} cuentas",
+    "addedOn": "Agregada el {{date}}",
+    "fallback": "Cuenta {{number}}",
+    "remove": "Desconectar {{name}}",
+    "disconnectTitle": "¿Desconectar {{account}}?",
+    "disconnectBody": "Esto quita la cuenta {{account}} de {{name}} para todos tus empleados de IA. Tus otras cuentas de {{name}} siguen conectadas.",
+    "disconnectAction": "Desconectar cuenta"
+  },
+  "custom": {
+    "edit": {
+      "title": "Editar detalles",
+      "description": "Cambia cómo aparece esta integración. Tu conexión sigue igual.",
+      "website": "Sitio web (opcional)",
+      "websiteHelp": "Usa el sitio web de la app, empezando con https://. Se usa para el ícono.",
+      "save": "Guardar cambios",
+      "saving": "Guardando..."
+    },
+    "description": "Conecta una API o un servidor MCP que no esté en el catálogo de aplicaciones.",
+    "empty": "Aún no tienes integraciones personalizadas. Agrega una para conectar una herramienta que no esté en el catálogo.",
+    "emptyForAgent": "{{agent}} aún no tiene integraciones personalizadas. Agrega una para conectar una herramienta que no esté en el catálogo.",
+    "noResults": "Ninguna integración personalizada coincide con tu búsqueda.",
+    "scope": {
+      "title": "Las integraciones personalizadas se configuran por empleado de IA. Elige cuáles mostrar.",
+      "label": "De {{agent}}"
+    },
+    "catalogUnavailable": "El catálogo de aplicaciones no está disponible en esta configuración, pero aún puedes agregar integraciones personalizadas.",
+    "addButton": "Agregar integración personalizada",
+    "loadError": "No pudimos cargar tus integraciones personalizadas.",
+    "retry": "Intentar de nuevo",
+    "badge": {
+      "api": "API",
+      "mcp": "Servidor MCP"
+    },
+    "toolCount_one": "{{count}} acción",
+    "toolCount_other": "{{count}} acciones",
+    "enterKey": "Ingresar clave",
+    "add": {
+      "title": "Agregar una integración personalizada",
+      "chatTitle": "Configúrala con tu empleado de IA",
+      "chatDesc": "Cuéntale a tu empleado de IA qué quieres conectar y te guiará paso a paso en el chat.",
+      "manualTitle": "Agregarla manualmente",
+      "manualDesc": "Pega la dirección de una API o de un servidor MCP y completa los datos tú mismo.",
+      "kindLabel": "Tipo de conexión",
+      "urlLabelApi": "URL de la documentación de la API",
+      "urlLabelMcp": "URL del servidor MCP",
+      "urlPlaceholderApi": "https://api.ejemplo.com/openapi.json",
+      "urlPlaceholderMcp": "https://mcp.ejemplo.com",
+      "check": "Comprobar",
+      "detected": {
+        "api": "Reconocimos un servicio de API.",
+        "mcp": "Reconocimos un servidor MCP.",
+        "unknown": "No pudimos reconocer esta dirección. Revisa la URL o deja que tu empleado de IA te ayude en el chat.",
+        "mcpOauth": "Este servidor inicia sesión con su propia cuenta (OAuth), algo que aún no es compatible. Una clave de API no funcionará aquí.",
+        "mcpOauthOk": "Este servidor MCP usa su propio inicio de sesión. Después de agregarlo, iniciarás sesión en tu navegador."
+      },
+      "nameLabel": "Nombre",
+      "namePlaceholder": "¿Cómo quieres llamarla?",
+      "needsKey": "Necesita una clave de API",
+      "needsKeyDesc": "Activa esto si el servicio pide una clave o un token. La ingresarás de forma segura justo después de agregar.",
+      "back": "Atrás",
+      "submit": "Agregar integración",
+      "submitting": "Agregando...",
+      "addedToast": "{{name}} está listo para usarse"
+    },
+    "details": {
+      "url": "Dirección",
+      "added": "Agregada",
+      "actions": "Acciones",
+      "activeBody": "Conectada y funcionando. Tus empleados de IA pueden usar sus acciones en cualquier chat.",
+      "activeBodyAgent": "Conectada y funcionando. Este empleado de IA puede usar sus acciones en cualquier chat.",
+      "pendingBody": "Esperando una clave de API. Ingresa la clave para activarla.",
+      "errorBody": "No está funcionando en este momento: {{message}}",
+      "updateKey": "Actualizar clave",
+      "pendingSignInBody": "Esta integración está esperando a que inicies sesión. Presiona Iniciar sesión y termina en tu navegador."
+    },
+    "status": {
+      "active": "Conectado",
+      "pendingKey": "Necesita una clave de API",
+      "error": "{{message}}",
+      "pendingSignIn": "Esperando a que inicies sesión"
+    },
+    "credential": {
+      "apiKeyLabel": "Clave de API",
+      "placeholder": "Pega tu clave",
+      "show": "Mostrar clave",
+      "hide": "Ocultar clave"
+    },
+    "keyDialog": {
+      "title": "Ingresa la clave de {{name}}",
+      "description": "Tu clave se guarda de forma segura y nunca se muestra en el chat.",
+      "save": "Guardar clave",
+      "saving": "Guardando...",
+      "savedToast": "{{name}} está listo para usarse",
+      "savedUnverifiedToast": "Clave guardada para {{name}}. El servicio aún no la ha confirmado."
+    },
+    "delete": {
+      "title": "¿Quitar {{name}}?",
+      "description": "Tus empleados de IA perderán acceso a sus acciones. Esto no se puede deshacer.",
+      "descriptionAgent": "Este empleado de IA perderá el acceso a sus acciones. Esto no se puede deshacer.",
+      "confirm": "Quitar",
+      "cancel": "Cancelar"
+    },
+    "setupChat": {
+      "missionTitle": "Configurar una integración personalizada",
+      "close": "Cerrar el chat",
+      "opening": "Abriendo el chat...",
+      "bannerTitle": "Estás configurando una integración personalizada en el chat",
+      "bannerDescription": "Retoma donde quedaste o descarta el chat en curso.",
+      "continue": "Continuar",
+      "discard": "Descartar",
+      "startError": "No se pudo iniciar el chat de configuración",
+      "done": "Listo",
+      "doneToast": "¡Perfecto! Tu integración personalizada está lista para usar."
+    },
+    "signIn": "Iniciar sesión",
+    "signInAgain": "Iniciar sesión de nuevo",
+    "oauth": {
+      "openedToast": "Termina de iniciar sesión en {{name}} en tu navegador",
+      "blockedToast": "Tu navegador bloqueó la ventana de inicio de sesión. Abre {{name}} y toca Iniciar sesión para intentarlo de nuevo."
+    }
+  },
+  "curated": {
+    "croma": {
+      "description": "Registros oficiales del gobierno de Colombia, Perú y México: consulta procesos judiciales, empresas, vehículos y personas, con respuestas basadas en fuentes oficiales.",
+      "keyHelp": "Inicia sesión en tu espacio de trabajo de Croma y copia una clave de API (empieza con croma_live_). Las claves pertenecen al espacio de trabajo de tu organización, no a una cuenta personal."
+    },
+    "highlevel": {
+      "description": "Tu CRM de HighLevel (GoHighLevel): contactos, conversaciones, embudos, calendarios, facturas y redes sociales. Una subcuenta por conexión.",
+      "keyTitle": "Conectar con un token de HighLevel",
+      "keyDesc": "Crea un token de integración privada en tu subcuenta y pégalo aquí.",
+      "keyHelp": "En HighLevel, abre la subcuenta que quieres conectar, ve a Configuración (Settings), luego a Integraciones privadas (Private Integrations) y crea un token con los permisos que necesitan tus empleados de IA (contactos, conversaciones, oportunidades, calendarios). Pégalo aquí; empieza con pit-.",
+      "headerLabel": "ID de la subcuenta",
+      "headerHelp": "Lo encuentras en la subcuenta, en Configuración, Perfil del negocio (Business Profile), o en la dirección web de HighLevel después de /location/.",
+      "providerTitle": "Conectar HighLevel con Composio",
+      "providerDesc": "Todas las funciones de HighLevel. Cuando se abra HighLevel, cambia de Agency View a Sub-Account View y aprueba."
+    },
+    "manychat": {
+      "description": "Tu cuenta de ManyChat: contactos de Instagram, Messenger, WhatsApp, SMS y correo, etiquetas, campos personalizados, automatizaciones y mensajes.",
+      "keyTitle": "Conectar con una clave de API de ManyChat",
+      "keyDesc": "Copia la clave de API desde la configuración de ManyChat y pégala aquí.",
+      "keyHelp": "En ManyChat, abre Configuración (Settings), luego API, y genera tu clave de API (disponible en el plan Pro). Copia la clave completa; empieza con el número de tu cuenta seguido de dos puntos."
+    },
+    "connect": {
+      "title": "Conectar {{name}}",
+      "recommendedBadge": "Recomendado",
+      "signInTitle": "Iniciar sesión con {{name}}",
+      "signInDesc": "La forma más fácil: se abre tu navegador e inicias sesión en tu cuenta de {{name}}. Sin claves que copiar.",
+      "keyTitle": "Usar una clave de API",
+      "keyDesc": "Pega una clave de tu cuenta de {{name}}.",
+      "openKeys": "Abrir {{name}} para obtener una clave",
+      "back": "Atrás",
+      "newTo": "¿Nuevo en {{name}}? Crea tu cuenta primero y luego vuelve aquí para conectar.",
+      "createAccount": "Crear una cuenta de {{name}}",
+      "headerRequired": "Ingresa el ID de la subcuenta para continuar."
+    }
+  }
+}

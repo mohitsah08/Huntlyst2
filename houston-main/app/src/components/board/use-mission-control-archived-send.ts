@@ -1,0 +1,78 @@
+import type { KanbanItem } from "@houston-ai/board";
+import type { MessageMention } from "@houston-ai/chat";
+import { useCallback } from "react";
+import { analytics } from "../../lib/analytics";
+import { buildAttachmentPrompt } from "../../lib/attachment-message";
+import { classifyFileKind } from "../../lib/file-kind";
+import type { ModelPin } from "../../lib/model-selector-lock";
+import { perfSpans } from "../../lib/perf-spans";
+import { showSendFailedToast } from "../../lib/send-error-toast";
+import { tauriAttachments, tauriChat } from "../../lib/tauri";
+import { DEFAULT_TURN_MODE } from "../../lib/turn-mode";
+import type { Agent } from "../../lib/types";
+
+/**
+ * Send-to-reactivate for the cross-agent Archived view — the analogue of the
+ * per-agent `useArchivedSendMessage`. Sending in an archived chat re-activates
+ * the mission (the engine flips `archived → running` on session start) and
+ * hands off to that mission's agent board with the chat open. The target is
+ * always the selected archived mission, whose agent is `activeAgent`.
+ */
+export function useMissionControlArchivedSend({
+  activeAgent,
+  selectedItem,
+  resolveSendPin,
+  onHandoff,
+}: {
+  activeAgent: Agent | null;
+  selectedItem: KanbanItem | null;
+  /** The chat panel's settled pin (PRODUCT-1771), read at send time. */
+  resolveSendPin: () => Promise<ModelPin>;
+  /** The archived → active handoff (`useArchivedHandoff`), run once the send
+   *  lands and the mission is no longer archived. */
+  onHandoff: (missionId: string) => void;
+}) {
+  return useCallback(
+    async (
+      sessionKey: string,
+      text: string,
+      files: File[],
+      mentions?: MessageMention[],
+    ) => {
+      if (!activeAgent || !selectedItem) return;
+      const agentPath = activeAgent.folderPath;
+      const missionId = selectedItem.id;
+      try {
+        const paths = await tauriAttachments.save(
+          `activity-${missionId}`,
+          files,
+        );
+        const prompt = buildAttachmentPrompt(text, files, paths);
+        const pin = await resolveSendPin();
+        // The turn stream pushes the user bubble into the conversation VM
+        // itself — no app-side optimistic push.
+        await tauriChat.send(agentPath, prompt, sessionKey, {
+          providerOverride: pin.provider,
+          modelOverride: pin.model,
+          modeOverride: DEFAULT_TURN_MODE,
+          mentions,
+        });
+        perfSpans.messageSent();
+        analytics.track("chat_message_sent", {
+          provider: pin.provider,
+          model: pin.model,
+        });
+        for (const f of files)
+          analytics.track("file_attached", { file_kind: classifyFileKind(f) });
+        // Reactivated (archived → running): hand off to the agent's board.
+        onHandoff(missionId);
+      } catch (err) {
+        // The send failed BEFORE a turn stream existed — nothing wrote to the
+        // VM, so surface it as a toast (no-silent-failures rule).
+        showSendFailedToast(err);
+        throw err;
+      }
+    },
+    [activeAgent, selectedItem, resolveSendPin, onHandoff],
+  );
+}

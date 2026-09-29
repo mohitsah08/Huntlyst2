@@ -16,6 +16,9 @@ interface HuntLoadingScreenProps {
   contactsCheckedCount?: number;
   sourcesScannedCount?: number;
   verifiedContactsCount?: number;
+  currentStrategy?: string;
+  sourcesSearched?: string[];
+  duplicatesFiltered?: number;
   isComplete?: boolean;
   errorMessage?: string | null;
   onViewResults?: () => void;
@@ -97,6 +100,9 @@ export default function HuntLoadingScreen({
   contactsCheckedCount = 0,
   sourcesScannedCount = 0,
   verifiedContactsCount = 0,
+  currentStrategy,
+  sourcesSearched = [],
+  duplicatesFiltered = 0,
   isComplete = false,
   errorMessage = null,
   onViewResults,
@@ -217,6 +223,11 @@ export default function HuntLoadingScreen({
             <p className="font-mono text-xs text-[#FF6B35] font-bold tracking-wide animate-pulse min-h-[20px]">
               {currentMessage || 'Scanning the world for possibilities...'}
             </p>
+            {currentStrategy && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FAF6EE] border border-[#E8DAC2] rounded-full text-[11px] font-mono text-[#1E1B18] shadow-sm">
+                <span className="text-[#FF6B35]">🎯</span> {currentStrategy}
+              </div>
+            )}
             <p className="text-[11px] font-mono text-[#766E65]">
               Target: {config.geography.countries.join(', ') || config.geography.regions.join(', ') || 'Global Non-US'} • {config.sectors.join(', ')} • {config.targetLeads} leads
             </p>
@@ -290,7 +301,7 @@ export default function HuntLoadingScreen({
       </div>
 
       {/* Real Progress Telemetry Counts Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-4 border-t border-[#F0EAD8] text-xs font-mono max-w-3xl mx-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5 pt-4 border-t border-[#F0EAD8] text-xs font-mono max-w-4xl mx-auto">
         <div className="p-2.5 bg-[#FAF6EE] rounded-xl border border-[#EBE4D5]">
           <span className="text-[10px] text-[#766E65] block">Candidates Found</span>
           <span className="font-bold text-sm text-[#1E1B18]">{candidatesFound}</span>
@@ -323,6 +334,12 @@ export default function HuntLoadingScreen({
           <span className="text-[10px] text-[#766E65] block">Emails Verified</span>
           <span className="font-bold text-sm text-[#FF6B35]">
             {verifiedContactsCount !== undefined ? verifiedContactsCount : 0}
+          </span>
+        </div>
+        <div className="p-2.5 bg-[#FAF6EE] rounded-xl border border-[#EBE4D5]">
+          <span className="text-[10px] text-[#766E65] block">Dupes Prevented</span>
+          <span className="font-bold text-sm text-[#2E7D32]">
+            {duplicatesFiltered || 0}
           </span>
         </div>
       </div>

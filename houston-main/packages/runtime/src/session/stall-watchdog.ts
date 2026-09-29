@@ -1,0 +1,100 @@
+import type { ProviderError, WireEvent } from "@houston/runtime-client";
+
+/**
+ * Whether a provider_error frame is our OWN abort coming back: pi does not
+ * resolve an aborted request as a neutral `aborted` turn when the abort lands
+ * while the response is still pending — it ends the assistant message with
+ * stopReason `error` and the AbortError's text ("This operation was aborted")
+ * as the reason, which the classifier can only call `unknown`. Letting that
+ * frame stand painted "Houston could not classify this Azure OpenAI error"
+ * over a turn the watchdog cut for silence (PRODUCT-1778); the turn's honest
+ * surface is the synthesized "stopped responding" card (or, for a user Stop,
+ * the "Stopped by user" frame). Only ever consulted for an abort THIS turn
+ * issued — a genuine provider abort on an untouched turn still surfaces.
+ */
+export function isAbortEcho(error: ProviderError): boolean {
+  return (
+    error.kind === "unknown" &&
+    /operation was aborted/i.test(error.raw_excerpt ?? "")
+  );
+}
+
+/**
+ * Guards a turn's model round-trip against a provider that goes silent — an SSE
+ * read that never returns another byte and so never resolves `prompt()`.
+ *
+ * pi resolves a turn on success or a provider_error frame, but a stalled stream
+ * resolves NEITHER and emits nothing. pi's SSE reader has no idle timeout (only
+ * its WebSocket transport does), so without an external nudge the turn holds the
+ * per-workspace workdir lock until the OS socket finally dies — 19 minutes in the
+ * production incident, freezing every queued turn on the agent behind it.
+ *
+ * The watchdog is armed for the model round-trip only and reset by every wire
+ * event: a healthy turn streams text/thinking/tool events continuously, so it
+ * never trips; a genuinely silent stream does. Tool execution is EXEMPT — a long
+ * `bash`/build is legitimately silent — so the clock is suspended while ≥1 tool
+ * runs (tracked by `tool_start`/`tool_end`) and re-armed when the last one ends.
+ *
+ * Timer-library-agnostic (plain `setTimeout`/`clearTimeout`) so tests drive it
+ * with fake timers and no live session. `timeoutMs <= 0` (or non-finite) disables
+ * it entirely — a fail-safe: a misconfigured timeout never fires a false abort.
+ */
+export interface StallWatchdog {
+  /** Begin watching (call right before awaiting the model). */
+  arm(): void;
+  /** Feed one wire event: resets the idle clock, tracks tool depth. */
+  onEvent(event: WireEvent): void;
+  /**
+   * Proof of life with no wire event behind it: resets the idle clock only.
+   * Fed by the backend's liveness channel (`HarnessSession.subscribeLiveness`)
+   * — a tool call's streamed input reaches the wire as nothing until the call
+   * completes, so a model writing a large file would otherwise look dead.
+   */
+  touch(): void;
+  /** Stop watching + clear any pending timer (call in a `finally`). Idempotent. */
+  disarm(): void;
+}
+
+export function createStallWatchdog(opts: {
+  timeoutMs: number;
+  /** Fired once when the idle window elapses while armed and no tool is running. */
+  onStall: () => void;
+}): StallWatchdog {
+  const { timeoutMs, onStall } = opts;
+  const enabled = Number.isFinite(timeoutMs) && timeoutMs > 0;
+  let armed = false;
+  let toolDepth = 0;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  const clear = () => {
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      timer = undefined;
+    }
+  };
+  // (Re)start the idle clock — unless disabled, disarmed, or a tool is in flight.
+  const reset = () => {
+    clear();
+    if (!enabled || !armed || toolDepth > 0) return;
+    timer = setTimeout(onStall, timeoutMs);
+  };
+
+  return {
+    arm() {
+      armed = true;
+      reset();
+    },
+    onEvent(event) {
+      if (event.type === "tool_start") toolDepth++;
+      else if (event.type === "tool_end" && toolDepth > 0) toolDepth--;
+      reset();
+    },
+    touch() {
+      reset();
+    },
+    disarm() {
+      armed = false;
+      clear();
+    },
+  };
+}

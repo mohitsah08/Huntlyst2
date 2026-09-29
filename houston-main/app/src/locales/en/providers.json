@@ -1,0 +1,237 @@
+{
+  "setup": {
+    "installHint": "Install the {{cli}} CLI on your machine. It will be picked up automatically.",
+    "installGuide": "Install guide",
+    "signInWith": "Sign in",
+    "waiting": "Waiting for the sign-in to finish in your browser...",
+    "cancelWaiting": "Cancel and try again",
+    "installedCheckAgain": "Already installed? Check again"
+  },
+  "signOutConfirm": {
+    "title": "Sign out of {{provider}}?",
+    "description": "{{provider}} won't be used until you sign in again. Existing tasks can still finish their current turn.",
+    "confirm": "Sign out",
+    "cancel": "Cancel"
+  },
+  "toast": {
+    "signInFailed": "Couldn't open {{provider}} sign-in",
+    "engineUnavailable": "We couldn't reach your workspace. Give it a moment and try again.",
+    "connectTimedOut": "The connection didn't complete in time. Please try connecting again.",
+    "loginTimedOut": "The sign-in didn't complete in time. Please try again.",
+    "signInExpiredTitle": "That sign-in link expired",
+    "signInExpiredRestarting": "Starting the {{provider}} sign-in again.",
+    "signInExpiredRetry": "Start the {{provider}} sign-in again.",
+    "signInPortBusy": "Another app on this computer is using the sign-in port. Close other AI coding tools and try again.",
+    "copilotNoAccess": "Your GitHub account doesn't have Copilot access yet. Enable GitHub Copilot on github.com (the Free plan works), then try connecting again.",
+    "signOutFailed": "Couldn't sign out of {{provider}}",
+    "signInSucceeded": "Signed in to {{provider}}",
+    "cancelFailed": "Couldn't cancel {{provider}} sign-in",
+    "catalogLoadFailed": "Couldn't load your available AI models. The list may be incomplete until this succeeds.",
+    "orgAdminRequiredTitle": "Ask an admin to connect this",
+    "orgAdminRequiredBody": "Only an owner or admin can connect AI for the organization. Ask one of them to set it up, or to add you to an AI Employee so you can connect your own account."
+  },
+  "providerLogin": {
+    "title": "Finish signing in to {{name}}",
+    "description": "Open the sign-in page in your browser, complete sign-in, then paste the verification code back here.",
+    "authCodeDescription": "Paste an API key or token to finish connecting {{name}}.",
+    "pasteInstructions": "Create an API key in the Anthropic Console, then paste it here. It starts with sk-ant-api03. A Claude setup token (sk-ant-oat01) also works.",
+    "reference": "Reference",
+    "openUrl": "Open URL",
+    "copyUrl": "Copy URL",
+    "urlCopied": "URL copied to clipboard",
+    "urlCopyFailed": "Couldn't copy the URL",
+    "showUrl": "Show URL",
+    "hideUrl": "Hide URL",
+    "destinationHint": "You'll be taken to {{host}}.",
+    "codeLabel": "Verification code",
+    "codePlaceholder": "Paste the code from your browser",
+    "tokenLabel": "API key or token",
+    "tokenPlaceholder": "sk-ant-...",
+    "codeRequired": "Enter the verification code first.",
+    "sessionExpired": "That sign-in link expired. Close this and start the {{name}} sign-in again.",
+    "submit": "Submit code",
+    "submitting": "Submitting...",
+    "deviceDescription": "Open the link below, sign in, then enter this one-time code to finish.",
+    "deviceCodeLabel": "One-time code",
+    "deviceCodeHint": "Enter this code on the {{name}} page after you sign in.",
+    "deviceWaiting": "Waiting for you to authorize in your browser...",
+    "copyCode": "Copy code",
+    "codeCopied": "Code copied!",
+    "codeCopyFailed": "Couldn't copy the code",
+    "deviceOpenFailed": "Couldn't open the sign-in page",
+    "deviceSettingsHint": "Not seeing a code prompt? Turn on device-code sign-in in <link>ChatGPT Settings > Security</link>.",
+    "deviceSettingsOpenFailed": "Couldn't open ChatGPT settings",
+    "cancel": "Cancel",
+    "browserDescription": "Approve Houston in the browser tab that just opened. This window updates on its own when you finish.",
+    "browserCodeCopyHint": "If the Claude page shows you a code, copy it and come back here. Sign-in will finish on its own.",
+    "browserCodeReveal": "Claude showed you a code?",
+    "browserCodeHint": "If Claude shows you a code after you approve, paste it here to finish.",
+    "browserOpen": "Didn't open? Open sign-in"
+  },
+  "apiKey": {
+    "title": "Connect {{name}}",
+    "description": "Paste your {{name}} API key. We keep it safe and use it for your chats.",
+    "getKey": "Get your API key",
+    "label": "API key",
+    "placeholder": "Paste your API key",
+    "endpointLabel": "Endpoint",
+    "endpointPlaceholder": "https://your-resource.openai.azure.com",
+    "endpointHelp": "The endpoint URL from your resource in the Azure portal. Each request goes to the deployment named exactly like the model, so name your deployments after the model (for example \"gpt-5.5\").",
+    "endpointRequired": "Enter your endpoint URL first. It starts with https:// and comes from your resource in the Azure portal.",
+    "required": "Enter your API key first.",
+    "verifyFailed": "This key couldn't be connected: {{detail}}",
+    "show": "Show key",
+    "hide": "Hide key",
+    "save": "Connect",
+    "saving": "Connecting...",
+    "cancel": "Cancel",
+    "guide": {
+      "title": "How to get your key",
+      "nvidia1": "Open the NVIDIA key page with the button above and sign in, or create a free account.",
+      "nvidia2": "Click \"Generate Personal Key\" and under \"Services Included\" check \"Public API Endpoints\".",
+      "nvidia3": "Copy the key that starts with \"nvapi-\" and paste it below.",
+      "bedrock1": "Open the Bedrock API keys page with the button above and choose \"Long-term API keys\".",
+      "bedrock2": "Click \"Generate long-term API keys\". The key value is shown only once, so copy it right away.",
+      "bedrock3": "Paste the key value below. It starts with \"ABSK\". The name shown in the list (\"BedrockAPIKey-...\") is not the key.",
+      "azure1": "In the Azure portal, open your Azure OpenAI (or Foundry) resource and go to \"Keys and endpoint\".",
+      "azure2": "Copy one of the two keys and the endpoint URL.",
+      "azure3": "Deploy the models you want to use, each named exactly like the model (for example \"gpt-5.5\"), then paste the endpoint and key here.",
+      "huggingface1": "Open the Hugging Face tokens page with the button above and sign in, or create a free account.",
+      "huggingface2": "Click \"Create new token\". A \"Read\" token works. If you pick \"Fine-grained\", check \"Make calls to Inference Providers\" under Inference.",
+      "huggingface3": "Copy the token that starts with \"hf_\" and paste it below."
+    },
+    "errorInvalidKey": "{{name}} didn't accept this key. Check it and paste it again.",
+    "errorKeyRestricted": "This key is blocked by settings in your {{name}} account. Create a new key without restrictions using the button above, then paste it here.",
+    "errorNvidiaAccountGated": "Your key is valid, but NVIDIA isn't serving any chat models to your account right now. Make sure your key is a Personal Key from org.ngc.nvidia.com with \"Public API Endpoints\" under Services Included. If it still fails, ask NVIDIA support to enable model access for your account.",
+    "errorBedrockInvalidKey": "Amazon Bedrock didn't accept this key. Make sure you pasted the key value (it starts with \"ABSK\"), not its name from the list (\"BedrockAPIKey-...\"). AWS shows the value only once, so generate a new key if you no longer have it.",
+    "errorHuggingfaceInferenceGated": "Your token is valid, but it isn't allowed to run models. Open the Hugging Face tokens page with the button above and create a token with \"Make calls to Inference Providers\" checked (a \"Read\" token also works), then paste it here.",
+    "errorGoogleKeyRestricted": "Google is blocking this key through its own settings. In Google AI Studio or Google Cloud, open the key, remove its application and API restrictions (or allow the Generative Language API), or create a new key without restrictions with the button above, then paste it here.",
+    "errorProviderUnavailable": "We couldn't reach {{name}} to check your key, so nothing was saved. Please try again in a moment.",
+    "errorOrgAdminRequired": "Only an owner or admin can connect AI for the organization. Ask one of them to set it up, or to add you to an AI Employee so you can connect your own key."
+  },
+  "copilot": {
+    "title": "Connect GitHub Copilot",
+    "description": "Choose where you sign in to GitHub.",
+    "personalTitle": "On github.com",
+    "personalDesc": "Your personal Copilot, or a Copilot Business plan your company pays for.",
+    "companyTitle": "Company GitHub domain (Enterprise)",
+    "companyDesc": "Your company signs in at its own GitHub address, like company.ghe.com.",
+    "domainLabel": "Company GitHub domain",
+    "domainPlaceholder": "company.ghe.com",
+    "domainHint": "Ask your IT team if you're not sure.",
+    "domainInvalid": "Enter a valid GitHub domain, like company.ghe.com. If your company uses regular github.com, pick the first option instead.",
+    "cancel": "Cancel",
+    "continue": "Continue"
+  },
+  "openaiCompatible": {
+    "title": "Connect a local model",
+    "description": "Use a model running on your computer, like Ollama, LM Studio or vLLM.",
+    "baseUrlLabel": "Server address",
+    "baseUrlPlaceholder": "http://localhost:11434/v1",
+    "baseUrlHelp": "The address where your local server is listening. For Ollama this is usually http://localhost:11434/v1.",
+    "modelLabel": "Model",
+    "modelPlaceholder": "llama3.1",
+    "modelHelp": "The exact name of the model your server serves.",
+    "nameLabel": "Display name (optional)",
+    "namePlaceholder": "My local model",
+    "nameHelp": "A friendly label for the picker. Defaults to the model name.",
+    "keyLabel": "API key (optional)",
+    "keyPlaceholder": "Leave empty if your server has no key",
+    "keyHelp": "Most local servers don't need one. Add a key only if yours requires it.",
+    "show": "Show key",
+    "hide": "Hide key",
+    "baseUrlRequired": "Enter the server address first.",
+    "modelRequired": "Enter a model name first.",
+    "save": "Connect",
+    "saving": "Connecting...",
+    "cancel": "Cancel",
+    "cloudOnly": {
+      "title": "The cloud can't reach that address",
+      "notHttps": "AI Employees in the cloud can only reach public https:// addresses. Enter an https:// address, or put your server behind a tunnel like cloudflared or ngrok.",
+      "customPort": "AI Employees in the cloud can only reach addresses on the standard https port. Remove the port from the address.",
+      "privateHost": "AI Employees in the cloud can't reach your computer or your local network directly. Use a public https:// address, or put your server behind a tunnel like cloudflared, ngrok or Tailscale Funnel.",
+      "unspecified": "AI Employees in the cloud can only reach public https:// addresses. Use a public https:// address, or put your server behind a tunnel like cloudflared or ngrok."
+    }
+  },
+  "claudeLogin": {
+    "timeout": "Claude sign-in timed out. Please try connecting again.",
+    "confirmTimeout": "Signed in to Claude, but we couldn't confirm the connection. Please try again.",
+    "handoffFailed": "Signed in to Claude, but we hit a problem on our side while finishing the connection. Please try again in a moment, or report a bug if it keeps happening.",
+    "autoFailedTitle": "Couldn't finish connecting automatically",
+    "autoFailedBody": "Paste an Anthropic API key to finish connecting.",
+    "helperUnsupported": "This computer's processor is too old to run the Claude sign-in helper, so a Claude subscription can't be connected on this machine.",
+    "shellUnavailable": "Claude sign-in needs Git for Windows on this computer. Install it from git-scm.com, then try connecting again."
+  },
+  "localModel": {
+    "title": "Connect a local model",
+    "description": "Run a model on your own computer and use it here. We take care of the connection.",
+    "detecting": "Looking for model apps on your computer...",
+    "cancel": "Cancel",
+    "connecting": {
+      "title": "Connecting your model...",
+      "body": "This takes a few seconds. Keep the app open on your computer."
+    },
+    "empty": {
+      "body": "To run a model on your own computer, install one of these free apps, then open it:",
+      "apps": {
+        "lmstudio": "A friendly app for running models.",
+        "jan": "An open, easy model app.",
+        "ollama": "Popular and simple to set up."
+      },
+      "hint": {
+        "lmstudio": "Open its Developer tab, then switch the server on.",
+        "jan": "In Settings, turn on the Local API Server.",
+        "ollama": "Runs on its own once installed. Nothing to switch on."
+      },
+      "get": "Get it",
+      "reassure": "Once it's open, we take care of the rest.",
+      "recheck": "Check again"
+    },
+    "pick": {
+      "body": "We found these on your computer. Pick the model you'd like to use.",
+      "modelsFound_one": "{{count}} model available",
+      "modelsFound_other": "{{count}} models available",
+      "modelLabel": "Model",
+      "connect": "Connect"
+    },
+    "reasoning": {
+      "label": "Show the model's thinking",
+      "help": "Turn this on for reasoning models (they think before answering)."
+    },
+    "share": {
+      "label": "Share with my team",
+      "help": "Teammates' AI Employees can use this model. Their requests run through your computer while it's online."
+    },
+    "error": {
+      "body": "Something went wrong while connecting. Make sure the app is still open on your computer, then try again.",
+      "retry": "Try again"
+    },
+    "unsupported": {
+      "body": "Local models aren't available on this server yet. Try again later, or enter details manually."
+    },
+    "manual": {
+      "title": "Enter details manually",
+      "description": "Already have a model server address? Enter it here.",
+      "link": "Enter details manually",
+      "back": "Back"
+    },
+    "status": {
+      "online": "Online",
+      "connecting": "Connecting...",
+      "offline": "Offline",
+      "error": "Not reachable",
+      "offlineHint": "Your model isn't reachable right now. Make sure {{app}} is open on this computer.",
+      "yourApp": "the app on your computer",
+      "reconnect": "Reconnect",
+      "disabled": "Disconnected",
+      "reconnecting": "Reconnecting...",
+      "model_unavailable": "Open your model app",
+      "authorization_required": "Sign in to reconnect",
+      "revoked": "Connection removed",
+      "authorizationHint": "Sign in to the account that connected this model, then reconnect.",
+      "revokedHint": "This connection was removed. Connect your model again to use it.",
+      "reconnect_required": "Reconnect your model",
+      "reconnectHint": "Connect your model again to link it to this workspace."
+    }
+  }
+}

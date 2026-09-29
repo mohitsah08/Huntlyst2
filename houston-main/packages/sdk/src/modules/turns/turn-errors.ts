@@ -1,0 +1,205 @@
+import { EngineError, FatalResumeError } from "@houston/runtime-client";
+import {
+  type MessageLimitRefusal,
+  parseMessageLimitRefusal,
+} from "@houston/wire-types";
+
+/**
+ * The C19 `message_limit` refusal behind any failed call, or null. Every
+ * transport carries the 429 differently: the runtime client's `EngineError`
+ * keeps the body as text, the SDK REST families keep it as the message, and
+ * the adapter's `HoustonEngineError` holds it parsed. A turn start, a routine
+ * Run now and a mission start all read it through here.
+ */
+export function messageLimitRefusal(
+  error: unknown,
+): MessageLimitRefusal | null {
+  const cause = error instanceof FatalResumeError ? error.cause : error;
+  if (!(cause instanceof Error)) return null;
+  const { status, body } = cause as { status?: unknown; body?: unknown };
+  if (status !== 429) return null;
+  if (typeof body === "string") return parseText(body);
+  return body === undefined
+    ? parseText(cause.message)
+    : parseMessageLimitRefusal(body);
+}
+
+function parseText(text: string): MessageLimitRefusal | null {
+  try {
+    return parseMessageLimitRefusal(JSON.parse(text));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Turn error classification — pure string helpers shared by the sink, settles,
+ * and stream runners. Moved into the SDK with the turn machinery so the turn
+ * dialect (what counts as "not connected" / "stopped by user" / the plain
+ * message behind a rejected send) lives in exactly one place.
+ */
+
+/**
+ * Product-voice fallback for a turn failure that carries no engine-authored
+ * copy. Deliberately generic: the raw cause (a WebKit "Load failed", a thrown
+ * bug, …) is developer speak that must never reach the chat (HOU-705,
+ * HOU-721) — it goes to the console/log instead.
+ */
+export const TURN_FAILED_MESSAGE = "Something went wrong. Please try again.";
+
+/**
+ * A turn that fails on the SEND (e.g. no provider connected → the runtime answers
+ * 409) rejects with an EngineError wrapping the runtime's JSON body. Unwrap it to
+ * the plain message the engine sent, so the chat shows "No provider connected. Log
+ * in with Claude or Codex first." rather than a raw `engine request failed (409):
+ * {…}` string (the product voice never shows status codes or JSON to the user).
+ * A fatal stream refusal (FatalResumeError) unwraps to the EngineError it carries.
+ * Anything WITHOUT engine-authored copy — a transport failure, a thrown bug —
+ * resolves to {@link TURN_FAILED_MESSAGE}; the raw error is logged so the
+ * detail still lands in the frontend log for diagnosis.
+ */
+export function turnErrorMessage(e: unknown): string {
+  const verdict = engineVerdictMessage(e);
+  if (verdict !== undefined) return verdict;
+  if (e instanceof FatalResumeError) e = e.cause;
+  console.error("[turn] failed without engine verdict:", e);
+  return TURN_FAILED_MESSAGE;
+}
+
+/**
+ * The engine's own error copy when `e` carries one, else undefined. Only an
+ * {@link EngineError} (directly or inside a FatalResumeError) with a JSON
+ * `{ error }` body qualifies — that string is authored product copy. Anything
+ * else (a transport failure, the resume loop's own watchdog abort — WebKit's
+ * "Fetch is aborted" / "Load failed") is developer speak that must never
+ * reach the chat (HOU-705); callers substitute their product-voice fallback.
+ */
+export function engineVerdictMessage(e: unknown): string | undefined {
+  if (e instanceof FatalResumeError) e = e.cause;
+  if (!(e instanceof EngineError)) return undefined;
+  try {
+    const body = JSON.parse(e.body) as { error?: string };
+    if (body?.error) return body.error;
+  } catch {
+    /* body wasn't JSON — no product copy to surface */
+  }
+  return undefined;
+}
+
+/**
+ * Whether a failed send is AMBIGUOUS about whether the engine received it.
+ *
+ * An {@link EngineError} is a server verdict (the engine answered — 409, 401,
+ * …) and an abort is the caller's own cancellation: both are definitive.
+ * Everything else is `fetch` reporting a transport failure (WebKit's
+ * `TypeError: Load failed`, a reset, DNS…), which CANNOT distinguish "the
+ * request never reached the engine" from "the engine accepted it but the
+ * response was lost" — the turn may be running. Callers must not settle the
+ * turn as failed on such an error without independent evidence (see
+ * `streamTurn`'s send-verdict window).
+ */
+/**
+ * The engine answered the send with "not here, not now": the agent's pod is
+ * waking, restarting (a release roll, a drain), its runtime is still booting,
+ * or its id is latched for the seconds a rename moves its directory
+ * (PRODUCT-1804), and the SAME send succeeds once it is back. Keyed on the exact
+ * (status, reason) pairs the gateway and host mint for that state, never on a
+ * bare 502/503 (a provider quota page on the same status is a real failure).
+ * The web adapter's `isEngineWakingError` reads the same pairs across every
+ * client error shape; this is the one shape the turn stream sees.
+ */
+/**
+ * The runtime refused a control because a turn is accepted, queued or running
+ * on the conversation (`409 turn running`, its one 409). For a dismiss this
+ * means the card the surface showed was stale: a turn started elsewhere (a
+ * member's send, another device, a routine, a webhook) had already retired
+ * that interaction, so nothing broke and the running turn is the truth the
+ * surface must catch up to. Read by `dismissInteraction`, which turns it into
+ * a typed outcome instead of a throw (HOUSTON-APP-5EY / PRODUCT-1827).
+ */
+export function isTurnRunningRejection(e: unknown): boolean {
+  return e instanceof EngineError && e.status === 409;
+}
+
+export function isEngineWakingRejection(e: unknown): boolean {
+  if (!(e instanceof EngineError)) return false;
+  const reason = engineVerdictMessage(e);
+  if (reason === undefined) return false;
+  if (e.status === 503) {
+    return (
+      reason === "engine unavailable" ||
+      reason === "the agent's runtime is still starting, try again shortly" ||
+      // A host draining (roll, eviction, app quit): the send belongs to the
+      // replacement pod (PRODUCT-1777).
+      reason === "the host is shutting down; retry shortly"
+    );
+  }
+  return e.status === 502 && reason === "engine proxy failed";
+}
+
+export function isAmbiguousSendFailure(e: unknown): boolean {
+  if (e instanceof EngineError) return false;
+  if (e instanceof Error && e.name === "AbortError") return false;
+  return true;
+}
+
+/**
+ * Whether a turn failure is the runtime's "no provider connected" refusal — the
+ * verbatim message it raises when the chat's provider is logged out (runtime
+ * `ai/providers.ts`, `transport/server.ts`, `turn/server.ts`; all prefixed
+ * "No provider connected."). This is a HANDLED, recoverable state surfaced by
+ * the in-chat reconnect card, not a turn failure, so the UI settles it cleanly
+ * rather than rendering it as an error.
+ */
+export function isNotConnectedError(message: string): boolean {
+  return message.toLowerCase().includes("no provider connected");
+}
+
+/**
+ * The verbatim line the runtime (and the control plane's relay) emit when the
+ * user presses Stop — and the copy the reload paths re-derive from a persisted
+ * `stopped` reply so the transcript reads identically after a refresh. The ONE
+ * source of that string: {@link isStoppedByUser} matches it, the live stop
+ * settle pushes it, and the history fold replays it.
+ */
+export const STOPPED_BY_USER = "Stopped by user";
+
+/**
+ * The line for a turn the ENGINE died on (a pod OOM-killed mid-turn, the
+ * desktop force-quit): the runtime's boot settle stamps the dead turn's reply
+ * `interrupted` (`ChatMessage.interrupted`), and both the lost-terminal settle
+ * and the history replay render this from it. Product voice: the user's next
+ * move is in the copy, and nothing technical (no "process", "pod", "memory").
+ */
+export const ENGINE_RESTART_MESSAGE =
+  "Your agent had to restart. Say continue and it will pick up where it left off.";
+
+/**
+ * The line for a turn the engine died on and is ALREADY running again by
+ * itself (`interrupted.resumed`, PRODUCT-1785). Same shape as
+ * {@link ENGINE_RESTART_MESSAGE} and the same product voice, minus the ask:
+ * there is nothing for the user to do, so the copy only accounts for the pause
+ * they saw. A turn that renders this must not settle as an error — the work is
+ * still going (see `finishResumed`).
+ */
+export const ENGINE_RESUMED_MESSAGE =
+  "Your agent was interrupted by a restart and is picking up where it left off.";
+
+/**
+ * WHY the engine authored a system line, carried on the `system_message`
+ * feed item beside its English default. A surface renders its own copy by
+ * kind and never by matching the English text: the wording above is a
+ * default for surfaces without a dictionary, not a contract to compare
+ * against.
+ */
+export type EngineNoticeKind = "engine_restart" | "engine_resumed";
+
+/**
+ * Whether a turn's terminal error is the user pressing Stop — the verbatim
+ * message the runtime (and the control plane's relay) emit on a cancel. This is
+ * an intentional, handled stop, not a turn failure, so the UI shows the message
+ * but settles the card back to the user (needs_you), never the red error state.
+ */
+export function isStoppedByUser(message: string): boolean {
+  return message.includes(STOPPED_BY_USER);
+}

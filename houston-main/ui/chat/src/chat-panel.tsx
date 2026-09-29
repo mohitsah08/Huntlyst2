@@ -1,0 +1,130 @@
+/**
+ * ChatPanel -- THE single chat experience component.
+ * Follows the Vercel AI Elements chatbot example exactly.
+ * Generic version: accepts feedItems/status as props, no store dependencies.
+ */
+
+import { useEffect, useMemo, useRef } from "react";
+import { ChatDropOverlay } from "./chat-drop-overlay";
+import { feedItemsToMessages } from "./chat-helpers";
+import { ChatInput } from "./chat-input";
+import { ChatPanelLog } from "./chat-panel-log";
+import type { ChatPanelProps } from "./chat-panel-types";
+import { deriveStatus } from "./chat-status";
+import { useChatPanelAttachments } from "./use-chat-panel-attachments";
+
+export type { ChatPanelProps } from "./chat-panel-types";
+
+export function ChatPanel(props: ChatPanelProps) {
+  const {
+    sessionKey,
+    feedItems,
+    onStop,
+    onBack,
+    isLoading,
+    placeholder = "Type a message...",
+    status: statusProp,
+    value,
+    onValueChange,
+    composerFocusToken,
+    onNotice,
+    prepareAttachments,
+    onAttachmentRejections,
+    footer,
+    composerHeader,
+    attachMenu,
+    queuedMessages,
+    onRemoveQueuedMessage,
+    queuedLabels,
+    canSendEmpty,
+    composerDisabled,
+    composerOverride,
+    composerOverrideMode = "above",
+    composerLabels,
+    dictation,
+    mentionPeople,
+    renderMentionAvatar,
+    mentionLabels,
+  } = props;
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const status = statusProp ?? deriveStatus(feedItems, isLoading);
+  const messages = useMemo(() => feedItemsToMessages(feedItems), [feedItems]);
+  const { files, setFiles, handleSend, isDraggingOver, dropProps } =
+    useChatPanelAttachments(props);
+
+  useEffect(() => {
+    if (composerFocusToken === undefined) return;
+    panelRef.current
+      ?.querySelector<HTMLTextAreaElement>('textarea[name="message"]')
+      ?.focus();
+  }, [composerFocusToken]);
+
+  return (
+    <div
+      ref={panelRef}
+      className="relative flex flex-1 flex-col min-h-0 overflow-hidden bg-pane"
+      {...dropProps}
+    >
+      <ChatDropOverlay
+        visible={isDraggingOver}
+        title={composerLabels?.dropTitle}
+        description={composerLabels?.dropDescription}
+      />
+      {onBack && (
+        <div className="max-w-3xl mx-auto w-full px-4 pt-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-sm text-ink-muted hover:text-ink transition-colors flex items-center gap-1"
+          >
+            <span>←</span> Back to chats
+          </button>
+        </div>
+      )}
+      <ChatPanelLog {...props} messages={messages} status={status} />
+
+      {/* Above-card offers keep the composer visible. Replacing interaction
+          cards own their input, so the composer is hidden while they are
+          present. The override block drops the input's own top padding for its
+          gap, avoiding doubled spacing between the two. */}
+      {composerOverride && (
+        <div className="shrink-0 px-4 pt-2 pb-3">
+          <div className="max-w-3xl mx-auto">{composerOverride}</div>
+        </div>
+      )}
+      {!(composerOverride && composerOverrideMode === "replace") && (
+        <ChatInput
+          onSend={handleSend}
+          onStop={onStop}
+          status={status}
+          placeholder={placeholder}
+          value={value}
+          onValueChange={onValueChange}
+          attachments={files}
+          onAttachmentsChange={setFiles}
+          onNotice={onNotice}
+          prepareAttachments={prepareAttachments}
+          onAttachmentRejections={onAttachmentRejections}
+          footer={footer}
+          header={composerHeader}
+          attachMenu={attachMenu}
+          queuedMessages={queuedMessages}
+          onRemoveQueuedMessage={onRemoveQueuedMessage}
+          queuedLabels={queuedLabels}
+          canSendEmpty={canSendEmpty}
+          disabled={composerDisabled}
+          labels={composerLabels}
+          dictation={dictation}
+          mentionPeople={mentionPeople}
+          renderMentionAvatar={renderMentionAvatar}
+          mentionLabels={mentionLabels}
+          // The conversation on screen IS the draft: its @mention picks are
+          // parked under this key, exactly like its text is in the app's
+          // draft store, so a switch never crosses one chat's picks with
+          // another's words.
+          draftKey={sessionKey}
+        />
+      )}
+    </div>
+  );
+}

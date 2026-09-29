@@ -1,0 +1,114 @@
+import { createServer } from "node:http";
+import { primeAnthropicCredential } from "../backends/claude/credential-status";
+import { config } from "../config";
+import {
+  actingFromHeaders,
+  runWithActingContext,
+} from "../session/acting-context";
+import { anyTurnRunning } from "../session/bus";
+import { runTurn } from "../session/chat";
+import { isDraining } from "../session/drain";
+import { resumeInterruptedTurns } from "../session/resume-interrupted-turns";
+import type { ResumeRequest } from "../session/resume-request";
+import { settleInterruptedTurns } from "../session/settle-interrupted-turns";
+import { handleConversationRoute } from "./conversation-routes";
+import { applyCors } from "./cors";
+import { handleGenerateRoute } from "./generate-route";
+import {
+  authorized,
+  json,
+  type RouteContext,
+  routeContext,
+} from "./http-helpers";
+import { handleProviderRoute } from "./provider-routes";
+
+async function handle(ctx: RouteContext) {
+  applyCors(ctx.req, ctx.res);
+  if (ctx.method === "OPTIONS") {
+    ctx.res.writeHead(204);
+    ctx.res.end();
+    return;
+  }
+
+  if (ctx.method === "GET" && ctx.path === "/health") {
+    json(ctx.res, 200, { status: "ok", version: config.version });
+    return;
+  }
+  if (ctx.method === "GET" && ctx.path === "/busy") {
+    // A draining runtime reads busy until it exits: the host's activity
+    // probe must never call a pod idle while a turn is still finishing.
+    json(ctx.res, 200, { busy: anyTurnRunning() || isDraining() });
+    return;
+  }
+  if (ctx.method === "GET" && ctx.path === "/version") {
+    json(ctx.res, 200, { engine: config.version, protocol: 2 });
+    return;
+  }
+
+  if (!authorized(ctx)) {
+    json(ctx.res, 401, { error: "unauthorized" });
+    return;
+  }
+  if (await handleProviderRoute(ctx)) return;
+  if (await handleConversationRoute(ctx)) return;
+  if (await handleGenerateRoute(ctx)) return;
+
+  json(ctx.res, 404, { error: "not found" });
+}
+
+/**
+ * Every runtime request runs inside the acting identity its headers carry
+ * (HOU-976), so credential resolution is scope-correct on ALL of them — not just
+ * the message route: `GET /providers`, `/auth/status`, `/auth/:p/login`,
+ * `/auth/export` and the serve sync they trigger each read or write a
+ * credential. The per-turn wrap in session/exec-turn.ts STAYS: a turn outlives
+ * the request that started it.
+ */
+export function createRuntimeServer() {
+  return createServer((req, res) => {
+    runWithActingContext(actingFromHeaders(req.headers), () =>
+      handle(routeContext(req, res)),
+    ).catch((e) => {
+      console.error("[server] unhandled:", e);
+      if (!res.headersSent) json(res, 500, { error: "internal error" });
+      else if (!res.writableEnded) res.end();
+    });
+  });
+}
+
+export function startServer() {
+  // Turns the previous process died on (a pod OOM-killed mid-turn, the desktop
+  // force-quit) get their honest reply BEFORE anything can read history: a
+  // client reconnecting the instant this runtime is back settles from it.
+  // Never boot-fatal — a settle that throws must not turn one lost turn into
+  // an engine that will not start (it logs; the marker stays for next boot).
+  let resumable: ResumeRequest[] = [];
+  try {
+    resumable = settleInterruptedTurns({ dataDir: config.dataDir }).resumable;
+  } catch (error) {
+    console.error("[turn] settling interrupted turns failed:", error);
+  }
+  // Warm the anthropic shared-dir credential probe so the turn-time sync path
+  // (`activeProvider`) sees a connected credential even before the first
+  // /auth/status poll. Fire-and-forget; failures self-log (never connected).
+  primeAnthropicCredential();
+  const server = createRuntimeServer();
+  server.listen(config.port, config.host, () => {
+    console.info("runtime listening", {
+      auth: config.token ? "bearer_token_required" : "open_local_dev",
+      cors: config.corsOrigin,
+      dataDir: config.dataDir,
+      mode: "server",
+      model: config.model,
+      url: `http://${config.host}:${config.port}`,
+      workspace: config.workspaceDir,
+    });
+    // The automatic resume of every turn the settle judged resumable
+    // (PRODUCT-1785), started only once the port is open: a resumed turn is a
+    // normal turn — it streams to whoever is watching, and a client that
+    // reconnects must be able to reach this runtime while it runs.
+    // Fire-and-forget; `resumeInterruptedTurns` never rejects.
+    void resumeInterruptedTurns(resumable, { runTurn });
+  });
+  return server;
+}

@@ -1,0 +1,75 @@
+{
+  "actions": {
+    "continue": "Continuar",
+    "back": "Voltar",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "close": "Fechar",
+    "getStarted": "Começar",
+    "delete": "Excluir",
+    "remove": "Remover",
+    "confirm": "Confirmar",
+    "retry": "Tentar de novo",
+    "tryAgain": "Tentar novamente",
+    "edit": "Editar",
+    "rename": "Renomear",
+    "add": "Adicionar",
+    "next": "Próximo",
+    "done": "Pronto",
+    "loading": "Carregando",
+    "saving": "Salvando",
+    "saved": "Salvo",
+    "create": "Criar",
+    "dismiss": "Dispensar",
+    "submit": "Enviar",
+    "search": "Buscar",
+    "loadMore": "Carregar mais",
+    "install": "Instalar",
+    "installing": "Instalando",
+    "reload": "Recarregar",
+    "later": "Mais tarde",
+    "signIn": "Entrar"
+  },
+  "language": {
+    "title": "Idioma",
+    "description": "Escolha o idioma que o app usa neste espaço de trabalho.",
+    "label": "Idioma da interface",
+    "toastChanged": "Idioma alterado"
+  },
+  "env": {
+    "preview": "Prévia"
+  },
+  "notifications": {
+    "sessionComplete": {
+      "title": "{{workspace}} · {{agent}}",
+      "body": "Seu funcionário de IA terminou de trabalhar.",
+      "question_one": "Seu funcionário de IA tem uma pergunta para você.",
+      "question_other": "Seu funcionário de IA tem perguntas para você.",
+      "signin": "Seu funcionário de IA precisa que você entre.",
+      "connect": "Seu funcionário de IA precisa que você conecte um aplicativo.",
+      "credential": "Seu funcionário de IA precisa de uma chave de API para terminar.",
+      "handsOn": "Seu funcionário de IA precisa que você termine algo no Houston."
+    },
+    "mentioned": {
+      "title": "{{name}} mencionou você",
+      "titleUnknown": "Você foi mencionado",
+      "body": "Em {{mission}}"
+    },
+    "preprompt": {
+      "title": "Quer um aviso quando seu funcionário de IA terminar?",
+      "body": "Ative as notificações e o Houston avisa você assim que uma tarefa terminar ou precisar de você.",
+      "cta": "Ativar notificações"
+    },
+    "catchNet": {
+      "title": "Você perdeu um aviso",
+      "body": "Ative as notificações para o Houston avisar você quando uma tarefa terminar.",
+      "cta": "Ativar notificações"
+    },
+    "granted": "As notificações estão ativadas.",
+    "blocked": "As notificações estão bloqueadas. Abra as configurações do sistema para ativá-las.",
+    "blockedBrowser": "As notificações estão bloqueadas. Ative-as nas configurações do seu navegador.",
+    "openSettings": "Abrir configurações do sistema",
+    "openSettingsFailed": "Não foi possível abrir as configurações do sistema. Tente novamente.",
+    "requestFailed": "Não foi possível ativar as notificações. Tente novamente."
+  }
+}

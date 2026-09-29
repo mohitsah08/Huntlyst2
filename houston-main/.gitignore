@@ -1,0 +1,43 @@
+node_modules/
+dist/
+.DS_Store
+.env
+.env.local
+.env.*.local
+# Real staging client credentials (see scripts/dev/staging.sh for the keys).
+.env.staging
+*.tsbuildinfo
+target/
+.agents/
+!/store/agents/*/.agents/
+!/store/agents/*/.agents/**
+!/store/agents-i18n/*/*/.agents/
+!/store/agents-i18n/*/*/.agents/**
+.claude/skills/
+.windsurf/
+.codex/
+skills-lock.json
+.playwright-mcp/
+.wrangler/
+
+.claude/worktrees/
+
+# Houston engine sidecar staged by build.rs (built from source in CI, not committed)
+app/src-tauri/binaries/
+.vercel
+
+# local MCP config (may hold tokens)
+.mcp.json
+
+# Playwright UI tests (packages/web/e2e) — generated artifacts
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+.last-run.json
+
+# pnpm content-addressable store (created when a worktree sits on a different FS than the global store)
+.pnpm-store/
+
+# Process/crash logs (mprocs, dev panes) — machine state, never source
+*.log

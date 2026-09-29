@@ -1,0 +1,425 @@
+{
+  "welcome": {
+    "greeting": "¡Hola! Soy {{name}}, tu nuevo empleado de IA. Cuéntame en qué te gustaría que te ayude: puedes describir una tarea con tus propias palabras, compartir algunos detalles sobre cómo te gusta que se hagan las cosas o adjuntar archivos que me den contexto. Cuanto más me cuentes, mejor se ajustará mi trabajo a lo que necesitas. ¿Con qué te gustaría empezar?"
+  },
+  "setupGreeting": {
+    "text": "¡Hola, soy **{{name}}**! Hoy es mi *primer día*, así que ayúdame a aprender cómo puedo serte más útil.\n\nJuntos vamos a dejar por escrito cómo hago mi trabajo del día a día. En Houston, estos procedimientos paso a paso se llaman **Skills**.\n\nEmpecemos con **una tarea que haces todos los días**. La hacemos juntos una vez y después la guardo como Skill para poder hacerla por ti cuando quieras.\n\nEstas son algunas tareas con las que podríamos empezar:",
+    "textWithRole": "¡Hola, soy **{{name}}**, tu {{role}}! Hoy es mi *primer día*, así que ayúdame a aprender cómo puedo serte más útil.\n\nJuntos vamos a dejar por escrito cómo hago mi trabajo del día a día. En Houston, estos procedimientos paso a paso se llaman **Skills**.\n\nEmpecemos con **una tarea que haces todos los días**. La hacemos juntos una vez y después la guardo como Skill para poder hacerla por ti cuando quieras.\n\nEstas son algunas tareas con las que podríamos empezar:",
+    "textRoleAsName": "¡Hola, soy tu **{{role}}**! Hoy es mi *primer día*, así que ayúdame a aprender cómo puedo serte más útil.\n\nJuntos vamos a dejar por escrito cómo hago mi trabajo del día a día. En Houston, estos procedimientos paso a paso se llaman **Skills**.\n\nEmpecemos con **una tarea que haces todos los días**. La hacemos juntos una vez y después la guardo como Skill para poder hacerla por ti cuando quieras.\n\nEstas son algunas tareas con las que podríamos empezar:"
+  },
+  "composer": {
+    "placeholder": "Pregunta lo que quieras...",
+    "fileAlreadyInChat": "El archivo ya está en el chat",
+    "dropTitle": "Suelta tus archivos",
+    "dropDescription": "Suéltalos aquí para añadirlos a la conversación",
+    "imagePasteUnavailable": "No se pudo leer la imagen pegada. Prueba a arrastrar el archivo.",
+    "tooManyFiles": "Puedes adjuntar hasta {{max}} archivos a la vez",
+    "folderReadFailed": "No se pudo leer esa carpeta. Prueba con el botón de adjuntar.",
+    "folderFileCount_one": "{{count}} archivo",
+    "folderFileCount_other": "{{count}} archivos",
+    "addFiles": "Agregar archivos",
+    "dictation": {
+      "start": "Iniciar dictado por voz",
+      "stop": "Detener e insertar",
+      "cancel": "Cancelar",
+      "recording": "Grabando",
+      "transcribing": "Transcribiendo...",
+      "setupTitle": "Configurar dictado por voz",
+      "setupBody": "Descarga única de unos {{sizeMb}} MB.",
+      "setupConfirm": "Descargar",
+      "setupProgress": "Descargando... {{pct}}%",
+      "micDenied": "La escritura por voz necesita acceso al micrófono. Permítelo en la configuración del sistema y vuelve a intentarlo.",
+      "noMic": "No se encontró ningún micrófono.",
+      "failed": "El dictado por voz no funcionó esta vez. Inténtalo de nuevo.",
+      "unsupportedTitle": "El dictado por voz no está disponible en esta computadora",
+      "unsupportedBody": "El procesador de esta computadora es demasiado antiguo para el dictado por voz. Todo lo demás sigue funcionando con normalidad."
+    }
+  },
+  "mentions": {
+    "listAriaLabel": "Mencionar a un compañero"
+  },
+  "attribution": {
+    "you": "Tú"
+  },
+  "queue": {
+    "title": "En cola",
+    "remove": "Quitar mensaje en cola",
+    "attachmentsOnly": "Archivos adjuntos",
+    "attached": "Adjunto: {{names}}"
+  },
+  "attachmentMessage": {
+    "count_one": "1 archivo adjunto",
+    "count_other": "{{count}} archivos adjuntos"
+  },
+  "empty": {
+    "title": "Empieza una conversación",
+    "description": "Escribe un mensaje para hablar con tu asistente."
+  },
+  "questionCard": {
+    "placeholder": "Escribe tu respuesta...",
+    "escapePlaceholder": "Escribe otra opción...",
+    "send": "Enviar",
+    "back": "Atrás",
+    "forward": "Adelante",
+    "dismiss": "Descartar",
+    "progress": "{{current}} de {{total}}"
+  },
+  "interaction": {
+    "providerReason": "Conecta {{name}} para que pueda continuar. Tus credenciales no se comparten en la conversación.",
+    "providerUnavailable": "Este proveedor de IA no está disponible aquí. Omite este paso y pídeme que use otro proveedor.",
+    "handsOnTitle": "Abrir {{screen}}",
+    "handsOnReason": "Esta parte la tienes que hacer tú. Abre {{screen}} y termínala ahí.",
+    "handsOnExplainer": "Esto te lleva a la pantalla. Vuelve y avísame cuando termines.",
+    "handsOnOpen": "Abrir",
+    "handsOnDone": "Listo",
+    "handsOnLine": "Abriste {{screen}} y terminaste ahí.",
+    "handsOnSkippedLine": "Omitiste abrir {{screen}}.",
+    "handsOnRedirectLine": "No abrí {{screen}}. En vez de eso, haz esto: {{text}}",
+    "handsOnUnknownScreen": "esta pantalla",
+    "handsOnUnavailable": "Esta pantalla no está disponible en esta versión de Houston. Omite este paso y pídeme otra opción.",
+    "handsOnNotYours": "Esta pantalla no está disponible desde aquí. Salta este paso y pídeme otra forma.",
+    "handsOnScreens": {
+      "apiKeys": "Claves de API",
+      "billing": "Facturación",
+      "files": "Archivos",
+      "routineWebhook": "Rutinas",
+      "orgDanger": "Zona de peligro"
+    },
+    "cancelConnection": "Cancelar conexión",
+    "connectedLine": "Conectaste {{name}}.",
+    "signedInLine": "Sesión iniciada en Houston.",
+    "signedInFollowup": "Ya inicié sesión. Continúa, por favor.",
+    "skippedConnectLine": "Omitiste conectar {{name}}.",
+    "skippedSigninLine": "Omitiste iniciar sesión.",
+    "connectRedirectLine": "No conecté {{name}}. En vez de eso, haz esto: {{text}}",
+    "signinRedirectLine": "No inicié sesión. En vez de eso, haz esto: {{text}}",
+    "signinAppName": "Houston",
+    "signinTitle": "Inicia sesión en Houston",
+    "signinDescription": "Tus cuentas siguen siendo tuyas; el empleado de IA actúa en tu nombre.",
+    "signin": "Iniciar sesión",
+    "connectTitle": "Conectar {{app}}",
+    "connectReasonFallback": "El empleado de IA necesita {{app}} para continuar.",
+    "declinePlaceholder": "O dile qué hacer en vez de eso...",
+    "recommended": "Recomendado",
+    "skip": "Omitir",
+    "notNow": "Ahora no",
+    "collapse": "Contraer interacción",
+    "expand": "Expandir interacción",
+    "esc": "Esc"
+  },
+  "planReady": {
+    "title": "Plan listo",
+    "collapse": "Contraer aprobación del plan",
+    "expand": "Expandir aprobación del plan",
+    "askFirstTitle": "Continuar en modo Preguntar antes",
+    "askFirstDescription": "Hace las cosas y te pregunta antes de acciones delicadas.",
+    "autopilotTitle": "Continuar en modo Piloto automático",
+    "autopilotDescription": "Lo termina por su cuenta. Sin preguntas.",
+    "feedbackPlaceholder": "Da tu opinión sobre el plan...",
+    "startWorkingMessage": "Adelante con el plan.",
+    "runAutopilotMessage": "Adelante, termínalo por tu cuenta."
+  },
+  "suggestReusable": {
+    "title": "Guarda esto para la próxima vez",
+    "skillTitle": "Guardar como Skill",
+    "routineTitle": "Guardar como rutina",
+    "learningTitle": "Recordar esto",
+    "saveSkillMessage": "Guarda lo que acabo de hacer como una Skill llamada \"{{title}}\".",
+    "saveRoutineMessage": "Configura esto como una rutina recurrente llamada \"{{title}}\".",
+    "saveLearningMessage": "Recuerda \"{{title}}\" como un aprendizaje para la próxima vez."
+  },
+  "suggestActions": {
+    "heading": "Continuar con",
+    "dismiss": "Descartar acciones sugeridas"
+  },
+  "childMissions": {
+    "heading": "Misiones iniciadas aquí",
+    "goToMain": "Ir a la misión principal"
+  },
+  "errors": {
+    "sessionStart": "No se pudo enviar tu mensaje. Inténtalo de nuevo.",
+    "staleAttachmentTitle": "No pudimos leer un archivo adjunto",
+    "staleAttachmentBody": "Un archivo que adjuntaste cambió o se eliminó de tu dispositivo después de agregarlo. Quítalo del mensaje y adjúntalo de nuevo.",
+    "stopSession": "No se pudo detener la tarea. Inténtalo de nuevo.",
+    "modelPersistFailed": "No se pudo guardar la preferencia de modelo",
+    "modelNotAllowed": "Este modelo no está permitido para este empleado de IA",
+    "modelNotAllowedBody": "Los modelos permitidos de este empleado de IA cambiaron. Elige otro de la lista.",
+    "missionRowFailed": "No pudimos guardar esta tarea en tu tablero. Tu mensaje sí fue enviado.",
+    "interactionDismissFailed": "No pudimos descartar la solicitud.",
+    "interactionBusyTitle": "Esto ya está en curso",
+    "interactionBusyBody": "La solicitud fue reemplazada por una respuesta nueva. Espera a que termine o presiona Detener para abandonarla."
+  },
+  "providerError": {
+    "retryPrompt": "Intenta de nuevo.",
+    "reconnectedContinue": "Ya inicié sesión de nuevo. Por favor continúa donde quedaste. Si aún no has respondido mi último mensaje, respóndelo ahora."
+  },
+  "attachmentIssues": {
+    "title": "Algunos archivos no se adjuntaron",
+    "description": "Guardamos tu mensaje y los archivos que sí se pueden usar.",
+    "close": "Entendido",
+    "reasons": {
+      "blockedType": "Este tipo de archivo no se puede usar aquí.",
+      "blockedTypeWithExtension": "Los archivos .{{extension}} no se pueden usar aquí.",
+      "tooLarge": "Este archivo supera {{maxSize}}.",
+      "modelCannotViewImages": "El modelo de IA actual no puede ver imágenes. Cambia a un modelo con visión o quita la imagen."
+    }
+  },
+  "composio": {
+    "integration": "Integración de app",
+    "alreadyConnected": "Ya está conectado",
+    "connected": "Conectado",
+    "connecting": "Conectando...",
+    "connect": "Conectar",
+    "waitingToConnect": "Esperando a que te conectes",
+    "reconnect": "Reconectar",
+    "connectedFollowup": "Ya conecté {{name}}. Por favor continúa.",
+    "followupFailed": "No pudimos avisar al asistente que {{name}} está conectado"
+  },
+  "composioSignin": {
+    "appName": "Proveedor de integraciones",
+    "description": "Inicia sesión para que tu asistente use tus apps. Proveedor por defecto: Composio.",
+    "alreadySignedIn": "Ya iniciaste sesión en tu proveedor de integraciones",
+    "signedIn": "Conectado",
+    "signIn": "Iniciar sesión"
+  },
+  "modeSelector": {
+    "mode": "Modo",
+    "modeValue": "Modo: {{mode}}",
+    "askFirst": "Preguntar antes",
+    "askFirstDescription": "Hace las cosas y te pregunta antes de acciones delicadas.",
+    "planner": "Planificador",
+    "plannerDescription": "Primero escribe un plan para que lo apruebes. No hace cambios.",
+    "autopilot": "Piloto automático",
+    "autopilotDescription": "Termina la tarea por su cuenta con lo que tiene. No hace preguntas.",
+    "liveApplyFailedTitle": "No se pudo cambiar la respuesta en curso a {{mode}}",
+    "liveApplyFailedBody": "El modo se aplicará igualmente a tu próximo mensaje."
+  },
+  "modelSelector": {
+    "selectModel": "Elige un modelo",
+    "model": "Modelo",
+    "notConnected": "Sin conexión",
+    "checking": "Verificando...",
+    "effort": "Esfuerzo de razonamiento",
+    "effortValue": "Esfuerzo de razonamiento: {{level}}",
+    "effortLevels": {
+      "low": "Bajo",
+      "medium": "Medio",
+      "high": "Alto",
+      "xhigh": "Muy alto"
+    },
+    "effortDescriptions": {
+      "low": "Más rápido, menos análisis.",
+      "medium": "Equilibrio entre velocidad y profundidad.",
+      "high": "Análisis más profundo para tareas difíciles.",
+      "xhigh": "Ideal para tareas complejas."
+    },
+    "picker": {
+      "searchPlaceholder": "Busca modelos…",
+      "connectMore": "Conectar otra IA…",
+      "back": "Atrás",
+      "providersLabel": "Proveedores",
+      "modelsLabel": "Modelos",
+      "loading": "Cargando IAs…",
+      "empty": "No se encontraron modelos.",
+      "noProviders": {
+        "action": "Conectar IA",
+        "personal": {
+          "title": "Conecta una IA para empezar a chatear",
+          "hint": "Las respuestas vienen de una IA como Claude o ChatGPT. Conecta una para comenzar."
+        },
+        "team": {
+          "title": "Conecta tu IA para chatear con los empleados de IA de este equipo",
+          "hint": "Los empleados de IA del equipo responden usando tu propia cuenta de IA. Conecta la tuya para comenzar."
+        }
+      },
+      "account": {
+        "personal": "tu cuenta",
+        "team": "cuenta del equipo"
+      },
+      "hiddenByWorkspace_one": "{{count}} modelo más está desactivado en tu espacio de trabajo",
+      "hiddenByWorkspace_other": "{{count}} modelos más están desactivados en tu espacio de trabajo"
+    },
+    "modelDescriptions": {
+      "gpt-6-luna": "La opción predeterminada. El GPT-6 más liviano para tu cuota.",
+      "gpt-6-sol": "Nivel medio de GPT-6. Más profundidad que Luna para trabajo difícil.",
+      "gpt-6-astra": "El GPT-6 más capaz. Consume tu cuota 5 veces más rápido que Sol.",
+      "gpt-5_5": "Nivel completo de la generación anterior, previo a GPT-5.6.",
+      "gpt-5_6-sol": "Modelo frontera anterior. Fuerte en trabajo complejo.",
+      "gpt-5_6-terra": "Modelo intermedio equilibrado.",
+      "gpt-5_6-luna": "Rápido y económico para tareas más simples.",
+      "gpt-5_4": "Modelo potente para programar a diario.",
+      "gpt-5_4-mini": "Pequeño, rápido y económico para tareas más simples.",
+      "gpt-5_3-codex-spark": "Modelo de programación ultrarrápido.",
+      "claude-sonnet-5": "Sonnet mas reciente. Mejor para codigo con agentes y herramientas.",
+      "claude-sonnet-4-6": "Mejor equilibrio entre velocidad y calidad.",
+      "claude-opus-5": "Opus mas reciente. Razonamiento mas profundo y trabajo autonomo.",
+      "claude-opus-4-8": "Opus anterior. Buen alineamiento y codigo con agentes.",
+      "claude-fable-5-1": "Fable mas reciente. El modelo mas capaz, consume el doble de creditos que Opus 5.",
+      "claude-fable-5": "Fable anterior. Consume el doble de creditos que Opus 5.",
+      "claude-opus-4-7": "Opus antiguo. Autonomia de codigo y razonamiento complejo.",
+      "gemini-3_5-flash": "Rápido y capaz. La mejor opción por defecto.",
+      "gemini-3_1-flash-lite": "Ligero y veloz para tareas más simples.",
+      "gemma-4-26b-a4b-it": "Modelo abierto Gemma de Google. Rápido y eficiente.",
+      "gemma-4-31b-it": "Modelo abierto Gemma de Google. Más capaz."
+    },
+    "connectMore": "Conectar otra IA…"
+  },
+  "reasoning": {
+    "thinking": "Pensando...",
+    "thoughtFor": "Pensó durante {{count}} segundos",
+    "thoughtForFew": "Pensó durante unos segundos"
+  },
+  "process": {
+    "active": "Pensando...",
+    "complete": "Registro de tarea"
+  },
+  "summary": {
+    "updatesMade": "Actualizaciones hechas",
+    "newFiles_one": "1 archivo nuevo",
+    "newFiles_other": "{{count}} archivos nuevos",
+    "instructionsUpdated": "Instrucciones actualizadas",
+    "skillSaved": "Skill guardada: {{name}}",
+    "skillsUpdated": "Skills actualizadas",
+    "learningsUpdated": "Aprendizajes actualizados",
+    "openLinkFailedTitle": "No se pudo abrir el enlace"
+  },
+  "filesUpdated_one": "1 archivo actualizado",
+  "filesUpdated_other": "{{count}} archivos actualizados",
+  "contextCompacted": "Resumimos la conversación anterior para que el chat pueda continuar",
+  "contextCompactedManual": "Compactamos la conversación para liberar espacio",
+  "contextCleared": "Contexto borrado. Empiezo de cero y conservo lo que aprendí sobre ti.",
+  "engineRestart": {
+    "sayContinue": "Tu agente tuvo que reiniciarse. Dile que continúe y retomará donde se quedó.",
+    "resuming": "Tu agente se interrumpió por un reinicio y está retomando donde se quedó."
+  },
+  "contextCommands": {
+    "compact": "Compactar contexto",
+    "clear": "Borrar contexto"
+  },
+  "conversationMap": {
+    "title": "Buscar en el chat",
+    "moreActions": "Acciones del chat",
+    "find": "Buscar",
+    "hide": "Cerrar búsqueda en el chat",
+    "searchPlaceholder": "Buscar mensajes",
+    "clearSearch": "Borrar búsqueda",
+    "noResults": "Ningún mensaje coincide con tu búsqueda.",
+    "backToLatest": "Volver al final",
+    "selected": "Mensaje seleccionado",
+    "messagePosition": "Mensaje {{position}}",
+    "types": {
+      "user": "Tú",
+      "assistant": "Respuesta del empleado de IA",
+      "artifact": "Archivos actualizados",
+      "error": "Algo necesita atención"
+    }
+  },
+  "providerSwitch": {
+    "title": "¿Cambiar a {{provider}}?",
+    "replayBody": "Cambiar lleva toda esta conversación a {{provider}} para que pueda continuar con todo el contexto. Recargar la conversación usa una cantidad considerable de tokens, y más cuanto más larga sea la conversación en este momento. ¿Continuar?",
+    "replayConfirm": "Recargar y cambiar",
+    "summaryBody": "{{provider}} tiene una ventana de contexto más pequeña, así que la conversación completa no cabe. La resumiremos para que {{provider}} pueda continuar. Resumir usa tokens y puede perder algún detalle. ¿Continuar?",
+    "summaryConfirm": "Resumir y cambiar",
+    "cancel": "Cancelar",
+    "dividerFull": "Se continuó con {{provider}}",
+    "dividerSummary": "Se continuó con {{provider}}, resumido para que quepa"
+  },
+  "credential": {
+    "title": "Agrega tu clave de {{name}}",
+    "subtitle": "Pégala abajo. Se guarda de forma segura y nunca se muestra en el chat.",
+    "missingBody": "{{name}} aún no está configurado, así que no hay dónde guardar esta clave. Elige Omitir para continuar y que primero se configure bien.",
+    "save": "Guardar clave",
+    "saving": "Guardando...",
+    "saved": "Clave guardada",
+    "savedToast": "{{name}} está listo para usarse",
+    "savedLine": "Agregué la clave de {{name}}.",
+    "skippedLine": "Omití agregar la clave de {{name}}.",
+    "redirectLine": "No agregué la clave de {{name}}. En vez de eso, haz esto: {{text}}",
+    "savedFollowup": "Agregué la clave de {{name}}. Por favor continúa.",
+    "savedUnverifiedToast": "Clave guardada para {{name}}. El servicio aún no la ha confirmado, te avisaré si las llamadas fallan.",
+    "signInTitle": "Inicia sesión en {{name}}",
+    "signInSubtitle": "Tu navegador abre el inicio de sesión propio del servicio. Este paso termina solo cuando acabes.",
+    "signIn": "Iniciar sesión",
+    "signInAgain": "Iniciar sesión de nuevo",
+    "signingIn": "Esperando a que termines en tu navegador...",
+    "signedIn": "Sesión iniciada",
+    "signedInToast": "{{name}} conectado",
+    "signedInLine": "Inicié sesión en {{name}}.",
+    "skippedSignInLine": "Omití el inicio de sesión en {{name}}.",
+    "signInRedirectLine": "No inicié sesión en {{name}}. En su lugar, haz esto: {{text}}",
+    "signedInFollowup": "Ya inicié sesión en {{name}}. Continúa, por favor.",
+    "signInBlocked": "Tu navegador bloqueó la ventana de inicio de sesión.",
+    "openSignIn": "Abrir la página de inicio de sesión",
+    "signInFailed": "No se pudo iniciar el inicio de sesión. Inténtalo de nuevo en un momento u omite este paso."
+  },
+  "loadingPhrases": [
+    "Houston, ¡tenemos una solución!",
+    "Combatiendo invasores del espacio...",
+    "Alineando los satélites...",
+    "Calentando los propulsores...",
+    "Buscando respuestas en las estrellas...",
+    "Calibrando la computadora de la misión...",
+    "Iniciando la cuenta regresiva...",
+    "Flotando por tu solicitud...",
+    "Trazando la trayectoria...",
+    "Cargando combustible al cohete...",
+    "Escaneando la galaxia...",
+    "Hablando con el control de la misión...",
+    "Esquivando asteroides...",
+    "Puliendo el casco...",
+    "Desplegando los paneles solares...",
+    "Despertando a la tripulación...",
+    "Haciendo los chequeos previos al vuelo...",
+    "Asegurando la bodega de carga...",
+    "Orbitando tu problema...",
+    "Recogiendo rocas lunares...",
+    "Ajustando la antena...",
+    "Gravedad cero, concentración total...",
+    "Encendiendo los propulsores...",
+    "Leyendo las cartas estelares...",
+    "Un pequeño paso para tu tarea...",
+    "Desenredando los cables espaciales...",
+    "Cargando los láseres... era broma.",
+    "Haciendo espacio para las ideas...",
+    "Probando la esclusa de aire...",
+    "Buscando vida inteligente... ¡te encontré!",
+    "Poniendo en marcha los giroscopios...",
+    "Doblando de nuevo el mapa espacial...",
+    "Pidiéndole consejo a la luna...",
+    "Apretando tornillos en gravedad cero...",
+    "Atrapando un cometa...",
+    "Descargando polvo de estrellas...",
+    "Revisando el oxígeno... todo en orden.",
+    "Fijando las coordenadas...",
+    "Saludando a la estación espacial...",
+    "Enfrentando la lluvia de meteoros...",
+    "Pintando el cohete de rojo...",
+    "Alimentando a los hámsters espaciales...",
+    "Reiniciando la nave nodriza...",
+    "Susurrándoles a los satélites...",
+    "Persiguiendo estrellas fugaces...",
+    "Reuniendo a la tripulación...",
+    "Planchando el traje espacial...",
+    "Cartografiando la vía láctea...",
+    "Ya casi, cadete...",
+    "Faltan pocos segundos..."
+  ],
+  "editMessage": {
+    "edit": "Editar mensaje",
+    "send": "Enviar",
+    "cancel": "Cancelar"
+  },
+  "copyMessage": {
+    "copy": "Copiar mensaje"
+  },
+  "approvalCard": {
+    "approve": "Sí, adelante",
+    "decline": "No, no lo hagas",
+    "closing": "No puedo deshacer esto por ti. ¿Quieres continuar?",
+    "affects": "Esto afecta a {{arguments}}.",
+    "argument": "{{name}} \"{{value}}\"",
+    "exactValue": "Contenido exacto de {{name}}:",
+    "truncated_one": "[y {{formatted}} carácter más, que también se escribiría]",
+    "truncated_other": "[y {{formatted}} caracteres más, que también se escribirían]"
+  }
+}

@@ -1,0 +1,237 @@
+{
+  "setup": {
+    "installHint": "Instala la CLI de {{cli}} en tu computador. Se detecta sola.",
+    "installGuide": "Guía de instalación",
+    "signInWith": "Iniciar sesión",
+    "waiting": "Esperando a que termines de iniciar sesión en tu navegador...",
+    "cancelWaiting": "Cancelar e intentar de nuevo",
+    "installedCheckAgain": "¿Ya la instalaste? Reintentar"
+  },
+  "signOutConfirm": {
+    "title": "¿Cerrar sesión de {{provider}}?",
+    "description": "{{provider}} no se usará hasta que vuelvas a iniciar sesión. Las tareas existentes pueden terminar su turno actual.",
+    "confirm": "Cerrar sesión",
+    "cancel": "Cancelar"
+  },
+  "toast": {
+    "signInFailed": "No se pudo abrir el inicio de sesión de {{provider}}",
+    "engineUnavailable": "No pudimos conectarnos con tu espacio de trabajo. Espera un momento e intenta de nuevo.",
+    "connectTimedOut": "La conexión no se completó a tiempo. Intenta conectarte de nuevo.",
+    "loginTimedOut": "El inicio de sesión no se completó a tiempo. Intenta de nuevo.",
+    "signInExpiredTitle": "Ese enlace de inicio de sesión expiró",
+    "signInExpiredRestarting": "Iniciando de nuevo el inicio de sesión de {{provider}}.",
+    "signInExpiredRetry": "Inicia de nuevo el inicio de sesión de {{provider}}.",
+    "signInPortBusy": "Otra aplicación de este computador está usando el puerto de inicio de sesión. Cierra otras herramientas de IA e intenta de nuevo.",
+    "copilotNoAccess": "Tu cuenta de GitHub todavía no tiene acceso a Copilot. Activa GitHub Copilot en github.com (el plan gratuito sirve) y vuelve a intentar la conexión.",
+    "signOutFailed": "No se pudo cerrar sesión de {{provider}}",
+    "signInSucceeded": "Sesión iniciada en {{provider}}",
+    "cancelFailed": "No se pudo cancelar el inicio de sesión de {{provider}}",
+    "catalogLoadFailed": "No se pudieron cargar tus modelos de IA disponibles. La lista puede estar incompleta hasta que esto funcione.",
+    "orgAdminRequiredTitle": "Pide a un administrador que conecte esto",
+    "orgAdminRequiredBody": "Solo un propietario o administrador puede conectar la IA de la organización. Pídele a uno de ellos que la configure, o que te agregue a un empleado de IA para que conectes tu propia cuenta."
+  },
+  "providerLogin": {
+    "title": "Termina de iniciar sesión en {{name}}",
+    "description": "Abre la página de inicio de sesión en tu navegador, completa el inicio de sesión y luego pega aquí el código de verificación.",
+    "authCodeDescription": "Pega una clave de API o un token para terminar de conectar {{name}}.",
+    "pasteInstructions": "Crea una clave de API en la consola de Anthropic y pégala aquí. Empieza con sk-ant-api03. Un token de configuración de Claude (sk-ant-oat01) también funciona.",
+    "reference": "Referencia",
+    "openUrl": "Abrir URL",
+    "copyUrl": "Copiar URL",
+    "urlCopied": "URL copiada al portapapeles",
+    "urlCopyFailed": "No se pudo copiar la URL",
+    "showUrl": "Mostrar URL",
+    "hideUrl": "Ocultar URL",
+    "destinationHint": "Te llevaremos a {{host}}.",
+    "codeLabel": "Código de verificación",
+    "codePlaceholder": "Pega el código de tu navegador",
+    "tokenLabel": "Clave de API o token",
+    "tokenPlaceholder": "sk-ant-...",
+    "codeRequired": "Primero ingresa el código de verificación.",
+    "sessionExpired": "Ese enlace de inicio de sesión expiró. Cierra esto e inicia de nuevo el inicio de sesión de {{name}}.",
+    "submit": "Enviar código",
+    "submitting": "Enviando...",
+    "deviceDescription": "Abre el enlace de abajo, inicia sesión y luego ingresa este código de un solo uso para terminar.",
+    "deviceCodeLabel": "Código de un solo uso",
+    "deviceCodeHint": "Ingresa este código en la página de {{name}} después de iniciar sesión.",
+    "deviceWaiting": "Esperando a que autorices en tu navegador...",
+    "copyCode": "Copiar código",
+    "codeCopied": "¡Código copiado!",
+    "codeCopyFailed": "No se pudo copiar el código",
+    "deviceOpenFailed": "No se pudo abrir la página de inicio de sesión",
+    "deviceSettingsHint": "¿No aparece la solicitud de código? Activa el inicio de sesión con código de dispositivo en <link>Configuración de ChatGPT > Seguridad</link>.",
+    "deviceSettingsOpenFailed": "No se pudo abrir la configuración de ChatGPT",
+    "cancel": "Cancelar",
+    "browserDescription": "Aprueba Houston en la pestaña del navegador que se abrió. Esta ventana se actualiza sola cuando termines.",
+    "browserCodeCopyHint": "Si la página de Claude te muestra un código, cópialo y vuelve aquí. El inicio de sesión terminará solo.",
+    "browserCodeReveal": "¿Claude te mostró un código?",
+    "browserCodeHint": "Si Claude te muestra un código después de aprobar, pégalo aquí para terminar.",
+    "browserOpen": "¿No se abrió? Abrir inicio de sesión"
+  },
+  "apiKey": {
+    "title": "Conectar {{name}}",
+    "description": "Pega tu clave de API de {{name}}. La guardamos de forma segura y la usamos para tus chats.",
+    "getKey": "Obtén tu clave de API",
+    "label": "Clave de API",
+    "placeholder": "Pega tu clave de API",
+    "endpointLabel": "Punto de conexión",
+    "endpointPlaceholder": "https://tu-recurso.openai.azure.com",
+    "endpointHelp": "La URL del punto de conexión de tu recurso en el portal de Azure. Cada solicitud va a la implementación con el mismo nombre del modelo, así que nombra tus implementaciones igual que el modelo (por ejemplo \"gpt-5.5\").",
+    "endpointRequired": "Primero ingresa la URL del punto de conexión. Empieza con https:// y la encuentras en tu recurso del portal de Azure.",
+    "required": "Primero ingresa tu clave de API.",
+    "verifyFailed": "No se pudo conectar esta clave: {{detail}}",
+    "show": "Mostrar clave",
+    "hide": "Ocultar clave",
+    "save": "Conectar",
+    "saving": "Conectando...",
+    "cancel": "Cancelar",
+    "guide": {
+      "title": "Cómo obtener tu clave",
+      "nvidia1": "Abre la página de claves de NVIDIA con el botón de arriba e inicia sesión, o crea una cuenta gratis.",
+      "nvidia2": "Haz clic en \"Generate Personal Key\" y en \"Services Included\" marca \"Public API Endpoints\".",
+      "nvidia3": "Copia la clave que empieza con \"nvapi-\" y pégala abajo.",
+      "bedrock1": "Abre la página de claves de API de Bedrock con el botón de arriba y elige \"Claves de API de larga duración\".",
+      "bedrock2": "Haz clic en \"Generar claves de API de larga duración\". El valor de la clave se muestra una sola vez, así que cópialo de inmediato.",
+      "bedrock3": "Pega el valor de la clave abajo. Empieza con \"ABSK\". El nombre que aparece en la lista (\"BedrockAPIKey-...\") no es la clave.",
+      "azure1": "En el portal de Azure, abre tu recurso de Azure OpenAI (o Foundry) y entra a \"Claves y punto de conexión\".",
+      "azure2": "Copia una de las dos claves y la URL del punto de conexión.",
+      "azure3": "Implementa los modelos que quieras usar, cada uno con el mismo nombre del modelo (por ejemplo \"gpt-5.5\"), y pega aquí el punto de conexión y la clave.",
+      "huggingface1": "Abre la página de tokens de Hugging Face con el botón de arriba e inicia sesión, o crea una cuenta gratis.",
+      "huggingface2": "Haz clic en \"Create new token\". Un token \"Read\" funciona. Si eliges \"Fine-grained\", marca \"Make calls to Inference Providers\" en Inference.",
+      "huggingface3": "Copia el token que empieza con \"hf_\" y pégalo abajo."
+    },
+    "errorInvalidKey": "{{name}} no aceptó esta clave. Revísala y pégala de nuevo.",
+    "errorKeyRestricted": "Esta clave está bloqueada por la configuración de tu cuenta de {{name}}. Crea una clave nueva sin restricciones con el botón de arriba y pégala aquí.",
+    "errorNvidiaAccountGated": "Tu clave es válida, pero NVIDIA no está sirviendo modelos de chat a tu cuenta en este momento. Asegúrate de que tu clave sea una Personal Key de org.ngc.nvidia.com con \"Public API Endpoints\" en Services Included. Si aun así falla, pide al soporte de NVIDIA que habilite el acceso a modelos para tu cuenta.",
+    "errorBedrockInvalidKey": "Amazon Bedrock no aceptó esta clave. Asegúrate de pegar el valor de la clave (empieza con \"ABSK\") y no su nombre de la lista (\"BedrockAPIKey-...\"). AWS muestra el valor una sola vez, así que genera una clave nueva si ya no lo tienes.",
+    "errorHuggingfaceInferenceGated": "Tu token es válido, pero no tiene permiso para ejecutar modelos. Abre la página de tokens de Hugging Face con el botón de arriba y crea un token con \"Make calls to Inference Providers\" marcado (un token \"Read\" también funciona), y pégalo aquí.",
+    "errorGoogleKeyRestricted": "Google está bloqueando esta clave por su propia configuración. En Google AI Studio o Google Cloud, abre la clave, quita sus restricciones de aplicación y de API (o permite la Generative Language API), o crea una clave nueva sin restricciones con el botón de arriba, y pégala aquí.",
+    "errorProviderUnavailable": "No pudimos conectar con {{name}} para verificar tu clave, así que no se guardó nada. Inténtalo de nuevo en un momento.",
+    "errorOrgAdminRequired": "Solo un propietario o administrador puede conectar la IA de la organización. Pídele a uno de ellos que la configure, o que te agregue a un empleado de IA para que conectes tu propia clave."
+  },
+  "copilot": {
+    "title": "Conectar GitHub Copilot",
+    "description": "Elige dónde inicias sesión en GitHub.",
+    "personalTitle": "En github.com",
+    "personalDesc": "Tu Copilot personal, o un plan Copilot Business que paga tu empresa.",
+    "companyTitle": "Dominio de GitHub de tu empresa (Enterprise)",
+    "companyDesc": "Tu empresa inicia sesión en su propia dirección de GitHub, como empresa.ghe.com.",
+    "domainLabel": "Dominio de GitHub de tu empresa",
+    "domainPlaceholder": "empresa.ghe.com",
+    "domainHint": "Pregunta a tu equipo de TI si no estás seguro.",
+    "domainInvalid": "Escribe un dominio de GitHub válido, como empresa.ghe.com. Si tu empresa usa github.com normal, elige la primera opción.",
+    "cancel": "Cancelar",
+    "continue": "Continuar"
+  },
+  "openaiCompatible": {
+    "title": "Conecta un modelo local",
+    "description": "Usa un modelo que corre en tu computador, como Ollama, LM Studio o vLLM.",
+    "baseUrlLabel": "Dirección del servidor",
+    "baseUrlPlaceholder": "http://localhost:11434/v1",
+    "baseUrlHelp": "La dirección donde escucha tu servidor local. Para Ollama suele ser http://localhost:11434/v1.",
+    "modelLabel": "Modelo",
+    "modelPlaceholder": "llama3.1",
+    "modelHelp": "El nombre exacto del modelo que sirve tu servidor.",
+    "nameLabel": "Nombre para mostrar (opcional)",
+    "namePlaceholder": "Mi modelo local",
+    "nameHelp": "Una etiqueta amigable para el selector. Por defecto usa el nombre del modelo.",
+    "keyLabel": "Clave de API (opcional)",
+    "keyPlaceholder": "Déjalo vacío si tu servidor no usa clave",
+    "keyHelp": "La mayoría de los servidores locales no necesitan una. Agrega una clave solo si el tuyo la requiere.",
+    "show": "Mostrar clave",
+    "hide": "Ocultar clave",
+    "baseUrlRequired": "Primero ingresa la dirección del servidor.",
+    "modelRequired": "Primero ingresa un nombre de modelo.",
+    "save": "Conectar",
+    "saving": "Conectando...",
+    "cancel": "Cancelar",
+    "cloudOnly": {
+      "title": "La nube no puede acceder a esa dirección",
+      "notHttps": "Los empleados de IA en la nube solo pueden acceder a direcciones https:// públicas. Ingresa una dirección https:// o expón tu servidor con un túnel como cloudflared o ngrok.",
+      "customPort": "Los empleados de IA en la nube solo pueden acceder a direcciones en el puerto https estándar. Quita el puerto de la dirección.",
+      "privateHost": "Los empleados de IA en la nube no pueden acceder directamente a tu computador ni a tu red local. Usa una dirección https:// pública o expón tu servidor con un túnel como cloudflared, ngrok o Tailscale Funnel.",
+      "unspecified": "Los empleados de IA en la nube solo pueden acceder a direcciones https:// públicas. Usa una dirección https:// pública o expón tu servidor con un túnel como cloudflared o ngrok."
+    }
+  },
+  "claudeLogin": {
+    "timeout": "El inicio de sesión de Claude expiró. Intenta conectarte de nuevo.",
+    "confirmTimeout": "Iniciaste sesión en Claude, pero no pudimos confirmar la conexión. Inténtalo de nuevo.",
+    "handoffFailed": "Iniciaste sesión en Claude, pero tuvimos un problema de nuestro lado al terminar la conexión. Inténtalo de nuevo en un momento o reporta un error si sigue pasando.",
+    "autoFailedTitle": "No se pudo completar la conexión automáticamente",
+    "autoFailedBody": "Pega una clave de API de Anthropic para terminar de conectar.",
+    "helperUnsupported": "El procesador de este computador es demasiado antiguo para ejecutar el asistente de inicio de sesión de Claude, así que no se puede conectar una suscripción de Claude en esta máquina.",
+    "shellUnavailable": "El inicio de sesión de Claude necesita Git para Windows en este computador. Instálalo desde git-scm.com y vuelve a intentar conectarte."
+  },
+  "localModel": {
+    "title": "Conecta un modelo local",
+    "description": "Ejecuta un modelo en tu propio computador y úsalo aquí. Nosotros nos encargamos de la conexión.",
+    "detecting": "Buscando apps de modelos en tu computador...",
+    "cancel": "Cancelar",
+    "connecting": {
+      "title": "Conectando tu modelo...",
+      "body": "Esto toma unos segundos. Mantén la app abierta en tu computador."
+    },
+    "empty": {
+      "body": "Para ejecutar un modelo en tu propio computador, instala una de estas apps gratuitas y ábrela:",
+      "apps": {
+        "lmstudio": "Una app sencilla para ejecutar modelos.",
+        "jan": "Una app de modelos abierta y fácil.",
+        "ollama": "Popular y simple de configurar."
+      },
+      "hint": {
+        "lmstudio": "Abre su pestaña Developer y activa el servidor.",
+        "jan": "En Configuración, activa el servidor de API local.",
+        "ollama": "Funciona solo una vez instalado. No hay que activar nada."
+      },
+      "get": "Descargar",
+      "reassure": "Cuando esté abierta, nos encargamos del resto.",
+      "recheck": "Buscar de nuevo"
+    },
+    "pick": {
+      "body": "Encontramos estos en tu computador. Elige el modelo que quieres usar.",
+      "modelsFound_one": "{{count}} modelo disponible",
+      "modelsFound_other": "{{count}} modelos disponibles",
+      "modelLabel": "Modelo",
+      "connect": "Conectar"
+    },
+    "reasoning": {
+      "label": "Mostrar el razonamiento del modelo",
+      "help": "Actívalo para modelos de razonamiento (piensan antes de responder)."
+    },
+    "share": {
+      "label": "Compartir con mi equipo",
+      "help": "Los empleados de IA de tus compañeros pueden usar este modelo. Sus solicitudes se ejecutan en tu computador mientras esté en línea."
+    },
+    "error": {
+      "body": "Algo salió mal al conectar. Asegúrate de que la app siga abierta en tu computador e inténtalo de nuevo.",
+      "retry": "Intentar de nuevo"
+    },
+    "unsupported": {
+      "body": "Los modelos locales aún no están disponibles en este servidor. Inténtalo más tarde o ingresa los datos manualmente."
+    },
+    "manual": {
+      "title": "Ingresar datos manualmente",
+      "description": "¿Ya tienes la dirección de un servidor de modelos? Ingrésala aquí.",
+      "link": "Ingresar datos manualmente",
+      "back": "Volver"
+    },
+    "status": {
+      "online": "En línea",
+      "connecting": "Conectando...",
+      "offline": "Desconectado",
+      "error": "No disponible",
+      "offlineHint": "Tu modelo no está disponible ahora. Asegúrate de que {{app}} esté abierta en este computador.",
+      "yourApp": "la app en tu computador",
+      "reconnect": "Reconectar",
+      "disabled": "Desconectado",
+      "reconnecting": "Reconectando...",
+      "model_unavailable": "Abre la app de tu modelo",
+      "authorization_required": "Inicia sesión para reconectar",
+      "revoked": "Conexión eliminada",
+      "authorizationHint": "Inicia sesión en la cuenta que conectó este modelo y vuelve a conectarlo.",
+      "revokedHint": "Esta conexión se eliminó. Vuelve a conectar tu modelo para usarlo.",
+      "reconnect_required": "Vuelve a conectar tu modelo",
+      "reconnectHint": "Vuelve a conectar tu modelo para vincularlo a este espacio."
+    }
+  }
+}

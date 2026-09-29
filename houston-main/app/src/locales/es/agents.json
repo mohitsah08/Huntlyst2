@@ -1,0 +1,290 @@
+{
+  "catalog": {
+    "personal-assistant": {
+      "name": "Asistente personal",
+      "description": "Un asistente de uso general para tu día, tu bandeja de entrada, tu calendario, tus seguimientos y tu trabajo recurrente."
+    },
+    "blank": {
+      "name": "Empezar desde cero",
+      "description": "Un empleado de IA en blanco, sin acciones, instrucciones ni aprendizajes preconfigurados. Constrúyelo a tu manera."
+    },
+    "bookkeeping": {
+      "name": "Contador",
+      "description": "Categoriza transacciones, concilia cuentas, cierra los libros cada mes y genera estados financieros listos para inversionistas. Se conecta con QuickBooks, Xero, Stripe y tus conexiones bancarias. Redacta asientos contables y estados, pero nunca registra en tu libro mayor ni mueve dinero."
+    },
+    "legal": {
+      "name": "Director Jurídico",
+      "description": "Revisa contratos, audita el cumplimiento de privacidad, prepara presentaciones ante Delaware, hace búsquedas de marcas registradas y responde dudas legales al instante. Redacta acuerdos de confidencialidad, políticas y resúmenes de escalamiento, pero nunca presenta, firma ni envía nada en tu nombre."
+    },
+    "marketing": {
+      "name": "Líder de Crecimiento",
+      "description": "Define el posicionamiento, planifica campañas, escribe artículos de blog y páginas de aterrizaje, audita el SEO y la visibilidad en búsquedas con IA, y redacta secuencias de correo. De la estrategia a la ejecución en contenido, medios pagados, redes sociales y textos de conversión, todo en borradores, nunca publicado."
+    },
+    "operations": {
+      "name": "Jefe de Gabinete",
+      "description": "Prioriza tu bandeja de entrada, prepara reuniones, da seguimiento a objetivos, gestiona renovaciones con proveedores, audita el gasto en SaaS y ejecuta consultas de datos. Abarca planificación, agenda, orden financiero y reportes, solo borradores, nunca envía ni confirma nada."
+    },
+    "people": {
+      "name": "Jefe de Talento",
+      "description": "Busca y evalúa candidatos, coordina rondas de entrevistas, redacta cartas de oferta, gestiona ciclos de evaluación y da seguimiento a plazos de cumplimiento. Abarca desde la contratación hasta la retención, solo borradores, nunca envía ni modifica tus sistemas de recursos humanos."
+    },
+    "sales": {
+      "name": "Chief Revenue Officer",
+      "description": "Encuentra prospectos, investiga cuentas, prepara llamadas, redacta mensajes de contacto, gestiona tu CRM y proyecta el pipeline. Abarca desde la prospección hasta la expansión, solo borradores, nunca envía ni cambia la etapa de un trato sin tu aprobación."
+    },
+    "support": {
+      "name": "Jefe de Éxito del Cliente",
+      "description": "Prioriza tickets, redacta respuestas, escribe artículos del centro de ayuda, evalúa la salud de los clientes y crea planes para evitar cancelaciones. Abarca desde la bandeja de entrada hasta el éxito del cliente, solo borradores, nunca envía."
+    },
+    "outbound": {
+      "name": "Growth Hacker",
+      "description": "Convierte una sola publicación de LinkedIn en una campaña de correo en frío pausada en Instantly. Extraigo a quienes comentan o reaccionan, los guardo en Airtable, busco correos verificados con Apollo, escribo contigo una secuencia de 3 correos y luego cargo todo en Instantly. La campaña siempre queda en pausa para que la revises, nunca la lanzo sola."
+    }
+  },
+  "toasts": {
+    "renamed": "Espacio de trabajo renombrado",
+    "nameConflict": "Ya existe un empleado de IA llamado {{name}}",
+    "nameConflictDescription": "Elige un nombre diferente e inténtalo de nuevo.",
+    "deleted": "Espacio de trabajo eliminado",
+    "switchedModel": "Cambiaste a {{provider}} ({{model}})",
+    "timezoneSet": "Zona horaria puesta en {{zone}}"
+  },
+  "nameErrors": {
+    "invalidChars": "El nombre del empleado de IA no puede contener barras ni caracteres especiales",
+    "tooLong": "El nombre del empleado de IA puede tener máximo {{max}} caracteres"
+  },
+  "instructions": {
+    "specific": "Instrucciones específicas",
+    "placeholder": "Escribe las instrucciones para tu empleado de IA…",
+    "brief": {
+      "industry": "Industria",
+      "role": "Rol",
+      "addIndustry": "Agregar industria",
+      "addRole": "Agregar rol"
+    },
+    "loadFailed": "No se pudo cargar la descripción del puesto."
+  },
+  "learnings": {
+    "emptyTitle": "Aún no hay aprendizajes",
+    "emptyDescription": "El empleado de IA va tomando notas mientras trabaja, o puedes añadirlas tú mismo.",
+    "addLearning": "Añadir aprendizaje",
+    "helper": "Notas rápidas que el empleado de IA va recogiendo con el tiempo.",
+    "inputPlaceholder": "Escribe un aprendizaje y presiona Enter…",
+    "editAria": "Editar aprendizaje",
+    "expandAria": "Expandir aprendizaje",
+    "collapseAria": "Contraer aprendizaje",
+    "removeAria": "Quitar aprendizaje",
+    "confirmRemoveTitle": "¿Quitar este aprendizaje?",
+    "confirmRemoveDescription": "El empleado de IA perderá esta nota. Puedes añadirla de nuevo más tarde.",
+    "confirmRemoveLabel": "Quitar",
+    "provenanceFromMission": "De {{name}} · {{mission}}",
+    "provenanceFrom": "De {{name}}",
+    "provenanceMission": "De {{mission}}"
+  },
+  "subTabs": {
+    "instructions": "Descripción del puesto",
+    "skills": "Skills",
+    "learnings": "Aprendizajes"
+  },
+  "configure": {
+    "projectContext": {
+      "title": "Contexto del proyecto",
+      "description": "Se inyecta en todos los empleados de IA. Describe tu proyecto, convenciones y reglas.",
+      "placeholder": "Contexto del proyecto, convenciones de código, notas de arquitectura..."
+    },
+    "agentPrompts": {
+      "title": "Indicaciones del empleado de IA",
+      "description": "Cada modo del empleado de IA tiene su propia indicación.",
+      "placeholder": "Indicación para {{name}}..."
+    },
+    "skills": {
+      "title": "Skills",
+      "description": "Procedimientos reutilizables que los empleados de IA pueden ejecutar."
+    },
+    "learnings": {
+      "title": "Aprendizajes",
+      "description": "Los empleados de IA guardan aprendizajes mientras trabajan. Tú también puedes añadir los tuyos."
+    },
+    "settings": {
+      "title": "Configuración",
+      "description": "Configuración del empleado de IA y opciones de ejecución.",
+      "savingHint": "Guardando...",
+      "worktreeMode": "Modo worktree",
+      "worktreeModeDescription": "Crear un worktree de git aparte para cada tarea",
+      "installCommand": "Comando de instalación",
+      "installCommandPlaceholder": "p. ej. pnpm install, npm install, cargo build",
+      "devCommand": "Comando de desarrollo",
+      "devCommandPlaceholder": "p. ej. pnpm dev, npm run dev, cargo run"
+    }
+  },
+  "promptCards": {
+    "projectContext": "Contexto del proyecto",
+    "claudeMdSummary": "CLAUDE.md, {{count}} líneas",
+    "modeSummary": "{{file}}, {{count}} líneas"
+  },
+  "files": {
+    "openInFileManager": "Abrir en el Explorador de Archivos",
+    "loading": "Cargando…",
+    "sortBy": "Ordenar por",
+    "newMenu": "Nuevo",
+    "newFolder": "Nueva carpeta",
+    "newFolderPlaceholder": "carpeta sin título",
+    "emptyFolder": "Esta carpeta está vacía",
+    "itemSingular": "elemento",
+    "itemPlural": "elementos",
+    "itemCount_one": "{{count}} elemento",
+    "itemCount_other": "{{count}} elementos",
+    "menuButton": "Más acciones",
+    "expandAgent": "Expandir archivos de {{name}}",
+    "collapseAgent": "Contraer archivos de {{name}}",
+    "nameTaken": {
+      "title": "Ese nombre ya está en uso",
+      "description": "Ya hay un archivo o una carpeta con el nombre “{{name}}” aquí."
+    },
+    "readOnly": {
+      "title": "Estos archivos no se pueden cambiar por ahora",
+      "description": "No se pueden guardar cambios ahí. Revisa los permisos de la carpeta e inténtalo de nuevo."
+    },
+    "conflict": {
+      "title": "“{{name}}” ya existe",
+      "description": "La carpeta de destino ya tiene un elemento llamado “{{name}}”. Puedes reemplazarlo o conservar ambos.",
+      "replace": "Reemplazar",
+      "keepBoth": "Conservar ambos",
+      "cancel": "Cancelar"
+    },
+    "uploadFiles": "Subir archivos",
+    "uploadFolder": "Subir carpeta",
+    "folderDropFailed": "No pudimos leer esa carpeta. Intenta con el botón Subir.",
+    "downloadAll": "Descargar todo",
+    "gone": {
+      "title": "Ese archivo ya no está",
+      "description": "Tu asistente pudo haberlo renombrado, movido o eliminado. Revisa su pestaña de Archivos para ver la versión más reciente."
+    },
+    "uploadingBusy": "Subiendo…",
+    "searchPlaceholder": "Buscar archivos",
+    "searchClear": "Borrar búsqueda",
+    "searchNoResults": "Ningún archivo coincide con tu búsqueda",
+    "selectRow": "Seleccionar",
+    "selectAll": "Seleccionar todo",
+    "selectedCount_one": "{{count}} seleccionado",
+    "selectedCount_other": "{{count}} seleccionados",
+    "deleteSelected": "Eliminar",
+    "clearSelection": "Quitar selección",
+    "uploadTooLarge": {
+      "title_one": "Archivo demasiado grande",
+      "title_other": "Archivos demasiado grandes",
+      "description_one": "El límite es de {{maxSize}} por archivo, así que {{names}} no se subió.",
+      "description_other": "El límite es de {{maxSize}} por archivo, así que estos no se subieron: {{names}}",
+      "batchTitle": "Subida demasiado grande",
+      "batchDescription": "Esta subida supera el límite de {{maxSize}}. Intenta con archivos más pequeños."
+    },
+    "delete": {
+      "title": "¿Mover “{{name}}” a la Papelera?",
+      "fileDescription": "Este archivo se quitará del espacio de trabajo de tu asistente.",
+      "folderDescription": "Esta carpeta y todo su contenido se quitarán del espacio de trabajo de tu asistente.",
+      "batchTitle_one": "¿Mover {{count}} elemento a la Papelera?",
+      "batchTitle_other": "¿Mover {{count}} elementos a la Papelera?",
+      "batchDescription_one": "Este elemento se quitará del espacio de trabajo de tu asistente.",
+      "batchDescription_other": "Estos elementos se quitarán del espacio de trabajo de tu asistente.",
+      "confirm": "Mover a la Papelera",
+      "cancel": "Cancelar"
+    },
+    "columns": {
+      "name": "Nombre",
+      "dateModified": "Modificado",
+      "size": "Tamaño"
+    },
+    "menu": {
+      "open": "Abrir",
+      "rename": "Cambiar nombre",
+      "reveal": "Mostrar en el Explorador de Archivos",
+      "delete": "Mover a la Papelera",
+      "preview": "Vista previa",
+      "download": "Descargar"
+    },
+    "preview": {
+      "loading": "Cargando vista previa…",
+      "unsupportedTitle": "No hay vista previa para este tipo de archivo",
+      "unsupportedDescription": "Descárgalo para abrirlo en tu computador.",
+      "download": "Descargar",
+      "close": "Cerrar",
+      "errorTitle": "No se pudo cargar el archivo",
+      "expand": "Ampliar",
+      "collapse": "Reducir"
+    },
+    "toasts": {
+      "savedTitle": "Archivo guardado",
+      "savedDescription": "{{name}} se guardó en tu computador.",
+      "revealAction": "Mostrar en el Explorador de Archivos",
+      "revealFailed": "No se pudo mostrar el archivo",
+      "saveFailedTitle": "No se pudo guardar el archivo",
+      "openFailedTitle": "No se pudo abrir el archivo",
+      "savedRenamedDescription": "Se guardó como {{name}} porque {{original}} está abierto en otro programa.",
+      "saveLocked": "Ese archivo está abierto en otro programa. Ciérralo ahí y vuelve a descargarlo.",
+      "savePermission": "La app no tiene permiso para guardar en esa carpeta. Elige otra carpeta, como Descargas.",
+      "saveDiskFull": "No hay suficiente espacio libre en este computador para guardar el archivo.",
+      "revealPermission": "La app no tiene permiso para abrir esa carpeta en este computador. Busca el archivo donde lo guardaste."
+    },
+    "modifiedToday": "Hoy"
+  },
+  "copyAgent": {
+    "row": "Duplicar a {{name}}",
+    "rowDescription": "Crea un duplicado en uno de tus grupos. Las conversaciones no se duplican.",
+    "title": "Duplicar a {{name}}",
+    "body": "El duplicado empieza con la misma descripción del puesto, skills, rutinas, aprendizajes y color. Las conversaciones se quedan con el original y nunca se duplican.",
+    "nameLabel": "Nombre del duplicado",
+    "nameTaken": "Ya existe un empleado de IA llamado {{name}}. Los nombres de empleados de IA se comparten entre todos tus grupos, así que dale al duplicado un nombre propio.",
+    "teamLabel": "Grupo del duplicado",
+    "confirm": "Crear duplicado",
+    "copySuffix": "copia",
+    "toasts": {
+      "createdTitle": "Duplicado creado",
+      "createdDescription": "{{name}} está listo.",
+      "chatsCopiedTitle": "Chats copiados",
+      "chatsCopiedDescription_one": "{{count}} conversación ahora también vive con {{name}}.",
+      "chatsCopiedDescription_other": "{{count}} conversaciones ahora también viven con {{name}}."
+    },
+    "errors": {
+      "failed": "No pudimos duplicar el empleado de IA",
+      "chatsFailed": "No pudimos copiar los chats",
+      "chatsPartial": "Algunos chats no llegaron. Vuelve a duplicar el empleado de IA para reintentar."
+    },
+    "wizard": {
+      "source": {
+        "title": "¿Qué empleado de IA copiamos?",
+        "body": "El nuevo empleado de IA empieza igual que el que elijas. En las siguientes pantallas decides qué conserva. Los archivos se quedan con el original.",
+        "empty": "Todavía no tienes empleados de IA para copiar."
+      },
+      "instructions": {
+        "title": "¿Qué debe saber la copia?",
+        "body": "Todo empieza activado, salvo las conversaciones. Desactiva lo que el nuevo empleado de IA no deba llevarse.",
+        "instructionsLabel": "Descripción del puesto",
+        "instructionsRow": "Descripción del puesto y reglas",
+        "noInstructions": "{{name}} todavía no tiene descripción del puesto.",
+        "learningsLabel": "Aprendizajes",
+        "learningsBody": "Notas que el empleado de IA fue tomando mientras trabajaba. Las personales pueden quedarse fuera.",
+        "chatsLabel": "Chats",
+        "chatsRow": "Conversaciones",
+        "chatsCount_one": "{{count}} conversación que {{name}} ha tenido hasta ahora",
+        "chatsCount_other": "{{count}} conversaciones que {{name}} ha tenido hasta ahora",
+        "noChats": "{{name}} todavía no tiene conversaciones."
+      },
+      "routines": {
+        "title": "¿Qué rutinas se llevan?",
+        "body": "Las rutinas se ejecutan con su propio horario. Cada una que conserves se copia tal como está en {{name}}, y puedes cambiarla después."
+      },
+      "skills": {
+        "title": "¿Qué skills se llevan?",
+        "body": "Las skills son lo que {{name}} sabe hacer. Conserva las que la copia necesite."
+      },
+      "name": {
+        "heading": "Basado en {{name}}"
+      },
+      "actions": {
+        "next": "Continuar",
+        "selectAll": "Seleccionar todo",
+        "clearAll": "Quitar todo"
+      }
+    }
+  }
+}

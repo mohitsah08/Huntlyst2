@@ -1,0 +1,57 @@
+{#- The Guides hub is per locale, same rule as nav.njk: a path in the copy tree
+    wins, anything else falls back to the English hub. -#}
+{%- set guidesHref = t.nav.links.guides -%}
+<footer class="lfoot">
+  <div class="lfoot-inner">
+    <div class="lfoot-top">
+      <div class="lfoot-brand">
+        <a class="lnav-brand" href="{{ localeRoot }}">Houston</a>
+        <p>{{ t.footer.blurb }}</p>
+        <button class="btn btn-ghost btn-sm" data-dl-trigger data-dl-source="footer">{{ t.footer.download }}</button>
+        <p class="dl-os-links">
+          <button class="dl-os-link" data-dl-trigger data-dl-source="footer-os" data-dl-os="mac">{{ t.footer.mac }}</button> ·
+          <button class="dl-os-link" data-dl-trigger data-dl-source="footer-os" data-dl-os="windows">{{ t.footer.windows }}</button> ·
+          <button class="dl-os-link" data-dl-trigger data-dl-source="footer-os" data-dl-os="linux">{{ t.footer.linux }}</button>
+        </p>
+      </div>
+      <div class="lfoot-col">
+        <h4>{{ t.footer.product }}</h4>
+        <a href="{{ root }}#multiplayer">{{ t.nav.multiplayer }}</a>
+        <a href="{{ root }}#agents">{{ t.nav.agents }}</a>
+        <a href="{{ root }}#compound">{{ t.nav.features }}</a>
+        <a href="{{ root }}#pricing">{{ t.nav.pricing }}</a>
+        <a href="{{ root }}#faq">{{ t.nav.faq }}</a>
+      </div>
+      <div class="lfoot-col">
+        <h4>{{ t.footer.company }}</h4>
+        <a href="/vision/">{{ t.nav.vision }}</a>
+        <a href="mailto:hello@gethouston.ai">{{ t.footer.contact }}</a>
+      </div>
+      <div class="lfoot-col">
+        <h4>{{ t.footer.resources }}</h4>
+        <a href="https://agents.gethouston.ai">{{ t.nav.agentStore }}</a>
+        <a href="{{ guidesHref }}">{{ t.nav.guides }}</a>
+        <a href="/changelog/">{{ t.nav.changelog }}</a>
+        <a href="https://github.com/gethouston/houston" target="_blank" rel="noopener noreferrer">{{ t.nav.github }}</a>
+        <a href="https://x.com/ja818_" target="_blank" rel="noopener noreferrer">{{ t.footer.twitter }}</a>
+      </div>
+    </div>
+    <div class="lfoot-bottom">
+      <span class="lfoot-credit">
+        {{ t.footer.credit }}
+      </span>
+      {# The quiet second way to switch language, for anyone who reads to the
+         end of the page. Same [data-lang-choice] contract as the nav menu. #}
+      <nav class="lfoot-lang" aria-label="{{ t.footer.langLabel }}">
+        {%- for code in locales.order %}
+        <a href="{{ locales[code].dir }}" data-lang-choice="{{ code }}"{% if code == locale.code %} class="is-active" aria-current="true"{% endif %}>{{ locales[code].label }}</a>
+        {%- endfor %}
+      </nav>
+      <span class="lfoot-legal">
+        <a href="/privacy/">{{ t.footer.privacy }}</a>
+        <a href="/terms/">{{ t.footer.terms }}</a>
+        <a href="mailto:hello@gethouston.ai?subject={{ t.footer.unsubscribeSubject | urlencode }}&amp;body={{ t.footer.unsubscribeBody | urlencode }}">{{ t.footer.unsubscribe }}</a>
+      </span>
+    </div>
+  </div>
+</footer>

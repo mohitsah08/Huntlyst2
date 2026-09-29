@@ -1,0 +1,209 @@
+import {
+  type Activity,
+  type ActivityContributor,
+  type ActivityUpdate,
+  isPendingInteraction,
+  type NewActivity,
+  resolveInteractionPatch,
+} from "@houston/protocol";
+import {
+  cloneContributor,
+  sanitizeContributors,
+  upsertContributor,
+} from "./contributors";
+import { docKey } from "./layout";
+import { sanitizeMentions } from "./mentions";
+import { toCanonicalProviderId } from "./provider-dialect";
+import {
+  type DocDiagnostic,
+  loadJson,
+  saveJson,
+  type TextStore,
+} from "./store";
+
+/** Board statuses, per ui/agent-schemas/activity.schema.json. */
+export const ACTIVITY_STATUSES = [
+  "running",
+  "needs_you",
+  "done",
+  "error",
+  "archived",
+] as const;
+
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
+
+/** Validate the pending_interaction shape (mirrors the schema). The canonical
+ *  structural guard lives beside the type in @houston/protocol: an old
+ *  top-level `{kind, questions}` / `{kind, toolkit}` shape has no `steps`, so a
+ *  value persisted before the step-sequence change is dropped. */
+const isValidPendingInteraction = isPendingInteraction;
+
+/**
+ * Normalize a raw activity array (agents write this file with file tools, so
+ * junk happens): entries missing the required identity fields are dropped and
+ * reported; unknown statuses are preserved as-is (forward compat — the UI
+ * renders unknown statuses neutrally).
+ */
+export function normalizeActivities(
+  raw: unknown,
+  key: string,
+): { items: Activity[]; diagnostics: DocDiagnostic[] } {
+  if (raw === null || raw === undefined) return { items: [], diagnostics: [] };
+  if (!Array.isArray(raw)) {
+    return {
+      items: [],
+      diagnostics: [{ key, message: "activity.json is not an array" }],
+    };
+  }
+  const items: Activity[] = [];
+  const diagnostics: DocDiagnostic[] = [];
+  for (const entry of raw) {
+    if (
+      isRecord(entry) &&
+      typeof entry.id === "string" &&
+      typeof entry.title === "string" &&
+      typeof entry.status === "string"
+    ) {
+      const activity = { description: "", ...entry } as Activity;
+      if (typeof entry.created_by !== "string") {
+        delete activity.created_by;
+      }
+      if (entry.contributors !== undefined) {
+        if (Array.isArray(entry.contributors)) {
+          activity.contributors = sanitizeContributors(entry.contributors);
+        } else {
+          delete activity.contributors;
+        }
+      }
+      if (entry.mentioned !== undefined) {
+        const mentioned = sanitizeMentions(entry.mentioned);
+        if (mentioned) activity.mentioned = mentioned;
+        else delete activity.mentioned;
+      }
+      if (
+        entry.pending_interaction !== undefined &&
+        !isValidPendingInteraction(entry.pending_interaction)
+      ) {
+        delete activity.pending_interaction;
+        diagnostics.push({
+          key,
+          message: `dropped invalid pending_interaction on activity ${entry.id}: ${JSON.stringify(entry.pending_interaction)?.slice(0, 120)}`,
+        });
+      }
+      items.push(activity);
+    } else {
+      diagnostics.push({
+        key,
+        message: `dropped malformed activity entry: ${JSON.stringify(entry)?.slice(0, 120)}`,
+      });
+    }
+  }
+  return { items, diagnostics };
+}
+
+export async function loadActivities(
+  store: TextStore,
+  root: string,
+): Promise<{ items: Activity[]; diagnostics: DocDiagnostic[] }> {
+  const key = docKey(root, "activity");
+  return normalizeActivities(await loadJson<unknown>(store, key, []), key);
+}
+
+export async function saveActivities(
+  store: TextStore,
+  root: string,
+  items: Activity[],
+): Promise<void> {
+  await saveJson(store, docKey(root, "activity"), items);
+}
+
+/**
+ * Materialize a NewActivity. Caller supplies identity + clock (domain stays
+ * pure). When `author` is present (hosted Teams acting-as identity) the mission
+ * is stamped with `created_by` + a single-entry `contributors`; without it the
+ * output is byte-identical to a single-player mission (no attribution keys).
+ */
+export function createActivity(
+  input: NewActivity,
+  id: string,
+  nowIso: string,
+  author?: ActivityContributor,
+): Activity {
+  return {
+    id,
+    title: input.title,
+    description: input.description ?? "",
+    status: "running",
+    updated_at: nowIso,
+    ...(input.agent !== undefined ? { agent: input.agent } : {}),
+    ...(input.worktree_path !== undefined
+      ? { worktree_path: input.worktree_path }
+      : {}),
+    ...(input.provider !== undefined
+      ? { provider: toCanonicalProviderId(input.provider) }
+      : {}),
+    ...(input.model !== undefined ? { model: input.model } : {}),
+    ...(input.origin_session_key !== undefined
+      ? { origin_session_key: input.origin_session_key }
+      : {}),
+    ...(author !== undefined
+      ? {
+          created_by: author.user_id,
+          contributors: [cloneContributor(author)],
+        }
+      : {}),
+  };
+}
+
+/**
+ * Apply a partial update; undefined fields leave the current value alone
+ * (explicit null clears). When `author` is present (hosted Teams acting-as
+ * identity) the actor is recorded as a contributor on the resulting mission.
+ */
+export function applyActivityUpdate(
+  current: Activity,
+  update: ActivityUpdate,
+  nowIso: string,
+  author?: ActivityContributor,
+): Activity {
+  const { pending_interaction, provider, model, ...rest } = update;
+  const defined = Object.fromEntries(
+    Object.entries(rest).filter(([, v]) => v !== undefined),
+  );
+  const next = { ...current, ...defined, updated_at: nowIso } as Activity;
+  // `provider`/`model` are the mission's model pin: `null` deletes the key so
+  // the mission falls back to the engine's own resolution (the warming flush
+  // clears a pin its pod cannot honor).
+  if (provider === null) delete next.provider;
+  else if (provider !== undefined)
+    next.provider = toCanonicalProviderId(provider);
+  if (model === null) delete next.model;
+  else if (model !== undefined) next.model = model;
+  // PATCH bodies are untrusted at runtime (an old client or a stale message can
+  // carry a pre-step shape the compile-time type can't catch), and closing a
+  // mission answers whatever it was waiting on. Both rules live once, in
+  // @houston/protocol, shared with the app's local write path and the fake host.
+  const outcome = resolveInteractionPatch({
+    patched: pending_interaction,
+    stored: next.pending_interaction,
+    status: update.status,
+  });
+  if (outcome.kind === "set") next.pending_interaction = outcome.interaction;
+  else if (outcome.kind === "clear") delete next.pending_interaction;
+  return author !== undefined ? upsertContributor(next, author) : next;
+}
+
+export function upsertById<T extends { id: string }>(items: T[], item: T): T[] {
+  const i = items.findIndex((x) => x.id === item.id);
+  if (i === -1) return [...items, item];
+  return [...items.slice(0, i), item, ...items.slice(i + 1)];
+}
+
+export function removeById<T extends { id: string }>(
+  items: T[],
+  id: string,
+): { items: T[]; removed: boolean } {
+  const next = items.filter((x) => x.id !== id);
+  return { items: next, removed: next.length !== items.length };
+}

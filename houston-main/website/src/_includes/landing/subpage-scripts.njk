@@ -1,0 +1,162 @@
+{% include "landing/i18n-data.njk" %}
+{# Behaviours for the subpage shell: the shared navbar (Resources dropdown +
+   mobile menu) and the invite-code download gate. A lean subset of the
+   landing's scripts.njk — no hero/board/chat/reveal assets, since subpages
+   carry none of that markup. The nav is solid from the start (.lnav-solid),
+   so no scroll-state handler is needed. #}
+{% include "installer-urls.njk" %}
+<script>
+  // Nav dropdowns (Resources, language): every [data-menu] container owns a
+  // direct <button> child that toggles it. Click toggles, Escape / outside
+  // click closes, and opening one closes the others.
+  (function () {
+    var menus = Array.prototype.slice.call(
+      document.querySelectorAll("[data-menu]")
+    );
+    if (!menus.length) return;
+    function setOpen(menu, open) {
+      menu.classList.toggle("open", open);
+      var btn = menu.querySelector(":scope > button");
+      if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+    function closeAll(except) {
+      menus.forEach(function (menu) {
+        if (menu !== except) setOpen(menu, false);
+      });
+    }
+    menus.forEach(function (menu) {
+      var btn = menu.querySelector(":scope > button");
+      if (!btn) return;
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var open = !menu.classList.contains("open");
+        closeAll(menu);
+        setOpen(menu, open);
+      });
+    });
+    document.addEventListener("click", function (e) {
+      menus.forEach(function (menu) {
+        if (!menu.contains(e.target)) setOpen(menu, false);
+      });
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeAll(null);
+    });
+  })();
+
+  // Language picks are remembered, so a later visit can honor the choice.
+  // Navigation is untouched: the link follows through to the localized page.
+  (function () {
+    document.querySelectorAll("[data-lang-choice]").forEach(function (link) {
+      link.addEventListener("click", function () {
+        try {
+          localStorage.setItem(
+            "houston_lang_pref",
+            link.getAttribute("data-lang-choice")
+          );
+        } catch (e) {}
+      });
+    });
+  })();
+
+  // Mobile menu toggle.
+  (function () {
+    var burger = document.getElementById("lnav-burger");
+    var drop = document.getElementById("lnav-drop");
+    var icon = document.getElementById("lnav-burger-icon");
+    if (!burger || !drop) return;
+    burger.addEventListener("click", function () {
+      var open = drop.classList.toggle("open");
+      burger.setAttribute("aria-expanded", open ? "true" : "false");
+      icon.innerHTML = open
+        ? '<path d="M18 6L6 18M6 6l12 12"/>'
+        : '<path d="M4 6h16M4 12h16M4 18h16"/>';
+    });
+    drop.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () {
+        drop.classList.remove("open");
+        burger.setAttribute("aria-expanded", "false");
+        icon.innerHTML = '<path d="M4 6h16M4 12h16M4 18h16"/>';
+      });
+    });
+  })();
+
+  // Analytics — forwards each conversion event to PostHog and GA4 (globals used
+  // by the download gate below). Each sink is independent; pageviews come from
+  // the base layout, not here.
+  function track(name, props) {
+    if (typeof window === "undefined") return;
+    var payload = props || {};
+    if (window.posthog && window.posthog.capture) {
+      try {
+        window.posthog.capture(name, payload);
+      } catch (e) {}
+    }
+    if (typeof window.gtag === "function") {
+      try {
+        window.gtag("event", name, payload);
+      } catch (e) {}
+    }
+  }
+
+  // OS detection — decides which gated modal a download trigger opens, unless
+  // the trigger pins one explicitly via data-dl-os (the per-OS CTA tiles do).
+  function detectOs() {
+    var uaData = navigator.userAgentData;
+    var hay =
+      ((uaData && uaData.platform ? uaData.platform : "") +
+        " " +
+        (navigator.userAgent || "")).toLowerCase();
+    if (hay.indexOf("win") !== -1) return "windows";
+    if (hay.indexOf("mac") !== -1) return "mac";
+    // Android UAs also say "Linux"; only desktop Linux gets the AppImage.
+    if (
+      hay.indexOf("android") === -1 &&
+      (hay.indexOf("linux") !== -1 || hay.indexOf("x11") !== -1)
+    )
+      return "linux";
+    return "other";
+  }
+
+  // Windows x64 vs ARM64: show exactly ONE arch button, default x64, reveal
+  // ARM64 only on a positive signal. The help accordion's "Wrong one?" link is
+  // the one-click escape hatch.
+  (function () {
+    var x64 = document.getElementById("dl-windows-x64-btn");
+    var arm64 = document.getElementById("dl-windows-arm64-btn");
+    if (!x64 || !arm64) return;
+    function show(shown, hidden) {
+      shown.classList.remove("btn-outline");
+      shown.classList.add("btn-ink");
+      shown.style.display = "";
+      hidden.classList.remove("btn-ink");
+      hidden.classList.add("btn-outline");
+      hidden.style.display = "none";
+    }
+    arm64.style.display = "none";
+    var ua = (navigator.userAgent || "").toLowerCase();
+    if (ua.indexOf("arm64") !== -1 || ua.indexOf("aarch64") !== -1) {
+      show(arm64, x64);
+    } else {
+      var uaData = navigator.userAgentData;
+      if (uaData && uaData.getHighEntropyValues) {
+        uaData
+          .getHighEntropyValues(["architecture"])
+          .then(function (info) {
+            if (info && info.architecture === "arm") show(arm64, x64);
+          })
+          .catch(function () {});
+      }
+    }
+    var switchLink = document.getElementById("dl-windows-switch-arch");
+    if (switchLink) {
+      switchLink.addEventListener("click", function (e) {
+        e.preventDefault();
+        if (arm64.style.display === "none") show(arm64, x64);
+        else show(x64, arm64);
+        track("windows_arch_switched", {});
+      });
+    }
+  })();
+</script>
+{% include "landing/scripts-download.njk" %}

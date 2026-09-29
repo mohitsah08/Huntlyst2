@@ -1,0 +1,272 @@
+import type { IncomingMessage, ServerResponse } from "node:http";
+import type { HoustonEvent } from "@houston/protocol";
+import type { Agent, Workspace } from "../domain/types";
+import type { WorkspacePaths } from "../paths";
+import type { Vfs } from "../vfs";
+import { json, methodNotAllowed, readJson } from "./deps";
+import { MAX_UPLOAD_BODY_BYTES, MAX_UPLOAD_BYTES } from "./files-import";
+
+/**
+ * Composer attachments — files the user drops on a chat message, uploaded INTO
+ * the agent's workspace so the runtime's clamped file tools can Read them during
+ * the turn.
+ *
+ * Storage: `<agentRoot>/uploads/<filename>`. `agentRoot` is
+ * HOUSTON_WORKSPACE_DIR — the very root the runtime's WorkspaceGuard clamps to —
+ * so the RELATIVE path we return (`uploads/<filename>`) is exactly what the
+ * agent's Read tool resolves and is allowed to open. The frontend encodes that
+ * path verbatim into the message text ("Read these attached files: …"), so what
+ * we store and what we return MUST agree.
+ *
+ * `uploads` is a regular, VISIBLE workspace folder: uploads are permanent agent
+ * context, not per-conversation scratch (HOU-706). The user sees them in the
+ * Files tab, the agent can find them from ANY later conversation, and clearing
+ * or deleting a chat never removes them. (The pre-HOU-706 layout — a hidden
+ * `.attachments/<scopeId>/` dot-dir wiped on chat delete — made every upload
+ * silently vanish from the user's point of view. Files already stored there
+ * stay readable at their old paths; new uploads never land there.)
+ *
+ * Transport: base64 JSON (dependency-free, binary-safe — the same base64 path
+ * `files/read` already uses). The body's `scopeId` is legacy: older hosts keyed
+ * storage (and a DELETE route) on it. It is accepted and ignored so current
+ * clients — which still send it to stay compatible with not-yet-updated cloud
+ * pods — never 400.
+ */
+
+/** The on-disk dir name — a visible, durable folder in the agent's workspace. */
+const UPLOADS_DIR = "uploads";
+
+// A single request's decoded payload is capped at MAX_UPLOAD_BYTES (shared with
+// files/import so the composer's client-side per-file limit and the host cap
+// can't drift; the client uploads one request per file, so per-file =
+// per-request). The RAW body is bounded during draining by MAX_UPLOAD_BODY_BYTES
+// so an oversized upload can never buffer into the process.
+
+export class AttachmentError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "AttachmentError";
+  }
+}
+
+/**
+ * One uploaded file: original name + its base64-encoded bytes. `relPath` is
+ * set for folder uploads (HOU-808): the file's slash-joined path INSIDE the
+ * dropped folder, including the filename (mirrors `File.webkitRelativePath`,
+ * e.g. `docs/guide/intro.md`) — the file then lands at `uploads/<relPath>` so
+ * the folder's structure survives. Hosts predating folder support ignore the
+ * field and store the flat `name`, which still yields readable paths.
+ */
+interface UploadFile {
+  name: string;
+  contentBase64: string;
+  relPath?: string;
+}
+
+/**
+ * Validate a filename: a single path component, no traversal, no separators,
+ * no leading dot (a dotfile would be invisible in the Files tab, defeating the
+ * whole point of durable uploads). Rejected loudly.
+ */
+function safeFilename(name: string): string {
+  if (
+    name === "" ||
+    name === "." ||
+    name === ".." ||
+    name.includes("/") ||
+    name.includes("\\") ||
+    name.startsWith(".")
+  ) {
+    throw new AttachmentError(400, `invalid attachment filename: ${name}`);
+  }
+  return name;
+}
+
+/** Folder uploads can nest, but not absurdly: a runaway path is a client bug. */
+const MAX_RELPATH_SEGMENTS = 32;
+const MAX_RELPATH_LENGTH = 1024;
+
+/**
+ * Validate a folder-upload relative path: 2+ segments (a 1-segment path is a
+ * plain filename and must arrive as `name`), every segment individually held to
+ * the same rules as `safeFilename` — so `..`, `\`, empty segments (`a//b`) and
+ * hidden dot-segments are all rejected loudly, and the joined path can never
+ * escape `uploads/`.
+ */
+function safeRelPath(relPath: string): string {
+  const segments = relPath.split("/");
+  if (
+    segments.length < 2 ||
+    segments.length > MAX_RELPATH_SEGMENTS ||
+    relPath.length > MAX_RELPATH_LENGTH
+  ) {
+    throw new AttachmentError(400, `invalid attachment path: ${relPath}`);
+  }
+  for (const segment of segments) safeFilename(segment);
+  return relPath;
+}
+
+const uploadsKey = (root: string) => `${root}/${UPLOADS_DIR}`;
+
+/**
+ * Write each uploaded file under `uploads/` and return the RELATIVE workspace
+ * paths the agent will read. Folder uploads (`relPath` set) keep their
+ * directory structure: `docs/a.md` lands at `uploads/docs/a.md`. FILES
+ * colliding with anything already stored — or with each other within a batch —
+ * are disambiguated (`name.ext`, `name (1).ext`, …) so an upload never
+ * silently overwrites an earlier one and every returned path resolves to a
+ * distinct stored file. DIRECTORIES deliberately merge instead of deduping:
+ * the client uploads a folder across several requests (one per size-batch),
+ * so a per-request folder rename would scatter one folder over many — and the
+ * returned per-file paths stay exact either way.
+ */
+export async function saveAttachments(
+  vfs: Vfs,
+  root: string,
+  files: readonly UploadFile[],
+): Promise<string[]> {
+  // Seed the dedup set with what the folder already holds: uploads are durable
+  // across conversations, so "report.pdf" attached today must not clobber the
+  // "report.pdf" attached last week. `vfs.list` is recursive, so the set holds
+  // full `uploads/`-relative paths — nested folder-upload files included.
+  const prefix = uploadsKey(root);
+  const used = new Set<string>(
+    (await vfs.list(prefix)).map((k) => k.slice(prefix.length + 1)),
+  );
+  // Validate the WHOLE batch before writing anything: one bad path must 400
+  // the request without leaving earlier files half-persisted (their paths
+  // would never be returned and no FilesChanged would fire).
+  const paths = files.map((f) => {
+    const target = f.relPath ? safeRelPath(f.relPath) : safeFilename(f.name);
+    return `${UPLOADS_DIR}/${dedupe(target, used)}`;
+  });
+  // Path validation is lexical; the Vfs write resolves the path as the
+  // filesystem sees it, symlinks included. A symlinked dir under uploads/
+  // could redirect a write — but only something that already writes to the
+  // workspace (the agent itself) can plant one there, and that principal can
+  // already write wherever the symlink would point. Same posture as the
+  // pre-existing flat uploads (where `uploads` itself could be a symlink).
+  for (const [i, f] of files.entries()) {
+    await vfs.writeBytes(
+      `${root}/${paths[i]}`,
+      Buffer.from(f.contentBase64, "base64"),
+    );
+  }
+  return paths;
+}
+
+/**
+ * Pick a unique path within `uploads/`, appending " (n)" before the FILENAME's
+ * extension (the directory part never changes — see saveAttachments on merge).
+ */
+function dedupe(relPath: string, used: Set<string>): string {
+  if (!used.has(relPath)) {
+    used.add(relPath);
+    return relPath;
+  }
+  const slash = relPath.lastIndexOf("/");
+  const dir = slash >= 0 ? relPath.slice(0, slash + 1) : "";
+  const name = slash >= 0 ? relPath.slice(slash + 1) : relPath;
+  const dot = name.lastIndexOf(".");
+  const stem = dot > 0 ? name.slice(0, dot) : name;
+  const ext = dot > 0 ? name.slice(dot) : "";
+  for (let n = 1; ; n++) {
+    const candidate = `${dir}${stem} (${n})${ext}`;
+    if (!used.has(candidate)) {
+      used.add(candidate);
+      return candidate;
+    }
+  }
+}
+
+/** Parse + validate the upload body. Throws AttachmentError (→ 4xx) on any malformed input. */
+function parseUploadBody(body: Record<string, unknown>): UploadFile[] {
+  // `scopeId` (legacy per-conversation storage key) is deliberately not read.
+  if (!Array.isArray(body.files)) {
+    throw new AttachmentError(400, "missing 'files' array");
+  }
+  let total = 0;
+  return body.files.map((raw, i) => {
+    const f = raw as {
+      name?: unknown;
+      contentBase64?: unknown;
+      relPath?: unknown;
+    };
+    if (typeof f.name !== "string" || typeof f.contentBase64 !== "string") {
+      throw new AttachmentError(
+        400,
+        `file[${i}] needs string 'name' and 'contentBase64'`,
+      );
+    }
+    if (f.relPath !== undefined && typeof f.relPath !== "string") {
+      throw new AttachmentError(400, `file[${i}] 'relPath' must be a string`);
+    }
+    // Semantic decoded-size limit (base64 is ~3/4 the byte size). The raw body
+    // is already capped DURING draining by readJson(MAX_UPLOAD_BODY_BYTES) — the
+    // OOM guard — so this estimate is now purely the user-facing size limit, not
+    // the memory backstop it used to (wrongly) stand in for.
+    total += Math.floor((f.contentBase64.length * 3) / 4);
+    if (total > MAX_UPLOAD_BYTES) {
+      throw new AttachmentError(
+        413,
+        "attachments exceed the upload size limit",
+      );
+    }
+    return { name: f.name, contentBase64: f.contentBase64, relPath: f.relPath };
+  });
+}
+
+/**
+ * HTTP handler for `attachments` routes, intercepted by the host BEFORE the
+ * runtime channel (the runtime has no /attachments route). Returns true when it
+ * owns the request. A missing vfs 503s; malformed input 4xxs. Nothing swallowed.
+ *
+ *   POST attachments  { files: [{ name, contentBase64, relPath? }] } → { paths }
+ *
+ * DELETE (the legacy per-scope wipe) is gone: uploads are permanent workspace
+ * files the user manages through the Files tab. Old clients still fire a
+ * best-effort DELETE when a chat is cleared; they get the 405 below and ignore
+ * it — and, crucially, nothing they do can remove a stored upload.
+ *
+ * Every upload fires `FilesChanged` through `emit`: the files now land in a
+ * visible folder, so Files tabs (this client's and everyone else's) must
+ * refresh without a manual reload.
+ */
+export async function handleAttachments(
+  vfs: Vfs | undefined,
+  paths: WorkspacePaths,
+  ctx: { workspace: Workspace; agent: Agent },
+  method: string,
+  rest: string,
+  req: IncomingMessage,
+  res: ServerResponse,
+  emit?: (event: HoustonEvent) => void,
+): Promise<boolean> {
+  if (rest !== "attachments") return false;
+  if (!vfs) {
+    json(res, 503, { error: "attachments not configured" });
+    return true;
+  }
+  const root = paths.agentRoot(ctx.workspace, ctx.agent);
+  try {
+    if (method === "POST") {
+      const files = parseUploadBody(await readJson(req, MAX_UPLOAD_BODY_BYTES));
+      const saved = await saveAttachments(vfs, root, files);
+      if (saved.length > 0)
+        emit?.({ type: "FilesChanged", agentPath: ctx.agent.id });
+      json(res, 200, { paths: saved });
+      return true;
+    }
+    methodNotAllowed(res);
+    return true;
+  } catch (err) {
+    if (err instanceof AttachmentError) {
+      json(res, err.status, { error: err.message });
+      return true;
+    }
+    throw err;
+  }
+}

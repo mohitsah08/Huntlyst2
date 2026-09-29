@@ -1,0 +1,73 @@
+{
+  "name": {
+    "description": "Espaços de trabalho mantêm seus funcionários de IA organizados: um pessoal, um do trabalho, etc.",
+    "placeholder": "ex. Pessoal, Trabalho, Acme Corp"
+  },
+  "migrationReconnect": {
+    "title": "Bem-vindo de volta",
+    "body": "Seus funcionários de IA e tudo em que você trabalhou estão aqui. Basta reconectar sua IA para continuar de onde parou.",
+    "skip": "Faço isso depois",
+    "dismissError": "Não conseguimos salvar. Tente novamente."
+  },
+  "connectAi": {
+    "title": "Conecte sua IA",
+    "plans": {
+      "claude": {
+        "title": "Sua assinatura do Claude",
+        "subtitle": "Use o plano do Claude que você já paga.",
+        "cancel": "Cancelar a entrada no Claude"
+      },
+      "chatgpt": {
+        "title": "Sua assinatura do ChatGPT",
+        "subtitle": "Use o plano do ChatGPT que você já paga.",
+        "cancel": "Cancelar a entrada no ChatGPT"
+      }
+    },
+    "signIn": "Entrar",
+    "waiting": "Esperando você entrar",
+    "cancel": "Cancelar",
+    "connected": "Conectado",
+    "checking": "Verificando",
+    "viewMore": "Ver mais",
+    "showFewer": "Mostrar menos opções"
+  },
+  "team": {
+    "choice": {
+      "title": "Vamos montar sua equipe",
+      "subtitle": "Seus funcionários de IA tiram trabalho das suas mãos. Comece com uma equipe pronta ou contrate cada um você mesmo.",
+      "soFar_one": "Você já tem 1 funcionário de IA na sua equipe",
+      "soFar_other": "Você já tem {{count}} funcionários de IA na sua equipe",
+      "basicTitle": "Comece com uma equipe básica",
+      "basicBody": "Três funcionários de IA prontos para trabalhar: {{roles}}.",
+      "hireTitle": "Contrate sua equipe",
+      "hireBody": "Escolha um setor, uma função e um nome, um funcionário de IA de cada vez."
+    },
+    "hire": {
+      "submit": "Contratar"
+    },
+    "hired": {
+      "title_one": "Você contratou seu primeiro funcionário de IA",
+      "title_other": "Você contratou {{count}} funcionários de IA",
+      "subtitle": "Você pode mudar um nome ou uma cor quando quiser. Contrate outro ou conclua e conheça sua equipe.",
+      "hireAnother": "Contratar outro"
+    },
+    "basic": {
+      "title": "Conheça sua nova equipe",
+      "subtitle": "Tudo aqui pode ser editado: mude qualquer nome, cargo ou cor antes de contratá-los.",
+      "submit": "Contratar minha equipe",
+      "add": "Contratar mais um",
+      "attention_one": "{{name}} ainda não conseguiu entrar na sua equipe. Tente de novo ou remova este funcionário de IA para concluir.",
+      "attention_other": "{{count}} funcionários de IA ainda não conseguiram entrar na sua equipe. Tente de novo ou remova-os para concluir.",
+      "unsaved_one": "Ainda não conseguimos salvar as alterações de {{name}}. Vamos tentar de novo quando você contratar sua equipe.",
+      "unsaved_other": "Ainda não conseguimos salvar as alterações de {{count}} funcionários de IA. Vamos tentar de novo quando você contratar sua equipe."
+    }
+  },
+  "onboardingSurvey": {
+    "goal": {
+      "title": "Que tarefa você adoraria passar para um funcionário de IA?"
+    },
+    "completion": {
+      "notNow": "Agora não"
+    }
+  }
+}

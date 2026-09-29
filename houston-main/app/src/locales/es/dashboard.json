@@ -1,0 +1,48 @@
+{
+  "filter": {
+    "allAgents": "Todos los empleados de IA"
+  },
+  "peopleFilter": {
+    "label": "Filtrar por persona",
+    "everyone": "Todos",
+    "mine": "Mis tareas",
+    "inviteTeaser": "Invita a tu equipo para ver quién trabaja en qué"
+  },
+  "search": {
+    "placeholder": "Buscar tareas",
+    "placeholderShort": "Buscar...",
+    "clear": "Borrar búsqueda",
+    "clearCta": "Borrar búsqueda",
+    "searchingText": "Buscando en el texto de las tareas",
+    "searchingTitle": "Buscando en el texto de las tareas",
+    "searchingDescription": "Revisando mensajes anteriores.",
+    "emptyTitle": "No hay tareas que coincidan",
+    "emptyDescription": "Prueba otra búsqueda o borra la actual.",
+    "historyErrorTitle": "No se pudieron buscar todas las tareas",
+    "historyErrorDescription": "No se pudo cargar parte del texto de tareas anteriores."
+  },
+  "columns": {
+    "running": "En curso",
+    "needsYou": "Necesita tu atención",
+    "done": "Listo"
+  },
+  "empty": {
+    "boardTitle": "Aún no hay conversaciones",
+    "boardDescription": "Inicia una conversación nueva para delegarle trabajo a un empleado de IA.",
+    "newMission": "Nueva tarea"
+  },
+  "errors": {
+    "noAgentForMission": "Elige un empleado de IA antes de iniciar una tarea.",
+    "partialMissionLoad": "Algunas tareas no se pudieron cargar. Lo estamos intentando de nuevo."
+  },
+  "agentPicker": {
+    "title": "¿Qué empleado de IA debería ejecutar esto?",
+    "description": "Elige un empleado de IA para abrir una nueva conversación."
+  },
+  "skillPicker": {
+    "title": "Elige una skill",
+    "descriptionWithAgent": "Explora las skills que {{name}} ya sabe hacer.",
+    "empty": "Aún no hay skills.",
+    "skillsLoading": "Cargando skills..."
+  }
+}

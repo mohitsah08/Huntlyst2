@@ -1,0 +1,341 @@
+/*
+ * Editorial body — part 2: pricing + the grouped Q&A.
+ * warm-light: warm cards, hairlines, warm ink type. Palette/type from
+ * site-tokens.css.
+ */
+
+/* ── Pricing ─────────────────────────────────────────────────────────────── */
+#pricing {
+  padding-top: clamp(96px, 12vw, 160px);
+}
+.pricing-head {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto clamp(28px, 3.4vw, 44px);
+}
+.pricing-head .sec-title {
+  max-width: none;
+  margin: 0 auto;
+}
+.pricing-head .sec-lead {
+  margin: 16px auto 0;
+}
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+.price-col {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 30px 28px;
+}
+/* Featured plan: the ONE loud object — a full ink card on the light band,
+   white chrome inside, the same inversion the dark sections use. */
+.price-col.featured {
+  background: var(--band-black);
+  border-color: var(--band-black);
+  box-shadow: 0 32px 64px -24px rgba(0, 0, 0, 0.35);
+}
+.price-col.featured .price-name,
+.price-col.featured .price-amt .amount {
+  color: #fff;
+}
+.price-col.featured .price-amt .per {
+  color: rgba(255, 255, 255, 0.6);
+}
+.price-col.featured .price-note {
+  color: rgba(255, 255, 255, 0.55);
+}
+.price-col.featured .price-list li {
+  color: rgba(255, 255, 255, 0.75);
+}
+.price-col.featured .price-list li::before {
+  background: #fff;
+}
+.price-chip {
+  position: absolute;
+  top: 26px;
+  right: 24px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+/* The checklist — one thin check per claim. */
+.price-list {
+  list-style: none;
+  margin: 20px 0 26px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.price-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+.price-list li::before {
+  content: "";
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: var(--ink);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.price-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-strong);
+  letter-spacing: -0.01em;
+}
+.price-amt {
+  margin: 14px 0 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.price-amt .amount {
+  font-weight: 600;
+  font-size: 38px;
+  letter-spacing: -0.03em;
+  color: var(--ink-strong);
+  font-variant-numeric: tabular-nums;
+}
+.price-amt .per {
+  font-size: 14px;
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+.price-note {
+  font-size: 12.5px;
+  color: var(--ink-subtle);
+  min-height: 18px;
+}
+.price-cta {
+  margin-top: auto;
+}
+.price-cta .btn {
+  width: 100%;
+}
+.price-col .dl-os-links {
+  text-align: center;
+}
+@media (max-width: 880px) {
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    max-width: 440px;
+  }
+  .price-desc {
+    min-height: 0;
+  }
+}
+
+/* ── Q&A — grouped accordion, all the page's depth lives here ──────────────── */
+#faq {
+  padding-top: clamp(72px, 9vw, 120px);
+}
+.faq-head {
+  text-align: center;
+  margin-bottom: clamp(28px, 3.4vw, 44px);
+}
+.faq-head .sec-title {
+  margin: 0 auto;
+}
+.faq-groups {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(36px, 4vw, 52px);
+}
+.faq-group-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-subtle);
+  letter-spacing: 0.01em;
+  margin-bottom: 14px;
+  padding-left: 4px;
+}
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.faq-answer a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.faq-item {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--ink-strong);
+}
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+.faq-chevron {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--ink-muted);
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+.faq-item[open] .faq-chevron {
+  transform: rotate(180deg);
+}
+.faq-answer {
+  padding: 0 22px 20px;
+}
+.faq-answer p {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ink-muted);
+  max-width: 60ch;
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq-chevron {
+    transition: none;
+  }
+}
+
+/* ── FAQ group accordions — each section collapses, badge shows its size ── */
+details.faq-group > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 4px;
+  border-bottom: 1px solid var(--line-strong);
+}
+details.faq-group > summary::-webkit-details-marker {
+  display: none;
+}
+details.faq-group > summary .faq-chevron {
+  margin-left: auto;
+  width: 18px;
+  height: 18px;
+  color: var(--ink-subtle);
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+details.faq-group[open] > summary .faq-chevron {
+  transform: rotate(180deg);
+}
+.faq-count {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--panel-raised);
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+details.faq-group > .faq-list {
+  padding: 6px 0 18px;
+}
+
+/* ── Stack grid (#stack) — four dark tiles with real logo walls ──────────── */
+.stack-grid {
+  margin-top: clamp(36px, 4.5vw, 56px);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.stack-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: clamp(24px, 2.8vw, 34px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.045);
+}
+.st-n {
+  font-weight: 340;
+  font-size: clamp(28px, 2.8vw, 40px);
+  letter-spacing: -0.02em;
+  color: #fff;
+  line-height: 1.05;
+}
+.st-l {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 40ch;
+}
+/* Monochrome white marks — the one consistent way every brand sits on black. */
+.st-logos {
+  margin-top: auto;
+  padding-top: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+.st-mark {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  fill: rgba(255, 255, 255, 0.85);
+}
+.st-more {
+  /* Its own quiet line under the wall — never inside the icon row, so all
+     four tiles keep an identical mark rhythm. */
+  display: block;
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.5);
+}
+/* A brand with no vector mark ships as a wordmark chip in the same tone. */
+.st-word {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1;
+}
+@media (max-width: 880px) {
+  .stack-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* The integrations view's closing count row. */
+.feat-more .feat-note {
+  color: var(--ink-subtle);
+  font-weight: 500;
+}

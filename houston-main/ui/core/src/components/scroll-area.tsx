@@ -1,0 +1,70 @@
+import { ScrollArea as ScrollAreaPrimitive } from "radix-ui";
+import type * as React from "react";
+
+import { cn } from "../utils";
+
+function ScrollArea({
+  className,
+  viewportClassName,
+  children,
+  ...props
+}: React.ComponentProps<typeof ScrollAreaPrimitive.Root> & {
+  /** Classes for the scrolling Radix viewport, rather than its wrapper root. */
+  viewportClassName?: string;
+}) {
+  return (
+    <ScrollAreaPrimitive.Root
+      data-slot="scroll-area"
+      className={cn("relative", className)}
+      {...props}
+    >
+      <ScrollAreaPrimitive.Viewport
+        data-slot="scroll-area-viewport"
+        className={cn(
+          "size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-focus/50 focus-visible:outline-1",
+          // Radix wraps the children in an inline-styled `display: table` div
+          // that grows to the widest child, so a `w-full` + `truncate` row
+          // inside never shrinks and its right edge is clipped by the
+          // viewport's hidden horizontal overflow (PRODUCT-1769). Block keeps
+          // the wrapper at the viewport width; wider content still scrolls
+          // when a horizontal ScrollBar is mounted.
+          "[&>div]:block!",
+          viewportClassName,
+        )}
+      >
+        {children}
+      </ScrollAreaPrimitive.Viewport>
+      <ScrollBar />
+      <ScrollAreaPrimitive.Corner />
+    </ScrollAreaPrimitive.Root>
+  );
+}
+
+function ScrollBar({
+  className,
+  orientation = "vertical",
+  ...props
+}: React.ComponentProps<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>) {
+  return (
+    <ScrollAreaPrimitive.ScrollAreaScrollbar
+      data-slot="scroll-area-scrollbar"
+      orientation={orientation}
+      className={cn(
+        "flex touch-none p-px transition-colors select-none",
+        orientation === "vertical" &&
+          "h-full w-2.5 border-l border-l-transparent",
+        orientation === "horizontal" &&
+          "h-2.5 flex-col border-t border-t-transparent",
+        className,
+      )}
+      {...props}
+    >
+      <ScrollAreaPrimitive.ScrollAreaThumb
+        data-slot="scroll-area-thumb"
+        className="relative flex-1 rounded-full bg-line"
+      />
+    </ScrollAreaPrimitive.ScrollAreaScrollbar>
+  );
+}
+
+export { ScrollArea, ScrollBar };

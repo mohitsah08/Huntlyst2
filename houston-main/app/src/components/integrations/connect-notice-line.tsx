@@ -1,0 +1,88 @@
+import { cn } from "@houston-ai/core";
+import { Check, TriangleAlert } from "lucide-react";
+import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import type { ConnectNotice } from "./connect-flow-run";
+
+/**
+ * ONE settled connect outcome as a single quiet line.
+ *
+ * The words are deliberately short. The TOAST is the full announcement — it has
+ * to be, it is the only one that still reaches a user who navigated away — so
+ * repeating the same sentence on the row said one thing three times over. What
+ * belongs here is the state: "Connected", "Could not connect". The abandoned
+ * case keeps its sentence because it is the actionable one: it says the app can
+ * be connected again, right where it sits. A connection that vanished under
+ * the poll (`cancelled`) has NO toast at all: the user disconnected it
+ * themselves, or the provider let it lapse, so this quiet line is the one
+ * surface (PRODUCT-1733).
+ *
+ * Lives apart from {@link ConnectFlowInline} so a surface can show the outcome
+ * without pulling in the whole live-phase block.
+ */
+export function ConnectNoticeLine({
+  appName,
+  notice,
+}: {
+  /** The app's real name, never the machine slug. */
+  appName: string;
+  notice: ConnectNotice;
+}) {
+  const { t } = useTranslation("integrations");
+  if (notice === "connected") {
+    return (
+      <NoticeLine
+        icon={<Check aria-hidden className="size-3.5" strokeWidth={2.5} />}
+        tone="success"
+      >
+        {t("waiting.connected")}
+      </NoticeLine>
+    );
+  }
+  if (notice === "failed") {
+    return (
+      <NoticeLine
+        icon={<TriangleAlert aria-hidden className="size-3.5" />}
+        tone="danger"
+      >
+        {t("waiting.failed")}
+      </NoticeLine>
+    );
+  }
+  if (notice === "cancelled") {
+    return <NoticeLine tone="muted">{t("waiting.cancelled")}</NoticeLine>;
+  }
+  return (
+    <NoticeLine tone="muted">
+      {t("waiting.stopped", { app: appName })}
+    </NoticeLine>
+  );
+}
+
+/** One quiet status line: an optional leading glyph and a tone-carrying label.
+ *  Shared with the inline block's `starting` phase. */
+export function NoticeLine({
+  icon,
+  tone,
+  children,
+}: {
+  icon?: ReactNode;
+  tone: "muted" | "success" | "danger";
+  children: ReactNode;
+}) {
+  return (
+    <p
+      className={cn(
+        "flex items-center gap-1.5",
+        tone === "success"
+          ? "text-success"
+          : tone === "danger"
+            ? "text-danger"
+            : "text-ink-muted",
+      )}
+    >
+      {icon}
+      <span className="min-w-0">{children}</span>
+    </p>
+  );
+}

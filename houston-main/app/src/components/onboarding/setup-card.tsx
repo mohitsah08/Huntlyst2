@@ -1,0 +1,126 @@
+import { Button } from "@houston-ai/core";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import type { ReactNode } from "react";
+
+/**
+ * The one frame every pre-app setup screen shares (the language question, the
+ * migration reconnect and the cloud-migration result), so they read as a
+ * single coherent flow rather than a pile of mismatched screens. Modeled on
+ * the Discord server-onboarding pattern: a centered card with a small step
+ * eyebrow, one clear question, the content, and a Back / helper / Next footer
+ * (stacked with Next on top below md, where a long Next label would otherwise
+ * run off the card).
+ *
+ * Always a plain white card ({@link https://…|`bg-card`}) that floats on the
+ * calm grey {@link FirstRunScreen} background: a hairline `border-line` and a
+ * soft shadow lift it off the gutter, no glass, no backdrop-blur. The
+ * FirstRunScreen wrapper pins `data-theme="light"`, so the card reads the same
+ * bright light way in both app themes.
+ *
+ * Below md the card IS the screen: full-bleed, full-height, no frame and no
+ * gutter, with the phone's own padding (the floating 680px card wasted a
+ * third of a phone viewport and shrank the questions into it). The safe-area
+ * insets pad the wrapper, inert on desktop and un-notched phones.
+ *
+ * Houston-monochrome: selection uses the near-black foreground, never a
+ * decorative accent (design-system color restraint).
+ */
+interface SetupCardProps {
+  /** Optional brand mark above the eyebrow (used by the Welcome hero). */
+  icon?: ReactNode;
+  /** Small muted line above the title, e.g. "Step 2 of 3" or "Welcome". */
+  eyebrow?: string;
+  /** Omit on screens that render their own centered hero (e.g. success). */
+  title?: string;
+  subtitle?: string;
+  children?: ReactNode;
+  /** Muted helper text shown between Back and Next (the "you'll be added to…"
+   *  line in the reference). */
+  helper?: ReactNode;
+  onBack?: () => void;
+  backLabel?: string;
+  onNext?: () => void;
+  nextLabel?: string;
+  nextDisabled?: boolean;
+  nextLoading?: boolean;
+}
+
+export function SetupCard({
+  icon,
+  eyebrow,
+  title,
+  subtitle,
+  children,
+  helper,
+  onBack,
+  backLabel,
+  onNext,
+  nextLabel,
+  nextDisabled,
+  nextLoading,
+}: SetupCardProps) {
+  return (
+    <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden pt-safe pb-safe md:px-6">
+      {/* Fixed height + flex-1 content so the card stays the SAME size across
+          every step and the footer never jumps as content changes. Keyed by
+          title so React remounts (and the CSS entrance replays) on each step
+          change, but not on in-step state updates like typing. A plain white
+          card with a hairline + soft shadow, floating on the grey first-run
+          background — no glass, no backdrop-blur. */}
+      <div
+        key={title}
+        className="setup-step-in relative z-10 flex min-h-0 w-full flex-1 flex-col bg-card p-5 text-ink md:h-[680px] md:max-h-[88dvh] md:max-w-2xl md:flex-initial md:rounded-2xl md:border md:border-line md:p-8 md:shadow-raised"
+      >
+        {icon && <div className="mb-4">{icon}</div>}
+        {eyebrow && (
+          <p className="text-xs font-medium text-ink-muted">{eyebrow}</p>
+        )}
+        {title && (
+          <h1 className="mt-1 text-[22px] font-semibold leading-tight">
+            {title}
+          </h1>
+        )}
+        {subtitle && <p className="mt-2 text-sm text-ink-muted">{subtitle}</p>}
+
+        <div className="mt-6 flex min-h-0 flex-1 flex-col">{children}</div>
+
+        {(onBack || onNext || helper) && (
+          <div className="mt-6 flex flex-col-reverse gap-3 md:mt-8 md:flex-row md:items-center md:justify-between md:gap-4">
+            <div className="shrink-0">
+              {onBack && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full rounded-full md:w-auto"
+                  onClick={onBack}
+                >
+                  <ArrowLeft className="size-4" />
+                  {backLabel}
+                </Button>
+              )}
+            </div>
+            {helper && (
+              <p className="text-center text-xs text-ink-muted md:flex-1 md:text-right">
+                {helper}
+              </p>
+            )}
+            <div className="shrink-0">
+              {onNext && (
+                <Button
+                  type="button"
+                  className="w-full rounded-full md:w-auto"
+                  onClick={onNext}
+                  disabled={nextDisabled || nextLoading}
+                >
+                  {nextLoading && <Loader2 className="size-4 animate-spin" />}
+                  {nextLabel}
+                  {!nextLoading && <ArrowRight className="size-4" />}
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

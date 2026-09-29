@@ -1,0 +1,640 @@
+/*
+ * Landing page — base, chrome (nav + footer), buttons, section primitives.
+ * Warm editorial: warm ivory ground, warm ink type, one ink pill CTA.
+ * Palette + type come from site-tokens.css. Hero / app-window / body-sections
+ * / motion live in their own files.
+ */
+
+/* ── Reset (landing page only loads this) ─────────────────────────────────── */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+  background: var(--ground);
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  font-family: var(--sans);
+  background: var(--ground);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+img {
+  max-width: 100%;
+  display: block;
+}
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 200;
+  background: var(--action);
+  color: var(--action-text);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: top var(--dur-fast) var(--ease-entrance);
+}
+.skip-link:focus {
+  top: 12px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  height: 50px;
+  padding: 0 24px;
+  border-radius: 999px;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 15.5px;
+  line-height: 1;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform var(--dur-fast) var(--ease-entrance),
+    background-color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.btn-sm {
+  height: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+/* Primary: the black pill (on light grounds) */
+.btn-ink {
+  background: var(--action);
+  color: var(--action-text);
+}
+.btn-ink:hover {
+  background: var(--action-hover);
+}
+/* Secondary: quiet outline on light */
+.btn-outline {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+.btn-outline:hover {
+  border-color: var(--ink);
+}
+/* White pill — a light primary that reads on the dark ground (dark ink label) */
+.btn-white {
+  background: #fff;
+  color: var(--ink-strong);
+}
+.btn-white:hover {
+  background: #ececec;
+}
+/* Ghost on dark — the quiet secondary on the dark ground */
+.btn-ghost {
+  background: transparent;
+  color: #fff;
+  border-color: var(--line-on-ink);
+}
+.btn-ghost:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ── Section primitives ──────────────────────────────────────────────────── */
+.section {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: var(--section-pad) var(--gutter);
+}
+/* A soft-rounded light-gray panel on the white page (the recurring editorial
+   surface, echoing the hero frame). Adds only the surface — width + interior
+   padding stay identical to a plain section so content aligns across bands. */
+.section.is-panel {
+  background: var(--panel);
+  border-radius: var(--panel-radius);
+  margin-block: clamp(10px, 2vw, 24px);
+}
+/* The dark band — the page's mid-scroll black beat, echoing the hero. Full
+   bleed edge to edge; the content inside keeps the shared section measure so
+   everything stays aligned with the bands above and below. Type flips white,
+   the segmented pill and preview get their dark-ground treatments. */
+.section.is-dark {
+  max-width: none;
+  background: var(--band-black);
+}
+.section.is-dark > * {
+  max-width: calc(var(--measure) - 2 * var(--gutter));
+  margin-inline: auto;
+}
+.section.is-dark .sec-title {
+  color: #fff;
+}
+.section.is-dark .split-line {
+  color: rgba(255, 255, 255, 0.65);
+}
+.section.is-dark .chat-tabs {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.07);
+}
+.section.is-dark .chat-tab {
+  color: rgba(255, 255, 255, 0.65);
+}
+.section.is-dark .chat-tab:hover {
+  color: #fff;
+}
+.section.is-dark .chat-tab.active {
+  background: #fff;
+  color: var(--ink-strong);
+}
+.section.is-dark .acol,
+.section.is-dark .share-mock {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 28px 56px -22px rgba(0, 0, 0, 0.5),
+    0 56px 110px -52px rgba(0, 0, 0, 0.6);
+}
+.section.is-dark .stat {
+  border-left-color: rgba(255, 255, 255, 0.2);
+}
+.section.is-dark .stat-n {
+  color: #fff;
+}
+.section.is-dark .stat-l {
+  color: rgba(255, 255, 255, 0.6);
+}
+.eyebrow-mono {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-subtle);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+/* The big statement — one enormous, light-weight display line per section.
+   Impact comes from scale + air + brevity, not weight (editorial voice). */
+.sec-title {
+  font-weight: 340;                  /* light, refined display */
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  color: var(--ink-strong);
+  text-wrap: balance;
+  max-width: 18ch;
+}
+.sec-lead {
+  font-size: clamp(16px, 1.55vw, 19px);
+  line-height: 1.5;
+  color: var(--ink-muted);
+  max-width: 48ch;
+  margin-top: 20px;
+  text-wrap: balance;
+}
+
+/* ── Nav — the startups-page component, verbatim values, all pages ────────
+   Fixed, transparent over the dark hero; dark glass once scrolled (and from
+   the start on light subpages via .lnav-solid). General Sans wordmark 22/500.
+   NOTE: backdrop-filter here matches the shipped startups nav exactly. */
+.lnav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 16px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  transition: background 0.3s ease, backdrop-filter 0.3s ease;
+}
+/* Scrolled: the frosted BLACK bar (the startups recipe) — the base
+   white-on-dark chrome colors below apply unchanged. */
+.lnav.scrolled {
+  background: rgba(13, 13, 13, 0.92);
+  backdrop-filter: blur(20px);
+}
+/* The LIGHT bar: over the landing's light sections (scripts.njk sets
+   .on-light) and on every subpage (.lnav-solid — resources et al. live on
+   white pages). White glass, ink chrome, light dropdowns. */
+.lnav.scrolled.on-light,
+.lnav.lnav-solid {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+}
+.lnav.scrolled.on-light .lnav-brand,
+.lnav.lnav-solid .lnav-brand {
+  color: var(--ink-strong);
+}
+.lnav.scrolled.on-light .lnav-links a,
+.lnav.scrolled.on-light .lnav-icon,
+.lnav.scrolled.on-light .lnav-res-btn,
+.lnav.scrolled.on-light .lnav-burger,
+.lnav.lnav-solid .lnav-links a,
+.lnav.lnav-solid .lnav-icon,
+.lnav.lnav-solid .lnav-res-btn,
+.lnav.lnav-solid .lnav-burger {
+  color: var(--ink-muted);
+}
+.lnav.scrolled.on-light .lnav-links a:hover,
+.lnav.scrolled.on-light .lnav-icon:hover,
+.lnav.scrolled.on-light .lnav-res-btn:hover,
+.lnav.scrolled.on-light .lnav-res.open .lnav-res-btn,
+.lnav.lnav-solid .lnav-links a:hover,
+.lnav.lnav-solid .lnav-icon:hover,
+.lnav.lnav-solid .lnav-res-btn:hover,
+.lnav.lnav-solid .lnav-res.open .lnav-res-btn {
+  color: var(--ink-strong);
+}
+.lnav.scrolled.on-light .lnav-cta,
+.lnav.lnav-solid .lnav-cta {
+  background: var(--action);
+  color: var(--action-text);
+}
+.lnav.scrolled.on-light .lnav-cta:hover,
+.lnav.lnav-solid .lnav-cta:hover {
+  background: var(--action-hover);
+}
+/* The resources menu follows the bar: white panel, ink links. */
+.lnav.scrolled.on-light .lnav-res-menu,
+.lnav.lnav-solid .lnav-res-menu {
+  background: rgba(255, 255, 255, 0.97);
+  border-color: var(--line);
+  box-shadow: 0 16px 48px -20px rgba(0, 0, 0, 0.25);
+}
+.lnav.scrolled.on-light .lnav-res-menu a,
+.lnav.lnav-solid .lnav-res-menu a {
+  color: var(--ink);
+}
+.lnav.scrolled.on-light .lnav-res-menu a:hover,
+.lnav.lnav-solid .lnav-res-menu a:hover {
+  background: rgba(13, 13, 13, 0.06);
+  color: var(--ink-strong);
+}
+/* The mobile dropdown sheet follows the white bar too — no bottom hairline,
+   same as the bar itself. */
+.lnav.scrolled.on-light + .lnav-drop,
+.lnav.lnav-solid + .lnav-drop {
+  background: rgba(255, 255, 255, 0.97);
+  border-bottom: none;
+}
+.lnav.scrolled.on-light + .lnav-drop a,
+.lnav.lnav-solid + .lnav-drop a {
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+}
+.lnav.scrolled.on-light + .lnav-drop a:last-child,
+.lnav.lnav-solid + .lnav-drop a:last-child {
+  border-bottom: none;
+}
+.lnav-brand {
+  font-family: "General Sans", sans-serif;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: white;
+  text-decoration: none;
+}
+.lnav-links {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+.lnav-links a {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.lnav-links a:hover {
+  color: white;
+}
+.lnav-right {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.lnav-icon {
+  color: rgba(255, 255, 255, 0.6);
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+.lnav-icon:hover {
+  color: white;
+}
+.lnav-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+  color: #0d0d0d;
+  font-family: var(--sans);
+}
+.lnav-cta:hover {
+  background: #ececec;
+}
+.lnav-cta-glyph {
+  width: 15px;
+  height: 15px;
+  display: inline-block;
+  background: currentColor;
+  -webkit-mask: var(--helmet-mask) center / contain no-repeat;
+  mask: var(--helmet-mask) center / contain no-repeat;
+}
+/* Resources: same voice as the links. */
+.lnav-res {
+  position: relative;
+}
+.lnav-res-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  transition: color 0.2s;
+}
+.lnav-res-btn:hover,
+.lnav-res.open .lnav-res-btn {
+  color: white;
+}
+.lnav-res-btn svg {
+  transition: transform 0.2s;
+}
+.lnav-res.open .lnav-res-btn svg {
+  transform: rotate(180deg);
+}
+.lnav-res-menu {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  min-width: 168px;
+  background: rgba(13, 13, 13, 0.97);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+}
+.lnav-res.open .lnav-res-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+.lnav-res-menu a {
+  display: block;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+}
+.lnav-res-menu a:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+.lnav-burger {
+  display: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.7);
+}
+.lnav-burger:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.lnav-burger svg {
+  width: 20px;
+  height: 20px;
+}
+.lnav-drop {
+  display: none;
+  position: fixed;
+  top: 52px;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  background: rgba(13, 13, 13, 0.97);
+  backdrop-filter: blur(20px);
+  padding: 8px 20px 16px;
+  flex-direction: column;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.lnav-drop.open {
+  display: flex;
+}
+.lnav-drop a {
+  padding: 12px 4px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.75);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.lnav-drop a:last-child {
+  border-bottom: none;
+}
+/* ── Nav collapse (the missing breakpoints) ────────────────────────────────
+   The burger and the dropdown sheet always existed in markup and JS, but no
+   media query ever hid the centered links or showed the burger, so on
+   narrow screens the links overlapped the wordmark. Below 1020px the links
+   move into the sheet; below 560px the GitHub icon and the language menu
+   follow them (both have rows in the sheet), leaving brand + Download +
+   burger. */
+@media (max-width: 1020px) {
+  .lnav-links {
+    display: none;
+  }
+  .lnav-burger {
+    display: flex;
+  }
+}
+@media (max-width: 560px) {
+  .lnav {
+    padding: 12px 16px;
+  }
+  .lnav-icon,
+  .lnav-lang {
+    display: none;
+  }
+  .lnav-right {
+    gap: 10px;
+  }
+}
+
+/* ── Footer (the deepest ground, a step below the page) ──────────────────── */
+.lfoot {
+  background: var(--ground-deep);
+  color: var(--on-ink-faint);
+  padding: 56px var(--gutter) 40px;
+}
+.lfoot-inner {
+  max-width: var(--measure);
+  margin: 0 auto;
+}
+.lfoot-top {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: 40px;
+  padding-bottom: 36px;
+  border-bottom: 1px solid var(--line-on-ink);
+}
+.lfoot-brand .lnav-brand {
+  color: #fff;
+  margin-bottom: 12px;
+}
+.lfoot-brand p {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--on-ink-faint);
+  max-width: 30ch;
+  margin-bottom: 18px;
+}
+.lfoot-col h4 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--on-ink-faint);
+  margin-bottom: 14px;
+}
+.lfoot-col a {
+  display: block;
+  font-size: 13.5px;
+  color: var(--on-ink-muted);
+  padding: 5px 0;
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+.lfoot-col a:hover {
+  color: #fff;
+}
+.lfoot-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+  font-size: 12.5px;
+  color: var(--on-ink-faint);
+}
+.lfoot-bottom a {
+  color: var(--on-ink-muted);
+}
+.lfoot-bottom a:hover {
+  color: #fff;
+}
+.lfoot-legal {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.lfoot-credit {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+@media (max-width: 760px) {
+  .lfoot-top {
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+  /* Give the bottom-row legal/credit links a comfortable tap height on phones
+     (they are single-line text links, ~19px tall otherwise). */
+  .lfoot-bottom {
+    row-gap: 6px;
+  }
+  .lfoot-bottom a {
+    padding: 6px 0;
+  }
+}
+@media (max-width: 460px) {
+  .lfoot-top {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Explicit per-OS download triggers (HOU-919) ──────────────────────────
+   The gate script routes [data-dl-trigger] by data-dl-os (else detectOs),
+   but v3 dropped every pinned trigger — non-Windows visitors had no path to
+   the Windows installer. These quiet text links restore both directions. */
+.dl-os-links {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--ink-subtle);
+}
+.dl-os-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--ink-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.dl-os-link:hover {
+  color: var(--ink-strong);
+}
+.lfoot .dl-os-links {
+  color: var(--on-ink-faint);
+}
+.lfoot .dl-os-link {
+  color: var(--on-ink-muted);
+}
+.lfoot .dl-os-link:hover {
+  color: var(--on-ink);
+}

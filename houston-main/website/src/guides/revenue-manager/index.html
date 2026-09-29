@@ -1,0 +1,900 @@
+---
+lang: en
+---
+{% extends "subpage.njk" %}
+{% block title %}Step-by-step guide · Build your Revenue Management Agent with Houston{% endblock %}
+{% block meta %}
+<meta name="description" content="Official Houston guide: install the app, connect Apify, Anakin.io and Google Sheets, and install the agent that does your hotel market research for you.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://gethouston.ai/guides/revenue-manager/">
+<meta property="og:title" content="Build your Revenue Management Agent with Houston">
+<meta property="og:description" content="Follow the workshop guide at your own pace: 6 steps to an agent that watches the market for you.">
+<meta property="og:site_name" content="Houston">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" hreflang="en" href="https://gethouston.ai/guides/revenue-manager/">
+<link rel="alternate" hreflang="es" href="https://gethouston.ai/guides/es/revenue-manager/">
+<link rel="alternate" hreflang="x-default" href="https://gethouston.ai/guides/revenue-manager/">
+{% endblock %}
+{% block subpageStyles %}
+<style>
+  :root{
+    --ink: var(--ink-strong);
+    --muted: var(--ink-muted);
+    --gray6: var(--ink-subtle);
+    --gray7: var(--ink-muted);
+    --bg: transparent;
+    --border: var(--line);
+    --soft: var(--panel);
+    --blue: var(--ink-strong);
+    --indigo: var(--ink-strong);
+    --orange: var(--ink-strong);
+    --gold: var(--ink-strong);
+    --green: var(--ink-strong);
+    --grad: var(--ink-strong);
+    --panel: var(--card);
+    --panel-solid: var(--card);
+    --code-bg: var(--ground-deep);
+    --font: var(--sans);
+    --maxw: 820px;
+  }
+
+  /* hero */
+  .hero{padding:64px 0 34px}
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px; font-size:12.5px; font-weight:600;
+    letter-spacing:.02em; color:var(--ink-muted); background:var(--panel); border:1px solid var(--line);
+    border-radius:999px; padding:7px 14px; text-transform:uppercase;
+  }
+  .eyebrow .dot{width:7px; height:7px; border-radius:50%; background:var(--ink-strong)}
+  h1{
+    font-weight:400; letter-spacing:-0.035em; line-height:1.05; font-size:52px;
+    margin:20px 0 0;
+  }
+  h1 .accent{
+    background:var(--grad); -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent; color:transparent;
+  }
+  .lede{font-size:19px; color:var(--muted); font-weight:400; margin:18px 0 0; max-width:660px}
+  .meta{display:flex; flex-wrap:wrap; gap:10px; margin-top:26px}
+  .chip{
+    display:inline-flex; align-items:center; gap:9px; background:var(--panel); border:1px solid var(--border);
+    border-radius:12px; padding:11px 15px; font-size:14px;
+  }
+  .chip svg{width:17px; height:17px; flex:none}
+  .chip b{font-weight:600}
+  .chip span{color:var(--muted)}
+
+  /* section */
+  section{padding:30px 0; border-top:1px solid var(--border)}
+  .kicker{font-size:12.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--blue)}
+  h2{font-weight:600; letter-spacing:-0.025em; font-size:30px; margin:8px 0 6px}
+  h2 .accent{background:var(--grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent}
+  .sub{color:var(--muted); margin:0 0 8px; font-size:16.5px}
+  p{margin:12px 0}
+
+  /* roadmap */
+  .road{display:grid; gap:10px; margin-top:14px}
+  .road a{
+    display:flex; gap:14px; align-items:center; text-decoration:none; color:var(--ink);
+    background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:14px 16px;
+    transition:.15s border-color, .15s transform;
+  }
+  .road a:hover{border-color:var(--line-strong); transform:translateY(-1px)}
+  .road .n{
+    flex:none; width:30px; height:30px; border-radius:9px; font-weight:600; font-size:14px;
+    display:grid; place-items:center; color:var(--action-text); background:var(--ink);
+  }
+  .road .t{font-weight:600}
+  .road .d{color:var(--muted); font-size:14px}
+  .road .time{margin-left:auto; color:var(--gray6); font-size:13px; font-weight:500; white-space:nowrap}
+
+  /* step block */
+  .step{scroll-margin-top:72px}
+  .step-head{display:flex; align-items:flex-start; gap:16px; margin-bottom:6px}
+  .badge{
+    flex:none; width:46px; height:46px; border-radius:13px; display:grid; place-items:center;
+    background:var(--ink); color:var(--action-text); font-weight:700; font-size:19px; letter-spacing:-0.02em;
+  }
+  .step-head .est{color:var(--gray6); font-size:13px; font-weight:500; margin-top:3px}
+
+  ol.steps{counter-reset:s; list-style:none; padding:0; margin:18px 0 0}
+  ol.steps>li{
+    counter-increment:s; position:relative; padding:2px 0 20px 44px; margin:0;
+  }
+  ol.steps>li::before{
+    content:counter(s); position:absolute; left:0; top:0;
+    width:28px; height:28px; border-radius:50%; background:var(--soft); border:1px solid var(--border);
+    color:var(--gray7); font-weight:600; font-size:14px; display:grid; place-items:center;
+  }
+  ol.steps>li:not(:last-child)::after{
+    content:""; position:absolute; left:13.5px; top:30px; bottom:2px; width:1px; background:var(--border);
+  }
+  ol.steps>li b{font-weight:600}
+  code.ui{
+    background:var(--panel-raised); border:1px solid var(--border); border-radius:6px; padding:1px 7px;
+    font-family:var(--font); font-weight:600; font-size:.92em; white-space:nowrap;
+  }
+
+  /* checkpoint */
+  .check{
+    display:flex; gap:11px; align-items:flex-start; margin:14px 0 4px; padding:12px 15px;
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+  }
+  .check svg{width:20px; height:20px; flex:none; margin-top:1px}
+  .check .lbl{font-weight:700; color:var(--ink-strong); font-size:12.5px; letter-spacing:.04em; text-transform:uppercase; display:block; margin-bottom:1px}
+  .check p{margin:0; font-size:15px}
+
+  /* callouts */
+  .call{display:flex; gap:12px; align-items:flex-start; border-radius:12px; padding:13px 16px; margin:14px 0; font-size:15px}
+  .call svg{width:19px; height:19px; flex:none; margin-top:2px}
+  .call .lbl{font-weight:700; font-size:12px; letter-spacing:.05em; text-transform:uppercase; display:block; margin-bottom:2px}
+  .call p{margin:0}
+  .tip{background:var(--panel); border:1px solid var(--line)}
+  .tip .lbl{color:var(--ink-strong)}
+  .warn{background:var(--panel); border:1px solid var(--line)}
+  .warn .lbl{color:var(--ink-strong)}
+  .note{background:var(--panel); border:1px solid var(--line)}
+  .note .lbl{color:var(--ink-strong)}
+
+  /* prompt block */
+  .prompt{
+    position:relative; background:var(--code-bg); color:#e8eaed; border-radius:12px; padding:15px 16px;
+    font-size:14.5px; line-height:1.5; margin:12px 0; border:1px solid rgba(255,255,255,0.1);
+  }
+  .prompt .pl{display:block; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:#8b93a1; font-weight:600; margin-bottom:7px}
+  .prompt .txt{font-family:var(--font)}
+  .prompt .txt::before{content:"“"} .prompt .txt::after{content:"”"}
+
+  /* screenshot placeholder */
+  .shot{
+    display:flex; gap:14px; align-items:center; margin:16px 0; padding:14px 16px;
+    background:var(--panel); border:1.5px dashed var(--line-strong); border-radius:14px;
+  }
+  .shot .cam{
+    flex:none; width:40px; height:40px; border-radius:10px; display:grid; place-items:center;
+    background:var(--soft); color:var(--gray6); border:1px solid var(--border);
+  }
+  .shot .cam svg{width:20px; height:20px}
+  .shot .num{font-weight:700; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--blue)}
+  figure.shot-real{margin:16px 0}
+  .shot-real img{width:100%; display:block; border:1px solid var(--border); border-radius:14px; box-shadow:0 6px 24px rgba(40,36,28,0.16)}
+  .shot-real figcaption{font-size:13px; color:var(--gray6); margin-top:8px}
+  .shot-real figcaption .num{font-weight:700; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--blue); margin-right:8px}
+  .shot-real.narrow img{max-width:360px; margin:0 auto}
+  .shot-real.narrow figcaption{text-align:center}
+  .shot .desc{font-size:14.5px; margin:1px 0 2px}
+  .shot .ref{font-size:12.5px; color:var(--gray6); font-weight:500}
+
+  /* generic list */
+  ul.plain{padding-left:20px; margin:12px 0}
+  ul.plain li{margin:7px 0}
+
+  /* troubleshooting */
+  details.ts{border:1px solid var(--border); border-radius:12px; padding:0 16px; margin:10px 0; background:var(--panel)}
+  details.ts+details.ts{margin-top:8px}
+  details.ts summary{
+    cursor:pointer; list-style:none; padding:15px 0; font-weight:600; font-size:16px;
+    display:flex; gap:11px; align-items:flex-start;
+  }
+  details.ts summary::-webkit-details-marker{display:none}
+  details.ts summary .q{flex:none; width:22px; height:22px; border-radius:6px; background:var(--panel-raised); color:var(--ink-strong); font-weight:700; font-size:13px; display:grid; place-items:center; margin-top:1px}
+  details.ts[open] summary{border-bottom:1px solid var(--border)}
+  details.ts .ans{padding:4px 0 16px 33px; color:var(--gray7); font-size:15px}
+  details.ts .ans code.ui{white-space:normal}
+
+  /* success checklist */
+  .final{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:8px 22px 18px}
+  .final ul{list-style:none; padding:0; margin:0}
+  .final li{display:flex; gap:12px; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); font-size:15.5px}
+  .final li:last-child{border-bottom:none}
+  .final .box{flex:none; width:22px; height:22px; border-radius:6px; border:2px solid var(--line-strong)}
+
+  /* shot index */
+  .idx{background:var(--soft); border:1px solid var(--border); border-radius:14px; padding:6px 20px}
+  .idx table{width:100%; border-collapse:collapse; font-size:14px}
+  .idx td{padding:9px 6px; border-bottom:1px solid var(--border); vertical-align:top}
+  .idx tr:last-child td{border-bottom:none}
+  .idx td.c1{font-weight:700; color:var(--blue); white-space:nowrap; width:78px}
+  .idx td.c3{color:var(--gray6); white-space:nowrap; width:70px; text-align:right}
+
+  a.inline{color:var(--link); text-decoration:underline; text-underline-offset:3px; font-weight:500; word-break:break-all}
+  a.inline:hover{text-decoration-color:var(--ink-strong)}
+  .ph{background:var(--panel-raised); border:1px solid var(--line-strong); border-radius:6px; padding:1px 7px; font-weight:600; font-size:.92em; color:var(--ink-strong); white-space:nowrap}
+
+  /* review additions */
+  .stepno{font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--blue); margin:2px 0 2px}
+  .subh{font-weight:600; font-size:18px; margin:22px 0 0}
+  .btnlink{display:inline-flex; align-items:center; gap:8px; background:var(--ink); color:var(--action-text); border-radius:999px; padding:11px 22px; font-weight:500; font-size:14.5px; text-decoration:none; letter-spacing:-0.01em; margin:8px 0 0}
+  .btnlink:hover{opacity:.88}
+  .urlnote{display:block; font-size:12.5px; color:var(--gray6); margin-top:7px; word-break:break-all}
+  .prompt .copybtn{position:absolute; top:10px; right:10px; background:#fff; color:#0d0d0d; border:none; border-radius:999px; padding:6px 15px; font-family:var(--font); font-weight:600; font-size:12.5px; cursor:pointer}
+  .prompt .copybtn.ok{background:#fff; color:#0d0d0d}
+  .prompt .pl{padding-right:78px}
+  details.ts summary{position:relative; padding-right:32px}
+  details.ts summary::after{content:""; position:absolute; right:6px; top:21px; width:8px; height:8px; border-right:2px solid var(--gray6); border-bottom:2px solid var(--gray6); transform:rotate(45deg); transition:.18s transform}
+  details.ts[open] summary::after{transform:rotate(-135deg); top:25px}
+  .final label{display:flex; gap:12px; align-items:center; cursor:pointer; width:100%}
+  .final input[type=checkbox]{appearance:none; -webkit-appearance:none; flex:none; width:22px; height:22px; border-radius:6px; border:2px solid var(--line-strong); cursor:pointer; margin:0; display:grid; place-items:center; background:var(--panel); transition:.12s}
+  .final input[type=checkbox]:checked{background:var(--green); border-color:var(--green)}
+  .final input[type=checkbox]:checked::after{content:""; width:10px; height:5px; border-left:2.5px solid var(--action-text); border-bottom:2.5px solid var(--action-text); transform:rotate(-45deg) translate(0,-1px)}
+  .final input[type=checkbox]:checked~span{color:var(--gray6)}
+
+  @media (max-width:640px){
+    h1{font-size:36px} h2{font-size:24px} .hero{padding:44px 0 24px}
+    .road .time{display:none}
+  }
+  @page{margin:12mm 11mm 14mm}
+  @media print{
+    :root{
+      --ink:#0d0d0d; --muted:#5d5d5d; --gray6:#676767; --gray7:#424242;
+      --bg:#ffffff; --border:#e5e5e5; --soft:#f6f7f9;
+      --blue:#3b82f6; --indigo:#818cf8; --orange:#f97316; --gold:#eab308; --green:#00a240;
+      --grad:linear-gradient(100deg,#3b82f6 0%,#818cf8 42%,#f97316 100%);
+      --panel:#ffffff; --panel-solid:#ffffff; --code-bg:#0f1115;
+    }
+    .road .n,.badge,.btnlink{color:#fff}
+    code.ui{background:#f0f2f5}
+    .final input[type=checkbox]{background:#fff}
+    .final input[type=checkbox]:checked::after{border-left-color:#fff; border-bottom-color:#fff}
+    .shot-real img{box-shadow:none}
+    h1{font-size:42px}
+    h1 .accent, h2 .accent{
+      background:none !important;
+      -webkit-background-clip:initial !important; background-clip:initial !important;
+      -webkit-text-fill-color:#3b82f6 !important; color:#3b82f6 !important;
+    }
+    .copybtn,figure.shot{display:none} body{background:#fff}
+    .glayout{width:auto; margin:0 auto; padding:0 24px; background:none; border:none; border-radius:0}
+    .hero{padding-top:34px}
+    *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+    .step{break-inside:auto} .step-head{break-after:avoid}
+    ol.steps>li,.shot-real,.call,.check,.prompt,.final,details.ts,.road a{break-inside:avoid}
+    h2,h3{break-after:avoid}
+    a.inline{color:var(--ink); text-decoration:underline}
+    .foot-card{background:var(--ink) !important; color:#fff}
+    .foot-card a{border:1px solid var(--border) !important}
+    details.ts summary::after{display:none}
+  }
+
+  /* ---------- step mode (focus view) ---------- */
+  .glayout{width:min(1150px, calc(100% - 32px)); margin:28px auto 72px; padding:40px 40px 64px; background:var(--card); border:1px solid var(--line); border-radius:20px; display:grid; grid-template-columns:255px minmax(0,1fr); gap:44px; align-items:start}
+  .gmain{max-width:var(--maxw); min-width:0}
+  .gside{position:sticky; top:84px; padding:18px 0 24px}
+  .gside .gs-head{font-size:11.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--gray6); margin:0 0 10px 2px}
+  .gside ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:4px}
+  .gside li.gs-div{border-top:1px solid var(--border); margin:8px 2px}
+  .gside button.gs-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:none; border:none; border-radius:10px; padding:8px 10px; cursor:pointer; font-family:var(--font); color:var(--gray7)}
+  .gside button.gs-item:hover{background:var(--soft)}
+  .gside .gs-num{flex:none; width:24px; height:24px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--gray7); font-weight:600; font-size:12px; display:grid; place-items:center; transition:.15s}
+  .gside .gs-t{font-size:13.5px; font-weight:500; line-height:1.25}
+  .gside .gs-m{display:block; font-size:11.5px; color:var(--gray6); font-weight:400}
+  .gside .gs-item.on{background:var(--panel); box-shadow:inset 0 0 0 1px var(--border)}
+  .gside .gs-item.on .gs-t{font-weight:600; color:var(--ink)}
+  .gside .gs-item.on .gs-num{border-color:transparent; background:var(--grad); color:var(--action-text)}
+  .gside .gs-item.done .gs-num{border-color:var(--line-strong); background:var(--panel-raised); color:var(--ink-strong)}
+  .gside .gs-item.done .gs-num::before{content:"✓"; font-size:12px}
+  .gside .gs-item.done .gs-num span{display:none}
+  .gside .gs-foot{margin-top:14px; padding:0 2px}
+  .gside .gs-toggle{background:none; border:none; padding:0; font-family:var(--font); font-size:12.5px; font-weight:600; color:var(--gray6); cursor:pointer; text-decoration:underline; text-underline-offset:3px}
+  .gside .gs-toggle:hover{color:var(--ink)}
+  .gprog{position:fixed; top:68px; left:0; height:2.5px; background:var(--grad); z-index:99; transition:width .25s; width:0}
+  /* hide all panes except active in step mode */
+  body.stepper [data-pane]{display:none}
+  body.stepper [data-pane].on{display:block}
+  body.stepper [data-pane].on + section[data-pane].on{border-top:none; padding-top:0}
+  body.stepper #route{display:none}
+  body.stepper section[data-pane]{border-top:none}
+  /* step nav buttons */
+  .gnav{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:10px 0 70px}
+  .gnav .gprev{background:none; border:1px solid var(--border); color:var(--gray7); border-radius:999px; padding:11px 20px; font-family:var(--font); font-weight:500; font-size:14px; cursor:pointer}
+  .gnav .gprev:hover{border-color:var(--line-strong); color:var(--ink)}
+  .gnav .gnext{margin-left:auto; display:inline-flex; align-items:center; gap:8px; background:var(--ink); color:var(--action-text); border:none; border-radius:999px; padding:13px 26px; font-family:var(--font); font-weight:600; font-size:14.5px; cursor:pointer; letter-spacing:-0.01em}
+  .gnav .gnext:hover{opacity:.88}
+  .gnav .gdone-msg{margin-left:auto; font-weight:600; color:var(--green); font-size:15px}
+  /* full view: everything visible, no step chrome */
+  body.fullview [data-pane]{display:block !important}
+  body.fullview #route{display:block !important}
+  body.fullview .gnav{display:none}
+  body.fullview .gprog{display:none}
+  body.fullview section[data-pane]{border-top:1px solid var(--border)}
+  @media (max-width:920px){
+    .glayout{display:block; width:calc(100% - 24px); margin-top:12px; padding:8px 18px 48px}
+    .gside{position:sticky; top:68px; z-index:40; background:var(--ground); margin:0 -18px; padding:10px 18px; border-bottom:1px solid var(--border)}
+    .gside .gs-head, .gside .gs-m, .gside .gs-foot{display:none}
+    .gside ul{flex-direction:row; overflow-x:auto; gap:6px; scrollbar-width:none}
+    .gside ul::-webkit-scrollbar{display:none}
+    .gside li.gs-div{display:none}
+    .gside button.gs-item{width:auto; padding:4px; border-radius:999px}
+    .gside .gs-item .gs-t{display:none}
+    .gside .gs-item.on .gs-t{display:block; white-space:nowrap; padding-right:6px}
+    .gside .gs-item.on{box-shadow:none; background:var(--soft)}
+  }
+  @media print{
+    .gside, .gnav, .gprog{display:none !important}
+    [data-pane]{display:block !important}
+    #route{display:block !important}
+    section[data-pane]{border-top:1px solid var(--border)}
+  }
+
+  /* in-content toolbar + closing CTA, centered to the stepper card width */
+  .guide-shell{width:min(1150px, calc(100% - 32px)); margin:0 auto; padding:0 40px}
+  .guide-cta p + p{margin-top:10px}
+  .guide-cta-links{font-size:14px}
+  .guide-cta a{color:var(--on-ink); text-decoration:underline; text-underline-offset:3px}
+  .guide-cta .btn-white{color:var(--ground-deep)}
+  @media (max-width:920px){ .guide-shell{width:calc(100% - 24px); padding:0 18px} }
+
+  /* print: hide the fixed site chrome (it overlaps/repeats in print) */
+  @media print{
+    .lnav, .lfoot, .guide-toolbar, .gprog{display:none !important}
+    main.subpage{padding-top:0 !important; padding-bottom:0 !important}
+  }
+</style>
+{% endblock %}
+{% block subpageContent %}
+
+<div class="guide-shell">
+  <div class="guide-toolbar">
+    <div class="lang-toggle">
+      <a class="is-active" href="/guides/revenue-manager/" aria-current="page">English</a>
+      <a href="/guides/es/revenue-manager/">Español</a>
+    </div>
+    <a class="pdfbtn" href="/guides/downloads/houston-revenue-manager-guide-en.pdf" download>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Download PDF
+    </a>
+  </div>
+</div>
+
+<div class="gprog" id="gprog"></div>
+<div class="glayout" id="top">
+<aside class="gside" aria-label="Guide steps">
+  <p class="gs-head">Guide steps</p>
+  <ul>
+    <li><button type="button" class="gs-item" data-hash="intro"><span class="gs-num"><span>•</span></span><span class="gs-t">Welcome<span class="gs-m">What you will build</span></span></button></li>
+    <li><button type="button" class="gs-item" data-hash="prerequisites"><span class="gs-num"><span>0</span></span><span class="gs-t">Before you start<span class="gs-m">~5 min</span></span></button></li>
+    <li><button type="button" class="gs-item" data-hash="step1"><span class="gs-num"><span>1</span></span><span class="gs-t">Install Houston<span class="gs-m">~10 min</span></span></button></li>
+    <li><button type="button" class="gs-item" data-hash="step2"><span class="gs-num"><span>2</span></span><span class="gs-t">Set up Houston<span class="gs-m">~10 min</span></span></button></li>
+    <li><button type="button" class="gs-item" data-hash="step3"><span class="gs-num"><span>3</span></span><span class="gs-t">Create your tool accounts<span class="gs-m">~10 min</span></span></button></li>
+    <li><button type="button" class="gs-item" data-hash="step4"><span class="gs-num"><span>4</span></span><span class="gs-t">Connect the integrations<span class="gs-m">~10 min</span></span></button></li>
+    <li><button type="button" class="gs-item" data-hash="step5"><span class="gs-num"><span>5</span></span><span class="gs-t">Install the agent<span class="gs-m">~5 min</span></span></button></li>
+    <li><button type="button" class="gs-item" data-hash="step6"><span class="gs-num"><span>6</span></span><span class="gs-t">Run your first Market Pulse<span class="gs-m">20–60 min</span></span></button></li>
+    <li><button type="button" class="gs-item" data-hash="make-it-yours"><span class="gs-num"><span>+</span></span><span class="gs-t">Make it yours<span class="gs-m">Extra</span></span></button></li>
+    <li class="gs-div" role="separator"></li>
+    <li><button type="button" class="gs-item" data-hash="troubleshooting"><span class="gs-num"><span>?</span></span><span class="gs-t">Troubleshooting<span class="gs-m">When something fails</span></span></button></li>
+    <li><button type="button" class="gs-item" data-hash="checklist"><span class="gs-num"><span>✓</span></span><span class="gs-t">Success checklist<span class="gs-m">Wrap-up</span></span></button></li>
+  </ul>
+  <div class="gs-foot"><button type="button" class="gs-toggle" id="gs-toggle">View full guide</button></div>
+</aside>
+<div class="gmain">
+
+  <!-- HERO -->
+  <header class="hero" id="intro" data-pane="0">
+    <span class="eyebrow"><span class="dot"></span>Step-by-step guide · Live workshop</span>
+    <h1>Build your AI<br><span class="accent">Revenue Management</span> Agent</h1>
+    <p class="lede">Follow this guide to repeat, at your own pace, what we did in the workshop: create your Houston account, connect your tools, and install the agent we shared. By the end you will have an assistant that watches the market for you.</p>
+    <div class="meta">
+      <span class="chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#8ab4ff" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg>
+        <span><b>45–60 min</b> of setup</span>
+      </span>
+      <span class="chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fdba74" stroke-width="2"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z" stroke-linejoin="round"/></svg>
+        <span>For <b>revenue managers and hoteliers</b></span>
+      </span>
+      <span class="chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4" stroke-linecap="round"/></svg>
+        <span>You need a <b>Mac or Windows</b> computer</span>
+      </span>
+      <span class="chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>No technical skills needed</span>
+      </span>
+    </div>
+  </header>
+
+  <!-- WHAT YOU WILL BUILD -->
+  <section id="what-you-will-build" data-pane="0">
+    <span class="kicker">What you will build</span>
+    <h2>An agent that does your <span class="accent">market research</span> on its own</h2>
+    <p class="sub">A "Revenue Manager" inside Houston that runs the <b>Market Pulse</b> skill.</p>
+    <p>You give it a <b>city</b> and some <b>dates</b>, and it checks Airbnb, Booking, Expedia, Vrbo and Hostelworld to bring you prices, availability, real demand and what guests are saying. It replaces hours of opening listing after listing and copying data by hand.</p>
+    <p><b>The result:</b> a Google Sheet with <b>7 tabs</b> ready for decisions:</p>
+    <ul class="plain">
+      <li><b>Competition:</b> every listing consolidated and normalized to a nightly rate in dollars.</li>
+      <li><b>Demand calendar:</b> your competitors' occupancy, day by day.</li>
+      <li><b>Guest voice:</b> what guests love (in green) and what they complain about (in red), with the link to each review.</li>
+      <li><b>Rate parity:</b> the same property across channels and where the price gaps are.</li>
+      <li><b>Revenue actions:</b> raise, lower or hold your rate for each date window.</li>
+      <li><b>Demand drivers:</b> events that move the market (fairs, long weekends, concerts) with their source.</li>
+      <li><b>Summary:</b> type in your nightly rate and it tells you where you stand against the market.</li>
+    </ul>
+    <figure class="shot-real">
+      <img src="/guides/assets/revenue-manager/en/shot-01-sheet-7-tabs.png" alt="Market Pulse Google Sheet: revenue dashboard with the editable your-nightly-rate cell and the 7 tabs at the bottom" loading="lazy">
+      <figcaption><span class="num">Screenshots 1 &amp; 2</span>The Market Pulse Google Sheet: the revenue dashboard with the editable "Your nightly rate" cell and, at the bottom, the 7 tabs.</figcaption>
+    </figure>
+    <figure class="shot-real">
+      <img src="/guides/assets/revenue-manager/en/shot-03-guest-voice.png" alt="Guest Voice tab of the Google Sheet: what guests love and what they complain about, with verbatim quotes and links to the reviews" loading="lazy">
+      <figcaption><span class="num">Screenshot 3</span>The "Guest Voice" tab: what guests love and what they complain about (your opportunities), with the verbatim quote and the link to each review.</figcaption>
+    </figure>
+  </section>
+
+  <!-- PREREQUISITES -->
+  <section id="prerequisites" data-pane="1">
+    <span class="kicker">Before you start</span>
+    <h2>What you need at hand</h2>
+    <ul class="plain">
+      <li><b>A Mac or Windows computer.</b> Houston runs on your computer, not on a phone, tablet or iPad.</li>
+      <li><b>An AI provider account:</b> OpenAI (the ChatGPT one) is recommended for its free plan, or Anthropic. If you do not have one, you can create it free in a minute.</li>
+      <li><b>The Revenue Manager agent file.</b> It is the same one we shared in the workshop; download it here:
+        <div><a class="btnlink" href="/guides/downloads/Revenue-Manager.houstonagent" download>Download the agent file</a><span class="urlnote">Revenue-Manager.houstonagent · 26 KB</span></div>
+      </li>
+      <li><b>These links:</b>
+        <ul class="plain">
+          <li>Apify sign-up (comes with 75 USD in credits): <a class="inline" href="https://console.apify.com/sign-up?couponId=HOUSTON_ROCKET" target="_blank" rel="noopener noreferrer">open the sign-up link</a></li>
+          <li>Anakin.io sign-up: <a class="inline" href="https://www.anakin.io" target="_blank" rel="noopener noreferrer">www.anakin.io</a></li>
+        </ul>
+      </li>
+    </ul>
+    <div class="call note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#b6bec9" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><span class="lbl">Ready to go?</span><p>You can open your email, you have your computer at hand and the links from this guide in view. Set aside a quiet block of time: setup takes 45–60 min, and your first Market Pulse another 20–60 min the first time.</p></div>
+    </div>
+  </section>
+
+  <!-- ROADMAP -->
+  <section id="route">
+    <span class="kicker">The full route</span>
+    <h2>6 steps, in order</h2>
+    <p class="sub">Do them top to bottom. Each step builds on the previous one.</p>
+    <div class="road">
+      <a href="#step1"><span class="n">1</span><span><span class="t">Install Houston and create your account</span><br><span class="d">Download and installation</span></span><span class="time">~10 min</span></a>
+      <a href="#step2"><span class="n">2</span><span><span class="t">Set up Houston</span><br><span class="d">Language, AI provider (OpenAI) and Composio</span></span><span class="time">~10 min</span></a>
+      <a href="#step3"><span class="n">3</span><span><span class="t">Create your tool accounts</span><br><span class="d">Apify and Anakin.io</span></span><span class="time">~10 min</span></a>
+      <a href="#step4"><span class="n">4</span><span><span class="t">Connect the integrations in Houston</span><br><span class="d">Apify MCP, Google Sheets and Anakin</span></span><span class="time">~10 min</span></a>
+      <a href="#step5"><span class="n">5</span><span><span class="t">Install the agent we shared</span><br><span class="d">"From a friend" → bring the agent in</span></span><span class="time">~5 min</span></a>
+      <a href="#step6"><span class="n">6</span><span><span class="t">Run your first Market Pulse</span><br><span class="d">Generate your 7-tab Google Sheet</span></span><span class="time">20–60 min</span></a>
+    </div>
+  </section>
+
+  <!-- STEP 1 -->
+  <section id="step1" data-pane="2" class="step">
+    <div class="step-head">
+      <div class="badge">1</div>
+      <div><div class="stepno">Step 1 of 6</div><h2 style="margin-top:2px">Install Houston and create your account</h2><div class="est">~10 minutes</div></div>
+    </div>
+    <ol class="steps">
+      <li>Go to <a class="inline" href="https://www.gethouston.ai" target="_blank" rel="noopener noreferrer">www.gethouston.ai</a>.</li>
+      <li>Click the download button, enter your contact details, and continue to the installer.</li>
+      <li>Download the <b>right version for your system</b>: one for <b>Mac</b> and one for <b>Windows</b>.</li>
+      <li>Open the installer and follow <code class="ui">Next</code> → <code class="ui">Next</code> → <code class="ui">Install</code>.</li>
+      <li>Open Houston.</li>
+    </ol>
+    <div class="call warn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fdba74" stroke-width="2"><path d="M12 3l9 16H3z" stroke-linejoin="round"/><path d="M12 10v4M12 17h.01" stroke-linecap="round"/></svg>
+      <div><span class="lbl">If you use Windows</span><p>Windows may show <b>"Windows protected your PC"</b>. This is normal: Houston is in beta for Windows. Click <code class="ui">More info</code> and then <code class="ui">Run anyway</code>.</p></div>
+    </div>
+    <figure class="shot-real narrow">
+      <img src="/guides/assets/revenue-manager/en/shot-05-windows-smartscreen.png" alt="Windows notice: Windows protected your PC, with the Run anyway button" loading="lazy">
+      <figcaption><span class="num">Screenshot 5</span>The Windows notice. Click "More info" and "Run anyway" appears. (Windows only.)</figcaption>
+    </figure>
+    <div class="check">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.4"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><span class="lbl">You should see</span><p>Houston installed and open on your computer. If it seems to have "disappeared", it is minimized in the taskbar: open it again.</p></div>
+    </div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section id="step2" data-pane="3" class="step">
+    <div class="step-head">
+      <div class="badge">2</div>
+      <div><div class="stepno">Step 2 of 6</div><h2 style="margin-top:2px">Set up Houston</h2><div class="est">~10 minutes · you connect your AI provider and your integrations provider</div></div>
+    </div>
+    <ol class="steps">
+      <li><b>Choose Houston's language.</b> Pick <b>English</b> (or Spanish, if you prefer).</li>
+      <li>On the <b>"A few things to know"</b> screen (it explains that agents act on your behalf and that your files stay yours), read it and click <code class="ui">I understand and want to continue</code>.
+        <figure class="shot-real">
+          <img src="/guides/assets/revenue-manager/en/shot-06-consent.png" alt="Houston screen: A few things to know, with the I understand and want to continue button" loading="lazy">
+          <figcaption><span class="num">Screenshot 6</span>The "A few things to know" screen. At the end, click "I understand and want to continue".</figcaption>
+        </figure>
+      </li>
+      <li><b>Connect your AI provider.</b> Choose <b>OpenAI</b> (recommended) or <b>Anthropic</b>. Click to sign in; if you use ChatGPT, sign in with your OpenAI account. It may pass through a <b>Codex</b> screen: accept it. When the browser says <i>"you can close this page"</i>, go back to Houston.</li>
+      <li><b>Connect your integrations provider (Composio).</b> Click <code class="ui">Sign in</code> → the Composio site opens → <code class="ui">Sign in with Google or Microsoft</code> → <code class="ui">Authorize</code>. Close the tab and go back to Houston.
+        <figure class="shot-real">
+          <img src="/guides/assets/revenue-manager/en/shot-08-apps-connected.png" alt="Houston screen: Apps connected!, with Connect your AI and Connect your apps checked and the Create my agent button" loading="lazy">
+          <figcaption><span class="num">Screenshot 8</span>The "Apps connected!" confirmation: your AI and your apps are ready. Continue with "Create my agent".</figcaption>
+        </figure>
+      </li>
+      <li><b>Create your first agent</b> (Houston walks you through a mini tutorial). Name it after its role, for example <i>Personal Assistant</i>.</li>
+      <li>When it asks, <b>connect your email (Gmail)</b> and let it send the <b>first test email</b>.</li>
+      <li>Complete <code class="ui">Take a tour of Houston</code>.</li>
+    </ol>
+    <figure class="shot-real">
+      <img src="/guides/assets/revenue-manager/en/shot-09-main-screen.png" alt="Houston main screen unlocked: agents in the left column and the Revenue Manager board with Market Pulse missions" loading="lazy">
+      <figcaption><span class="num">Screenshot 9</span>Houston's main screen: your agents in the left column and the mission board. This is what a Revenue Manager looks like in action, with market pulses running for several cities.</figcaption>
+    </figure>
+    <div class="call tip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#8ab4ff" stroke-width="2"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 1 4 10.5c-.6.6-1 1.4-1 2.5H9c0-1.1-.4-1.9-1-2.5A6 6 0 0 1 12 3z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><span class="lbl">If something gets stuck</span><p>If the browser says "you can close this page" and Houston does not move on, or if Composio says <b>"something went wrong while connecting"</b>: click <code class="ui">Try again</code>. If it persists, <b>close Houston and open it again</b>.</p></div>
+    </div>
+    <div class="check">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.4"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><span class="lbl">You should see</span><p>Houston's main screen unlocks, with your agents in the left column. Your AI provider and your integrations provider are now connected.</p></div>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section id="step3" data-pane="4" class="step">
+    <div class="step-head">
+      <div class="badge">3</div>
+      <div><div class="stepno">Step 3 of 6</div><h2 style="margin-top:2px">Create your tool accounts</h2><div class="est">~10 minutes · we are not connecting anything yet, just creating the accounts</div></div>
+    </div>
+    <p>These two tools give your agent "hands" to search prices and data on the web. For now <b>just create the accounts</b>; we connect them in Step 4.</p>
+    <figure class="shot-real">
+      <img src="/guides/assets/revenue-manager/en/support-four-tools.png" alt="The four workshop tools: Houston, Apify, Anakin.io and Google" loading="lazy">
+      <figcaption>The four workshop accounts: Houston and Google you already have from the previous steps; now come Apify and Anakin.io.</figcaption>
+    </figure>
+
+    <h3 class="subh">A · Apify: the price and data fetcher</h3>
+    <ol class="steps">
+      <li>Open the Apify sign-up link. It loads <b>75 USD in credits</b> automatically.
+        <div><a class="btnlink" href="https://console.apify.com/sign-up?couponId=HOUSTON_ROCKET" target="_blank" rel="noopener noreferrer">Create my Apify account</a><span class="urlnote">console.apify.com/sign-up?couponId=HOUSTON_ROCKET</span></div>
+      </li>
+      <li>Sign up.</li>
+    </ol>
+    <div class="call tip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#8ab4ff" stroke-width="2"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 1 4 10.5c-.6.6-1 1.4-1 2.5H9c0-1.1-.4-1.9-1-2.5A6 6 0 0 1 12 3z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><span class="lbl">Tip</span><p>If email sign-up fails, use <b>"Sign in with Google"</b>.</p></div>
+    </div>
+
+    <h3 class="subh">B · Anakin.io: for the sites with no direct connection</h3>
+    <ol class="steps">
+      <li>Go to <a class="inline" href="https://www.anakin.io" target="_blank" rel="noopener noreferrer">www.anakin.io</a> and sign up.</li>
+      <li>Verify your email. You will see free credits (for example, "500 points").</li>
+      <li><b>Generate your API key:</b> in Anakin, go to the left bar, at the bottom, to <code class="ui">API Keys</code> → <code class="ui">Generate New Key</code> → give it a name (for example, "Houston").
+        <figure class="shot-real">
+          <img src="/guides/assets/revenue-manager/shared/anakin-api-keys.png" alt="Anakin.io, Account settings, API Keys tab with the Generate new key button" loading="lazy">
+          <figcaption><span class="num">Screenshot 11</span>In Anakin: Account settings → "API Keys" tab → "Generate new key" button (top right).</figcaption>
+        </figure>
+      </li>
+      <li><b>Copy the key and store it immediately</b> somewhere safe.</li>
+    </ol>
+    <div class="call warn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fdba74" stroke-width="2"><path d="M12 3l9 16H3z" stroke-linejoin="round"/><path d="M12 10v4M12 17h.01" stroke-linecap="round"/></svg>
+      <div><span class="lbl">Important</span><p>Anakin <b>will not show you the key again</b> after you close the window. Copy it as soon as you generate it. And for safety, <b>do not share your screen</b> while you create it.</p></div>
+    </div>
+    <div class="check">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.4"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><span class="lbl">You should have</span><p>An Apify account and an Anakin.io account, with your Anakin API key copied and stored.</p></div>
+    </div>
+  </section>
+
+  <!-- STEP 4 -->
+  <section id="step4" data-pane="5" class="step">
+    <div class="step-head">
+      <div class="badge">4</div>
+      <div><div class="stepno">Step 4 of 6</div><h2 style="margin-top:2px">Connect the integrations in Houston</h2><div class="est">~10 minutes</div></div>
+    </div>
+
+    <h3 class="subh" style="margin-top:8px">A · Apify (via "Apify MCP")</h3>
+    <ol class="steps">
+      <li>In Houston, go to <code class="ui">Integrations</code>.</li>
+      <li>Search for <b>Appify</b>. Two results appear: <code class="ui">Apify</code> and <code class="ui">Apify MCP</code>.
+        <figure class="shot-real">
+          <img src="/guides/assets/revenue-manager/shared/apify-mcp.png" alt="Houston's Integrations section showing Apify and Apify MCP side by side, with Apify MCP as the correct option" loading="lazy">
+          <figcaption><span class="num">Screenshot 10</span>The two results in Integrations: "Apify" and "Apify MCP" (the red box). Connect the one on the right: <b>Apify MCP</b>.</figcaption>
+        </figure>
+      </li>
+      <li>Connect <b>Apify MCP</b> (you just click and sign in, no token). Confirm <i>"is this you?"</i> → <code class="ui">Authorize</code>.</li>
+    </ol>
+    <div class="call warn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fdba74" stroke-width="2"><path d="M12 3l9 16H3z" stroke-linejoin="round"/><path d="M12 10v4M12 17h.01" stroke-linecap="round"/></svg>
+      <div><span class="lbl">Do not pick the wrong Apify</span><p>Connect <b>Apify MCP</b>, not the plain "Apify". The other one asks for a <i>token</i> and is the one that confuses people the most.</p></div>
+    </div>
+    <h3 class="subh">B · Google Sheets</h3>
+    <ol class="steps">
+      <li>In <code class="ui">Integrations</code>, connect <b>Google Sheets</b>. (If you want to connect all of Google at once, Calendar, Docs and email included, you can use <code class="ui">Google Super</code> instead.)</li>
+    </ol>
+
+    <h3 class="subh">C · Anakin.io (from the chat)</h3>
+    <p>Anakin is connected from a conversation with your agent, not from the Integrations list.</p>
+    <ol class="steps">
+      <li>Open a new chat with your agent and type:
+        <div class="prompt"><span class="pl">Copy and paste into the chat</span><span class="txt">I want to connect anakin.io, please help me step by step.</span></div>
+      </li>
+      <li>When it asks for the key, paste it like this:
+        <div class="prompt"><span class="pl">Copy and paste, replacing with your key</span><span class="txt">This is my key, please store it securely and connect me.</span></div>
+      </li>
+      <li>Verify it is connected by typing:
+        <div class="prompt"><span class="pl">Copy and paste into the chat</span><span class="txt">Are you connected to anakin.io yet?</span></div>
+      </li>
+    </ol>
+    <div class="call warn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fdba74" stroke-width="2"><path d="M12 3l9 16H3z" stroke-linejoin="round"/><path d="M12 10v4M12 17h.01" stroke-linecap="round"/></svg>
+      <div><span class="lbl">Watch the name</span><p>It is <b>anakin.io</b> (with <b>.io</b>), not anakin.ai. If you see it trying to connect to the other one, stop the run with the <b>stop icon</b> (bottom right) and tell it: <i>"the app is anakin.io"</i>.</p></div>
+    </div>
+    <div class="check">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.4"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><span class="lbl">You should have</span><p>All three integrations ready: Apify MCP, Google Sheets and Anakin.io (confirmed in the chat).</p></div>
+    </div>
+  </section>
+
+  <!-- STEP 5 -->
+  <section id="step5" data-pane="6" class="step">
+    <div class="step-head">
+      <div class="badge">5</div>
+      <div><div class="stepno">Step 5 of 6</div><h2 style="margin-top:2px">Install the agent we shared</h2><div class="est">~5 minutes</div></div>
+    </div>
+    <ol class="steps">
+      <li><b>First download the agent file</b> if you have not yet:
+        <div><a class="btnlink" href="/guides/downloads/Revenue-Manager.houstonagent" download>Download the agent file</a><span class="urlnote">Revenue-Manager.houstonagent · 26 KB</span></div>
+      </li>
+      <li>In Houston, in the left bar, click <code class="ui">New agent</code>.</li>
+      <li>Choose <code class="ui">From a friend</code> → <code class="ui">Choose file</code> and select the agent file.
+        <figure class="shot-real">
+          <img src="/guides/assets/revenue-manager/en/shot-12-from-a-friend.png" alt="Houston's New agent window with the From a friend option highlighted at the top" loading="lazy">
+          <figcaption><span class="num">Screenshot 12</span>The "New agent" window: the "From a friend" option is at the top. That is where you upload the file.</figcaption>
+        </figure>
+      </li>
+      <li>Houston asks <i>"should Houston take a quick look?"</i> Choose <code class="ui">Yes, review it first</code> (a recommended safety review when installing something from a third party) and wait for it to confirm it is clean.</li>
+      <li><b>Name it</b> (for example, <i>Revenue Manager</i>) and pick a <b>color</b>.</li>
+      <li>Click <code class="ui">Continue</code> and keep the skills checked: <b>Market Pulse (English)</b>, <b>Pulso de Mercado (Spanish)</b> and <b>Parallel Orchestration</b>.</li>
+      <li>Keep the <b>learnings</b> it comes with. Houston checks the apps: it may mark <b>Anakin</b> as "not connected" because we connected it through the chat; that is fine, keep going.</li>
+      <li>Click <code class="ui">Bring the agent in</code>.</li>
+    </ol>
+    <div class="call warn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fdba74" stroke-width="2"><path d="M12 3l9 16H3z" stroke-linejoin="round"/><path d="M12 10v4M12 17h.01" stroke-linecap="round"/></svg>
+      <div><span class="lbl">Do not unzip the file</span><p>Upload the file <b>as is</b>, as a single file. If your computer unpacks it into several parts, the install fails. Keep it all together.</p></div>
+    </div>
+    <div class="call note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#b6bec9" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><span class="lbl">Plan B, if the import fails</span><p>If choosing the file opens a strange window (PowerShell) or it will not load, use the alternate method: <b>drag the <code class="ui">.txt</code> skill files into the chat</b> and type <i>"these are all the skills, please install them"</i>.</p></div>
+    </div>
+    <div class="call tip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#8ab4ff" stroke-width="2"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 1 4 10.5c-.6.6-1 1.4-1 2.5H9c0-1.1-.4-1.9-1-2.5A6 6 0 0 1 12 3z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><span class="lbl">If it says Apify is not connected</span><p>After installing, type in the chat: <i>"I already have it connected through Apify MCP, please check, use that one and update my skill."</i></p></div>
+    </div>
+    <div class="check">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.4"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><span class="lbl">You should see</span><p>Your new <b>Revenue Manager</b> agent in the left column, with its instructions, skills and learnings already loaded.</p></div>
+    </div>
+  </section>
+
+  <!-- STEP 6 -->
+  <section id="step6" data-pane="7" class="step">
+    <div class="step-head">
+      <div class="badge">6</div>
+      <div><div class="stepno">Step 6 of 6</div><h2 style="margin-top:2px">Run your first Market Pulse</h2><div class="est">20–60 minutes the first time</div></div>
+    </div>
+    <ol class="steps">
+      <li>Open the <b>Revenue Manager</b> agent and create a <code class="ui">new mission</code> (the <b>+</b> button).</li>
+      <li>Select the <b>Market Pulse</b> skill.</li>
+      <li>Type your request:
+        <div class="prompt"><span class="pl">Copy and paste, changing the city</span><span class="txt">Run a market pulse for Cartagena.</span></div>
+      </li>
+      <li>The agent <b>asks you questions before starting</b>. Answer them: check-in and check-out dates, how many adults and children, which currency and which area. For example: <i>"for the last week of September, two adults, in dollars, in the historic center."</i></li>
+      <li>Let it work <b>in stages</b>. First it creates the empty Google Sheet and then fills each tab, pausing to ask for your feedback.
+        <figure class="shot-real">
+          <img src="/guides/assets/revenue-manager/en/shot-13-agent-stages.png" alt="Houston showing the Revenue Manager working in stages: rate parity, revenue actions, demand drivers and summary, with the Google Sheet link at the end" loading="lazy">
+          <figcaption><span class="num">Screenshot 13</span>The agent working in stages: it reports as it finishes each tab and at the end leaves you the link to the completed Google Sheet.</figcaption>
+        </figure>
+      </li>
+    </ol>
+    <div class="check">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.4"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><span class="lbl">You made it when</span><p>You have a Google Sheet with all <b>7 tabs</b> filled. In the <b>Summary</b> tab, type your nightly rate (for example, $100) and the sheet tells you where you stand against the market.</p></div>
+    </div>
+    <div class="call tip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#8ab4ff" stroke-width="2"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 1 4 10.5c-.6.6-1 1.4-1 2.5H9c0-1.1-.4-1.9-1-2.5A6 6 0 0 1 12 3z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><span class="lbl">Patience the first time</span><p>The first proper run takes 20–60 min, because you review and give feedback along the way. You can stop it anytime with the <b>stop icon</b> (bottom right) to correct it. Afterwards, turn it into a <b>Routine</b>: <i>"make this a routine, update it every day at this time."</i></p></div>
+    </div>
+  </section>
+
+  <!-- MAKE IT YOURS -->
+  <section id="make-it-yours" data-pane="8">
+    <span class="kicker">Extra</span>
+    <h2>Make it yours</h2>
+    <p class="sub">Everything is edited by talking to it in plain language, no code. Treat it like a new intern you are training.</p>
+    <ul class="plain">
+      <li><b>Compare against your property:</b> <i>"Run a market pulse for Medellín, but first here is my Airbnb so you can compare it: [paste your listing link]."</i></li>
+      <li><b>Adjust the scope:</b> <i>"Drop Expedia"</i>, <i>"do not connect to Booking"</i>, <i>"translate your instructions to Spanish and update them."</i></li>
+      <li><b>Teach it from a conversation:</b> <i>"Review this conversation, update your skills and save what is new to your memory."</i></li>
+      <li><b>Connect another tool (your PMS):</b> in the chat, <i>"help me connect to [your PMS] step by step, explain it like I am 10 years old."</i></li>
+    </ul>
+  </section>
+
+  <!-- TROUBLESHOOTING -->
+  <section id="troubleshooting" data-pane="9">
+    <span class="kicker">If something goes wrong</span>
+    <h2>Troubleshooting</h2>
+    <p class="sub">The most common stumbles from the workshop and how to fix them.</p>
+
+    <details class="ts"><summary><span class="q">?</span>Windows says "Windows protected your PC" and will not let me install</summary>
+      <div class="ans">Click <code class="ui">More info</code> and then <code class="ui">Run anyway</code>. It happens because Houston is in beta for Windows; it is safe. If your computer is corporate and blocks every download, that is your company's security policy; write to us and we will help.</div>
+    </details>
+    <details class="ts"><summary><span class="q">?</span>I downloaded Houston but it will not open</summary>
+      <div class="ans">Check that you downloaded the right version for your system: the Mac one does not open on Windows and vice versa. If it "disappeared", it is usually minimized in the taskbar.</div>
+    </details>
+    <details class="ts"><summary><span class="q">?</span>The browser says "you can close this page" and Houston stays stuck</summary>
+      <div class="ans">Close Houston completely and open it again. Same if Composio says <b>"something went wrong while connecting"</b>: click <code class="ui">Try again</code> or restart the app.</div>
+    </details>
+    <details class="ts"><summary><span class="q">?</span>I use ChatGPT, which AI provider do I pick?</summary>
+      <div class="ans">Pick <b>OpenAI</b> (it is the company behind ChatGPT). The connection may pass through a Codex screen: accept it.</div>
+    </details>
+    <details class="ts"><summary><span class="q">?</span>Apify asks me for a "token"</summary>
+      <div class="ans">You connected the wrong "Apify". Use <b>Apify MCP</b>, which only asks you to sign in, no token.</div>
+    </details>
+    <details class="ts"><summary><span class="q">?</span>After installing the agent, it says Apify is "not connected"</summary>
+      <div class="ans">Type in the chat: <i>"I already have it connected through Apify MCP, please check, use that one and update my skill."</i></div>
+    </details>
+    <details class="ts"><summary><span class="q">?</span>Anakin tries to connect to the wrong app</summary>
+      <div class="ans">It is <b>anakin.io</b> (with .io), not anakin.ai. Stop the run with the stop icon and tell it: <i>"the app is anakin.io."</i></div>
+    </details>
+    <details class="ts"><summary><span class="q">?</span>The Anakin key does not work after importing the agent</summary>
+      <div class="ans">On export, the key is wiped for security. Generate a <b>new API key</b> in Anakin and connect it again from the chat.</div>
+    </details>
+    <details class="ts"><summary><span class="q">?</span>Choosing "From a friend → Choose file" opens a strange window</summary>
+      <div class="ans">It is a known bug. Wait a moment in case it loads, try from a new chat, or use plan B: drag the <code class="ui">.txt</code> skill files into the chat and say <i>"please install them."</i></div>
+    </details>
+    <details class="ts"><summary><span class="q">?</span>The agent says it lost the Google Sheets permission midway</summary>
+      <div class="ans">Even if Integrations shows it as connected, tell it: <i>"I just checked, it is still connected, please check my Google Sheets connection and continue."</i> Sometimes it just needs to re-sync.</div>
+    </details>
+    <details class="ts"><summary><span class="q">?</span>I have many properties, does this work for my portfolio?</summary>
+      <div class="ans">The agent we shared runs a general market pulse. For your portfolio, co-create your own skill in the chat: <i>"these are my properties, pull the prices and compare them against the market."</i></div>
+    </details>
+  </section>
+
+  <!-- FINAL CHECKLIST -->
+  <section id="checklist" data-pane="10">
+    <span class="kicker">Before you close</span>
+    <h2>Your success checklist</h2>
+    <p class="sub">If you can check all of this, you are done.</p>
+    <div class="final">
+      <ul>
+        <li><label><input type="checkbox"><span>Houston installed and open</span></label></li>
+        <li><label><input type="checkbox"><span>AI provider connected (OpenAI or Anthropic)</span></label></li>
+        <li><label><input type="checkbox"><span>Composio connected</span></label></li>
+        <li><label><input type="checkbox"><span>Apify MCP connected</span></label></li>
+        <li><label><input type="checkbox"><span>Google Sheets connected</span></label></li>
+        <li><label><input type="checkbox"><span>Anakin.io connected (verified in the chat)</span></label></li>
+        <li><label><input type="checkbox"><span>"Revenue Manager" agent imported</span></label></li>
+        <li><label><input type="checkbox"><span>First Market Pulse generated (7-tab Google Sheet)</span></label></li>
+      </ul>
+    </div>
+  </section>
+<div class="gnav" id="gnav"></div>
+</div>
+</div>
+
+<div class="guide-shell">
+  <div class="guide-cta">
+    <h3>Stuck on a step?</h3>
+    <p>Write to us and we will get you unstuck. Nobody is left without their Revenue Manager up and running.</p>
+    <p class="guide-cta-links"><a href="mailto:hello@gethouston.ai">Email hello@gethouston.ai</a></p>
+    <p class="guide-cta-links">¿Hablas español? <a href="https://chat.whatsapp.com/LDytsBEAL3OBTpoGn2X061?s=cl&amp;p=i&amp;mlu=4" target="_blank" rel="noopener noreferrer">Join the Houston LATAM WhatsApp community</a>.</p>
+    <button class="btn btn-white" data-dl-trigger data-dl-source="guide-revenue-manager">Download Houston</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Open all troubleshooting accordions for print/PDF
+  function openAll(){ document.querySelectorAll('details.ts').forEach(function(d){ d.open = true; }); }
+  window.addEventListener('beforeprint', openAll);
+  if (new URLSearchParams(location.search).has('print')) openAll();
+  document.querySelectorAll('.prompt').forEach(function(p){
+    var t = p.querySelector('.txt');
+    if(!t) return;
+    var b = document.createElement('button');
+    b.className = 'copybtn'; b.type = 'button'; b.textContent = 'Copy';
+    b.addEventListener('click', function(){
+      var text = t.textContent.trim();
+      function done(){ b.textContent = 'Copied'; b.classList.add('ok');
+        setTimeout(function(){ b.textContent = 'Copy'; b.classList.remove('ok'); }, 1600); }
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(done).catch(function(){ fallback(); });
+      } else { fallback(); }
+      function fallback(){
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        try{ document.execCommand('copy'); done(); }catch(e){}
+        document.body.removeChild(ta);
+      }
+    });
+    p.appendChild(b);
+  });
+})();
+</script>
+
+<script>
+(function(){
+  var body = document.body;
+  var KEY = 'houston-guide-revenue-manager-en';
+  var L = {"next": "Next step", "prev": "Back", "finish": "I finished the workshop", "finished": "Done. Guide completed.", "full": "View full guide", "step": "View step by step"};
+  var GUIDE = 'Revenue Manager Agent';
+  var lang = document.documentElement.lang || 'en';
+  var items = Array.prototype.slice.call(document.querySelectorAll('.gside .gs-item'));
+  var N = items.length;
+  var gnav = document.getElementById('gnav');
+  var prog = document.getElementById('gprog');
+  var toggle = document.getElementById('gs-toggle');
+  var hashMap = {"intro": 0, "what-you-will-build": 0, "prerequisites": 1, "step1": 2, "step2": 3, "step3": 4, "step4": 5, "step5": 6, "step6": 7, "make-it-yours": 8, "troubleshooting": 9, "checklist": 10};
+  var cur = 0, finished = false;
+
+  function track(name, props) {
+    var payload = props || {};
+    if (window.posthog && window.posthog.capture) { try { window.posthog.capture(name, payload); } catch (e) {} }
+    if (typeof window.gtag === 'function') { try { window.gtag('event', name, payload); } catch (e) {} }
+  }
+  function panes(i){ return document.querySelectorAll('[data-pane="' + i + '"]'); }
+  function renderNav(i){
+    gnav.innerHTML = '';
+    if (i > 0) {
+      var p = document.createElement('button'); p.className = 'gprev'; p.type = 'button';
+      p.textContent = '← ' + L.prev;
+      p.addEventListener('click', function(){ show(cur - 1, true); });
+      gnav.appendChild(p);
+    }
+    if (i < N - 1) {
+      var n = document.createElement('button'); n.className = 'gnext'; n.type = 'button';
+      n.innerHTML = L.next + ' <span aria-hidden="true">→</span>';
+      n.addEventListener('click', function(){ show(cur + 1, true); });
+      gnav.appendChild(n);
+    } else if (!finished) {
+      var f = document.createElement('button'); f.className = 'gnext'; f.type = 'button';
+      f.textContent = L.finish;
+      f.addEventListener('click', function(){
+        finished = true;
+        track('guide_completed', { guide: GUIDE, lang: lang });
+        var m = document.createElement('span'); m.className = 'gdone-msg'; m.textContent = L.finished;
+        f.replaceWith(m);
+      });
+      gnav.appendChild(f);
+    }
+  }
+  function show(i, user){
+    i = Math.max(0, Math.min(N - 1, i));
+    cur = i;
+    document.querySelectorAll('[data-pane]').forEach(function(e){ e.classList.remove('on'); });
+    panes(i).forEach(function(e){ e.classList.add('on'); });
+    items.forEach(function(it, j){
+      it.classList.toggle('on', j === i);
+      it.classList.toggle('done', j < i);
+    });
+    renderNav(i);
+    if (prog) prog.style.width = ((i) / (N - 1) * 100) + '%';
+    var id = items[i].getAttribute('data-hash');
+    if (user) {
+      try { history.replaceState(null, '', '#' + id); } catch (e) {}
+      try { localStorage.setItem(KEY, String(i)); } catch (e) {}
+      window.scrollTo({ top: 0 });
+      track('guide_step_viewed', { guide: GUIDE, step: id, step_index: i, lang: lang });
+    }
+  }
+  items.forEach(function(it, j){ it.addEventListener('click', function(){ show(j, true); }); });
+  function applyFull(on){
+    body.classList.toggle('fullview', on);
+    body.classList.toggle('stepper', !on);
+    if (toggle) toggle.textContent = on ? L.step : L.full;
+  }
+  if (toggle) toggle.addEventListener('click', function(){ applyFull(!body.classList.contains('fullview')); });
+  window.addEventListener('hashchange', function(){
+    var id = location.hash.replace('#', '');
+    if (hashMap.hasOwnProperty(id)) show(hashMap[id], true);
+  });
+  // print / ?print → full view
+  if (new URLSearchParams(location.search).has('print')) { applyFull(true); }
+  else {
+    body.classList.add('stepper');
+    var start = 0;
+    var id = location.hash.replace('#', '');
+    if (hashMap.hasOwnProperty(id)) start = hashMap[id];
+    else { try { start = parseInt(localStorage.getItem(KEY) || '0', 10) || 0; } catch (e) {} }
+    show(start, false);
+  }
+  window.addEventListener('beforeprint', function(){ applyFull(true); });
+})();
+</script>
+
+{% endblock %}

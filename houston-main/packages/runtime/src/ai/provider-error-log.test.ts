@@ -1,0 +1,193 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { logProviderError } from "./provider-error-log";
+
+describe("logProviderError", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("logs an unauthenticated failure at error level with its cause on the line", () => {
+    // The `cause=` field is what the Sentry capture regex turns into the
+    // `provider_error_cause` tag (PRODUCT-1302) — the line format is a
+    // contract with runtime-client sentry/client.ts PROVIDER_ERROR_LINE.
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    logProviderError(
+      {
+        kind: "unauthenticated",
+        provider: "anthropic",
+        cause: "token_revoked",
+        message: "401 OAuth access token has been revoked",
+      },
+      { model: "claude-fable-5", status: 401 },
+    );
+    expect(error).toHaveBeenCalledWith(
+      "[provider_error] provider=anthropic model=claude-fable-5 status=401 " +
+        "kind=unauthenticated cause=token_revoked :: 401 OAuth access token has been revoked",
+    );
+  });
+
+  it("keeps never-connected (no_credentials) a warning, still carrying the cause", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    logProviderError({
+      kind: "unauthenticated",
+      provider: "google",
+      cause: "no_credentials",
+      message: "Provider is not configured: google",
+    });
+    expect(error).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("kind=unauthenticated cause=no_credentials ::"),
+    );
+  });
+
+  it("puts the SDK error slug BEFORE kind, and cause right after it (the regex contract)", () => {
+    // `[provider_error] provider=X model=Y status=Z error=SLUG kind=K cause=C :: text`
+    // — the exact shape runtime-client sentry/client.ts PROVIDER_ERROR_LINE
+    // captures into the (provider, kind, cause, sdk-slug) fingerprint.
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    logProviderError(
+      {
+        kind: "unauthenticated",
+        provider: "anthropic",
+        cause: "org_policy_blocked",
+        message: "Your organization has disabled Claude subscription access",
+      },
+      {
+        model: "claude-fable-5",
+        status: 403,
+        sdkError: "oauth_org_not_allowed",
+      },
+    );
+    expect(warn).toHaveBeenCalledWith(
+      "[provider_error] provider=anthropic model=claude-fable-5 status=403 " +
+        "error=oauth_org_not_allowed kind=unauthenticated cause=org_policy_blocked " +
+        ":: Your organization has disabled Claude subscription access",
+    );
+  });
+
+  it("keeps org_policy_blocked a warning — the user's org policy, not broken custody", () => {
+    // Anthropic authenticated the token and its org policy rejected the
+    // surface (PRODUCT-1553): the card already offers the API-key remedy,
+    // only the org admin can lift the block, and every retried turn
+    // re-fires. HOUSTON-APP-4XG-style custody breaks carry other causes and
+    // stay errors.
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    logProviderError({
+      kind: "unauthenticated",
+      provider: "anthropic",
+      cause: "org_policy_blocked",
+      message: "Your organization has disabled Claude subscription access",
+    });
+    expect(error).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "kind=unauthenticated cause=org_policy_blocked ::",
+      ),
+    );
+  });
+
+  it("keeps a deactivated ChatGPT workspace a warning — user account state, not custody", () => {
+    // OpenAI authenticated the served token and rejected the WORKSPACE behind
+    // it (PRODUCT-1547): only the user can fix that, the reconnect card says
+    // so, and a Sentry error per retried turn adds no signal.
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    logProviderError(
+      {
+        kind: "unauthenticated",
+        provider: "openai-codex",
+        cause: "token_revoked",
+        message: '{"detail":{"code":"deactivated_workspace"}}',
+      },
+      { model: "gpt-5.5" },
+    );
+    expect(error).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("kind=unauthenticated cause=token_revoked ::"),
+    );
+  });
+
+  it("keeps a caller-cancelled abort a warning even as kind=unknown", () => {
+    // The AbortError a mid-request cancel raises ("This operation was
+    // aborted") classifies as unknown, but it is the user's Stop or a dropped
+    // client — never an engine incident (HOUSTON-APP-59E).
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    logProviderError(
+      {
+        kind: "unknown",
+        provider: "google",
+        raw_excerpt: "This operation was aborted",
+      },
+      { model: "gemini-3.5-flash" },
+    );
+    expect(error).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("kind=unknown :: This operation was aborted"),
+    );
+  });
+
+  it("keeps every other unknown failure an error — untriaged by definition", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    logProviderError({
+      kind: "unknown",
+      provider: "google",
+      raw_excerpt: "something novel exploded",
+    });
+    expect(warn).not.toHaveBeenCalled();
+    expect(error).toHaveBeenCalledWith(
+      expect.stringContaining("kind=unknown :: something novel exploded"),
+    );
+  });
+
+  it("emits no cause field for non-auth kinds", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    logProviderError(
+      {
+        kind: "rate_limited",
+        provider: "openai-codex",
+        model: "gpt-5.5",
+        retry_after_seconds: 30,
+        message: "429 too many requests",
+      },
+      { model: "gpt-5.5", status: 429 },
+    );
+    expect(warn).toHaveBeenCalledWith(expect.not.stringContaining("cause="));
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("kind=rate_limited ::"),
+    );
+  });
+  it("keeps ChatGPT's reason-less refusal a warning even when nothing explains it (PRODUCT-1832)", () => {
+    // `{"detail":"Bad Request"}` / a bare `Not Found` is the Codex gateway
+    // dropping the explanation of a refusal it gave in full moments earlier
+    // (ai/codex-terse-refusal.ts). The card stays `unknown`; a Sentry error
+    // per turn only re-counts HOUSTON-APP-56R.
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    logProviderError(
+      {
+        kind: "unknown",
+        provider: "openai-codex",
+        raw_excerpt: '{"detail":"Bad Request"}',
+      },
+      { model: "gpt-5.4-mini" },
+    );
+    logProviderError({
+      kind: "unknown",
+      provider: "openai-codex",
+      raw_excerpt: "Not Found",
+    });
+    expect(error).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledTimes(2);
+    // The same body from any other provider is still unclassified territory.
+    logProviderError({
+      kind: "unknown",
+      provider: "openrouter",
+      raw_excerpt: '{"detail":"Bad Request"}',
+    });
+    expect(error).toHaveBeenCalledTimes(1);
+  });
+});

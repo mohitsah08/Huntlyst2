@@ -1,0 +1,254 @@
+/*
+ * Landing hero — Houston's own black and white, Apple-clean.
+ *
+ * A flat near-black ground with one neutral white glow for depth (zero color:
+ * the palette is the app's — ink and white). Centered statement, pill CTAs,
+ * then the REAL app window inside the same dark field, its bottom dissolving
+ * into the ground where the white page picks up. Palette/type from
+ * site-tokens.css; the app-window mock lives in its own file; the invite-code
+ * download modals sit at the foot of this file.
+ */
+
+/* ── Hero shell — flat near-black, one neutral glow ───────────────────────── */
+.hero {
+  position: relative;
+  background: #0d0d0d;
+}
+.hero-photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+/* The astronaut ground. The photo is pinned so the astronaut rides the LEFT
+   edge and the earth horizon the lower right; the centered statement floats
+   over open space, never over the figure. Legibility guards: a radial veil
+   deepens the center column behind the text, a left-to-right wash keeps the
+   middle dark, and the whole field dissolves into the hero ground before the
+   app window. */
+.hero-astro {
+  position: absolute;
+  top: 0;
+  /* The layer hangs 12vw past the LEFT edge of the page, so the astronaut's
+     face slides out of the text column while the photo still covers every
+     visible pixel: no seam on the right, no uncovered strip anywhere. */
+  left: -12vw;
+  right: 0;
+  height: min(100svh, 900px);
+  background: url("/assets/img/hero-astronaut.jpg") no-repeat;
+  background-size: cover;
+  background-position: left top 30%;
+  opacity: 0.9;
+}
+.hero-astro::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 52% 58% at 52% 26%,
+      rgba(8, 10, 14, 0.5),
+      rgba(8, 10, 14, 0.16) 62%,
+      transparent 78%
+    ),
+    /* Side dissolves: the photo breathes out into the ground color before
+       either screen edge, so no window width shows a hard border. */
+    linear-gradient(
+      90deg,
+      rgba(13, 13, 13, 0.55) 0%,
+      transparent 18%,
+      transparent 78%,
+      rgba(13, 13, 13, 0.65) 96%,
+      #0d0d0d 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(13, 13, 13, 0.16) 0%,
+      rgba(13, 13, 13, 0.24) 42%,
+      rgba(13, 13, 13, 0.88) 74%,
+      #0d0d0d 92%
+    );
+}
+/* On narrow screens no left slice is safe, so show the photo's right side,
+   the window and the earth, and let the figure leave the frame entirely. */
+@media (max-width: 820px) {
+  .hero-astro {
+    background-position: 62% 30%;
+    opacity: 0.75;
+  }
+}
+/* Monochrome light: a single soft white bloom bleeding from the top. */
+.hero-glowfield {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 72% 54% at 50% 0%,
+    rgba(255, 255, 255, 0.07),
+    transparent
+  );
+  pointer-events: none;
+}
+.hero-fold {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 110px 40px 0;
+  overflow: hidden;
+  /* The fold always fills the viewport, whatever the browser chrome's height
+     (Chrome's tab bar vs Arc/Zen's none). The window's natural height already
+     ≈ fills Chrome; any slack flows into the app window below (see the
+     stretch chain on .hero-visual/.hero-stage), never into a white gap. */
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+/* ── The statement — centered, white on black, system-crisp ──────────────── */
+.hero-intro {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: var(--measure);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.hero-h1 {
+  font-family: ui-sans-serif, -apple-system, system-ui, "Segoe UI", Helvetica,
+    Arial, sans-serif;
+  font-weight: 600;
+  font-size: clamp(34px, 4.7vw, 64px);
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  color: #fff;
+  text-wrap: balance;
+  max-width: 14ch;
+}
+.hero-sub {
+  font-family: ui-sans-serif, -apple-system, system-ui, "Segoe UI", Helvetica,
+    Arial, sans-serif;
+  margin-top: clamp(16px, 1.8vw, 22px);
+  font-weight: 400;
+  font-size: clamp(15.5px, 1.4vw, 18px);
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 52ch;
+  text-wrap: balance;
+}
+.hero-cta {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  margin-top: clamp(24px, 3vw, 36px);
+}
+@media (max-width: 640px) {
+  .hero-cta {
+    flex-direction: column;
+  }
+}
+
+/* ── The product moment — the real app window inside the dark field ────────
+   Tight under the CTAs so the fold reads as one composition: statement,
+   buttons, product. A faint white ring defines the window edge on the dark
+   ground; deep black shadows give it lift. The ground ends flush with the
+   window's bottom edge, dissolved by the blur band below. */
+.hero-visual {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin-top: clamp(40px, 6vh, 64px);
+  display: flex;
+  justify-content: center;
+  /* Absorb whatever viewport height the fold's min-height adds beyond the
+     natural composition: the whole stretch chain (visual → stage → win →
+     win-body) grows so the window's bottom stays flush with the fold's edge,
+     dissolving into the ground exactly as at its natural height. */
+  flex: 1;
+}
+.hero-stage {
+  position: relative;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+.hero-stage .win {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 28px 56px -22px rgba(0, 0, 0, 0.5),
+    0 56px 110px -52px rgba(0, 0, 0, 0.6);
+}
+/* 496px stays the window's floor (its Chrome-fitted natural height); flex lets
+   it grow in taller viewports — the board's columns take the extra rows. */
+.hero-stage .win-body {
+  height: auto;
+  min-height: 496px;
+  flex: 1;
+}
+@media (max-width: 900px) {
+  /* Mirror the shared mock's narrow collapse: content-sized, no forced floor. */
+  .hero-stage .win-body {
+    min-height: 0;
+  }
+}
+/* Progressive dissolve across the fold's lower edge: a masked backdrop-filter
+   blurs the window's bottom while a gradient in the hero's own ground color
+   rises over it, so everything fades into the dark before the white page. */
+.hero-bottom-blur {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 160px;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(13, 13, 13, 0), #0d0d0d);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 75%);
+  mask-image: linear-gradient(to bottom, transparent, #000 75%);
+}
+
+/* ── Nav over the dark hero — light treatment until scrolled ────────────────
+   The nav is transparent chrome over the hero; on the dark ground its brand,
+   links, icon and burger go white and the Download pill inverts to white with
+   an ink label. The SCROLLED state (solid bar) is intentionally left
+   untouched — this only restyles the nav while it sits over the hero. */
+.lnav:not(.scrolled)::before {
+  opacity: 0;
+}
+.lnav:not(.scrolled) .lnav-brand {
+  color: #fff;
+}
+.lnav:not(.scrolled) .lnav-links a,
+.lnav:not(.scrolled) .lnav-res-btn,
+.lnav:not(.scrolled) .lnav-icon {
+  color: rgba(255, 255, 255, 0.85);
+}
+.lnav:not(.scrolled) .lnav-links a:hover,
+.lnav:not(.scrolled) .lnav-res-btn:hover,
+.lnav:not(.scrolled) .lnav-res.open .lnav-res-btn,
+.lnav:not(.scrolled) .lnav-icon:hover {
+  color: #fff;
+}
+.lnav:not(.scrolled) .lnav-cta {
+  background: #fff;
+  border-color: #fff;
+  color: var(--ink-strong);
+}
+.lnav:not(.scrolled) .lnav-cta:hover {
+  background: #ececec;
+  border-color: #ececec;
+}
+.lnav:not(.scrolled) .lnav-burger {
+  color: #fff;
+}

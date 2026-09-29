@@ -1,0 +1,35 @@
+"use client";
+
+import { Progress as ProgressPrimitive } from "radix-ui";
+import type * as React from "react";
+
+import { cn } from "../utils";
+
+function Progress({
+  className,
+  value,
+  ...props
+}: React.ComponentProps<typeof ProgressPrimitive.Root>) {
+  return (
+    <ProgressPrimitive.Root
+      data-slot="progress"
+      className={cn(
+        "relative h-2 w-full overflow-hidden rounded-full bg-action/20",
+        className,
+      )}
+      // Radix derives `aria-valuenow` and `data-state` from the root's own
+      // `value`; drawing the fill from the prop alone leaves the bar announced
+      // as indeterminate.
+      value={value}
+      {...props}
+    >
+      <ProgressPrimitive.Indicator
+        data-slot="progress-indicator"
+        className="h-full w-full flex-1 bg-action transition-all"
+        style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
+      />
+    </ProgressPrimitive.Root>
+  );
+}
+
+export { Progress };

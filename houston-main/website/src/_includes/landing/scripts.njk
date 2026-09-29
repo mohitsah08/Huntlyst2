@@ -1,0 +1,345 @@
+{% include "landing/i18n-data.njk" %}
+{% include "installer-urls.njk" %}
+<script>
+  // Nav scroll state — transparent over the hero, frosted once scrolled, and
+  // section-aware: the frost is black over dark grounds (hero, dark bands,
+  // footer) and white over the light sections in between.
+  (function () {
+    var nav = document.getElementById("lnav");
+    if (!nav) return;
+    var darks = Array.prototype.slice.call(
+      document.querySelectorAll(".hero, .section.is-dark, .lfoot")
+    );
+    function check() {
+      var y = 34; // the bar's vertical middle
+      var overDark = darks.some(function (el) {
+        var r = el.getBoundingClientRect();
+        return r.top <= y && r.bottom >= y;
+      });
+      nav.classList.toggle("scrolled", window.scrollY > 10);
+      nav.classList.toggle("on-light", !overDark);
+    }
+    window.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check);
+    check();
+  })();
+
+  // Nav dropdowns (Resources, language): every [data-menu] container owns a
+  // direct <button> child that toggles it. Click toggles, Escape / outside
+  // click closes, and opening one closes the others.
+  (function () {
+    var menus = Array.prototype.slice.call(
+      document.querySelectorAll("[data-menu]")
+    );
+    if (!menus.length) return;
+    function setOpen(menu, open) {
+      menu.classList.toggle("open", open);
+      var btn = menu.querySelector(":scope > button");
+      if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+    function closeAll(except) {
+      menus.forEach(function (menu) {
+        if (menu !== except) setOpen(menu, false);
+      });
+    }
+    menus.forEach(function (menu) {
+      var btn = menu.querySelector(":scope > button");
+      if (!btn) return;
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var open = !menu.classList.contains("open");
+        closeAll(menu);
+        setOpen(menu, open);
+      });
+    });
+    document.addEventListener("click", function (e) {
+      menus.forEach(function (menu) {
+        if (!menu.contains(e.target)) setOpen(menu, false);
+      });
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeAll(null);
+    });
+  })();
+
+  // Language picks are remembered, so a later visit can honor the choice.
+  // Navigation is untouched: the link follows through to the localized page.
+  (function () {
+    document.querySelectorAll("[data-lang-choice]").forEach(function (link) {
+      link.addEventListener("click", function () {
+        try {
+          localStorage.setItem(
+            "houston_lang_pref",
+            link.getAttribute("data-lang-choice")
+          );
+        } catch (e) {}
+      });
+    });
+  })();
+
+  // Swap groups (#parallel agents, #compound feature views): pills toggle
+  // pre-rendered .swap-panel siblings, so JS-off shows the first panel. They
+  // auto-rotate while on screen; a manual click hands control to the user for
+  // good, hovering pauses, reduced-motion never rotates.
+  (function () {
+    var reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    document.querySelectorAll("[data-swap-group]").forEach(function (group) {
+      var tabs = group.querySelectorAll("[data-swap]");
+      var panels = group.querySelectorAll(".swap-panel");
+      var current = 0;
+      var userTookOver = false;
+      var hovered = false;
+      var visible = false;
+
+      function show(i) {
+        current = i;
+        tabs.forEach(function (t, j) {
+          t.classList.toggle("active", i === j);
+          t.setAttribute("aria-selected", i === j ? "true" : "false");
+        });
+        panels.forEach(function (p, j) {
+          p.classList.toggle("active", i === j);
+        });
+      }
+
+      tabs.forEach(function (tab) {
+        tab.addEventListener("click", function () {
+          userTookOver = true;
+          show(Number(tab.getAttribute("data-swap")));
+        });
+      });
+
+      group.addEventListener("mouseenter", function () {
+        hovered = true;
+      });
+      group.addEventListener("mouseleave", function () {
+        hovered = false;
+      });
+
+      if (reduce && reduce.matches) return;
+      if ("IntersectionObserver" in window) {
+        new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            visible = e.isIntersecting;
+          });
+        }, { threshold: 0.35 }).observe(group);
+      } else {
+        visible = true;
+      }
+      setInterval(function () {
+        if (userTookOver || hovered || !visible) return;
+        show((current + 1) % tabs.length);
+      }, 5000);
+    });
+  })();
+
+  // Compounding, made visible (#compound): while the Learnings panel is on
+  // screen, a new team-taught learning slides in at the top every few seconds
+  // and the header count ticks up. Reduced motion keeps the static list.
+  (function () {
+    var panel = document.querySelector("[data-compound-live]");
+    var countEl = document.querySelector("[data-cl-count]");
+    if (!panel || !countEl) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+
+    function face(img, initial, tone, name) {
+      if (!img) {
+        return '<span class="face ' + tone + ' feat-face" title="' + name + '">' + initial + "</span>";
+      }
+      return (
+        '<span class="face face-img feat-face" title="' + name + '">' +
+        '<img src="/assets/img/' + img + '-48.webp" srcset="/assets/img/' + img + '-96.webp 2x" width="48" height="48" alt="' + name + '"></span>'
+      );
+    }
+    // The rotating pool: notes and teammate names come from the page's locale
+    // (_data/i18n/*, js.compound), the avatars from _data/landing.js
+    // compoundLive, zipped by index.
+    var justNow = {{ t.js.compound.justNow | jsonScript | safe }};
+    var pool = [
+      {%- for entry in t.js.compound.pool %}
+      {%- set person = landing.people[landing.compoundLive.pool[loop.index0].person] %}
+      { t: {{ entry.note | jsonScript | safe }}, f: face({{ person.img | jsonScript | safe }}, {{ person.initials | jsonScript | safe }}, {{ person.tone | jsonScript | safe }}, {{ entry.who | jsonScript | safe }}) }{{ "," if not loop.last }}
+      {%- endfor %}
+    ];
+    var i = 0;
+    var visible = false;
+    new IntersectionObserver(function (entries) {
+      visible = entries[0].isIntersecting;
+    }, { threshold: 0.4 }).observe(panel);
+
+    setInterval(function () {
+      if (!visible || !panel.classList.contains("active")) return;
+      var item = pool[i % pool.length];
+      i++;
+      var row = document.createElement("div");
+      row.className = "feat-row cl-enter";
+      row.innerHTML = '<span class="feat-note"></span><span class="feat-when"></span>' + item.f;
+      row.querySelector(".feat-note").textContent = item.t;
+      row.querySelector(".feat-when").textContent = justNow;
+      panel.insertBefore(row, panel.firstChild);
+      var rows = panel.querySelectorAll(".feat-row");
+      if (rows.length > 5) panel.removeChild(rows[rows.length - 1]);
+      countEl.textContent = String(Number(countEl.textContent) + 1);
+    }, 3800);
+  })();
+
+  // Mobile menu toggle.
+  (function () {
+    var burger = document.getElementById("lnav-burger");
+    var drop = document.getElementById("lnav-drop");
+    var icon = document.getElementById("lnav-burger-icon");
+    if (!burger || !drop) return;
+    burger.addEventListener("click", function () {
+      var open = drop.classList.toggle("open");
+      burger.setAttribute("aria-expanded", open ? "true" : "false");
+      icon.innerHTML = open
+        ? '<path d="M18 6L6 18M6 6l12 12"/>'
+        : '<path d="M4 6h16M4 12h16M4 18h16"/>';
+    });
+    drop.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () {
+        drop.classList.remove("open");
+        burger.setAttribute("aria-expanded", "false");
+        icon.innerHTML = '<path d="M4 6h16M4 12h16M4 18h16"/>';
+      });
+    });
+  })();
+
+  // Scroll reveal (opacity/transform only; CSS gates it behind html.js +
+  // prefers-reduced-motion, so this is a no-op visual when motion is reduced).
+  (function () {
+    var els = document.querySelectorAll(".reveal");
+    if (!("IntersectionObserver" in window) || !els.length) {
+      els.forEach(function (el) {
+        el.classList.add("visible");
+      });
+      return;
+    }
+    var obs = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            obs.unobserve(entry.target);
+          }
+        });
+      },
+      // Reveal a touch BEFORE an element enters, so a mid-scroll pause never
+      // catches an in-frame block still invisible (reads as an empty section).
+      { threshold: 0.01, rootMargin: "0px 0px 22% 0px" }
+    );
+    els.forEach(function (el) {
+      obs.observe(el);
+    });
+  })();
+
+  // Smooth scroll for in-page anchors.
+  document.querySelectorAll('a[href^="#"]').forEach(function (link) {
+    link.addEventListener("click", function (e) {
+      var id = link.getAttribute("href");
+      if (id.length < 2) return;
+      var target = document.querySelector(id);
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  });
+
+  // Analytics — forwards each conversion event to PostHog and GA4 (globals used
+  // by the download gate below). Each sink is independent; pageviews come from
+  // the base layout, not here.
+  function track(name, props) {
+    if (typeof window === "undefined") return;
+    var payload = props || {};
+    if (window.posthog && window.posthog.capture) {
+      try {
+        window.posthog.capture(name, payload);
+      } catch (e) {}
+    }
+    if (typeof window.gtag === "function") {
+      try {
+        window.gtag("event", name, payload);
+      } catch (e) {}
+    }
+  }
+
+  // OS detection — decides which gated modal a download trigger opens, unless
+  // the trigger pins one explicitly via data-dl-os (the per-OS CTA tiles do).
+  function detectOs() {
+    var uaData = navigator.userAgentData;
+    var hay =
+      ((uaData && uaData.platform ? uaData.platform : "") +
+        " " +
+        (navigator.userAgent || "")).toLowerCase();
+    if (hay.indexOf("win") !== -1) return "windows";
+    if (hay.indexOf("mac") !== -1) return "mac";
+    // Android UAs also say "Linux"; only desktop Linux gets the AppImage.
+    if (
+      hay.indexOf("android") === -1 &&
+      (hay.indexOf("linux") !== -1 || hay.indexOf("x11") !== -1)
+    )
+      return "linux";
+    return "other";
+  }
+
+  // Windows x64 vs ARM64: show exactly ONE arch button, default x64, reveal
+  // ARM64 only on a positive signal. The help accordion's "Wrong one?" link is
+  // the one-click escape hatch.
+  (function () {
+    var x64 = document.getElementById("dl-windows-x64-btn");
+    var arm64 = document.getElementById("dl-windows-arm64-btn");
+    if (!x64 || !arm64) return;
+    function show(shown, hidden) {
+      shown.classList.remove("btn-outline");
+      shown.classList.add("btn-ink");
+      shown.style.display = "";
+      hidden.classList.remove("btn-ink");
+      hidden.classList.add("btn-outline");
+      hidden.style.display = "none";
+    }
+    arm64.style.display = "none";
+    var ua = (navigator.userAgent || "").toLowerCase();
+    if (ua.indexOf("arm64") !== -1 || ua.indexOf("aarch64") !== -1) {
+      show(arm64, x64);
+    } else {
+      var uaData = navigator.userAgentData;
+      if (uaData && uaData.getHighEntropyValues) {
+        uaData
+          .getHighEntropyValues(["architecture"])
+          .then(function (info) {
+            if (info && info.architecture === "arm") show(arm64, x64);
+          })
+          .catch(function () {});
+      }
+    }
+    var switchLink = document.getElementById("dl-windows-switch-arch");
+    if (switchLink) {
+      switchLink.addEventListener("click", function (e) {
+        e.preventDefault();
+        if (arm64.style.display === "none") show(arm64, x64);
+        else show(x64, arm64);
+        track("windows_arch_switched", {});
+      });
+    }
+  })();
+</script>
+
+<!-- Landing behaviours as standalone deferred assets. Order matters for the
+     board demo: data + clock + stage define the globals hero-demo.js reads.
+     Each guards prefers-reduced-motion itself and no-ops without its markup. -->
+<script defer src="/assets/hero-demo-data.js"></script>
+<script defer src="/assets/hero-demo-clock.js"></script>
+<script defer src="/assets/hero-demo-stage.js"></script>
+<script defer src="/assets/hero-demo.js"></script>
+<script defer src="/assets/chat.js"></script>
+
+<!-- Hero motion rig (HOU-948): self-hosted GSAP + ScrollTrigger + Lenis drive
+     the hero's load timeline, star parallax and CTA micro-spring. Deferred (so
+     order is preserved: libraries before the rig) and gated on
+     prefers-reduced-motion inside hero-motion.js. Landing-only. -->
+<script defer src="/assets/vendor/gsap.min.js"></script>
+<script defer src="/assets/vendor/ScrollTrigger.min.js"></script>
+<script defer src="/assets/vendor/lenis.min.js"></script>
+<script defer src="/assets/hero-motion.js"></script>
+{% include "landing/scripts-download.njk" %}

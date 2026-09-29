@@ -1,0 +1,500 @@
+/*
+ * The .win app-window: a CSS-built Houston Mission Control in the app's REAL
+ * light theme (staged in the #agents board zoom + reused by the chat window).
+ * Every colour is a product token (site-tokens.css --app-* / --agent-*).
+ */
+.win {
+  border-radius: 16px;
+  overflow: hidden;
+  text-align: left;
+  border: 1px solid var(--app-line);
+  background: var(--app-gutter);
+  /* The app renders in the SYSTEM font stack (DESIGN.md §4) — never the site's
+     Hanken. Pin it here so the mock's chrome matches the product exactly. */
+  font-family: ui-sans-serif, -apple-system, system-ui, "Segoe UI", Helvetica,
+    Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.win-body {
+  display: flex;
+  gap: 0;
+  padding: 8px 8px 8px 0;
+  height: 496px;
+  background: var(--app-gutter);
+}
+
+/* ── Sidebar — transparent, melts into the gutter ────────────────────────── */
+.sb {
+  width: 210px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 10px 10px;
+  color: var(--app-ink);
+}
+.sb-lights {
+  display: flex;
+  gap: 8px;
+  padding: 2px 6px 14px;
+}
+.sb-lights i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: block;
+}
+.tl-r { background: #ff5f57; }
+.tl-y { background: #febc2e; }
+.tl-g { background: #28c840; }
+.sb-ws {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.sb-ws .ws-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--app-ink);
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.sb-ws .ws-name svg {
+  width: 14px;
+  height: 14px;
+  color: var(--app-ink-muted);
+  stroke-width: 2;
+}
+.sb-ws .ws-collapse {
+  width: 16px;
+  height: 16px;
+  color: var(--app-ink-muted);
+  stroke-width: 2;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: var(--app-ink);
+  font-weight: 500;
+}
+.nav-item svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+  flex-shrink: 0;
+  /* Real SidebarNavItem: the Lucide icon inherits text-ink (currentColor) — the
+     top-level nav glyphs read dark, not muted. */
+  color: var(--app-ink);
+}
+.sb-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--app-ink-muted);
+  padding: 16px 8px 6px;
+}
+.sb-group .sg-label {
+  flex: 1;
+}
+.sb-group .sg-ic {
+  width: 16px;
+  height: 16px;
+  color: var(--app-ink-muted);
+  stroke-width: 2;
+}
+.agent-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+.agent-row.on {
+  background: var(--app-active);
+}
+/* Agent avatar — core's HoustonAvatar: a faint tinted circle + helmet glyph. */
+.av {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--app-chip) 82%, var(--ac) 18%);
+}
+.av::before {
+  content: "";
+  width: 65%;
+  height: 65%;
+  background-color: var(--ac);
+  -webkit-mask: var(--helmet-mask) center / contain no-repeat;
+  mask: var(--helmet-mask) center / contain no-repeat;
+}
+/* Single-color agent palette (the app's real light --ht-agent-* values). */
+.av-p { --ac: #5b21b6; } /* purple — Houston */
+.av-b { --ac: #1e4d8c; } /* navy — Chief of Staff */
+.av-g { --ac: #1b6b3a; } /* forest */
+.av-o { --ac: #b45309; } /* orange — Bookkeeper */
+.av-c { --ac: #a3261a; } /* crimson — Sales Rep */
+.agent-row .a-name {
+  flex: 1;
+  font-size: 13.5px;
+  color: var(--app-ink);
+  font-weight: 500;
+}
+/* Needs-you chip — a white outline Badge (core NeedsYouChip). */
+.agent-row .a-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(20, 22, 29, 0.8);
+  min-width: 24px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--app-input);
+  border: 1px solid var(--app-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Screen — the floating white pane ────────────────────────────────────── */
+.screen {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--app-screen);
+  border: 1px solid var(--app-line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.screen-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px 12px;
+}
+.sh-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--app-ink);
+  flex-shrink: 0;
+}
+.sh-search {
+  flex: 1;
+  max-width: 320px;
+  margin: 0 auto;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--app-line-input);
+  background: var(--app-input);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  color: var(--app-ink-muted);
+  font-size: 13px;
+}
+.sh-search svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2;
+  flex-shrink: 0;
+}
+.sh-guide {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--app-ink);
+  flex-shrink: 0;
+}
+.sh-guide svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.9;
+  color: var(--app-ink-muted);
+}
+.sh-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 15px;
+  border-radius: 999px;
+  background: var(--app-action);
+  color: var(--app-action-text);
+  font-size: 13.5px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.sh-new .glyph {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  background-color: var(--app-action-text);
+  -webkit-mask: var(--helmet-mask) center / contain no-repeat;
+  mask: var(--helmet-mask) center / contain no-repeat;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 4px 20px 0;
+  border-bottom: 1px solid var(--app-line);
+}
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 0 11px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--app-ink-muted);
+  position: relative;
+}
+.tab.on {
+  color: var(--app-ink);
+  font-weight: 600;
+}
+.tab.on::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--app-action);
+}
+.tab .t-count {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--app-action);
+  color: var(--app-action-text);
+  font-size: 10.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Board columns ───────────────────────────────────────────────────────── */
+.cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 16px;
+  flex: 1;
+  min-height: 0;
+}
+.col {
+  background: var(--app-chip);
+  border-radius: 14px;
+  padding: 12px 10px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.col-h {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--app-ink);
+  padding: 4px 6px 12px;
+}
+.col-h .c-count {
+  color: var(--app-ink-muted);
+  font-weight: 500;
+}
+.col-h .c-menu {
+  position: absolute;
+  right: 4px;
+  top: 2px;
+  color: var(--app-ink-muted);
+  display: inline-flex;
+}
+.col-h .c-menu svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Card containers — the demo appends into #hd-running/#hd-done (FLIP in landing-motion.css). */
+.col-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+.card-add + .col-body:not(:empty) {
+  margin-top: 10px;
+}
+
+.card-add {
+  height: 46px;
+  border-radius: 12px;
+  background: var(--app-input);
+  border: 1px solid var(--app-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--app-ink-muted);
+}
+.card-add svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}
+
+/* Task card */
+.tcard {
+  position: relative;
+  background: var(--app-input);
+  border: 1px solid var(--app-line);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 1px 2px rgba(13, 13, 13, 0.04);
+}
+.tc-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.tc-head .av {
+  width: 16px;
+  height: 16px;
+}
+.tc-agent {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--app-ink-muted);
+  flex: 1;
+}
+.tc-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--app-ink-muted);
+  opacity: 0.4;
+}
+.tc-actions svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2;
+}
+.tc-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--app-ink);
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+  margin-bottom: 3px;
+}
+.tc-desc {
+  font-size: 12px;
+  color: var(--app-ink-muted);
+  line-height: 1.4;
+  /* Leave room so the bottom-right face stack never overlaps the last line. */
+  padding-right: 44px;
+}
+
+/* ── Human contributor face stack — the multiplayer signal ─────────────────
+   Mirrors @houston-ai/board KanbanPeople: overlapping human avatars bottom-right
+   (photos or quiet-tone initials) with a 2px ring and a "+N" overflow chip. The
+   helmet (top-left) is the agent; these faces are the teammates on the mission. */
+.faces {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: inline-flex;
+  flex-direction: row;
+}
+.face {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: #fff;
+  margin-left: -6px;
+  box-shadow: 0 0 0 2px var(--app-input);
+}
+.face:first-child {
+  margin-left: 0;
+}
+/* Quiet human tones (distinct from agent helmets); white initials clear AA. */
+.hp-1 { background: #5b6b7a; }  /* slate */
+.hp-2 { background: #5e7266; }  /* sage */
+.hp-3 { background: #84616b; }  /* mauve */
+.hp-4 { background: #736550; }  /* taupe */
+.hp-5 { background: #5b6488; }  /* indigo */
+.face-more {
+  background: #e6e8ec;
+  color: #555b66;
+  font-weight: 600;
+}
+/* A photo face (real teammate headshot) — image cropped to the circle. */
+.face-img {
+  overflow: hidden;
+}
+.face-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Graceful collapse (mirrors the app's narrow board) ──────────────────── */
+@media (max-width: 900px) {
+  .win-body {
+    height: auto;
+  }
+  .sb {
+    display: none;
+  }
+  .win-body {
+    padding: 8px;
+  }
+}
+@media (max-width: 560px) {
+  .cols {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .screen-head {
+    flex-wrap: wrap;
+  }
+  .sh-search {
+    order: 3;
+    max-width: none;
+    width: 100%;
+  }
+  .tabs {
+    overflow-x: auto;
+  }
+}

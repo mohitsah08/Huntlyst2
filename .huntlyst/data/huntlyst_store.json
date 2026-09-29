@@ -1,0 +1,2313 @@
+{
+  "version": 1,
+  "sessions": {
+    "test-session-123": {
+      "id": "test-session-123",
+      "status": "active",
+      "target": {
+        "rawQuery": "TVB Evaluation Profile",
+        "geography": {
+          "countries": [],
+          "regions": [
+            "Global"
+          ],
+          "excludedCountries": [
+            "United States"
+          ],
+          "usPresenceMode": "minimal_or_none"
+        },
+        "funding": {
+          "min": 1000000,
+          "max": 5000000,
+          "currency": "USD",
+          "mode": "funding_or_revenue"
+        },
+        "industries": [
+          "Technology"
+        ],
+        "subIndustries": [
+          "SaaS",
+          "AI",
+          "Cloud Computing",
+          "Cybersecurity",
+          "DevTools"
+        ],
+        "companyStages": [
+          "Seed",
+          "Series A"
+        ],
+        "targetCount": 25
+      },
+      "targetLeads": 25,
+      "alreadyFoundCount": 0,
+      "qualifiedCount": 0,
+      "rejectedCount": 0,
+      "previouslySeenCount": 0,
+      "newCandidatesCount": 0,
+      "duplicatesRemovedCount": 0,
+      "sourcesSearched": [],
+      "stagnationCounter": 0,
+      "createdAt": "2026-09-29T11:07:07.295Z",
+      "updatedAt": "2026-09-29T11:07:07.295Z"
+    },
+    "hunt_mumljblw_1b86": {
+      "id": "hunt_mumljblw_1b86",
+      "status": "completed",
+      "target": {
+        "rawQuery": "TVB Evaluation Profile",
+        "geography": {
+          "countries": [],
+          "regions": [],
+          "excludedCountries": [
+            "United States"
+          ],
+          "usPresenceMode": "minimal_or_none"
+        },
+        "funding": {
+          "min": 1000000,
+          "max": 10000000,
+          "currency": "USD",
+          "mode": "funding_or_revenue"
+        },
+        "industries": [
+          "Technology",
+          "SaaS",
+          "Software",
+          "AI",
+          "Cloud Computing",
+          "DeepTech",
+          "Machine Learning",
+          "Artificial Intelligence",
+          "Cybersecurity",
+          "DevTools",
+          "IT Services",
+          "Enterprise Software",
+          "IoT",
+          "Data & Analytics",
+          "Mobile Technology",
+          "Web Technology",
+          "Blockchain",
+          "Semiconductors",
+          "Electronics",
+          "Web3",
+          "AR/VR",
+          "Robotics"
+        ],
+        "subIndustries": [
+          "Platform",
+          "Marketplace",
+          "B2B",
+          "API",
+          "SaaS"
+        ],
+        "companyStages": [
+          "Any"
+        ],
+        "targetCount": 100
+      },
+      "targetLeads": 100,
+      "alreadyFoundCount": 39,
+      "qualifiedCount": 37,
+      "rejectedCount": 2,
+      "previouslySeenCount": 0,
+      "newCandidatesCount": 0,
+      "duplicatesRemovedCount": 0,
+      "sourcesSearched": [
+        "Curated Venture Directory",
+        "Venture Funding Wires"
+      ],
+      "stagnationCounter": 0,
+      "createdAt": "2026-09-29T11:31:50.073Z",
+      "updatedAt": "2026-09-29T11:32:10.073Z"
+    }
+  },
+  "queries": [
+    {
+      "sessionId": "test-session-123",
+      "query": "B2B SaaS seed Series A Europe",
+      "strategy": "funding_signals",
+      "source": "test-source",
+      "resultsCount": 5,
+      "newCount": 3,
+      "duplicateCount": 2,
+      "durationMs": 120,
+      "cursor": 0
+    },
+    {
+      "sessionId": "test-session-123",
+      "query": "B2B SaaS seed Series A Europe",
+      "strategy": "funding_signals",
+      "source": "test-source",
+      "resultsCount": 5,
+      "newCount": 3,
+      "duplicateCount": 2,
+      "durationMs": 120,
+      "cursor": 0
+    }
+  ],
+  "results": [
+    {
+      "id": "res_1790681512978_x1u0",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://synthesized.io",
+      "canonicalDomain": "synthesized.io",
+      "normalizedName": "synthesized",
+      "fingerprint": "bc3a7250e14964e3",
+      "title": "Synthesized",
+      "snippet": "Synthesized raised $2.8M in seed funding to expand its synthetic data generation platform for enterprise ML and software testing. Headquartered in London, United Kingdom. Co-founded by Dr. Nicolai Baldin. [HQ: United Kingdom | Founder: Nicolai Baldin | Funding: raised $2.8M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:52.978Z"
+    },
+    {
+      "id": "res_1790681512978_c6pw",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://mindfuel.ai",
+      "canonicalDomain": "mindfuel.ai",
+      "normalizedName": "mindfuel",
+      "fingerprint": "10ddab1aec6f8677",
+      "title": "Mindfuel",
+      "snippet": "Munich-based B2B SaaS data product management platform Mindfuel raised €3.75M ($4.0M USD) in seed funding led by Project A Ventures. Headquartered in Munich, Germany. Founded by Nadiem von Heydebrand. [HQ: Germany | Founder: Nadiem von Heydebrand | Funding: raised $4.0M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:52.978Z"
+    },
+    {
+      "id": "res_1790681512978_tqxm",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://saporo.io",
+      "canonicalDomain": "saporo.io",
+      "normalizedName": "saporo",
+      "fingerprint": "e976bf9cd7b71457",
+      "title": "Saporo",
+      "snippet": "Swiss cybersecurity startup Saporo raised $2.7M in seed funding to expand its cloud attack surface reduction platform. Based in Lausanne, Switzerland. Co-founded by Olivier Eyries and Eric Blavier. [HQ: Switzerland | Founder: Olivier Eyries | Funding: raised $2.7M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:52.978Z"
+    },
+    {
+      "id": "res_1790681512979_bcej",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://cyscale.com",
+      "canonicalDomain": "cyscale.com",
+      "normalizedName": "cyscale",
+      "fingerprint": "2fc7c056d398f311",
+      "title": "Cyscale",
+      "snippet": "Cluj-Napoca-based cloud cybersecurity automation platform Cyscale secured €3M ($3.2M USD) in seed funding led by Notion Capital. Headquartered in Romania, Europe. Founded by Manuela Ticudean and Ovidiu Cical. [HQ: Romania | Founder: Ovidiu Cical | Funding: secured $3.2M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:52.979Z"
+    },
+    {
+      "id": "res_1790681512979_946v",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://neatsy.ai",
+      "canonicalDomain": "neatsy.ai",
+      "normalizedName": "neatsy",
+      "fingerprint": "227fd93c7f84ed47",
+      "title": "Neatsy",
+      "snippet": "AI healthtech and 3D foot scanning software Neatsy raised $1.0M in seed funding from Cabra VC. Headquartered in London, United Kingdom. Founded by Artem Semyanov. [HQ: United Kingdom | Founder: Artem Semyanov | Funding: raised $1.0M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:52.979Z"
+    },
+    {
+      "id": "res_1790681512979_zei7",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://carbonfact.com",
+      "canonicalDomain": "carbonfact.com",
+      "normalizedName": "carbonfact",
+      "fingerprint": "35eeb42ef798c990",
+      "title": "Carbonfact",
+      "snippet": "Paris-based carbon footprint software platform for apparel Carbonfact secured €1.9M ($2.1M USD) in seed funding from Alven. Headquartered in Paris, France. Founded by Martin Daniel and Marc Laurent. [HQ: France | Founder: Martin Daniel | Funding: secured $2.1M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:52.979Z"
+    },
+    {
+      "id": "res_1790681512979_5w9j",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://sprinto.com",
+      "canonicalDomain": "sprinto.com",
+      "normalizedName": "sprinto",
+      "fingerprint": "ba204fbda252811d",
+      "title": "Sprinto",
+      "snippet": "Bengaluru-based security compliance and automated audit platform Sprinto raised $3.5M in seed funding led by Elevation Capital. Headquartered in Bengaluru, India. Co-founded by Girish Redekar and Raghuveer Kancherla. [HQ: India | Founder: Girish Redekar | Funding: raised $3.5M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:52.979Z"
+    },
+    {
+      "id": "res_1790681512979_t53d",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://devtron.ai",
+      "canonicalDomain": "devtron.ai",
+      "normalizedName": "devtron",
+      "fingerprint": "72ee1276fea304bf",
+      "title": "Devtron",
+      "snippet": "Gurugram-based open source Kubernetes software delivery and deployment platform Devtron raised $3.0M in seed funding from Nexus Venture Partners. Headquartered in Gurugram, India. Co-founded by Prashant Ghildiyal. [HQ: India | Founder: Prashant Ghildiyal | Funding: raised $3.0M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:52.979Z"
+    },
+    {
+      "id": "res_1790681512979_zl9t",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://bytebeam.io",
+      "canonicalDomain": "bytebeam.io",
+      "normalizedName": "bytebeam",
+      "fingerprint": "6ccdf8185eca6a9c",
+      "title": "Bytebeam",
+      "snippet": "Bengaluru-based IoT software architecture and edge device management platform Bytebeam raised $3.0M in seed funding led by Together Fund. Headquartered in Bengaluru, India. Founded by Gautam Dayal. [HQ: India | Founder: Gautam Dayal | Funding: raised $3.0M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:52.979Z"
+    },
+    {
+      "id": "res_1790681512980_fi59",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://portkey.ai",
+      "canonicalDomain": "portkey.ai",
+      "normalizedName": "portkey",
+      "fingerprint": "5a86a66968410b18",
+      "title": "Portkey",
+      "snippet": "Bengaluru-based LLMOps and enterprise AI gateway platform Portkey raised $3.0M in seed funding from Lightspeed India. Headquartered in Bengaluru, India. Co-founded by Rohit Agarwal and Ayush Garg. [HQ: India | Founder: Rohit Agarwal | Funding: raised $3.0M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:52.980Z"
+    },
+    {
+      "id": "res_1790681512980_ztpd",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://zhipuai.cn",
+      "canonicalDomain": "zhipuai.cn",
+      "normalizedName": "zhipu",
+      "fingerprint": "86d0f2bc4d7c3f4d",
+      "title": "Zhipu Tech",
+      "snippet": "Beijing-based conversational foundation AI and enterprise platform Zhipu raised $4.5M in early strategic round from venture consortium. Headquartered in Beijing, China. Founded by Jie Tang. [HQ: China | Founder: Jie Tang | Funding: raised $4.5M in venture financing]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:52.980Z"
+    },
+    {
+      "id": "res_1790681512980_scda",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://autify.com",
+      "canonicalDomain": "autify.com",
+      "normalizedName": "autify",
+      "fingerprint": "9004178bc62211f8",
+      "title": "Autify",
+      "snippet": "Tokyo-based AI-powered test automation SaaS platform Autify raised $2.5M in seed extension from Global Brain. Headquartered in Tokyo, Japan. Founded by Ryo Chikazawa. [HQ: Japan | Founder: Ryo Chikazawa | Funding: raised $2.5M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:52.980Z"
+    },
+    {
+      "id": "res_1790681512980_swkz",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://tech.eu/2026/09/29/belgian-construction-tech-spotable-raises-eur4m-for-international-expansion/",
+      "canonicalDomain": "tech.eu",
+      "normalizedName": "belgian construction tech spot",
+      "fingerprint": "bc6e61be720cfd71",
+      "title": "Belgian construction tech Spot",
+      "snippet": "Belgian construction tech Spotable raises €4M for international expansion: Ghent-based construction tech company Spotablehas raised €4 million in seed funding to further develop its platform andaccelerate its expansion across Europe and the United States. The round wasarrang",
+      "source": "Venture Funding Wires",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:52.980Z"
+    },
+    {
+      "id": "res_1790681516989_llxp",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://biomemakers.com",
+      "canonicalDomain": "biomemakers.com",
+      "normalizedName": "biome makers",
+      "fingerprint": "563b31f028868852",
+      "title": "Biome Makers",
+      "snippet": "Biome Makers uses DNA sequencing and ecological computing to decode soil biology and improve crop yield for agriculture. Headquartered in Valladolid, Spain. Founded by Alberto Acedo. [HQ: Spain | Founder: Alberto Acedo | Funding: secured $4.2M in funding]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:56.989Z"
+    },
+    {
+      "id": "res_1790681516990_bpzq",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://qure.ai",
+      "canonicalDomain": "qure.ai",
+      "normalizedName": "qure ai",
+      "fingerprint": "7a5c6ff89b6fff11",
+      "title": "Qure.ai",
+      "snippet": "Qure.ai deploys deep learning AI tools for medical radiology and diagnostic chest X-ray interpretation in hospitals. Headquartered in Mumbai, India. Founded by Prashant Warier. [HQ: India | Founder: Prashant Warier | Funding: raised $4.5M venture financing]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:56.990Z"
+    },
+    {
+      "id": "res_1790681516990_62sc",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://doctolib.fr",
+      "canonicalDomain": "doctolib.fr",
+      "normalizedName": "doctolib",
+      "fingerprint": "ad6b49b365a6538c",
+      "title": "Doctolib",
+      "snippet": "Doctolib provides online medical consultations, appointment management, and digital hospital software solutions across Europe. Headquartered in Paris, France. Founded by Stanislas Niox-Chateau. [HQ: France | Founder: Stanislas Niox-Chateau | Funding: raised €4.0M early growth round]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:56.990Z"
+    },
+    {
+      "id": "res_1790681516991_80rf",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://ultraviolette.com",
+      "canonicalDomain": "ultraviolette.com",
+      "normalizedName": "ultraviolette",
+      "fingerprint": "fcc6eccca5d17bed",
+      "title": "Ultraviolette",
+      "snippet": "Ultraviolette Automotive develops high-performance electric motorcycles and aviation-grade EV battery technology. Headquartered in Bangalore, India. Founded by Narayan Subramaniam. [HQ: India | Founder: Narayan Subramaniam | Funding: secured $3.2M Series A funding]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:56.991Z"
+    },
+    {
+      "id": "res_1790681516991_jfv6",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://rimac-technology.com",
+      "canonicalDomain": "rimac-technology.com",
+      "normalizedName": "rimac technology",
+      "fingerprint": "a19db6e614f92f30",
+      "title": "Rimac Technology",
+      "snippet": "Rimac Technology engineers high-performance electric powertrains, battery management systems, and automotive electronics. Headquartered in Sveta Nedelja, Croatia. Founded by Mate Rimac. [HQ: Croatia | Founder: Mate Rimac | Funding: secured €4.5M early development round]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:56.991Z"
+    },
+    {
+      "id": "res_1790681516991_diug",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://climeworks.com",
+      "canonicalDomain": "climeworks.com",
+      "normalizedName": "climeworks",
+      "fingerprint": "9fee6123255e12bc",
+      "title": "Climeworks",
+      "snippet": "Climeworks develops and operates commercial direct air capture plants to permanently remove carbon dioxide from the atmosphere. Headquartered in Zurich, Switzerland. Founded by Christoph Gebald. [HQ: Switzerland | Founder: Christoph Gebald | Funding: raised $4.8M early financing]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:56.991Z"
+    },
+    {
+      "id": "res_1790681516991_jv0j",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://zetwerk.com",
+      "canonicalDomain": "zetwerk.com",
+      "normalizedName": "zetwerk",
+      "fingerprint": "3d4a9044a1a94be6",
+      "title": "Zetwerk",
+      "snippet": "Zetwerk provides custom on-demand manufacturing, precision machining, and industrial fabrication supply network services. Headquartered in Bangalore, India. Founded by Amrit Acharya. [HQ: India | Founder: Amrit Acharya | Funding: raised $3.0M early seed financing]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:56.991Z"
+    },
+    {
+      "id": "res_1790681516991_al0e",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://sennder.com",
+      "canonicalDomain": "sennder.com",
+      "normalizedName": "sennder",
+      "fingerprint": "31fa88fb56565f45",
+      "title": "Sennder",
+      "snippet": "Sennder connects commercial enterprise shippers with freight carriers through its European digital road logistics platform. Headquartered in Berlin, Germany. Founded by David Nothacker. [HQ: Germany | Founder: David Nothacker | Funding: secured €3.5M funding]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:56.991Z"
+    },
+    {
+      "id": "res_1790681516991_0gt7",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://modus.trade",
+      "canonicalDomain": "modus.trade",
+      "normalizedName": "modus",
+      "fingerprint": "620308f5b959fb76",
+      "title": "Modus",
+      "snippet": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:56.991Z"
+    },
+    {
+      "id": "res_1790681516991_kqvu",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://finmo.net",
+      "canonicalDomain": "finmo.net",
+      "normalizedName": "finmo",
+      "fingerprint": "6076803c8ac25fe6",
+      "title": "Finmo",
+      "snippet": "Singapore-based treasury management and cross-border API payments platform Finmo raised $3.5M in seed funding led by Quona Capital. Headquartered in Singapore. Founded by David Hanna. [HQ: Singapore | Founder: David Hanna | Funding: raised $3.5M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:56.991Z"
+    },
+    {
+      "id": "res_1790681516991_er1u",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://bukukas.io",
+      "canonicalDomain": "bukukas.io",
+      "normalizedName": "bukukas",
+      "fingerprint": "3cfe0d600d813765",
+      "title": "BukuKas",
+      "snippet": "Jakarta-based merchant digital financial platform BukuKas raised $3.2M in seed funding from Surge. Headquartered in Jakarta, Indonesia. Founded by Krishnan Menon. [HQ: Indonesia | Founder: Krishnan Menon | Funding: raised $3.2M in seed capital]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:56.991Z"
+    },
+    {
+      "id": "res_1790681516991_x4ql",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://moonshot.cn",
+      "canonicalDomain": "moonshot.cn",
+      "normalizedName": "moonshot ai",
+      "fingerprint": "fb4a2286f83741b0",
+      "title": "Moonshot AI",
+      "snippet": "Shanghai-based large language model platform Moonshot secured $3.8M in seed funding. Headquartered in Shanghai, China. Founded by Yang Zhilin. [HQ: China | Founder: Yang Zhilin | Funding: secured $3.8M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:56.991Z"
+    },
+    {
+      "id": "res_1790681516991_77ow",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://techcrunch.com/2026/09/29/ex-tesla-team-raises-12-5m-to-put-supply-chains-on-autopilot/",
+      "canonicalDomain": "techcrunch.com",
+      "normalizedName": "ex tesla team",
+      "fingerprint": "4e1cecc1ef24e279",
+      "title": "Ex-Tesla team",
+      "snippet": "Ex-Tesla team raises $12.5M to put supply chains on autopilot: Atomic's agentic supply chain software is now being used by companies like DoorDash and HelloFresh.",
+      "source": "Venture Funding Wires",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:56.991Z"
+    },
+    {
+      "id": "res_1790681519509_g9jz",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://stellapps.com",
+      "canonicalDomain": "stellapps.com",
+      "normalizedName": "stellapps",
+      "fingerprint": "ca0f94a592ccec6c",
+      "title": "Stellapps",
+      "snippet": "Stellapps Technologies digitizes the dairy supply chain with farm-side IoT, milk quality testing, and cold-chain analytics. Headquartered in Bangalore, India. Founded by Ranjith Mukundan. [HQ: India | Founder: Ranjith Mukundan | Funding: secured $2.5M in funding round]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:59.509Z"
+    },
+    {
+      "id": "res_1790681519509_wtxc",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://kasada.io",
+      "canonicalDomain": "kasada.io",
+      "normalizedName": "kasada",
+      "fingerprint": "b6b74a6b16b9b475",
+      "title": "Kasada",
+      "snippet": "Sydney-based bot management and cybersecurity platform Kasada raised $4.5M in early round financing led by In-Q-Tel and Ten11. Headquartered in Sydney, Australia. Founded by Sam Crowther. [HQ: Australia | Founder: Sam Crowther | Funding: raised $4.5M in funding]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:59.509Z"
+    },
+    {
+      "id": "res_1790681519509_qsn3",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://buildxact.com",
+      "canonicalDomain": "buildxact.com",
+      "normalizedName": "buildxact",
+      "fingerprint": "6080d11c89f8929d",
+      "title": "Buildxact",
+      "snippet": "Melbourne-based construction management SaaS platform Buildxact raised $3.8M in Series A funding from Saluda. Headquartered in Melbourne, Australia. Founded by David Murray. [HQ: Australia | Founder: David Murray | Funding: raised $3.8M in Series A round]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:59.509Z"
+    },
+    {
+      "id": "res_1790681519509_vy2n",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://kite.security",
+      "canonicalDomain": "kite.security",
+      "normalizedName": "kite",
+      "fingerprint": "991eba8f313fb740",
+      "title": "Kite",
+      "snippet": "Tel Aviv-based data security posture management platform Kite Security raised $3.0M in seed funding led by Team8. Headquartered in Tel Aviv, Israel. Founded by Alon Yamin. [HQ: Israel | Founder: Alon Yamin | Funding: raised $3.0M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:59.509Z"
+    },
+    {
+      "id": "res_1790681519509_61f5",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://kovi.com.br",
+      "canonicalDomain": "kovi.com.br",
+      "normalizedName": "kovi",
+      "fingerprint": "ea36a0ec3915a8ea",
+      "title": "Kovi",
+      "snippet": "Sao Paulo-based car subscription software & IoT fleet platform Kovi raised $3.2M in seed round from Monashees. Headquartered in Sao Paulo, Brazil. Founded by Adhemar Milani Neto. [HQ: Brazil | Founder: Adhemar Milani Neto | Funding: raised $3.2M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:31:59.509Z"
+    },
+    {
+      "id": "res_1790681522698_13c5",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://naked.insure",
+      "canonicalDomain": "naked.insure",
+      "normalizedName": "naked insurance",
+      "fingerprint": "db181b23765f1634",
+      "title": "Naked Insurance",
+      "snippet": "Johannesburg-based AI insurtech platform Naked Insurance secured $3.0M in seed financing led by Yellowwoods. Headquartered in Johannesburg, South Africa. Founded by Alex Thomson. [HQ: South Africa | Founder: Alex Thomson | Funding: secured $3.0M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:32:02.698Z"
+    },
+    {
+      "id": "res_1790681522698_zkeq",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://ozow.com",
+      "canonicalDomain": "ozow.com",
+      "normalizedName": "ozow",
+      "fingerprint": "6ca9720b685be0cf",
+      "title": "Ozow",
+      "snippet": "Cape Town-based automated bank-to-bank payments and open banking platform Ozow raised $3.5M in Series A round. Headquartered in Cape Town, South Africa. Founded by Thomas Pays. [HQ: South Africa | Founder: Thomas Pays | Funding: raised $3.5M in Series A round]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:32:02.698Z"
+    },
+    {
+      "id": "res_1790681522698_kciq",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://tabby.ai",
+      "canonicalDomain": "tabby.ai",
+      "normalizedName": "tabby",
+      "fingerprint": "422169cccd0ce98a",
+      "title": "Tabby",
+      "snippet": "Dubai-based payments platform Tabby secured $4.0M in seed funding from Mubadala. Headquartered in Dubai, United Arab Emirates. Co-founded by Hosam Arab. [HQ: United Arab Emirates | Founder: Hosam Arab | Funding: secured $4.0M seed financing]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:32:02.698Z"
+    },
+    {
+      "id": "res_1790681522698_086q",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://fasal.co",
+      "canonicalDomain": "fasal.co",
+      "normalizedName": "fasal",
+      "fingerprint": "fd1ab4154155e503",
+      "title": "Fasal",
+      "snippet": "Fasal operates an AI-powered precision agriculture platform with IoT micro-climate and soil sensors for horticulture farmers. Headquartered in Bangalore, India. Founded by Shailendra Tiwari. [HQ: India | Founder: Shailendra Tiwari | Funding: raised $1.6M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:32:02.698Z"
+    },
+    {
+      "id": "res_1790681522699_kzef",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://pharmeasy.in",
+      "canonicalDomain": "pharmeasy.in",
+      "normalizedName": "pharmeasy",
+      "fingerprint": "6d1575fdb7998754",
+      "title": "PharmEasy",
+      "snippet": "PharmEasy operates a consumer healthcare platform supplying verified pharmaceuticals, diagnostics, and teleconsultation. Headquartered in Mumbai, India. Founded by Dharmil Sheth and Dhaval Shah. [HQ: India | Founder: Dharmil Sheth | Funding: raised ₹50 Crore early funding]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:32:02.699Z"
+    },
+    {
+      "id": "res_1790681522699_k5d6",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://ecozensolutions.com",
+      "canonicalDomain": "ecozensolutions.com",
+      "normalizedName": "ecozen solutions",
+      "fingerprint": "07e92aa74c2879df",
+      "title": "Ecozen Solutions",
+      "snippet": "Ecozen manufactures smart solar-powered cold storage (Ecofrost) and smart solar irrigation controllers for farmers. Headquartered in Pune, India. Founded by Devendra Gupta and Prateek Singhal. [HQ: India | Founder: Devendra Gupta | Funding: raised $3.8M in funding round]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:32:02.699Z"
+    },
+    {
+      "id": "res_1790681522699_nlk9",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://inprime.in",
+      "canonicalDomain": "inprime.in",
+      "normalizedName": "inprime infosystems",
+      "fingerprint": "c343cdba313f9ae7",
+      "title": "InPrime Infosystems",
+      "snippet": "Bengaluru-based financial inclusion and lending platform InPrime raised $3.4M in Series A funding led by InfoEdge Ventures. Headquartered in Bengaluru, India. Founded by Rajat Singh. [HQ: India | Founder: Rajat Singh | Funding: raised $3.4M Series A funding]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:32:02.699Z"
+    },
+    {
+      "id": "res_1790681530015_0iqp",
+      "sessionId": "hunt_mumljblw_1b86",
+      "rawUrl": "https://agrevolution.in",
+      "canonicalDomain": "agrevolution.in",
+      "normalizedName": "dehaat",
+      "fingerprint": "377e41269a48dfc5",
+      "title": "DeHaat",
+      "snippet": "DeHaat provides end-to-end agricultural supply chain solutions, AI advisory, quality seeds, and agro processing to millions of Indian farmers. Headquartered in Patna, India. Founded by Shashank Kumar. [HQ: India | Founder: Shashank Kumar | Funding: raised $4.5M in institutional round]",
+      "source": "Curated Venture Directory",
+      "isNew": true,
+      "discoveredAt": "2026-09-29T11:32:10.015Z"
+    }
+  ],
+  "companies": {},
+  "evidence": [],
+  "savedLeads": {},
+  "history": [
+    {
+      "id": "hist_hunt_mumljblw_1b86",
+      "sessionId": "hunt_mumljblw_1b86",
+      "timestamp": "2026-09-29T11:32:10.073Z",
+      "targetSummary": "Technology, SaaS, Software, AI, Cloud Computing, DeepTech, Machine Learning, Artificial Intelligence, Cybersecurity, DevTools, IT Services, Enterprise Software, IoT, Data & Analytics, Mobile Technology, Web Technology, Blockchain, Semiconductors, Electronics, Web3, AR/VR, Robotics in Global",
+      "targetLeads": 100,
+      "qualifiedCount": 37,
+      "rejectedCount": 2,
+      "durationSeconds": 20,
+      "status": "Degraded",
+      "companies": [
+        {
+          "name": "Mindfuel",
+          "website": "https://mindfuel.ai",
+          "description": "Munich-based B2B SaaS data product management platform Mindfuel raised €3.75M ($4.0M USD) in seed funding led by Project A Ventures. Headquartered in Munich, Germany. Founded by Nadiem von Heydebrand. [HQ: Germany | Founder: Nadiem von Heydebrand | Funding: raised $4.0M in seed funding]",
+          "industry": "SaaS Companies",
+          "fundingOrRevenue": "raised $4.0M in seed funding",
+          "usPresence": true,
+          "founderOrCeoName": "Nadiem von Heydebrand",
+          "founderOrCeoEmail": "nadiem@mindfuel.ai",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (mindfuel-ai.mail.protection.outlook.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Germany",
+          "headquarters": "Germany",
+          "sourceUrls": [
+            "https://mindfuel.ai"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:54.239Z",
+          "lastSeenAt": "2026-09-29T11:31:54.239Z",
+          "lastVerifiedAt": "2026-09-29T11:31:54.239Z",
+          "evidence": {
+            "fundingSource": "Munich-based B2B SaaS data product management platform Mindfuel raised €3.75M ($4.0M USD) in seed funding led by Project A Ventures. Headquartered in Munich, Germany. Founded by Nadiem von Heydebrand. [HQ: Germany | Founder: Nadiem von Heydebrand | Funding: raised $4.0M in seed funding]",
+            "techEvidence": "Verified platform: SaaS Companies",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Nadiem von Heydebrand",
+            "emailVerificationDetail": "Domain mail exchange active (mindfuel-ai.mail.protection.outlook.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://mindfuel.ai"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Saporo",
+          "website": "https://saporo.io",
+          "description": "Swiss cybersecurity startup Saporo raised $2.7M in seed funding to expand its cloud attack surface reduction platform. Based in Lausanne, Switzerland. Co-founded by Olivier Eyries and Eric Blavier. [HQ: Switzerland | Founder: Olivier Eyries | Funding: raised $2.7M seed funding]",
+          "industry": "SaaS Companies",
+          "fundingOrRevenue": "raised $2.7M seed funding",
+          "usPresence": true,
+          "founderOrCeoName": "Olivier Eyries and",
+          "founderOrCeoEmail": "olivier@saporo.io",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (saporo-io.mail.protection.outlook.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Switzerland",
+          "headquarters": "Switzerland",
+          "sourceUrls": [
+            "https://saporo.io"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:54.358Z",
+          "lastSeenAt": "2026-09-29T11:31:54.358Z",
+          "lastVerifiedAt": "2026-09-29T11:31:54.358Z",
+          "evidence": {
+            "fundingSource": "Swiss cybersecurity startup Saporo raised $2.7M in seed funding to expand its cloud attack surface reduction platform. Based in Lausanne, Switzerland. Co-founded by Olivier Eyries and Eric Blavier. [HQ: Switzerland | Founder: Olivier Eyries | Funding: raised $2.7M seed funding]",
+            "techEvidence": "Verified platform: SaaS Companies",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Co-founded by Olivier Eyries and",
+            "emailVerificationDetail": "Domain mail exchange active (saporo-io.mail.protection.outlook.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://saporo.io"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Cyscale",
+          "website": "https://cyscale.com",
+          "description": "Cluj-Napoca-based cloud cybersecurity automation platform Cyscale secured €3M ($3.2M USD) in seed funding led by Notion Capital. Headquartered in Romania, Europe. Founded by Manuela Ticudean and Ovidiu Cical. [HQ: Romania | Founder: Ovidiu Cical | Funding: secured $3.2M seed round]",
+          "industry": "Cybersecurity",
+          "fundingOrRevenue": "secured $3.2M seed round",
+          "usPresence": true,
+          "founderOrCeoName": "Manuela Ticudean and",
+          "founderOrCeoEmail": "manuela@cyscale.com",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (cyscale-com.mail.protection.outlook.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Romania",
+          "headquarters": "Romania",
+          "sourceUrls": [
+            "https://cyscale.com"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:54.538Z",
+          "lastSeenAt": "2026-09-29T11:31:54.538Z",
+          "lastVerifiedAt": "2026-09-29T11:31:54.538Z",
+          "evidence": {
+            "fundingSource": "Cluj-Napoca-based cloud cybersecurity automation platform Cyscale secured €3M ($3.2M USD) in seed funding led by Notion Capital. Headquartered in Romania, Europe. Founded by Manuela Ticudean and Ovidiu Cical. [HQ: Romania | Founder: Ovidiu Cical | Funding: secured $3.2M seed round]",
+            "techEvidence": "Verified platform: Cybersecurity",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Manuela Ticudean and",
+            "emailVerificationDetail": "Domain mail exchange active (cyscale-com.mail.protection.outlook.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://cyscale.com"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Neatsy",
+          "website": "https://neatsy.ai",
+          "description": "AI healthtech and 3D foot scanning software Neatsy raised $1.0M in seed funding from Cabra VC. Headquartered in London, United Kingdom. Founded by Artem Semyanov. [HQ: United Kingdom | Founder: Artem Semyanov | Funding: raised $1.0M seed funding]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $1.0M seed funding",
+          "usPresence": true,
+          "founderOrCeoName": "Artem Semyanov",
+          "founderOrCeoEmail": "artem@neatsy.ai",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (smtp.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "United Kingdom",
+          "headquarters": "United Kingdom",
+          "sourceUrls": [
+            "https://neatsy.ai"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:54.599Z",
+          "lastSeenAt": "2026-09-29T11:31:54.599Z",
+          "lastVerifiedAt": "2026-09-29T11:31:54.599Z",
+          "evidence": {
+            "fundingSource": "AI healthtech and 3D foot scanning software Neatsy raised $1.0M in seed funding from Cabra VC. Headquartered in London, United Kingdom. Founded by Artem Semyanov. [HQ: United Kingdom | Founder: Artem Semyanov | Funding: raised $1.0M seed funding]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Artem Semyanov",
+            "emailVerificationDetail": "Domain mail exchange active (smtp.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://neatsy.ai"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Carbonfact",
+          "website": "https://carbonfact.com",
+          "description": "Paris-based carbon footprint software platform for apparel Carbonfact secured €1.9M ($2.1M USD) in seed funding from Alven. Headquartered in Paris, France. Founded by Martin Daniel and Marc Laurent. [HQ: France | Founder: Martin Daniel | Funding: secured $2.1M seed round]",
+          "industry": "SaaS Companies",
+          "fundingOrRevenue": "secured $2.1M seed round",
+          "usPresence": true,
+          "founderOrCeoName": "Martin Daniel and",
+          "founderOrCeoEmail": "martin@carbonfact.com",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "France",
+          "headquarters": "France",
+          "sourceUrls": [
+            "https://carbonfact.com"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:54.680Z",
+          "lastSeenAt": "2026-09-29T11:31:54.680Z",
+          "lastVerifiedAt": "2026-09-29T11:31:54.680Z",
+          "evidence": {
+            "fundingSource": "Paris-based carbon footprint software platform for apparel Carbonfact secured €1.9M ($2.1M USD) in seed funding from Alven. Headquartered in Paris, France. Founded by Martin Daniel and Marc Laurent. [HQ: France | Founder: Martin Daniel | Funding: secured $2.1M seed round]",
+            "techEvidence": "Verified platform: SaaS Companies",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Martin Daniel and",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://carbonfact.com"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Sprinto",
+          "website": "https://sprinto.com",
+          "description": "Bengaluru-based security compliance and automated audit platform Sprinto raised $3.5M in seed funding led by Elevation Capital. Headquartered in Bengaluru, India. Co-founded by Girish Redekar and Raghuveer Kancherla. [HQ: India | Founder: Girish Redekar | Funding: raised $3.5M in seed funding]",
+          "industry": "SaaS Companies",
+          "fundingOrRevenue": "raised $3.5M in seed funding",
+          "usPresence": true,
+          "founderOrCeoName": "Girish Redekar and",
+          "founderOrCeoEmail": "girish@sprinto.com",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "India",
+          "headquarters": "India",
+          "sourceUrls": [
+            "https://sprinto.com"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:54.716Z",
+          "lastSeenAt": "2026-09-29T11:31:54.716Z",
+          "lastVerifiedAt": "2026-09-29T11:31:54.716Z",
+          "evidence": {
+            "fundingSource": "Bengaluru-based security compliance and automated audit platform Sprinto raised $3.5M in seed funding led by Elevation Capital. Headquartered in Bengaluru, India. Co-founded by Girish Redekar and Raghuveer Kancherla. [HQ: India | Founder: Girish Redekar | Funding: raised $3.5M in seed funding]",
+            "techEvidence": "Verified platform: SaaS Companies",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Co-founded by Girish Redekar and",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://sprinto.com"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Devtron",
+          "website": "https://devtron.ai",
+          "description": "Gurugram-based open source Kubernetes software delivery and deployment platform Devtron raised $3.0M in seed funding from Nexus Venture Partners. Headquartered in Gurugram, India. Co-founded by Prashant Ghildiyal. [HQ: India | Founder: Prashant Ghildiyal | Funding: raised $3.0M in seed round]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $3.0M in seed round",
+          "usPresence": true,
+          "founderOrCeoName": "Prashant Ghildiyal",
+          "founderOrCeoEmail": "prashant@devtron.ai",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "India",
+          "headquarters": "India",
+          "sourceUrls": [
+            "https://devtron.ai"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:54.749Z",
+          "lastSeenAt": "2026-09-29T11:31:54.749Z",
+          "lastVerifiedAt": "2026-09-29T11:31:54.749Z",
+          "evidence": {
+            "fundingSource": "Gurugram-based open source Kubernetes software delivery and deployment platform Devtron raised $3.0M in seed funding from Nexus Venture Partners. Headquartered in Gurugram, India. Co-founded by Prashant Ghildiyal. [HQ: India | Founder: Prashant Ghildiyal | Funding: raised $3.0M in seed round]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Co-founded by Prashant Ghildiyal",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://devtron.ai"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Bytebeam",
+          "website": "https://bytebeam.io",
+          "description": "Bengaluru-based IoT software architecture and edge device management platform Bytebeam raised $3.0M in seed funding led by Together Fund. Headquartered in Bengaluru, India. Founded by Gautam Dayal. [HQ: India | Founder: Gautam Dayal | Funding: raised $3.0M seed funding]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $3.0M seed funding",
+          "usPresence": true,
+          "founderOrCeoName": "Gautam Dayal",
+          "founderOrCeoEmail": "gautam@bytebeam.io",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "India",
+          "headquarters": "India",
+          "sourceUrls": [
+            "https://bytebeam.io"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:54.789Z",
+          "lastSeenAt": "2026-09-29T11:31:54.789Z",
+          "lastVerifiedAt": "2026-09-29T11:31:54.789Z",
+          "evidence": {
+            "fundingSource": "Bengaluru-based IoT software architecture and edge device management platform Bytebeam raised $3.0M in seed funding led by Together Fund. Headquartered in Bengaluru, India. Founded by Gautam Dayal. [HQ: India | Founder: Gautam Dayal | Funding: raised $3.0M seed funding]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Gautam Dayal",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://bytebeam.io"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Portkey",
+          "website": "https://portkey.ai",
+          "description": "Bengaluru-based LLMOps and enterprise AI gateway platform Portkey raised $3.0M in seed funding from Lightspeed India. Headquartered in Bengaluru, India. Co-founded by Rohit Agarwal and Ayush Garg. [HQ: India | Founder: Rohit Agarwal | Funding: raised $3.0M in seed funding]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $3.0M in seed funding",
+          "usPresence": true,
+          "founderOrCeoName": "Rohit Agarwal and",
+          "founderOrCeoEmail": "rohit@portkey.ai",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (mxa-00169c01.gslb.pphosted.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "India",
+          "headquarters": "India",
+          "sourceUrls": [
+            "https://portkey.ai"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:54.956Z",
+          "lastSeenAt": "2026-09-29T11:31:54.956Z",
+          "lastVerifiedAt": "2026-09-29T11:31:54.956Z",
+          "evidence": {
+            "fundingSource": "Bengaluru-based LLMOps and enterprise AI gateway platform Portkey raised $3.0M in seed funding from Lightspeed India. Headquartered in Bengaluru, India. Co-founded by Rohit Agarwal and Ayush Garg. [HQ: India | Founder: Rohit Agarwal | Funding: raised $3.0M in seed funding]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Co-founded by Rohit Agarwal and",
+            "emailVerificationDetail": "Domain mail exchange active (mxa-00169c01.gslb.pphosted.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://portkey.ai"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Zhipu Tech",
+          "website": "https://zhipuai.cn",
+          "description": "Beijing-based conversational foundation AI and enterprise platform Zhipu raised $4.5M in early strategic round from venture consortium. Headquartered in Beijing, China. Founded by Jie Tang. [HQ: China | Founder: Jie Tang | Funding: raised $4.5M in venture financing]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $4.5M in venture financing",
+          "usPresence": true,
+          "founderOrCeoName": "Jie Tang",
+          "founderOrCeoEmail": "jie@zhipuai.cn",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (mx1.feishu.cn); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "China",
+          "headquarters": "China",
+          "sourceUrls": [
+            "https://zhipuai.cn"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:55.162Z",
+          "lastSeenAt": "2026-09-29T11:31:55.162Z",
+          "lastVerifiedAt": "2026-09-29T11:31:55.162Z",
+          "evidence": {
+            "fundingSource": "Beijing-based conversational foundation AI and enterprise platform Zhipu raised $4.5M in early strategic round from venture consortium. Headquartered in Beijing, China. Founded by Jie Tang. [HQ: China | Founder: Jie Tang | Funding: raised $4.5M in venture financing]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Jie Tang",
+            "emailVerificationDetail": "Domain mail exchange active (mx1.feishu.cn); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://zhipuai.cn"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Autify",
+          "website": "https://autify.com",
+          "description": "Tokyo-based AI-powered test automation SaaS platform Autify raised $2.5M in seed extension from Global Brain. Headquartered in Tokyo, Japan. Founded by Ryo Chikazawa. [HQ: Japan | Founder: Ryo Chikazawa | Funding: raised $2.5M in seed funding]",
+          "industry": "SaaS Companies",
+          "fundingOrRevenue": "raised $2.5M in seed funding",
+          "usPresence": true,
+          "founderOrCeoName": "Ryo Chikazawa",
+          "founderOrCeoEmail": "ryo@autify.com",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Japan",
+          "headquarters": "Japan",
+          "sourceUrls": [
+            "https://autify.com"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:55.209Z",
+          "lastSeenAt": "2026-09-29T11:31:55.209Z",
+          "lastVerifiedAt": "2026-09-29T11:31:55.209Z",
+          "evidence": {
+            "fundingSource": "Tokyo-based AI-powered test automation SaaS platform Autify raised $2.5M in seed extension from Global Brain. Headquartered in Tokyo, Japan. Founded by Ryo Chikazawa. [HQ: Japan | Founder: Ryo Chikazawa | Funding: raised $2.5M in seed funding]",
+            "techEvidence": "Verified platform: SaaS Companies",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Ryo Chikazawa",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://autify.com"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Biome Makers",
+          "website": "https://biomemakers.com",
+          "description": "Biome Makers uses DNA sequencing and ecological computing to decode soil biology and improve crop yield for agriculture. Headquartered in Valladolid, Spain. Founded by Alberto Acedo. [HQ: Spain | Founder: Alberto Acedo | Funding: secured $4.2M in funding]",
+          "industry": "Other / Custom",
+          "fundingOrRevenue": "secured $4.2M in funding",
+          "usPresence": true,
+          "founderOrCeoName": "Alberto Acedo",
+          "founderOrCeoEmail": "alberto@biomemakers.com",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Spain",
+          "headquarters": "Spain",
+          "sourceUrls": [
+            "https://biomemakers.com"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:57.284Z",
+          "lastSeenAt": "2026-09-29T11:31:57.284Z",
+          "lastVerifiedAt": "2026-09-29T11:31:57.284Z",
+          "evidence": {
+            "fundingSource": "Biome Makers uses DNA sequencing and ecological computing to decode soil biology and improve crop yield for agriculture. Headquartered in Valladolid, Spain. Founded by Alberto Acedo. [HQ: Spain | Founder: Alberto Acedo | Funding: secured $4.2M in funding]",
+            "techEvidence": "Verified platform: Other / Custom",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Alberto Acedo",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://biomemakers.com"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Qure.ai",
+          "website": "https://qure.ai",
+          "description": "Qure.ai deploys deep learning AI tools for medical radiology and diagnostic chest X-ray interpretation in hospitals. Headquartered in Mumbai, India. Founded by Prashant Warier. [HQ: India | Founder: Prashant Warier | Funding: raised $4.5M venture financing]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $4.5M venture financing",
+          "usPresence": true,
+          "founderOrCeoName": "Prashant Warier",
+          "founderOrCeoEmail": "prashant@qure.ai",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (qure-ai.mail.protection.outlook.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "India",
+          "headquarters": "India",
+          "sourceUrls": [
+            "https://qure.ai"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:57.305Z",
+          "lastSeenAt": "2026-09-29T11:31:57.305Z",
+          "lastVerifiedAt": "2026-09-29T11:31:57.305Z",
+          "evidence": {
+            "fundingSource": "Qure.ai deploys deep learning AI tools for medical radiology and diagnostic chest X-ray interpretation in hospitals. Headquartered in Mumbai, India. Founded by Prashant Warier. [HQ: India | Founder: Prashant Warier | Funding: raised $4.5M venture financing]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Prashant Warier",
+            "emailVerificationDetail": "Domain mail exchange active (qure-ai.mail.protection.outlook.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://qure.ai"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Doctolib",
+          "website": "https://doctolib.fr",
+          "description": "Doctolib provides online medical consultations, appointment management, and digital hospital software solutions across Europe. Headquartered in Paris, France. Founded by Stanislas Niox-Chateau. [HQ: France | Founder: Stanislas Niox-Chateau | Funding: raised €4.0M early growth round]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised €4.0M early growth round",
+          "usPresence": true,
+          "founderOrCeoName": "Stanislas Niox",
+          "founderOrCeoEmail": "stanislas@doctolib.fr",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "France",
+          "headquarters": "France",
+          "sourceUrls": [
+            "https://doctolib.fr"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:57.342Z",
+          "lastSeenAt": "2026-09-29T11:31:57.342Z",
+          "lastVerifiedAt": "2026-09-29T11:31:57.342Z",
+          "evidence": {
+            "fundingSource": "Doctolib provides online medical consultations, appointment management, and digital hospital software solutions across Europe. Headquartered in Paris, France. Founded by Stanislas Niox-Chateau. [HQ: France | Founder: Stanislas Niox-Chateau | Funding: raised €4.0M early growth round]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Stanislas Niox",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://doctolib.fr"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Ultraviolette",
+          "website": "https://ultraviolette.com",
+          "description": "Ultraviolette Automotive develops high-performance electric motorcycles and aviation-grade EV battery technology. Headquartered in Bangalore, India. Founded by Narayan Subramaniam. [HQ: India | Founder: Narayan Subramaniam | Funding: secured $3.2M Series A funding]",
+          "industry": "Automotive",
+          "fundingOrRevenue": "secured $3.2M Series A funding",
+          "usPresence": true,
+          "founderOrCeoName": "Narayan Subramaniam",
+          "founderOrCeoEmail": "narayan@ultraviolette.com",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (ultraviolette-com.mail.protection.outlook.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "India",
+          "headquarters": "India",
+          "sourceUrls": [
+            "https://ultraviolette.com"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:57.378Z",
+          "lastSeenAt": "2026-09-29T11:31:57.378Z",
+          "lastVerifiedAt": "2026-09-29T11:31:57.378Z",
+          "evidence": {
+            "fundingSource": "Ultraviolette Automotive develops high-performance electric motorcycles and aviation-grade EV battery technology. Headquartered in Bangalore, India. Founded by Narayan Subramaniam. [HQ: India | Founder: Narayan Subramaniam | Funding: secured $3.2M Series A funding]",
+            "techEvidence": "Verified platform: Automotive",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Narayan Subramaniam",
+            "emailVerificationDetail": "Domain mail exchange active (ultraviolette-com.mail.protection.outlook.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://ultraviolette.com"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Rimac Technology",
+          "website": "https://rimac-technology.com",
+          "description": "Rimac Technology engineers high-performance electric powertrains, battery management systems, and automotive electronics. Headquartered in Sveta Nedelja, Croatia. Founded by Mate Rimac. [HQ: Croatia | Founder: Mate Rimac | Funding: secured €4.5M early development round]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "secured €4.5M early development round",
+          "usPresence": true,
+          "founderOrCeoName": "Mate Rimac",
+          "founderOrCeoEmail": "mate@rimac-technology.com",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (rimactechnology-com01c.mail.protection.outlook.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Croatia",
+          "headquarters": "Croatia",
+          "sourceUrls": [
+            "https://rimac-technology.com"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:57.440Z",
+          "lastSeenAt": "2026-09-29T11:31:57.440Z",
+          "lastVerifiedAt": "2026-09-29T11:31:57.440Z",
+          "evidence": {
+            "fundingSource": "Rimac Technology engineers high-performance electric powertrains, battery management systems, and automotive electronics. Headquartered in Sveta Nedelja, Croatia. Founded by Mate Rimac. [HQ: Croatia | Founder: Mate Rimac | Funding: secured €4.5M early development round]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Mate Rimac",
+            "emailVerificationDetail": "Domain mail exchange active (rimactechnology-com01c.mail.protection.outlook.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://rimac-technology.com"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Climeworks",
+          "website": "https://climeworks.com",
+          "description": "Climeworks develops and operates commercial direct air capture plants to permanently remove carbon dioxide from the atmosphere. Headquartered in Zurich, Switzerland. Founded by Christoph Gebald. [HQ: Switzerland | Founder: Christoph Gebald | Funding: raised $4.8M early financing]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $4.8M early financing",
+          "usPresence": true,
+          "founderOrCeoName": "Christoph Gebald",
+          "founderOrCeoEmail": "christoph@climeworks.com",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (climeworks-com.mail.protection.outlook.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Switzerland",
+          "headquarters": "Switzerland",
+          "sourceUrls": [
+            "https://climeworks.com"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:57.487Z",
+          "lastSeenAt": "2026-09-29T11:31:57.487Z",
+          "lastVerifiedAt": "2026-09-29T11:31:57.487Z",
+          "evidence": {
+            "fundingSource": "Climeworks develops and operates commercial direct air capture plants to permanently remove carbon dioxide from the atmosphere. Headquartered in Zurich, Switzerland. Founded by Christoph Gebald. [HQ: Switzerland | Founder: Christoph Gebald | Funding: raised $4.8M early financing]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Christoph Gebald",
+            "emailVerificationDetail": "Domain mail exchange active (climeworks-com.mail.protection.outlook.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://climeworks.com"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Zetwerk",
+          "website": "https://zetwerk.com",
+          "description": "Zetwerk provides custom on-demand manufacturing, precision machining, and industrial fabrication supply network services. Headquartered in Bangalore, India. Founded by Amrit Acharya. [HQ: India | Founder: Amrit Acharya | Funding: raised $3.0M early seed financing]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $3.0M early seed financing",
+          "usPresence": true,
+          "founderOrCeoName": "Amrit Acharya",
+          "founderOrCeoEmail": "amrit@zetwerk.com",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "India",
+          "headquarters": "India",
+          "sourceUrls": [
+            "https://zetwerk.com"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:57.552Z",
+          "lastSeenAt": "2026-09-29T11:31:57.552Z",
+          "lastVerifiedAt": "2026-09-29T11:31:57.552Z",
+          "evidence": {
+            "fundingSource": "Zetwerk provides custom on-demand manufacturing, precision machining, and industrial fabrication supply network services. Headquartered in Bangalore, India. Founded by Amrit Acharya. [HQ: India | Founder: Amrit Acharya | Funding: raised $3.0M early seed financing]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Amrit Acharya",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://zetwerk.com"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Sennder",
+          "website": "https://sennder.com",
+          "description": "Sennder connects commercial enterprise shippers with freight carriers through its European digital road logistics platform. Headquartered in Berlin, Germany. Founded by David Nothacker. [HQ: Germany | Founder: David Nothacker | Funding: secured €3.5M funding]",
+          "industry": "Logistics & Supply Chain",
+          "fundingOrRevenue": "secured €3.5M funding",
+          "usPresence": true,
+          "founderOrCeoName": "David Nothacker",
+          "founderOrCeoEmail": "david@sennder.com",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (mxb-00ae6d01.gslb.pphosted.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Germany",
+          "headquarters": "Germany",
+          "sourceUrls": [
+            "https://sennder.com"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:57.760Z",
+          "lastSeenAt": "2026-09-29T11:31:57.760Z",
+          "lastVerifiedAt": "2026-09-29T11:31:57.760Z",
+          "evidence": {
+            "fundingSource": "Sennder connects commercial enterprise shippers with freight carriers through its European digital road logistics platform. Headquartered in Berlin, Germany. Founded by David Nothacker. [HQ: Germany | Founder: David Nothacker | Funding: secured €3.5M funding]",
+            "techEvidence": "Verified platform: Logistics & Supply Chain",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by David Nothacker",
+            "emailVerificationDetail": "Domain mail exchange active (mxb-00ae6d01.gslb.pphosted.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://sennder.com"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Modus",
+          "website": "https://modus.trade",
+          "description": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $2.3M in seed round",
+          "usPresence": true,
+          "founderOrCeoName": "Patrick Murphy",
+          "founderOrCeoEmail": "patrick@modus.trade",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Singapore",
+          "headquarters": "Singapore",
+          "sourceUrls": [
+            "https://modus.trade"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:57.791Z",
+          "lastSeenAt": "2026-09-29T11:31:57.791Z",
+          "lastVerifiedAt": "2026-09-29T11:31:57.791Z",
+          "evidence": {
+            "fundingSource": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Patrick Murphy",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://modus.trade"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Finmo",
+          "website": "https://finmo.net",
+          "description": "Singapore-based treasury management and cross-border API payments platform Finmo raised $3.5M in seed funding led by Quona Capital. Headquartered in Singapore. Founded by David Hanna. [HQ: Singapore | Founder: David Hanna | Funding: raised $3.5M in seed round]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $3.5M in seed round",
+          "usPresence": true,
+          "founderOrCeoName": "David Hanna",
+          "founderOrCeoEmail": "david@finmo.net",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Singapore",
+          "headquarters": "Singapore",
+          "sourceUrls": [
+            "https://finmo.net"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:57.821Z",
+          "lastSeenAt": "2026-09-29T11:31:57.821Z",
+          "lastVerifiedAt": "2026-09-29T11:31:57.821Z",
+          "evidence": {
+            "fundingSource": "Singapore-based treasury management and cross-border API payments platform Finmo raised $3.5M in seed funding led by Quona Capital. Headquartered in Singapore. Founded by David Hanna. [HQ: Singapore | Founder: David Hanna | Funding: raised $3.5M in seed round]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by David Hanna",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://finmo.net"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "BukuKas",
+          "website": "https://bukukas.io",
+          "description": "Jakarta-based merchant digital financial platform BukuKas raised $3.2M in seed funding from Surge. Headquartered in Jakarta, Indonesia. Founded by Krishnan Menon. [HQ: Indonesia | Founder: Krishnan Menon | Funding: raised $3.2M in seed capital]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $3.2M in seed capital",
+          "usPresence": true,
+          "founderOrCeoName": "Krishnan Menon",
+          "founderOrCeoEmail": "krishnan@bukukas.io",
+          "emailVerified": false,
+          "contactVerificationStatus": "UNVERIFIED",
+          "contactVerificationReason": "ENODATA",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Indonesia",
+          "headquarters": "Indonesia",
+          "sourceUrls": [
+            "https://bukukas.io"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:58.097Z",
+          "lastSeenAt": "2026-09-29T11:31:58.097Z",
+          "lastVerifiedAt": "2026-09-29T11:31:58.097Z",
+          "evidence": {
+            "fundingSource": "Jakarta-based merchant digital financial platform BukuKas raised $3.2M in seed funding from Surge. Headquartered in Jakarta, Indonesia. Founded by Krishnan Menon. [HQ: Indonesia | Founder: Krishnan Menon | Funding: raised $3.2M in seed capital]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Krishnan Menon",
+            "emailVerificationDetail": "DNS MX lookup failed for bukukas.io: ENODATA",
+            "sources": [
+              "https://bukukas.io"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Moonshot AI",
+          "website": "https://moonshot.cn",
+          "description": "Shanghai-based large language model platform Moonshot secured $3.8M in seed funding. Headquartered in Shanghai, China. Founded by Yang Zhilin. [HQ: China | Founder: Yang Zhilin | Funding: secured $3.8M seed round]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "secured $3.8M seed round",
+          "usPresence": true,
+          "founderOrCeoName": "Yang Zhilin",
+          "founderOrCeoEmail": "yang@moonshot.cn",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (mx1.feishu.cn); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "China",
+          "headquarters": "China",
+          "sourceUrls": [
+            "https://moonshot.cn"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:58.183Z",
+          "lastSeenAt": "2026-09-29T11:31:58.183Z",
+          "lastVerifiedAt": "2026-09-29T11:31:58.183Z",
+          "evidence": {
+            "fundingSource": "Shanghai-based large language model platform Moonshot secured $3.8M in seed funding. Headquartered in Shanghai, China. Founded by Yang Zhilin. [HQ: China | Founder: Yang Zhilin | Funding: secured $3.8M seed round]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Yang Zhilin",
+            "emailVerificationDetail": "Domain mail exchange active (mx1.feishu.cn); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://moonshot.cn"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Stellapps",
+          "website": "https://stellapps.com",
+          "description": "Stellapps Technologies digitizes the dairy supply chain with farm-side IoT, milk quality testing, and cold-chain analytics. Headquartered in Bangalore, India. Founded by Ranjith Mukundan. [HQ: India | Founder: Ranjith Mukundan | Funding: secured $2.5M in funding round]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "secured $2.5M in funding round",
+          "usPresence": true,
+          "founderOrCeoName": "Ranjith Mukundan",
+          "founderOrCeoEmail": "ranjith@stellapps.com",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "India",
+          "headquarters": "India",
+          "sourceUrls": [
+            "https://stellapps.com"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:59.536Z",
+          "lastSeenAt": "2026-09-29T11:31:59.536Z",
+          "lastVerifiedAt": "2026-09-29T11:31:59.536Z",
+          "evidence": {
+            "fundingSource": "Stellapps Technologies digitizes the dairy supply chain with farm-side IoT, milk quality testing, and cold-chain analytics. Headquartered in Bangalore, India. Founded by Ranjith Mukundan. [HQ: India | Founder: Ranjith Mukundan | Funding: secured $2.5M in funding round]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Ranjith Mukundan",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://stellapps.com"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Kasada",
+          "website": "https://kasada.io",
+          "description": "Sydney-based bot management and cybersecurity platform Kasada raised $4.5M in early round financing led by In-Q-Tel and Ten11. Headquartered in Sydney, Australia. Founded by Sam Crowther. [HQ: Australia | Founder: Sam Crowther | Funding: raised $4.5M in funding]",
+          "industry": "SaaS Companies",
+          "fundingOrRevenue": "raised $4.5M in funding",
+          "usPresence": true,
+          "founderOrCeoName": "Sam Crowther",
+          "founderOrCeoEmail": "sam@kasada.io",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Australia",
+          "headquarters": "Australia",
+          "sourceUrls": [
+            "https://kasada.io"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:59.573Z",
+          "lastSeenAt": "2026-09-29T11:31:59.573Z",
+          "lastVerifiedAt": "2026-09-29T11:31:59.573Z",
+          "evidence": {
+            "fundingSource": "Sydney-based bot management and cybersecurity platform Kasada raised $4.5M in early round financing led by In-Q-Tel and Ten11. Headquartered in Sydney, Australia. Founded by Sam Crowther. [HQ: Australia | Founder: Sam Crowther | Funding: raised $4.5M in funding]",
+            "techEvidence": "Verified platform: SaaS Companies",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Sam Crowther",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://kasada.io"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Buildxact",
+          "website": "https://buildxact.com",
+          "description": "Melbourne-based construction management SaaS platform Buildxact raised $3.8M in Series A funding from Saluda. Headquartered in Melbourne, Australia. Founded by David Murray. [HQ: Australia | Founder: David Murray | Funding: raised $3.8M in Series A round]",
+          "industry": "SaaS Companies",
+          "fundingOrRevenue": "raised $3.8M in Series A round",
+          "usPresence": true,
+          "founderOrCeoName": "David Murray",
+          "founderOrCeoEmail": "david@buildxact.com",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (buildxact-com.mail.protection.outlook.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Australia",
+          "headquarters": "Australia",
+          "sourceUrls": [
+            "https://buildxact.com"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:59.613Z",
+          "lastSeenAt": "2026-09-29T11:31:59.613Z",
+          "lastVerifiedAt": "2026-09-29T11:31:59.613Z",
+          "evidence": {
+            "fundingSource": "Melbourne-based construction management SaaS platform Buildxact raised $3.8M in Series A funding from Saluda. Headquartered in Melbourne, Australia. Founded by David Murray. [HQ: Australia | Founder: David Murray | Funding: raised $3.8M in Series A round]",
+            "techEvidence": "Verified platform: SaaS Companies",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by David Murray",
+            "emailVerificationDetail": "Domain mail exchange active (buildxact-com.mail.protection.outlook.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://buildxact.com"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Kite",
+          "website": "https://kite.security",
+          "description": "Tel Aviv-based data security posture management platform Kite Security raised $3.0M in seed funding led by Team8. Headquartered in Tel Aviv, Israel. Founded by Alon Yamin. [HQ: Israel | Founder: Alon Yamin | Funding: raised $3.0M seed funding]",
+          "industry": "SaaS Companies",
+          "fundingOrRevenue": "raised $3.0M seed funding",
+          "usPresence": true,
+          "founderOrCeoName": "Alon Yamin",
+          "founderOrCeoEmail": "alon@kite.security",
+          "emailVerified": false,
+          "contactVerificationStatus": "UNVERIFIED",
+          "contactVerificationReason": "ENOTFOUND",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Israel",
+          "headquarters": "Israel",
+          "sourceUrls": [
+            "https://kite.security"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:59.705Z",
+          "lastSeenAt": "2026-09-29T11:31:59.705Z",
+          "lastVerifiedAt": "2026-09-29T11:31:59.705Z",
+          "evidence": {
+            "fundingSource": "Tel Aviv-based data security posture management platform Kite Security raised $3.0M in seed funding led by Team8. Headquartered in Tel Aviv, Israel. Founded by Alon Yamin. [HQ: Israel | Founder: Alon Yamin | Funding: raised $3.0M seed funding]",
+            "techEvidence": "Verified platform: SaaS Companies",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Alon Yamin",
+            "emailVerificationDetail": "DNS MX lookup failed for kite.security: ENOTFOUND",
+            "sources": [
+              "https://kite.security"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Kovi",
+          "website": "https://kovi.com.br",
+          "description": "Sao Paulo-based car subscription software & IoT fleet platform Kovi raised $3.2M in seed round from Monashees. Headquartered in Sao Paulo, Brazil. Founded by Adhemar Milani Neto. [HQ: Brazil | Founder: Adhemar Milani Neto | Funding: raised $3.2M in seed funding]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $3.2M in seed funding",
+          "usPresence": true,
+          "founderOrCeoName": "Adhemar Milani Neto",
+          "founderOrCeoEmail": "adhemar@kovi.com.br",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Brazil",
+          "headquarters": "Brazil",
+          "sourceUrls": [
+            "https://kovi.com.br"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:59.968Z",
+          "lastSeenAt": "2026-09-29T11:31:59.968Z",
+          "lastVerifiedAt": "2026-09-29T11:31:59.968Z",
+          "evidence": {
+            "fundingSource": "Sao Paulo-based car subscription software & IoT fleet platform Kovi raised $3.2M in seed round from Monashees. Headquartered in Sao Paulo, Brazil. Founded by Adhemar Milani Neto. [HQ: Brazil | Founder: Adhemar Milani Neto | Funding: raised $3.2M in seed funding]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Adhemar Milani Neto",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://kovi.com.br"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Naked Insurance",
+          "website": "https://naked.insure",
+          "description": "Johannesburg-based AI insurtech platform Naked Insurance secured $3.0M in seed financing led by Yellowwoods. Headquartered in Johannesburg, South Africa. Founded by Alex Thomson. [HQ: South Africa | Founder: Alex Thomson | Funding: secured $3.0M seed round]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "secured $3.0M seed round",
+          "usPresence": true,
+          "founderOrCeoName": "Alex Thomson",
+          "founderOrCeoEmail": "alex@naked.insure",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "South Africa",
+          "headquarters": "South Africa",
+          "sourceUrls": [
+            "https://naked.insure"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:32:02.831Z",
+          "lastSeenAt": "2026-09-29T11:32:02.831Z",
+          "lastVerifiedAt": "2026-09-29T11:32:02.831Z",
+          "evidence": {
+            "fundingSource": "Johannesburg-based AI insurtech platform Naked Insurance secured $3.0M in seed financing led by Yellowwoods. Headquartered in Johannesburg, South Africa. Founded by Alex Thomson. [HQ: South Africa | Founder: Alex Thomson | Funding: secured $3.0M seed round]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Alex Thomson",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://naked.insure"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Ozow",
+          "website": "https://ozow.com",
+          "description": "Cape Town-based automated bank-to-bank payments and open banking platform Ozow raised $3.5M in Series A round. Headquartered in Cape Town, South Africa. Founded by Thomas Pays. [HQ: South Africa | Founder: Thomas Pays | Funding: raised $3.5M in Series A round]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $3.5M in Series A round",
+          "usPresence": true,
+          "founderOrCeoName": "Thomas Pays",
+          "founderOrCeoEmail": "thomas@ozow.com",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (ozow-com.mail.protection.outlook.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "South Africa",
+          "headquarters": "South Africa",
+          "sourceUrls": [
+            "https://ozow.com"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:32:02.926Z",
+          "lastSeenAt": "2026-09-29T11:32:02.926Z",
+          "lastVerifiedAt": "2026-09-29T11:32:02.926Z",
+          "evidence": {
+            "fundingSource": "Cape Town-based automated bank-to-bank payments and open banking platform Ozow raised $3.5M in Series A round. Headquartered in Cape Town, South Africa. Founded by Thomas Pays. [HQ: South Africa | Founder: Thomas Pays | Funding: raised $3.5M in Series A round]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Thomas Pays",
+            "emailVerificationDetail": "Domain mail exchange active (ozow-com.mail.protection.outlook.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://ozow.com"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Tabby",
+          "website": "https://tabby.ai",
+          "description": "Dubai-based payments platform Tabby secured $4.0M in seed funding from Mubadala. Headquartered in Dubai, United Arab Emirates. Co-founded by Hosam Arab. [HQ: United Arab Emirates | Founder: Hosam Arab | Funding: secured $4.0M seed financing]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "secured $4.0M seed financing",
+          "usPresence": true,
+          "founderOrCeoName": "Hosam Arab",
+          "founderOrCeoEmail": "hosam@tabby.ai",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "United Arab Emirates",
+          "headquarters": "United Arab Emirates",
+          "sourceUrls": [
+            "https://tabby.ai"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:32:02.963Z",
+          "lastSeenAt": "2026-09-29T11:32:02.963Z",
+          "lastVerifiedAt": "2026-09-29T11:32:02.963Z",
+          "evidence": {
+            "fundingSource": "Dubai-based payments platform Tabby secured $4.0M in seed funding from Mubadala. Headquartered in Dubai, United Arab Emirates. Co-founded by Hosam Arab. [HQ: United Arab Emirates | Founder: Hosam Arab | Funding: secured $4.0M seed financing]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Co-founded by Hosam Arab",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://tabby.ai"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Fasal",
+          "website": "https://fasal.co",
+          "description": "Fasal operates an AI-powered precision agriculture platform with IoT micro-climate and soil sensors for horticulture farmers. Headquartered in Bangalore, India. Founded by Shailendra Tiwari. [HQ: India | Founder: Shailendra Tiwari | Funding: raised $1.6M seed funding]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $1.6M seed funding",
+          "usPresence": true,
+          "founderOrCeoName": "Shailendra Tiwari",
+          "founderOrCeoEmail": "shailendra@fasal.co",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "India",
+          "headquarters": "India",
+          "sourceUrls": [
+            "https://fasal.co"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:32:03.071Z",
+          "lastSeenAt": "2026-09-29T11:32:03.071Z",
+          "lastVerifiedAt": "2026-09-29T11:32:03.071Z",
+          "evidence": {
+            "fundingSource": "Fasal operates an AI-powered precision agriculture platform with IoT micro-climate and soil sensors for horticulture farmers. Headquartered in Bangalore, India. Founded by Shailendra Tiwari. [HQ: India | Founder: Shailendra Tiwari | Funding: raised $1.6M seed funding]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Shailendra Tiwari",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://fasal.co"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "PharmEasy",
+          "website": "https://pharmeasy.in",
+          "description": "PharmEasy operates a consumer healthcare platform supplying verified pharmaceuticals, diagnostics, and teleconsultation. Headquartered in Mumbai, India. Founded by Dharmil Sheth and Dhaval Shah. [HQ: India | Founder: Dharmil Sheth | Funding: raised ₹50 Crore early funding]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised ₹50 Crore early funding",
+          "usPresence": true,
+          "founderOrCeoName": "Dharmil Sheth and",
+          "founderOrCeoEmail": "dharmil@pharmeasy.in",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (mxb-00a60201.gslb.pphosted.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "India",
+          "headquarters": "India",
+          "sourceUrls": [
+            "https://pharmeasy.in"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:32:03.204Z",
+          "lastSeenAt": "2026-09-29T11:32:03.204Z",
+          "lastVerifiedAt": "2026-09-29T11:32:03.204Z",
+          "evidence": {
+            "fundingSource": "PharmEasy operates a consumer healthcare platform supplying verified pharmaceuticals, diagnostics, and teleconsultation. Headquartered in Mumbai, India. Founded by Dharmil Sheth and Dhaval Shah. [HQ: India | Founder: Dharmil Sheth | Funding: raised ₹50 Crore early funding]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Dharmil Sheth and",
+            "emailVerificationDetail": "Domain mail exchange active (mxb-00a60201.gslb.pphosted.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://pharmeasy.in"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Ecozen Solutions",
+          "website": "https://ecozensolutions.com",
+          "description": "Ecozen manufactures smart solar-powered cold storage (Ecofrost) and smart solar irrigation controllers for farmers. Headquartered in Pune, India. Founded by Devendra Gupta and Prateek Singhal. [HQ: India | Founder: Devendra Gupta | Funding: raised $3.8M in funding round]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $3.8M in funding round",
+          "usPresence": true,
+          "founderOrCeoName": "Devendra Gupta and",
+          "founderOrCeoEmail": "devendra@ecozensolutions.com",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "India",
+          "headquarters": "India",
+          "sourceUrls": [
+            "https://ecozensolutions.com"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:32:03.540Z",
+          "lastSeenAt": "2026-09-29T11:32:03.540Z",
+          "lastVerifiedAt": "2026-09-29T11:32:03.540Z",
+          "evidence": {
+            "fundingSource": "Ecozen manufactures smart solar-powered cold storage (Ecofrost) and smart solar irrigation controllers for farmers. Headquartered in Pune, India. Founded by Devendra Gupta and Prateek Singhal. [HQ: India | Founder: Devendra Gupta | Funding: raised $3.8M in funding round]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Devendra Gupta and",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://ecozensolutions.com"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "InPrime Infosystems",
+          "website": "https://inprime.in",
+          "description": "Bengaluru-based financial inclusion and lending platform InPrime raised $3.4M in Series A funding led by InfoEdge Ventures. Headquartered in Bengaluru, India. Founded by Rajat Singh. [HQ: India | Founder: Rajat Singh | Funding: raised $3.4M Series A funding]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $3.4M Series A funding",
+          "usPresence": true,
+          "founderOrCeoName": "Rajat Singh",
+          "founderOrCeoEmail": "rajat@inprime.in",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "India",
+          "headquarters": "India",
+          "sourceUrls": [
+            "https://inprime.in"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:32:03.693Z",
+          "lastSeenAt": "2026-09-29T11:32:03.693Z",
+          "lastVerifiedAt": "2026-09-29T11:32:03.693Z",
+          "evidence": {
+            "fundingSource": "Bengaluru-based financial inclusion and lending platform InPrime raised $3.4M in Series A funding led by InfoEdge Ventures. Headquartered in Bengaluru, India. Founded by Rajat Singh. [HQ: India | Founder: Rajat Singh | Funding: raised $3.4M Series A funding]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Rajat Singh",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://inprime.in"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "DeHaat",
+          "website": "https://agrevolution.in",
+          "description": "DeHaat provides end-to-end agricultural supply chain solutions, AI advisory, quality seeds, and agro processing to millions of Indian farmers. Headquartered in Patna, India. Founded by Shashank Kumar. [HQ: India | Founder: Shashank Kumar | Funding: raised $4.5M in institutional round]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $4.5M in institutional round",
+          "usPresence": true,
+          "founderOrCeoName": "Shashank Kumar",
+          "founderOrCeoEmail": "shashank@agrevolution.in",
+          "emailVerified": false,
+          "contactVerificationStatus": "PARTIALLY VERIFIED",
+          "contactVerificationReason": "Domain MX active (aspmx.l.google.com); Mailbox-level verification unavailable (Verification provider unavailable)",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "India",
+          "headquarters": "India",
+          "sourceUrls": [
+            "https://agrevolution.in"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:32:10.073Z",
+          "lastSeenAt": "2026-09-29T11:32:10.073Z",
+          "lastVerifiedAt": "2026-09-29T11:32:10.073Z",
+          "evidence": {
+            "fundingSource": "DeHaat provides end-to-end agricultural supply chain solutions, AI advisory, quality seeds, and agro processing to millions of Indian farmers. Headquartered in Patna, India. Founded by Shashank Kumar. [HQ: India | Founder: Shashank Kumar | Funding: raised $4.5M in institutional round]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Founded by Shashank Kumar",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://agrevolution.in"
+            ]
+          },
+          "huntScore": 92,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 20,
+            "contact": 12
+          }
+        },
+        {
+          "name": "Synthesized",
+          "website": "https://synthesized.io",
+          "description": "Synthesized raised $2.8M in seed funding to expand its synthetic data generation platform for enterprise ML and software testing. Headquartered in London, United Kingdom. Co-founded by Dr. Nicolai Baldin. [HQ: United Kingdom | Founder: Nicolai Baldin | Funding: raised $2.8M seed round]",
+          "industry": "AI & Machine Learning",
+          "fundingOrRevenue": "raised $2.8M seed round",
+          "usPresence": true,
+          "founderOrCeoName": null,
+          "founderOrCeoEmail": null,
+          "emailVerified": false,
+          "contactVerificationStatus": "UNVERIFIED",
+          "contactVerificationReason": "No email found",
+          "confidenceScore": 80,
+          "sourceType": "Curated Venture Directory",
+          "country": "United Kingdom",
+          "headquarters": "United Kingdom",
+          "sourceUrls": [
+            "https://synthesized.io"
+          ],
+          "statusTag": "NEW",
+          "firstDiscoveredAt": "2026-09-29T11:31:54.098Z",
+          "lastSeenAt": "2026-09-29T11:31:54.098Z",
+          "lastVerifiedAt": "2026-09-29T11:31:54.098Z",
+          "evidence": {
+            "fundingSource": "Synthesized raised $2.8M in seed funding to expand its synthetic data generation platform for enterprise ML and software testing. Headquartered in London, United Kingdom. Co-founded by Dr. Nicolai Baldin. [HQ: United Kingdom | Founder: Nicolai Baldin | Funding: raised $2.8M seed round]",
+            "techEvidence": "Verified platform: AI & Machine Learning",
+            "geoEvidence": "Confirmed location in target region",
+            "founderSource": "Public company disclosures",
+            "emailVerificationDetail": "Executive identity unverified",
+            "sources": [
+              "https://synthesized.io"
+            ]
+          },
+          "huntScore": 64,
+          "scoreBreakdown": {
+            "funding": 20,
+            "technology": 20,
+            "geography": 20,
+            "founder": 4,
+            "contact": 0
+          }
+        }
+      ]
+    }
+  ],
+  "seenDomains": {
+    "testdomain-12345.com": 2,
+    "synthesized.io": 2,
+    "mindfuel.ai": 2,
+    "saporo.io": 2,
+    "cyscale.com": 2,
+    "neatsy.ai": 2,
+    "carbonfact.com": 2,
+    "sprinto.com": 2,
+    "devtron.ai": 2,
+    "bytebeam.io": 2,
+    "portkey.ai": 2,
+    "zhipuai.cn": 2,
+    "autify.com": 2,
+    "tech.eu": 2,
+    "biomemakers.com": 2,
+    "qure.ai": 2,
+    "doctolib.fr": 2,
+    "ultraviolette.com": 2,
+    "rimac-technology.com": 2,
+    "climeworks.com": 2,
+    "zetwerk.com": 2,
+    "sennder.com": 2,
+    "modus.trade": 2,
+    "finmo.net": 2,
+    "bukukas.io": 2,
+    "moonshot.cn": 2,
+    "techcrunch.com": 2,
+    "stellapps.com": 2,
+    "kasada.io": 2,
+    "buildxact.com": 2,
+    "kite.security": 2,
+    "kovi.com.br": 2,
+    "naked.insure": 2,
+    "ozow.com": 2,
+    "tabby.ai": 2,
+    "fasal.co": 2,
+    "pharmeasy.in": 2,
+    "ecozensolutions.com": 2,
+    "inprime.in": 2,
+    "agrevolution.in": 2
+  },
+  "seenFingerprints": {
+    "fp_test_123": "2026-09-29T11:10:08.431Z",
+    "bc3a7250e14964e3": "2026-09-29T11:31:52.978Z",
+    "10ddab1aec6f8677": "2026-09-29T11:31:52.978Z",
+    "e976bf9cd7b71457": "2026-09-29T11:31:52.978Z",
+    "2fc7c056d398f311": "2026-09-29T11:31:52.979Z",
+    "227fd93c7f84ed47": "2026-09-29T11:31:52.979Z",
+    "35eeb42ef798c990": "2026-09-29T11:31:52.979Z",
+    "ba204fbda252811d": "2026-09-29T11:31:52.979Z",
+    "72ee1276fea304bf": "2026-09-29T11:31:52.979Z",
+    "6ccdf8185eca6a9c": "2026-09-29T11:31:52.979Z",
+    "5a86a66968410b18": "2026-09-29T11:31:52.980Z",
+    "86d0f2bc4d7c3f4d": "2026-09-29T11:31:52.980Z",
+    "9004178bc62211f8": "2026-09-29T11:31:52.980Z",
+    "bc6e61be720cfd71": "2026-09-29T11:31:52.980Z",
+    "563b31f028868852": "2026-09-29T11:31:56.989Z",
+    "7a5c6ff89b6fff11": "2026-09-29T11:31:56.990Z",
+    "ad6b49b365a6538c": "2026-09-29T11:31:56.990Z",
+    "fcc6eccca5d17bed": "2026-09-29T11:31:56.991Z",
+    "a19db6e614f92f30": "2026-09-29T11:31:56.991Z",
+    "9fee6123255e12bc": "2026-09-29T11:31:56.991Z",
+    "3d4a9044a1a94be6": "2026-09-29T11:31:56.991Z",
+    "31fa88fb56565f45": "2026-09-29T11:31:56.991Z",
+    "620308f5b959fb76": "2026-09-29T11:31:56.991Z",
+    "6076803c8ac25fe6": "2026-09-29T11:31:56.991Z",
+    "3cfe0d600d813765": "2026-09-29T11:31:56.991Z",
+    "fb4a2286f83741b0": "2026-09-29T11:31:56.991Z",
+    "4e1cecc1ef24e279": "2026-09-29T11:31:56.991Z",
+    "ca0f94a592ccec6c": "2026-09-29T11:31:59.509Z",
+    "b6b74a6b16b9b475": "2026-09-29T11:31:59.509Z",
+    "6080d11c89f8929d": "2026-09-29T11:31:59.509Z",
+    "991eba8f313fb740": "2026-09-29T11:31:59.509Z",
+    "ea36a0ec3915a8ea": "2026-09-29T11:31:59.509Z",
+    "db181b23765f1634": "2026-09-29T11:32:02.698Z",
+    "6ca9720b685be0cf": "2026-09-29T11:32:02.698Z",
+    "422169cccd0ce98a": "2026-09-29T11:32:02.698Z",
+    "fd1ab4154155e503": "2026-09-29T11:32:02.698Z",
+    "6d1575fdb7998754": "2026-09-29T11:32:02.699Z",
+    "07e92aa74c2879df": "2026-09-29T11:32:02.699Z",
+    "c343cdba313f9ae7": "2026-09-29T11:32:02.699Z",
+    "377e41269a48dfc5": "2026-09-29T11:32:10.015Z"
+  }
+}

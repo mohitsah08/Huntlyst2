@@ -38,11 +38,13 @@ export interface ValidatedCompany {
 }
 
 export type VerificationStatusType = 'VERIFIED' | 'PARTIALLY VERIFIED' | 'UNVERIFIED' | 'REJECTED' | 'UNKNOWN';
+export type StandardDeliverabilityStatus = 'valid' | 'invalid' | 'risky' | 'catch-all' | 'unavailable' | 'unknown' | 'pending';
 
 export interface EmailVerificationResult {
   email: string | null;
   verified: boolean;
   status: VerificationStatusType;
+  deliverabilityStatus?: StandardDeliverabilityStatus;
   emailType?: 'professional' | 'personal' | 'generic' | 'unknown';
   domain?: string | null;
   companyDomain?: string | null;

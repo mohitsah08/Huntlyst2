@@ -1,0 +1,121 @@
+{
+  "cardActions": {
+    "approve": "Mover para Pronto",
+    "approveTooltip": "Mover para Pronto",
+    "archiveTooltip": "Arquivar",
+    "renameTooltip": "Mudar título",
+    "deleteTooltip": "Excluir",
+    "select": "Selecionar tarefa",
+    "closePanel": "Fechar painel"
+  },
+  "deleteCard": {
+    "titleWithName": "Excluir \"{{name}}\"?",
+    "description": "Este item e seu histórico serão removidos de forma permanente."
+  },
+  "tags": {
+    "routine": "Rotina",
+    "agentStarted": "Iniciada pelo funcionário de IA",
+    "startedByAgent": "Iniciada por {{name}}",
+    "setup": "Configuração"
+  },
+  "panel": {
+    "taskLabel": "Tarefa: {{title}}",
+    "newTask": "Tarefa nova",
+    "expand": "Expandir chat",
+    "collapse": "Reduzir chat",
+    "backToArchived": "Voltar para arquivadas",
+    "backToTasks": "Voltar para tarefas"
+  },
+  "people": {
+    "label": "Pessoas nesta tarefa",
+    "expand": "Todas as pessoas"
+  },
+  "search": {
+    "placeholder": "Buscar tarefas",
+    "placeholderShort": "Buscar...",
+    "clear": "Limpar busca",
+    "clearCta": "Limpar busca",
+    "searchingText": "Buscando no texto das tarefas",
+    "searchingTitle": "Buscando no texto das tarefas",
+    "searchingDescription": "Verificando mensagens antigas agora.",
+    "emptyTitle": "Nenhuma tarefa encontrada",
+    "emptyDescription": "Tente outra busca ou limpe a atual.",
+    "historyErrorTitle": "Não foi possível buscar todas as tarefas",
+    "historyErrorDescription": "Parte do texto de tarefas antigas não pôde ser carregada."
+  },
+  "toasts": {
+    "attached": "Anexou: {{names}}"
+  },
+  "attachmentMessage": {
+    "count_one": "1 arquivo anexado",
+    "count_other": "{{count}} arquivos anexados"
+  },
+  "chatEmpty": {
+    "heading": "Em que posso ajudar?",
+    "subheading": "Toque uma skill para começar, ou escreva o que você precisa abaixo.",
+    "seeMore_one": "Ver mais {{count}} skill",
+    "seeMore_other": "Ver mais {{count}} skills"
+  },
+  "composer": {
+    "placeholder": "No que o funcionário de IA deve trabalhar?",
+    "followUp": "Continue a conversa...",
+    "assistantPlaceholder": "No que o Houston deve trabalhar?"
+  },
+  "composerSkill": {
+    "browse": "Skills"
+  },
+  "composerAttach": {
+    "addFiles": "Adicionar arquivos",
+    "addFolder": "Adicionar uma pasta"
+  },
+  "selectedSkill": {
+    "cancel": "Fechar"
+  },
+  "bulk": {
+    "selected_one": "{{count}} selecionada",
+    "selected_other": "{{count}} selecionadas",
+    "moveTo": "Mover para",
+    "archive": "Arquivar",
+    "delete": "Excluir",
+    "clear": "Limpar seleção",
+    "cancel": "Cancelar",
+    "error": "Não foi possível atualizar as tarefas selecionadas. Tente novamente.",
+    "confirmMove": {
+      "title": "Mover tarefas?",
+      "description_one": "Mover {{count}} tarefa para {{target}}?",
+      "description_other": "Mover {{count}} tarefas para {{target}}?",
+      "action": "Mover"
+    },
+    "confirmArchive": {
+      "title": "Arquivar tarefas?",
+      "description_one": "Arquivar {{count}} tarefa? Você pode reabrir pela aba Arquivadas.",
+      "description_other": "Arquivar {{count}} tarefas? Você pode reabrir pela aba Arquivadas.",
+      "action": "Arquivar"
+    },
+    "confirmDelete": {
+      "title": "Excluir tarefas?",
+      "description_one": "Excluir de forma permanente {{count}} tarefa e seu histórico?",
+      "description_other": "Excluir de forma permanente {{count}} tarefas e seu histórico?",
+      "action": "Excluir"
+    }
+  },
+  "column": {
+    "menu": "Ações da coluna",
+    "selectAll": "Selecionar toda a coluna"
+  },
+  "archived": {
+    "emptyTitle": "Nenhuma tarefa arquivada",
+    "emptyDescription": "As tarefas arquivadas aparecem aqui. Responda a uma para reativá-la."
+  },
+  "dnd": {
+    "moveError": "Não foi possível mover a tarefa. Tente novamente."
+  },
+  "firstDay": {
+    "start": "Começar o primeiro dia de {{name}}",
+    "heroTitle": "Tudo pronto para o primeiro dia de {{name}}",
+    "explain": "{{name}} vai fazer algumas perguntas para aprender o trabalho.",
+    "compactTitle": "O primeiro dia de {{name}} ainda não começou",
+    "bannerTitle": "Sua equipe está pronta. Escolha um funcionário de IA para começar o primeiro dia dele.",
+    "bannerExplain": "Cada um vai fazer algumas perguntas para aprender o trabalho."
+  }
+}

@@ -1,0 +1,348 @@
+{
+  "color": {
+    "base": {
+      "$type": "color",
+      "white": {
+        "$value": "#ffffff"
+      },
+      "black": {
+        "$value": "#000000"
+      },
+      "transparent": {
+        "$value": "transparent"
+      }
+    },
+    "neutral": {
+      "$type": "color",
+      "50": {
+        "$value": "#fcfcfc"
+      },
+      "100": {
+        "$value": "#efefef"
+      },
+      "150": {
+        "$value": "#e5e5e5"
+      },
+      "200": {
+        "$value": "#e3e3e3"
+      },
+      "250": {
+        "$value": "#d4d4d4"
+      },
+      "500": {
+        "$value": "#8e8e8e"
+      },
+      "450": {
+        "$value": "#9a9a9a"
+      },
+      "650": {
+        "$value": "#424242"
+      },
+      "700": {
+        "$value": "#383838"
+      },
+      "750": {
+        "$value": "#2c2c2b"
+      },
+      "775": {
+        "$value": "#2a2a2d"
+      },
+      "800": {
+        "$value": "#1e1e1e"
+      },
+      "850": {
+        "$value": "#1b1b1e"
+      },
+      "900": {
+        "$value": "#141414"
+      },
+      "950": {
+        "$value": "#0d0d0d"
+      }
+    },
+    "cool": {
+      "$type": "color",
+      "ink": {
+        "$value": "#14161d"
+      },
+      "gutter": {
+        "$value": "#f2f5f9"
+      },
+      "gutter-dark": {
+        "$value": "#141416"
+      },
+      "card-dark": {
+        "$value": "#1e1e20"
+      },
+      "surface": {
+        "$value": "#f4f6fc"
+      }
+    },
+    "status": {
+      "$type": "color",
+      "$description": "The status hues. The plain and `-bright` values are FILLS (a dot, a badge, a destructive button) and carry a white or black label; the `-ink` values are the same hues retuned to be legible AS TEXT on a light surface, where amber-on-white measures ~2:1, and on a chip washed with their OWN hue (`bg-success/15`), which tints the backdrop towards the ink.",
+      "success": {
+        "$value": "#00a240"
+      },
+      "success-bright": {
+        "$value": "#22c55e"
+      },
+      "success-ink": {
+        "$value": "#00742d"
+      },
+      "warning": {
+        "$value": "#e0ac00"
+      },
+      "warning-bright": {
+        "$value": "#eab308"
+      },
+      "warning-ink": {
+        "$value": "#856500"
+      },
+      "danger": {
+        "$value": "#e02e2a"
+      },
+      "danger-bright": {
+        "$value": "#ef4444"
+      },
+      "danger-ink": {
+        "$value": "#bb2321"
+      },
+      "danger-ink-bright": {
+        "$value": "#f87171"
+      },
+      "link": {
+        "$value": "#1264a3"
+      },
+      "link-bright": {
+        "$value": "#1d9bd1"
+      },
+      "highlight-ink-light": {
+        "$value": "#3f2d00"
+      },
+      "highlight-ink-dark": {
+        "$value": "#fde68a"
+      }
+    },
+    "glow": {
+      "$type": "color",
+      "$description": "The brand comet the running-card glow, avatar ring and progress line sweep with. Four fixed hues, deliberately identical in both themes.",
+      "blue": {
+        "$value": "#3b82f6"
+      },
+      "indigo": {
+        "$value": "#818cf8"
+      },
+      "orange": {
+        "$value": "#f97316"
+      },
+      "amber": {
+        "$value": "#fbbf24"
+      },
+      "blue-a15": {
+        "$value": "rgba(59, 130, 246, 0.15)"
+      },
+      "blue-a12": {
+        "$value": "rgba(59, 130, 246, 0.12)"
+      }
+    },
+    "agent": {
+      "$type": "color",
+      "charcoal": {
+        "$value": "#1a1a1a"
+      },
+      "charcoal-bright": {
+        "$value": "#d4d4d4"
+      },
+      "forest": {
+        "$value": "#1b6b3a"
+      },
+      "forest-bright": {
+        "$value": "#4ade80"
+      },
+      "teal": {
+        "$value": "#0f766e"
+      },
+      "teal-bright": {
+        "$value": "#2dd4bf"
+      },
+      "navy": {
+        "$value": "#1e4d8c"
+      },
+      "navy-bright": {
+        "$value": "#60a5fa"
+      },
+      "purple": {
+        "$value": "#5b21b6"
+      },
+      "purple-bright": {
+        "$value": "#a78bfa"
+      },
+      "rose": {
+        "$value": "#db2777"
+      },
+      "rose-bright": {
+        "$value": "#f472b6"
+      },
+      "crimson": {
+        "$value": "#a3261a"
+      },
+      "crimson-bright": {
+        "$value": "#f87171"
+      },
+      "orange": {
+        "$value": "#b45309"
+      },
+      "orange-bright": {
+        "$value": "#fb923c"
+      },
+      "golden": {
+        "$value": "#a16207"
+      },
+      "golden-bright": {
+        "$value": "#fbbf24"
+      },
+      "umber": {
+        "$value": "#78350f"
+      },
+      "umber-bright": {
+        "$value": "#d4a373"
+      }
+    },
+    "filetype": {
+      "$type": "color",
+      "pdf": {
+        "$value": "#c0392b"
+      },
+      "pdf-bright": {
+        "$value": "#e8776c"
+      },
+      "doc": {
+        "$value": "#2158a8"
+      },
+      "doc-bright": {
+        "$value": "#6ea8ef"
+      },
+      "sheet": {
+        "$value": "#1b6b3a"
+      },
+      "sheet-bright": {
+        "$value": "#4fb87b"
+      },
+      "slide": {
+        "$value": "#b45309"
+      },
+      "slide-bright": {
+        "$value": "#d09a4e"
+      },
+      "image": {
+        "$value": "#0e7490"
+      },
+      "image-bright": {
+        "$value": "#48b0c2"
+      },
+      "video": {
+        "$value": "#6d28d9"
+      },
+      "video-bright": {
+        "$value": "#a292e8"
+      },
+      "audio": {
+        "$value": "#a21a6b"
+      },
+      "audio-bright": {
+        "$value": "#df7fb0"
+      },
+      "archive": {
+        "$value": "#8a5a2b"
+      },
+      "archive-bright": {
+        "$value": "#bb9269"
+      },
+      "code": {
+        "$value": "#42509b"
+      },
+      "code-bright": {
+        "$value": "#8e9be6"
+      },
+      "generic": {
+        "$value": "#6b7280"
+      },
+      "generic-bright": {
+        "$value": "#9a9a9a"
+      }
+    },
+    "person": {
+      "$type": "color",
+      "slate": {
+        "$value": "#5b6b7a"
+      },
+      "slate-bright": {
+        "$value": "#647585"
+      },
+      "slate-name": {
+        "$value": "#4e5e6c"
+      },
+      "slate-name-bright": {
+        "$value": "#8b9dab"
+      },
+      "sage": {
+        "$value": "#5e7266"
+      },
+      "sage-bright": {
+        "$value": "#647a6d"
+      },
+      "sage-name": {
+        "$value": "#506357"
+      },
+      "sage-name-bright": {
+        "$value": "#8ca596"
+      },
+      "mauve": {
+        "$value": "#84616b"
+      },
+      "mauve-bright": {
+        "$value": "#8e6b76"
+      },
+      "mauve-name": {
+        "$value": "#74535d"
+      },
+      "mauve-name-bright": {
+        "$value": "#b08e98"
+      },
+      "taupe": {
+        "$value": "#736550"
+      },
+      "taupe-bright": {
+        "$value": "#7d6f59"
+      },
+      "taupe-name": {
+        "$value": "#645845"
+      },
+      "taupe-name-bright": {
+        "$value": "#a4957b"
+      },
+      "indigo": {
+        "$value": "#5b6488"
+      },
+      "indigo-bright": {
+        "$value": "#656e93"
+      },
+      "indigo-name": {
+        "$value": "#4f5878"
+      },
+      "indigo-name-bright": {
+        "$value": "#8e97bb"
+      },
+      "overflow": {
+        "$value": "#e6e8ec"
+      },
+      "overflow-dark": {
+        "$value": "#4c4c52"
+      },
+      "overflow-text": {
+        "$value": "#555b66"
+      }
+    }
+  }
+}

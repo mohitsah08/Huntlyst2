@@ -1,0 +1,124 @@
+{
+  "name": "@houston/domain",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    },
+    "./agent-name": {
+      "types": "./src/agent-name.ts",
+      "import": "./src/agent-name.ts"
+    },
+    "./job-description": {
+      "types": "./src/job-description.ts",
+      "import": "./src/job-description.ts"
+    },
+    "./job-description-yaml": {
+      "types": "./src/job-description-yaml.ts",
+      "import": "./src/job-description-yaml.ts"
+    },
+    "./job-role": {
+      "types": "./src/job-role.ts",
+      "import": "./src/job-role.ts"
+    },
+    "./first-day-greeting": {
+      "types": "./src/first-day-greeting.ts",
+      "import": "./src/first-day-greeting.ts"
+    },
+    "./first-day-mode": {
+      "types": "./src/first-day-mode.ts",
+      "import": "./src/first-day-mode.ts"
+    },
+    "./first-day-config": {
+      "types": "./src/first-day-config.ts",
+      "import": "./src/first-day-config.ts"
+    },
+    "./first-day-prompt": {
+      "types": "./src/first-day-prompt.ts",
+      "import": "./src/first-day-prompt.ts"
+    },
+    "./provider-dialect": {
+      "types": "./src/provider-dialect.ts",
+      "import": "./src/provider-dialect.ts"
+    },
+    "./model-display-names": {
+      "types": "./src/model-display-names.ts",
+      "import": "./src/model-display-names.ts"
+    },
+    "./provider-default-models": {
+      "types": "./src/provider-default-models.ts",
+      "import": "./src/provider-default-models.ts"
+    },
+    "./provider-visibility": {
+      "types": "./src/provider-visibility.ts",
+      "import": "./src/provider-visibility.ts"
+    },
+    "./model-aliases": {
+      "types": "./src/model-aliases.ts",
+      "import": "./src/model-aliases.ts"
+    },
+    "./agent-color-ids": {
+      "types": "./src/agent-color-ids.ts",
+      "import": "./src/agent-color-ids.ts"
+    },
+    "./assistant-role": {
+      "types": "./src/assistant-role.ts",
+      "import": "./src/assistant-role.ts"
+    },
+    "./assistant-capability-index": {
+      "types": "./src/assistant-capability-index.generated.ts",
+      "import": "./src/assistant-capability-index.generated.ts"
+    },
+    "./assistant-capability-index-render": {
+      "types": "./src/assistant-capability-index-render.ts",
+      "import": "./src/assistant-capability-index-render.ts"
+    },
+    "./assistant-deployment": {
+      "types": "./src/assistant-deployment.ts",
+      "import": "./src/assistant-deployment.ts"
+    },
+    "./assistant-hands": {
+      "types": "./src/assistant-hands.ts",
+      "import": "./src/assistant-hands.ts"
+    },
+    "./conversation-keys": {
+      "types": "./src/conversation-keys.ts",
+      "import": "./src/conversation-keys.ts"
+    },
+    "./assistant-catalog-callable": {
+      "types": "./src/assistant-catalog-callable.ts",
+      "import": "./src/assistant-catalog-callable.ts"
+    },
+    "./assistant-catalog-types": {
+      "types": "./src/assistant-catalog-types.ts",
+      "import": "./src/assistant-catalog-types.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "build": "tsgo -p tsconfig.json",
+    "test": "vitest run --testTimeout=30000",
+    "typecheck": "tsgo -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@houston-ai/agent-schemas": "workspace:*",
+    "@houston/protocol": "workspace:*",
+    "croner": "10.0.1",
+    "fflate": "0.8.3",
+    "yaml": "2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.0",
+    "@typescript/native-preview": "7.0.0-dev.20260607.1",
+    "typescript": "6.0.3",
+    "vitest": "3.2.6"
+  }
+}

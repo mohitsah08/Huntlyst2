@@ -1,0 +1,523 @@
+import {
+  ConfirmDialog,
+  cn,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@houston-ai/core";
+import { Archive, Check, Pencil, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  ACTION_BUTTON_CLASS,
+  ACTION_ICON_CLASS,
+  showsCardAction,
+} from "./kanban-card-actions";
+import { KanbanPeople } from "./kanban-people";
+import {
+  CARD_PEOPLE_MAX,
+  peopleGutterClass,
+  stackSlots,
+} from "./kanban-people-logic";
+import type { KanbanItem } from "./types";
+
+export interface KanbanCardLabels {
+  /** @deprecated kept for backward-compat. Was the visible Approve pill text;
+   *  the action is now an icon-only button with `approveTooltip`. */
+  approve?: string;
+  approveTooltip?: string;
+  /** Tooltip + accessible label for the archive action (the icon carries no
+   *  text, so this is its only non-visual form). */
+  archiveTooltip?: string;
+  renameTooltip?: string;
+  deleteTooltip?: string;
+  /** Delete confirm title, `{name}` substituted with `item.title`. */
+  deleteTitle?: (name: string) => string;
+  deleteDescription?: string;
+  /** Accessible label for the multi-select checkbox. */
+  selectTooltip?: string;
+  /** Accessible group label for the card's people face stack. */
+  people?: string;
+  /** Accessible label for the people overlay's expandable "+N" chip. */
+  peopleExpand?: string;
+  /** Accessible label for the detail panel's icon-only close button. */
+  closePanel?: string;
+}
+
+const DEFAULT_LABELS: Required<KanbanCardLabels> = {
+  approve: "Move to done",
+  approveTooltip: "Move to done",
+  archiveTooltip: "Archive",
+  renameTooltip: "Change title",
+  deleteTooltip: "Delete",
+  deleteTitle: (name) => `Delete "${name}"?`,
+  deleteDescription: "This item and its history will be permanently removed.",
+  selectTooltip: "Select",
+  people: "People",
+  peopleExpand: "All people",
+  closePanel: "Close panel",
+};
+
+export interface KanbanCardProps {
+  item: KanbanItem;
+  onSelect: () => void;
+  onDelete?: () => void;
+  onApprove?: () => void;
+  /** One-click "file this away". Mirrors {@link KanbanCardProps.onApprove}:
+   *  the consumer decides what archiving means, the card only offers it. */
+  onArchive?: () => void;
+  onRename?: (newTitle: string) => void;
+  runningStatuses?: string[];
+  approveStatuses?: string[];
+  /** Statuses whose cards offer the archive action. */
+  archiveStatuses?: string[];
+  errorStatuses?: string[];
+  actions?: React.ReactNode;
+  avatar?: React.ReactNode;
+  labels?: KanbanCardLabels;
+  /** Mark this card as the currently-open one in the right panel. */
+  selected?: boolean;
+  /** Mark this card as keyboard-focused (highlighted via arrow nav, not yet
+   *  opened). Renders a focus ring distinct from `selected`. */
+  highlighted?: boolean;
+  /** Enable the multi-select checkbox. */
+  selectable?: boolean;
+  /** Whether this card is part of the current multi-select set. */
+  selectedForBulk?: boolean;
+  /** Whether ANY card is currently multi-selected (keeps every checkbox
+   *  visible without hover so the affordance isn't hover-gated). */
+  anySelected?: boolean;
+  /** Toggle this card's membership in the multi-select set. */
+  onToggleSelect?: () => void;
+  /** Make the card draggable so it can be dropped onto another column.
+   *  Suppressed while renaming or during a multi-select so it doesn't
+   *  collide with those interactions. The board reads the resulting
+   *  `data-kanban-draggable` marker to start its pointer drag. */
+  enableDrag?: boolean;
+  /** True while THIS card is the one being dragged — dims it. Driven by the
+   *  board's drag state. */
+  dragging?: boolean;
+}
+
+export function KanbanCard({
+  item,
+  onSelect,
+  onDelete,
+  onApprove,
+  onArchive,
+  onRename,
+  runningStatuses = ["running"],
+  approveStatuses = ["needs_you"],
+  archiveStatuses = ["done"],
+  errorStatuses = ["error"],
+  actions,
+  avatar,
+  labels,
+  selected = false,
+  highlighted = false,
+  selectable = false,
+  selectedForBulk = false,
+  anySelected = false,
+  onToggleSelect,
+  enableDrag = false,
+  dragging = false,
+}: KanbanCardProps) {
+  const l = { ...DEFAULT_LABELS, ...labels };
+  const isRunning = runningStatuses.includes(item.status);
+  const isError = errorStatuses.includes(item.status);
+  // The two status-gated actions. Their status lists are disjoint by
+  // construction (a mission waiting on the user vs one the user already signed
+  // off), so a card shows at most one of them, and a running card neither.
+  const showsApprove = showsCardAction({
+    itemStatus: item.status,
+    actionStatuses: approveStatuses,
+    handled: !!onApprove,
+    hasCustomActions: !!actions,
+  });
+  const showsArchive = showsCardAction({
+    itemStatus: item.status,
+    actionStatuses: archiveStatuses,
+    handled: !!onArchive,
+    hasCustomActions: !!actions,
+  });
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState(item.title);
+  const inputRef = useRef<HTMLInputElement>(null);
+  // The face stack floats over the body's bottom-right corner, so the body has
+  // to give it a gutter or the last line of text runs underneath the faces
+  // (the artifact the landing mock avoids with `.tc-desc { padding-right }`).
+  // Empty for an unattributed card, so a single-player board is byte-identical.
+  const peopleGutter = peopleGutterClass(
+    stackSlots(item.people ?? [], CARD_PEOPLE_MAX),
+  );
+  // Don't let a drag start while renaming (the title input owns the gesture)
+  // or while a multi-select is active (the bulk action bar owns moves then).
+  const canDrag = enableDrag && !editing && !anySelected;
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    onDelete?.();
+    setShowConfirm(false);
+  };
+
+  const handleRenameClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditValue(item.title);
+    setEditing(true);
+  };
+
+  const commitRename = () => {
+    const trimmed = editValue.trim();
+    if (trimmed && trimmed !== item.title) {
+      onRename?.(trimmed);
+    }
+    setEditing(false);
+  };
+
+  return (
+    <>
+      <div
+        role="option"
+        tabIndex={0}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect();
+        }}
+        onKeyDown={(e) => {
+          // Only the card itself opens on Enter/Space; key events from a focused
+          // inner control (the rename input, the multi-select checkbox) bubble
+          // here but carry a different target — swallowing their Space would
+          // eat the typed character and open the mission instead.
+          if (
+            e.target === e.currentTarget &&
+            (e.key === "Enter" || e.key === " ")
+          ) {
+            e.preventDefault();
+            onSelect();
+          }
+        }}
+        // The board runs the drag (pointer events, delegated). These markers
+        // tell it which element is a card and whether it may be dragged right
+        // now; `canDrag` already excludes renaming + multi-select. Attribute
+        // names must match board-drag-dom (data-kanban-card / -draggable).
+        data-kanban-card={item.id}
+        data-kanban-draggable={canDrag ? "" : undefined}
+        aria-selected={selected || highlighted}
+        data-highlighted={highlighted || undefined}
+        // For running + active, override the running-glow inner fill
+        // (--glow-bg) so the accent tint is visible through the rotating
+        // border. The accent token is a translucent overlay (rgba), which
+        // would let the conic gradient bleed through — flatten it via
+        // color-mix to a solid tint that matches bg-hover rendered over
+        // the card background.
+        style={
+          (selected || highlighted) && isRunning
+            ? ({
+                "--glow-bg":
+                  "color-mix(in srgb, var(--ht-input) 93%, currentColor 7%)",
+              } as React.CSSProperties)
+            : undefined
+        }
+        className={cn(
+          // `transition-all` would also try to animate the
+          // running-glow's `linear-gradient(--glow-bg, --glow-bg)`
+          // background-image layer when --glow-bg flips on selection,
+          // colliding with the conic-gradient keyframe animation.
+          // Restrict transitions to the safe properties we actually
+          // care about.
+          "kanban-card group/card relative rounded-xl p-3 transition-[background-color,box-shadow,border-color] duration-200",
+          // The whole card reads as clickable: a plain pointer, never the grab
+          // "hand". During a drag the global `body.kanban-dragging` cursor (set
+          // by the board) overrides this everywhere, so the same grab/not-
+          // allowed cursor shows on every OS.
+          "cursor-pointer",
+          selected || highlighted ? "bg-hover" : "bg-input",
+          // Running cards keep their own animated border untouched —
+          // setting Tailwind's `border` would override the
+          // `border-style: solid` from card-running-glow's shorthand
+          // and kill the rotating gradient. For everything else, the
+          // border is always 1px (transparent when active, gray
+          // otherwise) so toggling state doesn't shift layout.
+          isRunning
+            ? "card-running-glow shadow-[0_2px_12px_var(--ht-glow-blue-shadow)]"
+            : isError
+              ? "border border-danger/60"
+              : selected || highlighted
+                ? "border border-transparent"
+                : "border border-line/20",
+          // Multi-select ring sits on top of (not replacing) the card's
+          // own border treatment so a selected running card keeps its glow.
+          // Half-strength primary (not solid) so selecting a whole column
+          // reads as a calm grey outline, not a wall of hard black/white
+          // edges — the filled checkbox is the primary "selected" signal.
+          selectedForBulk &&
+            "ring-2 ring-action/50 ring-offset-1 ring-offset-input",
+          // Dim the card while it's being dragged.
+          dragging && "opacity-40",
+        )}
+      >
+        {/* Top row: agent info + action buttons */}
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center min-w-0">
+            {/* Multi-select checkbox. Collapsed to zero width AND zero margin
+                until the card is hovered/focused or a selection is active, so
+                it reveals on hover (pushing the agent name right) yet stays
+                keyboard-reachable — never a hover-only affordance. The margin
+                collapses with the width so at rest the leading icon sits flush
+                with the card's content padding (same left edge as the title
+                and description); the gap lives on the checkbox,
+                never as a container `gap` that a zero-width child would keep. */}
+            {selectable && onToggleSelect && (
+              <div
+                className={cn(
+                  "shrink-0 overflow-hidden transition-all duration-150",
+                  selectedForBulk || anySelected
+                    ? "w-4 mr-1.5 opacity-100"
+                    : "w-0 mr-0 opacity-0 group-hover/card:w-4 group-hover/card:mr-1.5 group-hover/card:opacity-100 group-focus-within/card:w-4 group-focus-within/card:mr-1.5 group-focus-within/card:opacity-100",
+                )}
+              >
+                <span
+                  className={cn(
+                    "size-4 rounded-[5px] border flex items-center justify-center transition-colors relative",
+                    selectedForBulk
+                      ? "bg-action border-action text-action-text"
+                      : "border-ink-muted/40 text-transparent hover:border-ink",
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedForBulk}
+                    aria-label={l.selectTooltip}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      onToggleSelect();
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute inset-0 opacity-0 cursor-pointer size-full"
+                  />
+                  <Check
+                    className="size-3 pointer-events-none"
+                    strokeWidth={3}
+                  />
+                </span>
+              </div>
+            )}
+            {/* The board-wide `avatar` (the agent helmet) is the leading icon on
+                EVERY board — Mission Control and the per-agent board alike.
+                Contributors show only in the bottom-right people overlay, never
+                as the card icon. `item.icon` remains a generic per-item fallback for
+                boards that pass no `avatar` (e.g. cross-agent lists). */}
+            {avatar ??
+              (item.icon && (
+                <span className="size-3.5 shrink-0 flex items-center justify-center">
+                  {item.icon}
+                </span>
+              ))}
+            {item.group && (
+              <span className="ml-1.5 text-[11px] text-ink-muted truncate">
+                {item.group}
+              </span>
+            )}
+          </div>
+          {/* Card actions. Every button is a 24px box holding a 16px glyph —
+              the accessibility floor for a hit target, and the product's
+              "small" icon size — and every glyph rests at the SAME light
+              `ink-muted/40` (ACTION_BUTTON_CLASS). The row is one control
+              cluster, so mixed resting weights read as a bug; the light tint
+              keeps it recessive behind the mission's own content until the
+              card is worked with. Colour only
+              appears on hover, and only where the outcome is semantic:
+              approve turns success-green, delete danger-red; archive and
+              rename take the row's neutral hover. */}
+          <div className="flex items-center gap-0.5 shrink-0">
+            {showsApprove && onApprove && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onApprove();
+                    }}
+                    className={cn(
+                      ACTION_BUTTON_CLASS,
+                      "hover:bg-success/10 hover:text-success",
+                    )}
+                    aria-label={l.approveTooltip}
+                  >
+                    <Check className={ACTION_ICON_CLASS} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">{l.approveTooltip}</TooltipContent>
+              </Tooltip>
+            )}
+            {/* Archive: the checkmark's counterpart one column over. A signed-off
+                mission's only remaining move is out of the way, so it gets the
+                same one-click treatment and the same resting weight. Neutral,
+                never `danger` — archiving hides a mission, it doesn't destroy
+                one (that is the trash can beside it). */}
+            {showsArchive && onArchive && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onArchive();
+                    }}
+                    className={ACTION_BUTTON_CLASS}
+                    aria-label={l.archiveTooltip}
+                  >
+                    <Archive className={ACTION_ICON_CLASS} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">{l.archiveTooltip}</TooltipContent>
+              </Tooltip>
+            )}
+            {onRename && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={handleRenameClick}
+                    className={ACTION_BUTTON_CLASS}
+                    aria-label={l.renameTooltip}
+                  >
+                    <Pencil className={ACTION_ICON_CLASS} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">{l.renameTooltip}</TooltipContent>
+              </Tooltip>
+            )}
+            {onDelete && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={handleDeleteClick}
+                    className={cn(
+                      ACTION_BUTTON_CLASS,
+                      "hover:bg-danger/10 hover:text-danger",
+                    )}
+                    aria-label={l.deleteTooltip}
+                  >
+                    <Trash2 className={ACTION_ICON_CLASS} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">{l.deleteTooltip}</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </div>
+
+        {/* Card body (title + description). Relative so the people stack can
+           overlay the body's bottom-right corner (see below) without a
+           dedicated strip row. With no people the wrapper has no absolute
+           child, so `relative` is inert — zero layout change. */}
+        <div className="relative">
+          {/* Title */}
+          {editing ? (
+            <input
+              ref={inputRef}
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={commitRename}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitRename();
+                if (e.key === "Escape") setEditing(false);
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="text-[13px] font-medium text-ink bg-transparent border-b border-ink/20 outline-none w-full"
+            />
+          ) : (
+            <p
+              className={cn(
+                "text-[13px] font-medium text-ink line-clamp-2 cursor-pointer",
+                // The stack sits at the BOTTOM of the body, so it only needs to
+                // clear the title when there is no description under it.
+                !item.description && peopleGutter,
+              )}
+            >
+              {item.title}
+            </p>
+          )}
+
+          {/* Description */}
+          {item.description && (
+            <p
+              className={cn(
+                "text-xs text-ink-muted line-clamp-2 mt-1",
+                peopleGutter,
+              )}
+            >
+              {item.description}
+            </p>
+          )}
+
+          {/* People stack, overlaying the body's bottom-right corner (over the
+             description's final line, or the title when the description is
+             empty/short). Absolutely positioned so it floats over existing
+             content and never grows the card height; the strip row is gone.
+             `ring-2 ring-input` on every face (from AvatarGroup) is the
+             only separation from the text underneath — no border/divider. The
+             expandable "+N" popover is portalled, so nothing clips it. Renders
+             nothing when the mission has no people, leaving the card
+             untouched.
+
+             `right-0 bottom-0` is NOT flush with the card: this wrapper lives
+             inside the card's own `p-3`, so the stack rests 12px from the card
+             edge and its 2px ring bleeds 2px into that padding — the landing
+             mock's `.faces { right: 10px; bottom: 10px }` optical inset. The
+             text it floats over gets its clearance from `peopleGutter` above,
+             mirroring the mock's `.tc-desc { padding-right }`. */}
+          <KanbanPeople
+            people={item.people}
+            max={CARD_PEOPLE_MAX}
+            size="sm"
+            label={l.people}
+            expandable
+            expandLabel={l.peopleExpand}
+            className="absolute right-0 bottom-0"
+          />
+        </div>
+
+        {/* Footer: tags + custom actions. The Approve action moved to the
+           top-right icon row (see above) so it's visually consistent with
+           Rename / Delete and the tooltip explains exactly what it does.
+           People are NOT here — they overlay the card body's bottom-right
+           corner (see the body wrapper above). */}
+        {(item.tags?.length || actions) && (
+          <div className="flex items-center justify-between mt-2.5">
+            <div className="flex items-center gap-1 flex-wrap min-w-0">
+              {item.tags?.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex h-[18px] items-center rounded-full bg-chip px-2 text-[10px] font-medium text-ink-muted"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">{actions}</div>
+          </div>
+        )}
+      </div>
+
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        title={l.deleteTitle(item.title)}
+        description={l.deleteDescription}
+        onConfirm={confirmDelete}
+      />
+    </>
+  );
+}

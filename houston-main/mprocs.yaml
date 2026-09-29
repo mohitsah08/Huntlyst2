@@ -1,0 +1,38 @@
+# The `pnpm dev` stack — the ONE way to run Houston in development. Every
+# teammate gets the same panes, the same env, the same features; the doctor
+# (scripts/dev-doctor.mjs) has already validated tools/env/ports before mprocs
+# starts. Env contract: every pane sources scripts/dev/env.sh, which loads the
+# committed .env.development and then .env.local (secrets only) — see the
+# header of .env.development.
+procs:
+  # Postgres for the cloud stack (recreated each boot; data persists in the
+  # `houston-dev-pg` docker volume).
+  pg:
+    shell: scripts/dev/pg.sh
+  # The Go gateway (sibling cloud/ checkout) on :9080 — real GCIP sign-in,
+  # multiplayer/Teams/Spaces capabilities, billing off.
+  gateway:
+    shell: scripts/dev/logged.sh gateway scripts/dev/gateway.sh
+  # The Go control-plane in dev-launcher mode: spawns one engine process per
+  # agent from THIS checkout (no Kubernetes).
+  control-plane:
+    shell: scripts/dev/logged.sh control-plane scripts/dev/control-plane.sh
+  # The local single-player host on :4318 — what the desktop app talks to.
+  host:
+    shell: scripts/dev/logged.sh host pnpm dev:host
+  # The desktop app (Tauri) against the host above: LOCAL profile (terminal,
+  # reveal-in-OS, dictation, local models). Desktop login/logout are REAL when
+  # GOOGLE_DESKTOP_CLIENT_ID(+_SECRET) are in .env.local; otherwise the pane
+  # runs account-less (scripts/dev/app.sh explains why a gate without them
+  # would be uncompletable). The doctor matrix states which mode you're in.
+  app:
+    shell: pnpm dev:app
+  # The web app on :1430 against the gateway: CLOUD profile (Google sign-in,
+  # multiplayer). Test two users with a second browser/incognito window.
+  web:
+    shell: scripts/dev/web.sh
+  # Cloudflare named tunnel → the gateway on a stable public https hostname
+  # (Slack channel OAuth + events). Idles unless CLOUDFLARE_TUNNEL is set in
+  # .env.local; the doctor matrix states whether it is on.
+  tunnel:
+    shell: scripts/dev/tunnel.sh

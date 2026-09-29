@@ -1,0 +1,227 @@
+---
+lang: es
+---
+{% extends "subpage.njk" %}
+{% block title %}Guías — Houston{% endblock %}
+{% block meta %}
+<meta name="description" content="Guías oficiales de Houston. Construye agentes de IA reales siguiendo lo que hacemos en nuestros workshops en vivo, y conéctalos a tus propias herramientas con las guías para desarrolladores.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gethouston.ai/guides/es/">
+<meta property="og:title" content="Guías — Houston">
+<meta property="og:description" content="Guías oficiales de Houston. Construye agentes de IA reales siguiendo lo que hacemos en nuestros workshops en vivo, y conéctalos a tus propias herramientas con las guías para desarrolladores.">
+<meta property="og:site_name" content="Houston">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" hreflang="en" href="https://gethouston.ai/guides/">
+<link rel="alternate" hreflang="es" href="https://gethouston.ai/guides/es/">
+<link rel="alternate" hreflang="x-default" href="https://gethouston.ai/guides/">
+{% endblock %}
+{% block subpageStyles %}
+<link rel="stylesheet" href="/guides/style.css">
+{% endblock %}
+{% block subpageContent %}
+<div class="layout">
+  <div class="content-label">Guías oficiales de Houston</div>
+  <h1>Aprende construyendo.</h1>
+  <p class="lead">
+    Cada workshop en vivo se convierte en una guía paso a paso. Síguela a tu
+    ritmo y termina con un agente funcionando, no solo con apuntes. Después
+    conecta lo que construiste con el resto de tus herramientas usando las
+    guías para desarrolladores.
+  </p>
+  <div class="lang-toggle">
+    <a href="/guides/">English</a>
+    <a class="is-active" href="/guides/es/" aria-current="page">Español</a>
+  </div>
+
+  <h2 id="create">Crea tu agente</h2>
+  <p class="section-lede">
+    Workshops completos, desde el espacio de trabajo vacío hasta un agente
+    funcionando.
+  </p>
+  <div class="guide-grid">
+    <a class="guide-card" data-guide="Revenue Manager Agent" data-status="live" href="/guides/es/revenue-manager/">
+      <div class="thumb"><img src="/guides/assets/revenue-manager/es/hub-card.png" alt="Guía del workshop del Revenue Manager" loading="lazy"></div>
+      <div class="pad">
+        <span class="kicker">Workshop · Airbnb</span>
+        <h3>Crea tu Agente de Revenue Management</h3>
+        <p>Un agente que revisa Airbnb, Booking, Expedia, Vrbo y Hostelworld, y convierte el mercado en un tablero de revenue de 7 pestañas.</p>
+        <div class="metarow"><span>6 pasos</span><span>45–60 min de configuración</span><span class="go">Empezar →</span></div>
+      </div>
+    </a>
+    <a class="guide-card" data-guide="LinkedIn SDR Agent" data-status="live" href="/guides/es/sdr-linkedin/">
+      <div class="thumb"><img src="/guides/assets/sdr-linkedin/es/hub-card.png" alt="Guía del workshop del Agente SDR de LinkedIn" loading="lazy"></div>
+      <div class="pad">
+        <span class="kicker">Workshop · LinkedIn</span>
+        <h3>Crea tu Agente SDR de LinkedIn</h3>
+        <p>Un agente que convierte los comentarios de cualquier publicación de LinkedIn en leads verificados y una campaña de outreach en pausa.</p>
+        <div class="metarow"><span>5 pasos</span><span>60 a 90 min de configuración</span><span class="go">Empezar →</span></div>
+      </div>
+    </a>
+    <a class="guide-card" data-guide="AI Agents Bootcamp 0 to 1" data-status="live" href="/guides/es/bootcamp-0a1/">
+      <div class="thumb"><img src="/guides/assets/bootcamp-0a1/es/hub-card.png" alt="Guía del bootcamp De 0 a 1 con agentes de IA" loading="lazy"></div>
+      <div class="pad">
+        <span class="kicker">Bootcamp · De 0 a 1</span>
+        <h3>De 0 a 1 con agentes de IA</h3>
+        <p>El bootcamp completo, a tu ritmo: de qué está hecho un agente, cómo elegir el problema correcto y un agente que te arma tu base de prospectos desde LinkedIn.</p>
+        <div class="metarow"><span>6 pasos</span><span>~2 horas a tu ritmo</span><span class="go">Empezar →</span></div>
+      </div>
+    </a>
+  </div>
+
+  <h2 id="connect">Conecta tus agentes</h2>
+  <p class="section-lede">
+    Tus agentes no viven encerrados en Houston. Asistentes de IA, otros
+    agentes y herramientas de automatización pueden iniciar misiones y recibir
+    los resultados. Una sola guía lo cubre todo (disponible en inglés).
+  </p>
+  <div class="guide-group" data-guide="Public API guide" data-status="live">
+    <a class="intro" href="/developers/">
+      <span class="kicker">Guía para desarrolladores</span>
+      <h3>Usa tus agentes desde otras apps</h3>
+      <p>Una clave de API, tres caminos: una API REST para automatizaciones, Agent2Agent para otros agentes y MCP para asistentes de IA como Claude. El quickstart de 60 segundos te lleva de la clave a una misión terminada.</p>
+      <span class="start">Empezar la guía →</span>
+    </a>
+    <ul class="chapters">
+      <li><a href="/developers/"><span class="num">—</span>Overview y quickstart<span class="arrow">→</span></a></li>
+      <li><a href="/developers/missions/"><span class="num">01</span>Misiones (REST) y webhooks<span class="arrow">→</span></a></li>
+      <li><a href="/developers/a2a/"><span class="num">02</span>Agent2Agent<span class="arrow">→</span></a></li>
+      <li><a href="/developers/mcp/"><span class="num">03</span>MCP: agentes como herramientas<span class="arrow">→</span></a></li>
+    </ul>
+  </div>
+
+  <h2 id="whats-new">Novedades</h2>
+  <p class="section-lede">
+    Houston avanza rápido. Cada versión se explica en lenguaje claro, para que
+    sepas qué cambió y cómo te afecta.
+  </p>
+  <div class="card-grid">
+    <a class="surface-card" data-guide="Changelog" data-status="live" href="/changelog/">
+      <div class="surface-kicker">Changelog</div>
+      <div class="surface-title">Novedades de Houston</div>
+      <div class="surface-desc">Cada versión, qué cambió y cómo te afecta. Sin tecnicismos (en inglés).</div>
+    </a>
+    <a class="surface-card" data-guide="Releases on GitHub" data-status="live" href="https://github.com/gethouston/houston/releases" target="_blank" rel="noopener noreferrer">
+      <div class="surface-kicker">GitHub</div>
+      <div class="surface-title">Notas de versión</div>
+      <div class="surface-desc">El feed de versiones directo del repositorio. Houston es gratis y de código abierto.</div>
+    </a>
+  </div>
+
+  <h2 id="coming-soon">Muy pronto</h2>
+  <p class="section-lede">
+    Cada nuevo workshop se convierte en guía. Las nuevas salen primero aquí.
+  </p>
+  <div class="coming-grid">
+    <div class="coming-card" data-guide="Chief of Staff Agent" data-status="coming_soon">
+      <span class="surface-kicker">Operaciones</span>
+      <span class="surface-title">Agente Chief of Staff</span>
+      <p>Corre tu semana: prioridades, seguimiento y el brief del lunes.</p>
+      <div class="skl"><span>Prioridades semanales y OKRs</span><span>Notas de reunión a acciones</span><span>Brief del lunes</span></div>
+    </div>
+    <div class="coming-card" data-guide="Fundraising Agent" data-status="coming_soon">
+      <span class="surface-kicker">Levantamiento de capital</span>
+      <span class="surface-title">Agente de Fundraising</span>
+      <p>Un agente que corre tu levantamiento de punta a punta.</p>
+      <div class="skl"><span>Investigación de inversionistas y outreach</span><span>Updates a inversionistas</span><span>Data room</span></div>
+    </div>
+    <div class="coming-card" data-guide="Finance Agent" data-status="coming_soon">
+      <span class="surface-kicker">Finanzas</span>
+      <span class="surface-title">Agente de Finanzas</span>
+      <p>Tu back office: libros cerrados, caja vigilada, facturas cobradas.</p>
+      <div class="skl"><span>Contabilidad y cierre mensual</span><span>Flujo de caja y runway</span><span>Cobranza de facturas</span></div>
+    </div>
+    <div class="coming-card" data-guide="Marketing Agent" data-status="coming_soon">
+      <span class="surface-kicker">Marketing</span>
+      <span class="surface-title">Agente de Marketing</span>
+      <p>Convierte una idea en una semana de contenido con tu voz.</p>
+      <div class="skl"><span>Blog y newsletter</span><span>LinkedIn y calendario social</span><span>Reutilización de contenido</span></div>
+    </div>
+    <div class="coming-card" data-guide="Business Analyst Agent" data-status="coming_soon">
+      <span class="surface-kicker">Estrategia</span>
+      <span class="surface-title">Agente Analista</span>
+      <p>Vigila el mercado y tus métricas, y te informa cada semana.</p>
+      <div class="skl"><span>Monitoreo de competencia</span><span>Resumen semanal de KPIs</span><span>Investigación a fondo</span></div>
+    </div>
+    <div class="coming-card" data-guide="Support Agent" data-status="coming_soon">
+      <span class="surface-kicker">Soporte</span>
+      <span class="surface-title">Agente de Soporte</span>
+      <p>Responde a clientes con tus propios documentos y escala lo importante.</p>
+      <div class="skl"><span>Respuestas desde tus documentos</span><span>Borradores de respuesta</span><span>Escalamiento inteligente</span></div>
+    </div>
+    <div class="coming-card" data-guide="Recruiter Agent" data-status="coming_soon">
+      <span class="surface-kicker">Personas</span>
+      <span class="surface-title">Agente Reclutador</span>
+      <p>Busca, filtra y agenda mientras duermes.</p>
+      <div class="skl"><span>Búsqueda de candidatos</span><span>Filtro de hojas de vida</span><span>Agenda de entrevistas</span></div>
+    </div>
+    <div class="coming-card" data-guide="Personal Assistant" data-status="coming_soon">
+      <span class="surface-kicker">Productividad</span>
+      <span class="surface-title">Asistente Personal</span>
+      <p>Tu día, resuelto: correo, calendario y preparación de reuniones.</p>
+      <div class="skl"><span>Orden del inbox</span><span>Protección del calendario</span><span>Preparación de reuniones</span></div>
+    </div>
+    <div class="coming-card" data-guide="Legal Agent" data-status="coming_soon">
+      <span class="surface-kicker">Legal</span>
+      <span class="surface-title">Agente Legal</span>
+      <p>La primera revisión legal antes de pagarle a un abogado.</p>
+      <div class="skl"><span>Revisión de contratos</span><span>Ajustes de NDA</span><span>Alertas de cláusulas riesgosas</span></div>
+    </div>
+    <div class="coming-card" data-guide="Product Manager Agent" data-status="coming_soon">
+      <span class="surface-kicker">Producto</span>
+      <span class="surface-title">Agente Product Manager</span>
+      <p>Convierte el feedback de usuarios en specs que tu equipo puede construir.</p>
+      <div class="skl"><span>Síntesis de feedback</span><span>PRDs e historias de usuario</span><span>Checklists de lanzamiento</span></div>
+    </div>
+    <div class="coming-card" data-guide="Customer Success Agent" data-status="coming_soon">
+      <span class="surface-kicker">Éxito del cliente</span>
+      <span class="surface-title">Agente de Customer Success</span>
+      <p>Mantiene clientes sanos: check-ins, renovaciones y QBRs.</p>
+      <div class="skl"><span>Monitoreo de salud de cuentas</span><span>Seguimiento de renovaciones</span><span>Preparación de QBRs</span></div>
+    </div>
+    <div class="coming-card" data-guide="E-commerce Agent" data-status="coming_soon">
+      <span class="surface-kicker">Comercio</span>
+      <span class="surface-title">Agente E-commerce</span>
+      <p>Mantiene tu tienda al día: publicaciones, reseñas e inventario.</p>
+      <div class="skl"><span>Optimización de publicaciones</span><span>Respuesta a reseñas</span><span>Alertas de inventario</span></div>
+    </div>
+    <div class="coming-card" data-guide="Proposal Agent" data-status="coming_soon">
+      <span class="surface-kicker">Ventas</span>
+      <span class="surface-title">Agente de Propuestas</span>
+      <p>Redacta propuestas, cotizaciones y RFPs que ganan contratos.</p>
+      <div class="skl"><span>Propuestas y cotizaciones</span><span>Respuestas a RFPs</span><span>Plantillas de SOW</span></div>
+    </div>
+    <div class="coming-card" data-guide="PR Agent" data-status="coming_soon">
+      <span class="surface-kicker">Comunicaciones</span>
+      <span class="surface-title">Agente de Prensa</span>
+      <p>Te consigue prensa: listas de medios, pitches y monitoreo de menciones.</p>
+      <div class="skl"><span>Listas de medios</span><span>Redacción de pitches</span><span>Monitoreo de menciones</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Mirrors the homepage track() helper: PostHog + GA4, both optional.
+  (function(){
+    function track(name, props) {
+      if (typeof window === 'undefined') return;
+      var payload = props || {};
+      if (window.posthog && window.posthog.capture) {
+        try { window.posthog.capture(name, payload); } catch (e) {}
+      }
+      if (typeof window.gtag === 'function') {
+        try { window.gtag('event', name, payload); } catch (e) {}
+      }
+    }
+    var lang = document.documentElement.lang || 'es';
+    document.querySelectorAll('[data-guide]').forEach(function(el){
+      el.addEventListener('click', function(){
+        track('guide_card_clicked', {
+          guide: el.getAttribute('data-guide'),
+          status: el.getAttribute('data-status') || 'coming_soon',
+          lang: lang
+        });
+      });
+    });
+  })();
+</script>
+{% endblock %}

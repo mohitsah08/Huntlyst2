@@ -1,0 +1,162 @@
+import type { IncomingMessage, ServerResponse } from "node:http";
+import {
+  applyActivityUpdate,
+  loadActivities,
+  missionConversationKey,
+  saveActivities,
+  upsertById,
+} from "@houston/domain";
+import type { PendingInteraction } from "@houston/protocol";
+import { assistantRuntimeRole } from "../launcher/assistant-role";
+import { withDocLock } from "./doc-lock";
+import { json, readJson } from "./http";
+import { liveTurns } from "./live-turn";
+import { delegationRefusal } from "./mission-delegation-refusals";
+import { type MissionStatusInput, parseMissionStatus } from "./missions-remote";
+import { forwardMissionStatus } from "./missions-remote-forward";
+import { fireActivityChanged, type MissionsCtx } from "./missions-sandbox";
+import { refuseMissionRoute, resolveMissionRoute } from "./missions-target";
+
+/**
+ * The agent's explicit board move (`POST /sandbox/missions/status`): `done` or
+ * `archived`, finished missions only. This is the ONE deliberate exception to
+ * "only the user moves a card to done" - the user delegated the review to the
+ * agent (PRODUCT-1244's planning-agent flow), the move is an explicit tool call
+ * visible in the parent chat, and the guards below keep it away from anything
+ * still running and from the agent's own conversation (which the turn's settle
+ * would immediately contradict).
+ *
+ * An optional `agent` moves a card on ANOTHER agent's board - the settle half
+ * of a mission the caller started there. That board is reached wherever it
+ * lives: on this disk, or over the wire in the agent's own pod, which applies
+ * the very same move with the very same guards.
+ */
+export async function handleMissionStatus(
+  callerCtx: MissionsCtx,
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  const body = await readJson(req);
+  const parsed = parseMissionStatus(body);
+  if (!parsed.ok)
+    return json(res, 400, { error: parsed.error, code: parsed.code });
+  const route = await resolveMissionRoute(callerCtx, body.agent, {}, "status");
+  if (!route.ok) return refuseMissionRoute(route, res);
+  if (route.remote) {
+    await forwardMissionStatus(route.route, parsed.value, res);
+    return;
+  }
+  await applyMissionStatus(route.ctx, parsed.value, res, {
+    ...(route.ctx.agent.id !== callerCtx.agent.id &&
+    !assistantRuntimeRole({ agentId: callerCtx.agent.id })
+      ? { requireOrigin: callerCtx.agent.id }
+      : {}),
+  });
+}
+
+/**
+ * The move itself, on the board this host holds - the half that runs on
+ * whichever side owns the files, so the pod serving a cross-pod move applies
+ * the identical guards (never a running mission, never the conversation the
+ * caller is speaking in) rather than a looser copy of them.
+ */
+export async function applyMissionStatus(
+  ctx: MissionsCtx,
+  { id, status }: MissionStatusInput,
+  res: ServerResponse,
+  opts: { requireOrigin?: string } = {},
+): Promise<void> {
+  const outcome = await withDocLock(`${ctx.root}#activity`, async () => {
+    const { items } = await loadActivities(ctx.vfs, ctx.root);
+    const current = items.find((a) => a.id === id);
+    if (!current) return "not_found" as const;
+    if (opts.requireOrigin && current.origin_agent !== opts.requireOrigin)
+      return "not_origin" as const;
+    if (current.status === "running") return "running" as const;
+    if (missionConversationKey(current) === ctx.conversationId)
+      return "self" as const;
+    // applyActivityUpdate carries the user-move semantics: a move to `done`
+    // strips the blocking interaction steps and keeps the clean-finish offers.
+    const applied = applyActivityUpdate(
+      current,
+      { status },
+      new Date().toISOString(),
+      ctx.author,
+    );
+    await saveActivities(ctx.vfs, ctx.root, upsertById(items, applied));
+    return applied;
+  });
+  if (outcome === "not_found") {
+    json(res, 404, { error: "no mission with that id - check list_missions" });
+    return;
+  }
+  if (outcome === "not_origin") {
+    const { code, error } = delegationRefusal("not_mission_origin");
+    json(res, 403, { code, error });
+    return;
+  }
+  if (outcome === "running") {
+    json(res, 409, {
+      error:
+        "that mission is still running - wait for it to finish before moving it",
+    });
+    return;
+  }
+  if (outcome === "self") {
+    json(res, 409, {
+      error:
+        "you can't move the mission this conversation belongs to - the user closes it when they're ready",
+    });
+    return;
+  }
+  fireActivityChanged(ctx);
+  json(res, 200, { id: outcome.id, status: outcome.status });
+}
+
+/**
+ * The runtime's turn-end report (`POST /sandbox/missions/settle`). Applied ONLY
+ * to an agent-started mission (`origin_session_key` present) still on
+ * `running`: those may have no client observing their conversation, so without
+ * this report their card would sit on Running forever. Every other mission
+ * keeps today's client-side settle untouched; a report for one answers
+ * `{ok:false}` and writes nothing.
+ */
+export async function handleMissionSettle(
+  ctx: MissionsCtx,
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  const body = await readJson(req);
+  const cid =
+    typeof body.conversation_id === "string" ? body.conversation_id : "";
+  const status = body.status;
+  if (!cid || (status !== "needs_you" && status !== "error")) {
+    json(res, 400, { error: "missing 'conversation_id' or invalid 'status'" });
+    return;
+  }
+  // Malformed interaction shapes are dropped by resolveInteractionPatch inside
+  // applyActivityUpdate - pass through as-is; null clears explicitly.
+  const interaction = (body.pending_interaction ??
+    null) as PendingInteraction | null;
+  // THE TURN IS OVER. This report is the one thing the runtime sends at the end
+  // of every turn on every deployment, so it is where the host observes a turn
+  // ending: the live-turn record for that conversation is dropped, and a
+  // /sandbox write arriving after the work finished is refused as out-of-turn
+  // rather than served against a turn that is no longer running.
+  liveTurns.end(ctx.agent.id, cid);
+  const settled = await withDocLock(`${ctx.root}#activity`, async () => {
+    const { items } = await loadActivities(ctx.vfs, ctx.root);
+    const current = items.find((a) => missionConversationKey(a) === cid);
+    if (!current?.origin_session_key) return false;
+    if (current.status !== "running") return false;
+    const applied = applyActivityUpdate(
+      current,
+      { status, pending_interaction: interaction },
+      new Date().toISOString(),
+    );
+    await saveActivities(ctx.vfs, ctx.root, upsertById(items, applied));
+    return true;
+  });
+  if (settled) fireActivityChanged(ctx);
+  json(res, 200, { ok: settled });
+}

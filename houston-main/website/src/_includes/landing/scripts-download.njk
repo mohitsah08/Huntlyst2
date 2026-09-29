@@ -1,0 +1,26 @@
+<script>
+  // Download gate config: per-feature config for this one feature, not a global.
+  // `gatewayUrl` comes from `api.gatewayUrl` (src/_data/api.js), the single
+  // place the gateway origin is defined and the same origin the analytics
+  // beacon in base.njk and every /developers page render. The Supabase and
+  // Sheet entries are the mirrors written alongside the gateway, env-injected
+  // at build time (src/_data/env.js); the Supabase anon key is a public,
+  // RLS-protected client key.
+  window.HOUSTON_DL_CONFIG = {
+    gatewayUrl: "{{ api.gatewayUrl }}",
+    supabaseUrl: "{{ env.supabaseUrl }}",
+    supabaseAnonKey: "{{ env.supabaseAnonKey }}",
+    sheetEndpoint: "{{ env.waitlistSheetEndpoint }}"
+  };
+</script>
+<script defer src="/assets/download-gate-countries.js"></script>
+<script defer src="/assets/download-gate-placement.js"></script>
+<script defer src="/assets/download-gate-anchor.js"></script>
+<script defer src="/assets/download-gate-dropdown.js"></script>
+<script defer src="/assets/download-gate-lead.js"></script>
+<script defer src="/assets/download-gate-form.js"></script>
+{# The buttons module must define window.HoustonDLButtons before the modal
+   below initialises it. Deferred scripts run in document order, so this pair
+   stays in this order. #}
+<script defer src="/assets/download-gate-buttons.js"></script>
+<script defer src="/assets/download-gate.js"></script>

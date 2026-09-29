@@ -1,0 +1,76 @@
+{
+  "transport": {
+    "notConnected": "Não conseguimos falar com a nuvem agora. Verifique sua conexão e tente de novo.",
+    "interrupted": "O envio foi interrompido. Verifique sua conexão e tente de novo.",
+    "signedOut": "Entre na sua conta de novo para continuar movendo seus dados."
+  },
+  "offer": {
+    "title": "O Houston está indo para a nuvem",
+    "body": "Você acreditou no Houston antes de todo mundo. Veja o que você ganha ao ir para a nuvem.",
+    "whatTitle": "O que você ganha",
+    "benefit1": "<b>Sempre ativo.</b> Seus funcionários de IA continuam trabalhando, mesmo com seu computador desligado.",
+    "benefit2": "<b>As rotinas não param</b> e seguem o horário, sem precisar do computador ligado.",
+    "benefit3": "<b>Nada fica para trás.</b> Tudo o que você criou vem junto.",
+    "freeNote": "É grátis e leva só alguns minutos.",
+    "start": "Migrar agora",
+    "skipAction": "Começar sem meus funcionários de IA",
+    "skipConfirm": {
+      "title": "Começar sem seus funcionários de IA?",
+      "body": "Seus funcionários de IA e as conversas deles não vão estar aqui. Nada é apagado, eles ficam seguros neste computador e você pode migrá-los quando quiser em Configurações, em Migração para a nuvem.",
+      "confirm": "Começar sem eles",
+      "goBack": "Voltar"
+    }
+  },
+  "progress": {
+    "title": "Indo para a nuvem",
+    "phaseAssistants": "Movendo seus funcionários de IA",
+    "phaseConversations": "Trazendo suas conversas",
+    "phaseFiles": "Organizando seus arquivos e skills",
+    "phaseCloud": "Preparando sua nuvem",
+    "keepOpen": "Mantenha o Houston aberto até terminar.",
+    "playCaption": "Enquanto espera, defenda a galáxia.",
+    "playHint": "Mova com as setas e atire com a barra de espaço, ou arraste e toque.",
+    "backingUp": "Fazendo um backup dos seus dados neste computador.",
+    "preparing": "Preparando seus dados. Isso pode demorar alguns minutos.",
+    "startFailed": "Não conseguimos iniciar a mudança, então nada foi alterado. Você pode tentar de novo.",
+    "retry": "Tentar de novo",
+    "overall": "{{done}} de {{total}} funcionários de IA prontos",
+    "continueAnyway": "Continuar sem o resto",
+    "step": {
+      "pending": "Aguardando",
+      "creating": "Criando seu funcionário de IA",
+      "warming": "Deixando tudo pronto",
+      "uploading": "Movendo seus arquivos ({{current}} de {{total}})",
+      "finalizing": "Finalizando",
+      "done": "Pronto",
+      "error": "Algo deu errado"
+    },
+    "migrateLater": "Migrar depois"
+  },
+  "game": {
+    "over": "Fim de jogo. Você fez {{score}} pontos.",
+    "playAgain": "Toque ou pressione espaço para jogar de novo"
+  },
+  "done": {
+    "stepAi": "Etapa 1 de 2",
+    "stepApps": "Etapa 2 de 2",
+    "reconnectAiTitle": "Conecte sua IA",
+    "reconnectAiBody": "Seus funcionários de IA já chegaram na nuvem. Conecte sua IA uma vez para começar a usá-los.",
+    "reconnectAppsTitle": "Reconecte seus aplicativos",
+    "reconnectAppsBody": "Reconecte os aplicativos que quiser agora, ou faça isso depois na seção de Aplicativos.",
+    "skip": "Pular por enquanto",
+    "leftBehindTitle": "Ainda neste computador",
+    "leftBehindBody": "Estes funcionários de IA não vieram desta vez. Os dados deles ficam seguros neste computador.",
+    "excludedTitle": "Alguns arquivos grandes ficaram neste computador",
+    "rejectedTitle": "Algumas coisas não puderam vir",
+    "continue": "Continuar",
+    "back": "Voltar",
+    "connect": "Conectar",
+    "connecting": "Conectando…",
+    "cancel": "Cancelar",
+    "connected": "Conectado",
+    "finish": "Começar a criar",
+    "congratsTitle": "Tudo pronto",
+    "congratsBody": "Seus funcionários de IA estão na nuvem e prontos. Vamos criar algo."
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "button": {
+    "aria": "Context usage"
+  },
+  "card": {
+    "title": "Context",
+    "percent": "{{percent}}%",
+    "usedOfTotal": "{{used}} of {{total}} tokens",
+    "tokensUsed": "{{used}} tokens used",
+    "empty": "Send a message and the context usage will show up here.",
+    "unknownWindow": "The context size for this model is not known yet, so the amount used is shown without a percentage."
+  },
+  "aboutMe": {
+    "title": "About me",
+    "subtitle": "What every AI Employee knows about you before it starts."
+  },
+  "editor": {
+    "toolbar": {
+      "label": "Formatting",
+      "heading": "Heading",
+      "subheading": "Subheading",
+      "bold": "Bold",
+      "italic": "Italic",
+      "bulletList": "Bulleted list",
+      "numberedList": "Numbered list",
+      "quote": "Quote"
+    },
+    "saving": "Saving…",
+    "saved": "Saved",
+    "user": {
+      "placeholder": "e.g. I'm Juan, head of sales. I care about pipeline velocity and prefer short replies."
+    },
+    "workspace": {
+      "placeholder": "## Who we are\nAcme Corp. B2B fintech, Series A, 40 people.\n\n## Product and customers\nInvoicing software for CFOs at mid-market companies.\n\n## How we communicate\nFriendly and direct. Short sentences. Never overpromise."
+    },
+    "noAgent": {
+      "title": "No AI Employees yet",
+      "body": "What you write here is kept with your AI Employees, so it opens once you hire your first one."
+    }
+  }
+}

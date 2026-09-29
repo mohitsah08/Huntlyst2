@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en" translate="no">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover lets the document extend under the notch / home
+         indicator so env(safe-area-inset-*) resolves (see the safe-area
+         utilities in ui/core/src/globals.css); without it every inset is 0. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Browser/OS chrome colour (mobile URL bar, PWA title bar). Same values
+         as the pre-JS frame below: light screen #fcfcfc, dark gutter #141416.
+         The guard script flips it pre-paint; app/src/lib/theme-boot.ts keeps
+         it in sync with every later theme change. -->
+    <meta name="theme-color" content="#fcfcfc" />
+    <!-- Houston ships its own es/pt UI, so browser page translation (Chrome,
+         Safari, Edge) only corrupts it: the translator wraps every text node
+         in <font> elements, and React's next commit throws NotFoundError from
+         removeChild/insertBefore and loses the whole screen to the crash card.
+         `translate="no"` on <html> is the standard opt-out; the google meta
+         is the older spelling some translators still key on. Chat replies
+         are covered too: a streaming reply re-renders constantly, so it is
+         the surface a translator breaks first. app/src/lib/foreign-dom-guard.ts
+         is the safety net for translators that ignore both. -->
+    <meta name="google" content="notranslate" />
+    <title>Houston</title>
+    <!-- Pre-JS frame. The app's CSS arrives with the app bundle, so the FIRST
+         painted frame is whatever this document says — before any module runs.
+         `houston.theme.cache` is the boot mirror written by
+         app/src/lib/theme-boot.ts; reading it here (parser-blocking, so it lands
+         before first paint) lets that frame already match the theme
+         `applyBootTheme()` is about to apply, instead of flashing the wrong one.
+         The mirror is JSON: the resolved mode, the palette, and the palette's
+         two first-frame hexes (`base`, the window gutter, and `screen`, the
+         surface the OS chrome matches in light). The script paints `base`
+         inline, so a non-Houston palette's first frame is its OWN gutter.
+         The CSS below is the first-launch fallback only, and its values are
+         Houston's: light `--ht-background` #fcfcfc (the boot splash's screen
+         surface) and dark `--ht-base` #141416 (the opaque gutter the splash's
+         frosted glass sits on). No mirror yet (first launch) or storage
+         unavailable -> light, the document default, exactly how
+         applyBootTheme() resolves it.
+         KEEP IDENTICAL to packages/web/index.html — same document, two shells. -->
+    <style>
+      html {
+        background: #fcfcfc;
+      }
+      html[data-theme="dark"] {
+        background: #141416;
+      }
+      body {
+        margin: 0;
+      }
+    </style>
+    <script>
+      try {
+        var raw = localStorage.getItem("houston.theme.cache");
+        // The pre-palette mirror stored the bare mode. Read it as Houston's
+        // palette for that mode, with the hexes this file already carries.
+        var mirror =
+          raw === "dark" || raw === "light"
+            ? {
+                mode: raw,
+                palette: raw === "dark" ? "houston-dark" : "houston-light",
+                base: raw === "dark" ? "#141416" : "#fcfcfc",
+                screen: "#fcfcfc",
+              }
+            : JSON.parse(raw);
+        if (mirror && (mirror.mode === "dark" || mirror.mode === "light")) {
+          var root = document.documentElement;
+          if (mirror.mode === "dark") root.setAttribute("data-theme", "dark");
+          if (mirror.palette) root.setAttribute("data-palette", mirror.palette);
+          if (mirror.base) root.style.background = mirror.base;
+          var chrome = mirror.mode === "dark" ? mirror.base : mirror.screen;
+          // The meta ships in this document, so a null means something stripped
+          // it: throwing here would cost the whole frame, `data-theme` included.
+          // ES2015 spelling (no optional chaining): shipped as authored, like
+          // public/compat-gate.js.
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (chrome && meta) meta.setAttribute("content", chrome);
+        }
+      } catch (e) {
+        /* no mirror, junk mirror, or storage disabled/hardened webview: the
+           CSS above is the frame, same as a first launch */
+      }
+    </script>
+    <!-- Classic (non-module) script. `defer` (not parser-blocking) so it runs
+         AFTER the document is parsed and #root exists, yet still before the
+         deferred app bundle (defer scripts + module scripts execute in document
+         order, and this comes first). A parser-blocking script in <head> would
+         run before <body>, find no #root, and paint nothing -> white screen.
+         Shows a clear message instead of a white screen when the system WebView
+         is too old to run Houston (issue #102). Served verbatim from public/. -->
+    <script defer src="/compat-gate.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

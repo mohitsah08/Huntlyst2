@@ -1,0 +1,557 @@
+import type { Server } from "node:http";
+import { createServer, request as httpRequest } from "node:http";
+import type { AddressInfo } from "node:net";
+import type { WireFrame } from "@houston/runtime-client";
+import { afterAll, beforeAll, expect, test } from "vitest";
+import { MemoryCredentialStore } from "../credentials/store";
+import type { Agent, Workspace } from "../domain/types";
+import type { WorkspaceCredential } from "../ports";
+import { BodyTooLargeError, MAX_JSON_BYTES } from "../routes/read-body";
+import { MemoryVfs } from "../vfs";
+import { ConnectManager } from "./connect";
+import type { TurnDeps } from "./deps";
+import { dispatchCloudrun } from "./dispatch";
+import { TurnQuota } from "./quota";
+import { TurnRelay } from "./relay";
+import { dispatchTurn } from "./start-turn";
+
+/**
+ * End-to-end cloudrun dispatch against a FAKE turn runtime speaking the real
+ * SSE contract: a turn POST claims quota + relay, carries the refreshed
+ * access credential (never the refresh token), pumps frames to a subscriber,
+ * and the read endpoints serve straight from object storage.
+ */
+
+const ws: Workspace = {
+  id: "w1",
+  ownerUserId: "alice",
+  kind: "personal",
+  name: "Personal",
+  slug: "alice",
+  runtime: "cloudrun",
+  createdAt: 1,
+};
+const agent: Agent = {
+  id: "agent-1",
+  workspaceId: "w1",
+  name: "Sales",
+  createdAt: 1,
+};
+
+// Fake turn runtime: records the request body, streams user→text→done.
+let turnBodies: Record<string, unknown>[] = [];
+let fakeRuntime: Server;
+let runtimeUrl = "";
+
+beforeAll(async () => {
+  fakeRuntime = createServer((req, res) => {
+    const chunks: Buffer[] = [];
+    req.on("data", (c) => chunks.push(c as Buffer));
+    req.on("end", () => {
+      turnBodies.push(JSON.parse(Buffer.concat(chunks).toString("utf8")));
+      res.writeHead(200, { "Content-Type": "text/event-stream" });
+      res.write(": connected\n\n");
+      res.write(
+        `data: ${JSON.stringify({ type: "user", data: { content: "hi", ts: 1 } })}\n\n`,
+      );
+      res.write(
+        `data: ${JSON.stringify({ type: "text", data: "built your deck" })}\n\n`,
+      );
+      res.write(`data: ${JSON.stringify({ type: "done", data: null })}\n\n`);
+      res.end();
+    });
+  });
+  await new Promise<void>((r) => fakeRuntime.listen(0, "127.0.0.1", () => r()));
+  runtimeUrl = `http://127.0.0.1:${(fakeRuntime.address() as AddressInfo).port}`;
+});
+
+afterAll(() => fakeRuntime.close());
+
+function makeDeps(): {
+  deps: TurnDeps;
+  objects: MemoryVfs;
+  credentials: MemoryCredentialStore;
+} {
+  const objects = new MemoryVfs();
+  const credentials = new MemoryCredentialStore();
+  const deps: TurnDeps = {
+    runtimeUrl,
+    turnToken: "turn-secret",
+    relay: new TurnRelay(),
+    quota: new TurnQuota({ maxConcurrent: 2, perHour: 100 }),
+    vfs: objects,
+    credentials,
+    connect: new ConnectManager(credentials),
+    refresh: async (cred: WorkspaceCredential) => ({
+      ...cred,
+      accessToken: "AT-refreshed",
+      expiresAt: Date.now() + 3_600_000,
+    }),
+    idToken: async () => "google-id-token",
+    codexModels: ["gpt-5.5"],
+  };
+  return { deps, objects, credentials };
+}
+
+/**
+ * Drive dispatchCloudrun through a real HTTP server (it needs req/res).
+ * `preReadBody` stands in for the route that already drained the body to stamp
+ * @mention attribution (routes/agents.ts) and hands the buffer down.
+ */
+function serve(
+  deps: TurnDeps,
+  preReadBody?: Buffer,
+): Promise<{ base: string; close: () => void }> {
+  const s = createServer((req, res) => {
+    const url = new URL(req.url || "/", "http://x");
+    const rest = url.pathname.replace(/^\//, "");
+    void dispatchCloudrun(
+      deps,
+      ws,
+      agent,
+      req.method || "GET",
+      rest,
+      url,
+      req,
+      res,
+      preReadBody,
+    ).catch((err) => {
+      // Mirrors the real host's top-level mapping (server.ts): an over-cap body
+      // is a 413, everything else a 500. Without it a BodyTooLargeError that
+      // correctly escaped the route would be indistinguishable here from the
+      // 500 this change exists to stop returning.
+      res.writeHead(err instanceof BodyTooLargeError ? 413 : 500);
+      res.end(String(err));
+    });
+  });
+  return new Promise((resolve) =>
+    s.listen(0, "127.0.0.1", () =>
+      resolve({
+        base: `http://127.0.0.1:${(s.address() as AddressInfo).port}`,
+        close: () => s.close(),
+      }),
+    ),
+  );
+}
+
+test("a turn: refreshes the expiring credential, sends access-only, pumps frames to a subscriber", async () => {
+  const { deps, credentials } = makeDeps();
+  await credentials.put({
+    workspaceId: "w1",
+    provider: "openai-codex",
+    accessToken: "AT-stale",
+    refreshToken: "RT-central",
+    accountId: "acct-9",
+    expiresAt: Date.now() - 1000, // expiring → must refresh first
+  });
+  turnBodies = [];
+  const { base, close } = await serve(deps);
+  try {
+    const events: unknown[] = [];
+    const done = new Promise<void>((r) => {
+      deps.relay.subscribe("agent-1/c1", (e) => {
+        events.push(e);
+        if (e.type === "done" || e.type === "error") r();
+      });
+    });
+    const res = await fetch(`${base}/conversations/c1/messages`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text: "build me a deck", nonce: "n-1" }),
+    });
+    expect(res.status).toBe(202);
+    await done;
+
+    expect(events.map((e) => (e as { type: string }).type)).toEqual([
+      "user",
+      "text",
+      "done",
+    ]);
+    const sent = turnBodies[0];
+    if (sent === undefined) throw new Error("expected turnBodies[0] to exist");
+    expect(sent.gcsPrefix).toBe("ws/w1/agent-1");
+    expect(sent.nonce).toBe("n-1");
+    const cred = sent.credential as Record<string, unknown>;
+    expect(cred.access).toBe("AT-refreshed"); // refreshed centrally before the turn
+    expect(cred.accountId).toBe("acct-9");
+    expect("refresh" in cred).toBe(false); // the refresh token NEVER rides a turn
+    expect(JSON.stringify(sent)).not.toContain("RT-central");
+    // The refreshed credential was persisted back centrally.
+    expect((await credentials.get("w1", "openai-codex"))?.accessToken).toBe(
+      "AT-refreshed",
+    );
+  } finally {
+    close();
+  }
+});
+
+test("a pinned routine turn sends autopilot mode to the runtime", async () => {
+  const { deps } = makeDeps();
+  turnBodies = [];
+  const done = new Promise<void>((r) => {
+    deps.relay.subscribe("agent-1/c-auto", (e) => {
+      if (e.type === "done" || e.type === "error") r();
+    });
+  });
+
+  const outcome = await dispatchTurn(
+    deps,
+    ws,
+    agent,
+    "c-auto",
+    "run unattended",
+    undefined,
+    { provider: "openai-codex", mode: "auto" },
+  );
+  expect(outcome.status).toBe("accepted");
+  await done;
+
+  expect(turnBodies[0]?.mode).toBe("auto");
+});
+
+test("the turn envelope sanitizes a slash-bearing agent id", async () => {
+  const { deps } = makeDeps();
+  turnBodies = [];
+  const localAgent = { ...agent, id: "Work/Marketing team!" };
+  const done = new Promise<void>((resolve) => {
+    deps.relay.subscribe(`${localAgent.id}/c-local`, (event) => {
+      if (event.type === "done" || event.type === "error") resolve();
+    });
+  });
+
+  const outcome = await dispatchTurn(
+    deps,
+    ws,
+    localAgent,
+    "c-local",
+    "hello",
+    undefined,
+  );
+  expect(outcome.status).toBe("accepted");
+  await done;
+  expect(turnBodies[0]?.agentId).toBe("Work_Marketing_team_");
+  expect(turnBodies[0]?.gcsPrefix).toBe("ws/w1/Work/Marketing team!");
+});
+
+test("a malformed turn body answers a clean 400 — both the streamed and the pre-read parse", async () => {
+  const { deps } = makeDeps();
+  const bad = "{not json";
+
+  // The plain path: the dispatch reads and parses the request stream itself.
+  const streamed = await serve(deps);
+  try {
+    const res = await fetch(`${streamed.base}/conversations/c-bad/messages`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: bad,
+    });
+    // Not a 500: the client sent junk, and it must be told so — an unguarded
+    // parse used to escape into the host's top-level catch as an opaque 500.
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "invalid JSON body" });
+  } finally {
+    streamed.close();
+  }
+
+  // The attribution path: the route already drained the body, so the buffer is
+  // parsed in place of the (now exhausted) stream — same guard required.
+  const preread = await serve(deps, Buffer.from(bad));
+  try {
+    const res = await fetch(`${preread.base}/conversations/c-bad/messages`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: bad,
+    });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "invalid JSON body" });
+  } finally {
+    preread.close();
+  }
+});
+
+test("an over-cap turn body still propagates as a 413, not mislabelled a 400", async () => {
+  const { deps } = makeDeps();
+  const { base, close } = await serve(deps);
+  try {
+    // node:http rather than fetch: the host answers before the oversized body
+    // finishes uploading, so the write side may error after the response has
+    // already arrived — that is the intended behavior, not a test failure.
+    const { port } = new URL(base);
+    const status = await new Promise<number>((resolve, reject) => {
+      let responded = false;
+      const req = httpRequest(
+        {
+          host: "127.0.0.1",
+          port,
+          method: "POST",
+          path: "/conversations/c-huge/messages",
+          headers: { "content-type": "application/json" },
+        },
+        (res) => {
+          responded = true;
+          res.resume();
+          resolve(res.statusCode ?? 0);
+        },
+      );
+      req.on("error", (err) => {
+        if (!responded) reject(err);
+      });
+      req.end(Buffer.alloc(MAX_JSON_BYTES + 1, "a"));
+    });
+    expect(status).toBe(413);
+  } finally {
+    close();
+  }
+});
+
+test("conversation list + history read straight from object storage", async () => {
+  const { deps, objects } = makeDeps();
+  await objects.writeText(
+    "ws/w1/agent-1/data/conversations/c1.json",
+    JSON.stringify({
+      id: "c1",
+      title: "Deck work",
+      createdAt: 1,
+      updatedAt: 5,
+      messages: [{ role: "user", content: "build me a deck", ts: 1 }],
+    }),
+  );
+  const { base, close } = await serve(deps);
+  try {
+    const list = (await (await fetch(`${base}/conversations`)).json()) as {
+      id: string;
+    }[];
+    expect(list).toHaveLength(1);
+    expect(list[0]?.id).toBe("c1");
+    const history = (await (
+      await fetch(`${base}/conversations/c1/messages`)
+    ).json()) as { title: string; messages: unknown[] };
+    expect(history.title).toBe("Deck work");
+    expect(history.messages).toHaveLength(1);
+    expect((await fetch(`${base}/conversations/nope/messages`)).status).toBe(
+      404,
+    );
+  } finally {
+    close();
+  }
+});
+
+test("providers + auth/status reflect the central credential; settings persist to object storage", async () => {
+  const { deps, objects, credentials } = makeDeps();
+  const { base, close } = await serve(deps);
+  try {
+    let providers = (await (await fetch(`${base}/providers`)).json()) as {
+      configured: boolean;
+    }[];
+    expect(providers[0]?.configured).toBe(false);
+
+    await credentials.put({
+      workspaceId: "w1",
+      provider: "openai-codex",
+      accessToken: "AT",
+      refreshToken: "RT",
+      expiresAt: Date.now() + 3_600_000,
+    });
+    providers = (await (await fetch(`${base}/providers`)).json()) as {
+      configured: boolean;
+    }[];
+    expect(providers[0]?.configured).toBe(true);
+
+    const status = (await (await fetch(`${base}/auth/status`)).json()) as {
+      activeProvider: string;
+    };
+    expect(status.activeProvider).toBe("openai-codex");
+
+    const put = await fetch(`${base}/settings`, {
+      method: "PUT",
+      body: JSON.stringify({ model: "gpt-5.5" }),
+    });
+    expect(put.status).toBe(200);
+    expect(
+      await objects.readText("ws/w1/agent-1/data/settings.json"),
+    ).toContain("gpt-5.5");
+  } finally {
+    close();
+  }
+});
+
+/** Parse the SSE stream into `{type,data,seq,id}` frames until `count` arrive. */
+async function collectFrames(
+  res: Response,
+  count: number,
+): Promise<{ type: string; data: unknown; seq?: number; id?: string }[]> {
+  if (res.body === null) throw new Error("expected res.body to be non-null");
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  const frames: { type: string; data: unknown; seq?: number; id?: string }[] =
+    [];
+  let buf = "";
+  while (frames.length < count) {
+    const { value, done } = await reader.read();
+    if (done) throw new Error(`stream ended after ${frames.length} frames`);
+    buf += decoder.decode(value, { stream: true });
+    let sep = buf.indexOf("\n\n");
+    while (sep >= 0) {
+      const block = buf.slice(0, sep);
+      buf = buf.slice(sep + 2);
+      sep = buf.indexOf("\n\n");
+      const dataLine = block.split("\n").find((l) => l.startsWith("data: "));
+      if (!dataLine) continue; // ": connected" / ": hb"
+      const idLine = block.split("\n").find((l) => l.startsWith("id: "));
+      frames.push({
+        ...JSON.parse(dataLine.slice(6)),
+        ...(idLine ? { id: idLine.slice(4) } : {}),
+      });
+    }
+  }
+  await reader.cancel();
+  return frames;
+}
+
+test("the events SSE endpoint emits a sync frame (with watermark + id line), then sequenced live frames", async () => {
+  const { deps } = makeDeps();
+  const { base, close } = await serve(deps);
+  try {
+    const res = await fetch(`${base}/conversations/c9/events`);
+    expect(res.headers.get("content-type")).toContain("text/event-stream");
+    const pending = collectFrames(res, 2);
+    await deps.relay.publish("agent-1/c9", { type: "text", data: "live!" });
+    const frames = await pending;
+    expect(frames[0]).toEqual({
+      type: "sync",
+      data: { running: false, partial: "", seq: 0 },
+      seq: 0,
+      id: "0",
+    });
+    expect(frames[1]).toEqual({ type: "text", data: "live!", seq: 1, id: "1" });
+  } finally {
+    close();
+  }
+});
+
+test("?after= resumes the in-flight turn: no sync, replayed + live frames, no gap, no duplicate", async () => {
+  const { deps } = makeDeps();
+  const { base, close } = await serve(deps);
+  try {
+    let publishFrame!: (e: WireFrame) => Promise<void>;
+    let finish!: () => void;
+    await deps.relay.start("agent-1", "agent-1/c10", async (publish) => {
+      publishFrame = publish;
+      await new Promise<void>((r) => (finish = r));
+    });
+    await publishFrame({ type: "text", data: "a" }); // 1
+    await publishFrame({ type: "text", data: "b" }); // 2
+    await publishFrame({ type: "text", data: "c" }); // 3
+
+    const res = await fetch(`${base}/conversations/c10/events?after=1`);
+    const pending = collectFrames(res, 3);
+    await publishFrame({ type: "text", data: "d" }); // 4 — concurrent with the replay flush
+    const frames = await pending;
+    expect(frames.some((f) => f.type === "sync")).toBe(false);
+    expect(frames.map((f) => [f.seq, f.data])).toEqual([
+      [2, "b"],
+      [3, "c"],
+      [4, "d"],
+    ]);
+    finish();
+  } finally {
+    close();
+  }
+});
+
+test("an unserviceable cursor degrades to a resync sync carrying the current watermark", async () => {
+  const { deps } = makeDeps();
+  const { base, close } = await serve(deps);
+  try {
+    // Finished turn: the replay window is cleared, only the watermark survives.
+    await deps.relay.start("agent-1", "agent-1/c11", async (publish) => {
+      await publish({ type: "user", data: { content: "q", ts: 1 } }); // 1
+      await publish({ type: "text", data: "answer" }); // 2
+      await publish({ type: "done", data: null }); // 3
+    });
+    await new Promise((r) => setTimeout(r, 0));
+
+    const res = await fetch(`${base}/conversations/c11/events?after=1`);
+    const frames = await collectFrames(res, 1);
+    expect(frames[0]).toEqual({
+      type: "sync",
+      data: { running: false, partial: "", seq: 3, resync: true },
+      seq: 3,
+      id: "3",
+    });
+  } finally {
+    close();
+  }
+});
+
+test("Last-Event-ID resumes like ?after=, and the header wins when both are sent", async () => {
+  const { deps } = makeDeps();
+  const { base, close } = await serve(deps);
+  try {
+    let publishFrame!: (e: WireFrame) => Promise<void>;
+    let finish!: () => void;
+    await deps.relay.start("agent-1", "agent-1/c12", async (publish) => {
+      publishFrame = publish;
+      await new Promise<void>((r) => (finish = r));
+    });
+    await publishFrame({ type: "text", data: "a" }); // 1
+    await publishFrame({ type: "text", data: "b" }); // 2
+    await publishFrame({ type: "text", data: "c" }); // 3
+
+    const viaHeader = await fetch(`${base}/conversations/c12/events`, {
+      headers: { "Last-Event-ID": "1" },
+    });
+    expect((await collectFrames(viaHeader, 2)).map((f) => f.seq)).toEqual([
+      2, 3,
+    ]);
+
+    // The gateway advances Last-Event-ID past its Redis replay while the
+    // original ?after= stays in the query string: the header must win, or
+    // every frame the gateway just replayed is served a second time.
+    const both = await fetch(`${base}/conversations/c12/events?after=0`, {
+      headers: { "Last-Event-ID": "2" },
+    });
+    const frames = await collectFrames(both, 1);
+    expect(frames).toEqual([{ type: "text", data: "c", seq: 3, id: "3" }]);
+    finish();
+  } finally {
+    close();
+  }
+});
+
+test("cancel reports whether a turn was actually in flight (so the client can settle an orphaned card)", async () => {
+  const { deps } = makeDeps();
+  const { base, close } = await serve(deps);
+  try {
+    // No turn in flight → nothing to abort. `cancelled:false` is the signal the
+    // client uses to settle a card stuck "running" after the turn died (e.g. an
+    // app restart dropped the in-memory turn). Previously this was always {ok:true}.
+    const orphan = await fetch(`${base}/conversations/c-orphan/cancel`, {
+      method: "POST",
+    });
+    expect(orphan.status).toBe(200);
+    expect(await orphan.json()).toEqual({ ok: true, cancelled: false });
+
+    // A live turn IS in flight → cancel aborts it and reports cancelled:true, so
+    // the client leaves the status to the turn's own terminal frame (no race).
+    let release: (() => void) | undefined;
+    const claimed = await deps.relay.start(
+      "agent-1",
+      "agent-1/c-live",
+      (_publish, signal) =>
+        new Promise<void>((resolve) => {
+          if (signal.aborted) return resolve();
+          signal.addEventListener("abort", () => resolve());
+          release = resolve;
+        }),
+    );
+    expect(claimed).toBe(true);
+    const live = await fetch(`${base}/conversations/c-live/cancel`, {
+      method: "POST",
+    });
+    expect(await live.json()).toEqual({ ok: true, cancelled: true });
+    release?.();
+  } finally {
+    close();
+  }
+});

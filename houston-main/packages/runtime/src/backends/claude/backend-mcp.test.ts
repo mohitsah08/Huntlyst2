@@ -1,0 +1,187 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import type { Options } from "@anthropic-ai/claude-agent-sdk";
+import { expect, test, vi } from "vitest";
+import type { ToolSelection } from "../../session/tool-selection";
+import { httpSandboxFetch } from "../../session/tools/sandbox-fetch";
+import type { ResolvedModel } from "../types";
+import { createClaudeBackend } from "./backend";
+import { serverClaudeLayout } from "./paths";
+
+/**
+ * Verify the Claude backend WIRES the in-process MCP server into the SDK options:
+ * the `mcpServers` map carries the `houston` server and `allowedTools` auto-allows
+ * every `mcp__houston__*` tool. The SDK module is mocked so `query()` captures the
+ * per-turn `Options` and `createSdkMcpServer` records the tool defs it was handed —
+ * no subprocess, no binary.
+ */
+
+const h = vi.hoisted(() => ({
+  capturedOptions: undefined as Options | undefined,
+  capturedMcp: undefined as
+    | { name: string; tools: { name: string }[] }
+    | undefined,
+}));
+
+vi.mock("@anthropic-ai/claude-agent-sdk", () => ({
+  query: (params: { options: Options }) => {
+    h.capturedOptions = params.options;
+    return {
+      [Symbol.asyncIterator]: () => ({
+        next: async () => ({ done: true, value: undefined }),
+      }),
+    };
+  },
+  createSdkMcpServer: (opts: { name: string; tools: { name: string }[] }) => {
+    h.capturedMcp = opts;
+    return { type: "sdk", name: opts.name, instance: {} };
+  },
+}));
+
+const toolSelection: ToolSelection = { toolNames: [], includeRunCode: false };
+const model: ResolvedModel = {
+  provider: "anthropic",
+  id: "claude-sonnet-4-6",
+  contextWindow: 200_000,
+};
+
+async function runTurn(
+  integrations?: {
+    call: ReturnType<typeof httpSandboxFetch>;
+  },
+  mode?: "execute" | "plan" | "auto",
+): Promise<Options> {
+  h.capturedOptions = undefined;
+  h.capturedMcp = undefined;
+  const root = mkdtempSync(join(tmpdir(), "houston-mcp-test-"));
+  const backend = createClaudeBackend({
+    workspaceDir: root,
+    layout: serverClaudeLayout(join(root, "data")),
+    readToken: () => undefined,
+    toolSelection,
+    systemPrompt: "system",
+    integrations,
+  });
+  const session = await backend.createSession({
+    conversationId: "c1",
+    model,
+    ...(mode ? { mode } : {}),
+  });
+  await session.prompt("hi");
+  const options = h.capturedOptions;
+  if (!options) throw new Error("query was not called");
+  return options;
+}
+
+test("backend options carry the houston MCP server and its allowlist", async () => {
+  const options = await runTurn({
+    call: httpSandboxFetch("http://host.local", "tok"),
+  });
+  expect(options.mcpServers?.houston).toBeDefined();
+  expect(h.capturedMcp?.name).toBe("houston");
+  expect(options.allowedTools).toContain("mcp__houston__ask_user");
+  expect(options.allowedTools).toContain("mcp__houston__request_connection");
+  expect(options.allowedTools).toContain("mcp__houston__integration_search");
+  expect(options.allowedTools).toContain("mcp__houston__integration_execute");
+});
+
+test("without the integrations gate only ask_user + suggest_reusable are allow-listed", async () => {
+  const options = await runTurn(undefined);
+  expect(options.mcpServers?.houston).toBeDefined();
+  expect(new Set(options.allowedTools)).toEqual(
+    new Set([
+      "mcp__houston__ask_user",
+      "mcp__houston__suggest_reusable",
+      "mcp__houston__suggest_actions",
+    ]),
+  );
+});
+
+test("AskUserQuestion stays disabled — Houston ships its own ask_user", async () => {
+  const options = await runTurn(undefined);
+  expect(options.disallowedTools).toContain("AskUserQuestion");
+});
+
+test("plan mode builds the MCP server WITHOUT integrations — ask_user + plan_ready", async () => {
+  // Even with the integrations gate present, plan mode withholds the integration
+  // tools (they act on the user's connected apps), leaving ask_user plus the
+  // plan-only plan_ready presentation tool.
+  const options = await runTurn(
+    { call: httpSandboxFetch("http://host.local", "tok") },
+    "plan",
+  );
+  expect(options.mcpServers?.houston).toBeDefined();
+  expect(new Set(options.allowedTools)).toEqual(
+    new Set(["mcp__houston__ask_user", "mcp__houston__plan_ready"]),
+  );
+  expect(new Set(h.capturedMcp?.tools.map((t) => t.name))).toEqual(
+    new Set(["ask_user", "plan_ready"]),
+  );
+  // And the built-ins are the read-only plan subset.
+  expect(options.tools).toEqual(["Read", "Glob", "Grep"]);
+});
+
+test("auto mode builds the MCP with integrations ON and ask_user OFF", async () => {
+  // Autopilot is the inverse of plan: it KEEPS the acting integration tools
+  // (and the non-blocking suggest_reusable, save_routine and save_learning,
+  // and the
+  // request_connection / request_credential hand-offs autonomy cannot avoid —
+  // HOU-853) but drops ask_user so the agent never waits on the user's
+  // judgment.
+  const options = await runTurn(
+    { call: httpSandboxFetch("http://host.local", "tok") },
+    "auto",
+  );
+  expect(options.mcpServers?.houston).toBeDefined();
+  const exposed = h.capturedMcp?.tools.map((t) => t.name) ?? [];
+  expect(new Set(exposed)).toEqual(
+    new Set([
+      "suggest_reusable",
+      "suggest_actions",
+      "save_routine",
+      "save_learning",
+      "start_mission",
+      "list_missions",
+      "read_mission",
+      "update_mission_status",
+      "list_agents",
+      "read_agent",
+      "integration_search",
+      "integration_execute",
+      "request_connection",
+      "custom_integration_detect",
+      "custom_integration_add",
+      "custom_integration_remove",
+      "request_credential",
+      "request_provider_connection",
+      "request_hands_on",
+    ]),
+  );
+  expect(exposed).not.toContain("ask_user");
+  expect(new Set(options.allowedTools)).toEqual(
+    new Set([
+      "mcp__houston__suggest_reusable",
+      "mcp__houston__suggest_actions",
+      "mcp__houston__save_routine",
+      "mcp__houston__save_learning",
+      "mcp__houston__start_mission",
+      "mcp__houston__list_missions",
+      "mcp__houston__read_mission",
+      "mcp__houston__update_mission_status",
+      "mcp__houston__list_agents",
+      "mcp__houston__read_agent",
+      "mcp__houston__integration_search",
+      "mcp__houston__integration_execute",
+      "mcp__houston__request_connection",
+      "mcp__houston__custom_integration_detect",
+      "mcp__houston__custom_integration_add",
+      "mcp__houston__custom_integration_remove",
+      "mcp__houston__request_credential",
+      "mcp__houston__request_provider_connection",
+      "mcp__houston__request_hands_on",
+    ]),
+  );
+  // Built-ins keep the full execute policy — auto acts with everything else.
+  expect(options.tools).toEqual(["Read", "Edit", "Write", "Glob", "Grep"]);
+});

@@ -1,0 +1,58 @@
+{
+  "import": {
+    "eyebrow": "De um amigo",
+    "flagged": "Marcado para uma olhada mais atenta.",
+    "step1": {
+      "title": "Traga um funcionário de IA que alguém compartilhou",
+      "body": "Abra um arquivo que te enviaram, ou cole um link de compartilhamento. Nós lemos e mostramos o que tem dentro antes de instalar qualquer coisa.",
+      "pickFile": "Escolher arquivo",
+      "uploadedFrom": "Compartilhado por {{name}}",
+      "anonymous": "seu amigo",
+      "counts": "{{skills}} skills, {{routines}} rotinas, {{learnings}} aprendizados",
+      "anonymizedFlag": "Anonimizado antes do compartilhamento.",
+      "scanChoiceLabel": "Quer uma checagem rápida de segurança antes?",
+      "scanYesTitle": "Sim, revisar primeiro",
+      "scanYesBody": "Procuramos riscos óbvios. Não é garantia, é uma leitura atenta.",
+      "scanNoTitle": "Não, confio",
+      "scanNoBody": "Pular a revisão e continuar.",
+      "scanning": "Revisando o pacote.",
+      "scanClean": "Nada foi marcado.",
+      "scanFlagged": "{{count}} item(ns) marcado(s). Revise enquanto continua.",
+      "scanDisclaimer": "Este pacote foi revisado automaticamente. A revisão pode ter deixado passar algo. Abra qualquer coisa que pareça estranha antes de instalar."
+    },
+    "step2": {
+      "title": "Dê um nome ao funcionário de IA",
+      "placeholderName": "Seu funcionário de IA",
+      "tagline": "Pronto para ajudar"
+    },
+    "step3": {
+      "title": "Escolha quais skills trazer",
+      "body": "Desmarque o que não quer trazer."
+    },
+    "step4": {
+      "title": "Escolha quais rotinas trazer",
+      "body": "Rotinas rodam em horário. Esperam até suas integrações estarem conectadas."
+    },
+    "step5": {
+      "title": "Escolha quais aprendizados manter",
+      "body": "Aprendizados são notas que o funcionário de IA usa como contexto. Você pode deixar os itens pessoais de fora."
+    },
+    "actions": {
+      "back": "Voltar",
+      "next": "Continuar",
+      "install": "Trazer funcionário de IA",
+      "installing": "Trazendo.",
+      "selectAll": "Selecionar tudo",
+      "clearAll": "Limpar"
+    },
+    "errors": {
+      "uploadFailed": "Não consegui ler esse arquivo.",
+      "installFailed": "Não consegui instalar o funcionário de IA.",
+      "nameRequired": "Dê um nome ao funcionário de IA."
+    },
+    "toasts": {
+      "installedTitle": "Funcionário de IA pronto",
+      "installedDescription": "{{name}} está no seu espaço."
+    }
+  }
+}

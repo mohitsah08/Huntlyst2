@@ -1,0 +1,169 @@
+/**
+ * Pure decision helpers for the chat model + effort pickers
+ * (ChatModelSelector / ChatEffortSelector).
+ *
+ * Split out from the components (like the sibling `model-picker.ts` helpers) so
+ * the Teams behavior is unit-testable without a React renderer and the
+ * containers stay under the file-size budget.
+ *
+ * Teams E8 (contract Change 3) reversed E7's "hidden for members" rule. In a
+ * multiplayer Teams org the composer's model + effort pickers are shown for
+ * EVERYONE (plain members included), their option list is clamped to the agent's
+ * allowed-models ceiling, and they read+write the ACTING user's PERSONAL
+ * per-agent choice as the default for new missions. An open mission's in-ceiling
+ * activity pin wins. Single-player / self-host is unchanged: shared config, no
+ * ceiling, every model. These helpers mirror the gateway's resolution so the
+ * picker shows the pin that the next turn will run.
+ */
+
+import type {
+  Agent,
+  AgentModelChoice,
+  Capabilities,
+} from "@houston/engine-adapter";
+import { canEditAgentConfig } from "./agent-access.ts";
+import { type CeilingResolver, pickCeilingPin } from "./ceiling-pin.ts";
+import { decodeModelPickerId } from "./chat-model-picker-ids.ts";
+import { isMultiplayer } from "./org-roles.ts";
+
+export interface ModelSelectorDecision {
+  /** Whether the model/effort picker renders at all. */
+  show: boolean;
+  /**
+   * Whether the picker reads+writes the ACTING user's PERSONAL per-agent model
+   * choice (multiplayer Teams) instead of the shared agent config
+   * (single-player/self-host). Also gates the allowed-models clamp.
+   */
+  personal: boolean;
+}
+
+/**
+ * How the composer's model/effort picker should behave for the current caller.
+ *
+ * - No `agent` scope (`null`/`undefined`) → shown, shared behavior. Non-agent
+ *   surfaces (a routine editor with no agent, the create wizard) keep their
+ *   prior free behavior.
+ * - Single-player / self-host (no org) → shown, shared config, no ceiling.
+ * - Multiplayer Teams (the `teams` capability) → shown for EVERYONE (members
+ *   included), wired to the caller's personal per-agent choice.
+ * - Multiplayer host predating Teams (no per-user route) → falls back to the E7
+ *   gate: only an agent-manager may edit the shared config; hidden for members.
+ */
+export function modelSelectorDecision(
+  capabilities: Capabilities | null | undefined,
+  agent: Pick<Agent, "access"> | null | undefined,
+): ModelSelectorDecision {
+  if (agent == null) return { show: true, personal: false };
+  if (!isMultiplayer(capabilities)) return { show: true, personal: false };
+  if (capabilities?.teams === true) return { show: true, personal: true };
+  return { show: canEditAgentConfig(capabilities, agent), personal: false };
+}
+
+/**
+ * Whether `model` is within an agent's allowed-models ceiling.
+ * `null`/`undefined` = no ceiling (every model allowed). Used to clamp the
+ * picker's option list and to detect the single-allowed-model read-only case.
+ */
+export function isModelAllowed(
+  allowedModels: string[] | null | undefined,
+  model: string,
+): boolean {
+  if (allowedModels == null) return true;
+  return allowedModels.includes(model);
+}
+
+/**
+ * How many DISTINCT models the allowed-models ceiling removes from the picker's
+ * universe. Display-only: the gateway is the sole enforcer of the ceiling, so
+ * this count only keeps the clamp honest, surfacing the models it drops instead
+ * of hiding them in silence.
+ *
+ * A model offered by two providers is one hidden model, not two, so the count is
+ * over bare model ids. `allowedModels == null` = no ceiling → nothing hidden.
+ */
+export function hiddenModelCount(
+  pickerModels: ReadonlyArray<{ id: string }>,
+  allowedModels: string[] | null,
+): number {
+  if (allowedModels == null) return 0;
+  const allowed = new Set(allowedModels);
+  const hidden = new Set<string>();
+  for (const row of pickerModels) {
+    const { model } = decodeModelPickerId(row.id);
+    if (!allowed.has(model)) hidden.add(model);
+  }
+  return hidden.size;
+}
+
+/** A runnable provider/model/effort pin shown on the composer picker. */
+export interface ModelPin {
+  provider: string;
+  model: string;
+  effort?: string;
+}
+
+/**
+ * The provider/model/effort the composer should DISPLAY in personal (Teams)
+ * mode. The priority mirrors the gateway's per-turn resolution so the picker
+ * shows what will actually run:
+ *  1. an open mission's pin when its model remains inside the ceiling, carrying
+ *     the personal resolution's effort because activities have no effort field;
+ *  2. the user's stored `choice` when present AND still inside the ceiling;
+ *  3. else, when a ceiling exists and the shared `fallback` model is outside it,
+ *     a ceiling model the user can actually run (`pickCeilingPin`: the
+ *     fallback provider's own id first, then any connected provider's, then
+ *     the first entry on its catalogued provider);
+ *  4. else the shared `fallback` (agent / pod default) unchanged.
+ *
+ * A stored choice OUTSIDE the ceiling never wins (PRODUCT-1734): the gateway
+ * hands the stored pick back unclamped after a manager narrows the ceiling, and
+ * showing it would make the composer name a model the next turn cannot run
+ * while every effort click re-sent it and got `model_not_allowed` back. Such a
+ * choice is treated as absent, keeping only its effort as the user's preference.
+ */
+export function resolvePersonalModelPin(
+  choice: AgentModelChoice | null | undefined,
+  allowedModels: string[] | null | undefined,
+  fallback: ModelPin,
+  missionPin: ModelPin | null,
+  resolver: CeilingResolver,
+): ModelPin {
+  const personalPin =
+    choice && isModelAllowed(allowedModels, choice.model)
+      ? {
+          provider: choice.provider,
+          model: choice.model,
+          effort: choice.effort,
+        }
+      : resolveCeilingDefault(
+          allowedModels,
+          choice?.effort ? { ...fallback, effort: choice.effort } : fallback,
+          resolver,
+        );
+  if (missionPin && isModelAllowed(allowedModels, missionPin.model)) {
+    return {
+      provider: missionPin.provider,
+      model: missionPin.model,
+      effort: personalPin.effort,
+    };
+  }
+  return personalPin;
+}
+
+/**
+ * The pin when there is no usable stored choice: a ceiling model the user can
+ * run when the fallback sits outside a non-empty ceiling, else the fallback
+ * itself (no ceiling, in-ceiling fallback, or an EMPTY ceiling that leaves
+ * nothing to snap to — the composer guards the write in that last case).
+ */
+function resolveCeilingDefault(
+  allowedModels: string[] | null | undefined,
+  fallback: ModelPin,
+  resolver: CeilingResolver,
+): ModelPin {
+  return allowedModels != null &&
+    allowedModels.length > 0 &&
+    !allowedModels.includes(fallback.model)
+    ? pickCeilingPin(allowedModels, fallback, resolver)
+    : fallback;
+}
