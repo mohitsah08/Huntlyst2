@@ -65,7 +65,24 @@ export type CompanyRecord = {
   description: string | null;
   industry: string | null;
   fundingOrRevenue: string | null;
-  usPresence: boolean | null; // true means non-US (passes), false means US (rejected)
+  // Three distinct funding dimensions (Sections 7-9)
+  fundingAmount?: string | number | null;
+  fundingDate?: string | null;
+  fundingType?: string | null;
+  totalFundingUsd?: number | null;
+  latestRoundUsd?: number | null;
+  latestRoundDate?: string | null;
+  latestRoundType?: string | null;
+  fundingVerificationStatus?: 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'CONFLICT' | 'UNVERIFIED' | 'UNKNOWN';
+  fundingConflictReason?: string;
+  sourceFundingAmount?: string | null;
+  sourceFundingDate?: string | null;
+  sourceFundingType?: string | null;
+  verifiedFundingAmount?: string | null;
+  verifiedFundingDate?: string | null;
+  verifiedFundingType?: string | null;
+
+  usPresence?: boolean | null; // legacy backwards compatibility
   founderOrCeoName: string | null;
   founderOrCeoEmail: string | null;
   emailVerified: boolean;
@@ -313,17 +330,19 @@ export const REQUIRED_FIELDS = [
 export type RequiredField = (typeof REQUIRED_FIELDS)[number];
 
 export interface HuntGeographyConfig {
-  mode: 'regions' | 'countries' | 'global' | 'custom';
+  mode: 'regions' | 'countries' | 'global' | 'continents' | 'custom';
   regions: string[];
+  continents?: string[];
   countries: string[];
   excludedCountries: string[];
-  usPresence: 'strictly_none' | 'minimal_or_none' | 'limited' | 'any';
+  usPresence?: 'strictly_none' | 'minimal_or_none' | 'limited' | 'any';
 }
 
 export interface HuntFundingConfig {
   min: number;
   max: number;
-  mode: 'funding' | 'revenue' | 'funding_or_revenue';
+  mode: 'funding' | 'revenue' | 'funding_or_revenue' | 'funding_only' | 'revenue_only' | 'funding_and_revenue';
+  targetMetric?: 'total_funding' | 'latest_round';
   preset?: string;
 }
 
@@ -363,10 +382,11 @@ export const TVB_EVALUATION_CONFIG: HuntConfig = {
   name: 'TVB Evaluation Profile',
   geography: {
     mode: 'global',
-    regions: [],
+    regions: ['Global'],
+    continents: [],
     countries: [],
-    excludedCountries: ['United States'],
-    usPresence: 'minimal_or_none',
+    excludedCountries: [],
+    usPresence: 'any',
   },
   sectors: ['all'],
   businessModels: ['Platform', 'SaaS', 'Marketplace', 'B2B', 'API'],

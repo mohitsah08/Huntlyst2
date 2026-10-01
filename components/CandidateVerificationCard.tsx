@@ -383,7 +383,6 @@ export default function CandidateVerificationCard({
         {renderCriterionPill('Funding', criteria.funding)}
         {renderCriterionPill('Industry', criteria.industry)}
         {renderCriterionPill('Geography', criteria.geography)}
-        {renderCriterionPill('US Presence', criteria.usPresence)}
         {renderCriterionPill('Company Age', criteria.companyAge)}
         {renderCriterionPill('Stage', criteria.companyStage)}
         {renderCriterionPill('CEO / Founder', criteria.founderOrCeo)}

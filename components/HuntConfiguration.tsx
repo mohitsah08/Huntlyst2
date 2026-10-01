@@ -1247,58 +1247,72 @@ export default function HuntConfiguration({
       </div>
 
       {/* ----------------------------------------------------------- */}
-      {/* 5. GEOGRAPHY & US PRESENCE POLICY */}
+      {/* 5. GEOGRAPHY (Sections 12-15, 40) */}
       {/* ----------------------------------------------------------- */}
       <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch-sm space-y-5">
         <div className="flex items-center gap-2 border-b border-[#F0EAD8] pb-3">
           <span className="text-lg" aria-hidden="true">🌍</span>
-          <h2 className="font-display text-lg font-bold text-[#1E1B18]">Geography & Non-US Presence Criteria</h2>
+          <h2 className="font-display text-lg font-bold text-[#1E1B18]">Geography</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Regions & US Presence Mode */}
+          {/* Target Coverage & Continents */}
           <div className="space-y-4">
             <div>
-              <label htmlFor="tp-us-presence" className="block text-xs font-bold uppercase tracking-wider text-[#766E65] mb-1.5">
-                US Presence Policy (Non-US Requirement)
-              </label>
-              <select
-                id="tp-us-presence"
-                value={profile.usPresenceMode}
-                onChange={e => setProfile(prev => ({ ...prev, usPresenceMode: e.target.value as any }))}
-                className="w-full bg-[#FAF6EE] text-xs font-bold font-mono text-[#1E1B18] px-3 py-2.5 rounded-xl border border-[#D9D0C1]"
-              >
-                {US_PRESENCE_OPTIONS.map(u => (
-                  <option key={u.value} value={u.value}>
-                    {u.label} ({u.badge})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#766E65] block mb-2">
-                Target Regions:
+              <span className="text-xs font-bold uppercase tracking-wider text-[#766E65] block mb-2">
+                Target Coverage
               </span>
-              <div className="flex items-center gap-2 flex-wrap">
-                {REGION_OPTIONS.map(reg => {
-                  const isChecked = profile.regions.includes(reg);
+              <div className="flex items-center gap-2 flex-wrap mb-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (profile.regions.includes('Global')) {
+                      setProfile(prev => ({ ...prev, regions: [] }));
+                    } else {
+                      setProfile(prev => ({ ...prev, regions: ['Global'], countries: [] }));
+                    }
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-mono border transition-colors ${
+                    profile.regions.includes('Global')
+                      ? 'bg-[#1E1B18] text-[#FAF6EE] border-[#1E1B18] font-bold shadow-sketch-sm'
+                      : 'bg-[#FAF6EE] text-[#5A544E] border-[#EBE4D5] hover:bg-[#F2ECE0]'
+                  }`}
+                >
+                  {profile.regions.includes('Global') ? '✓ ' : ''}Global
+                </button>
+
+                {['Asia', 'Europe', 'North America', 'South America', 'Africa', 'Middle East', 'Oceania'].map(cont => {
+                  const isChecked = profile.regions.includes(cont);
+                  const isGlobalActive = profile.regions.includes('Global');
                   return (
                     <button
-                      key={reg}
+                      key={cont}
                       type="button"
-                      onClick={() => toggleArrayItem('regions', reg)}
+                      disabled={isGlobalActive}
+                      onClick={() => toggleArrayItem('regions', cont)}
                       className={`px-3 py-1.5 rounded-xl text-xs font-mono border transition-colors ${
-                        isChecked
+                        isGlobalActive
+                          ? 'opacity-40 cursor-not-allowed bg-[#FAF6EE] text-[#A0988E] border-[#EBE4D5]'
+                          : isChecked
                           ? 'bg-[#1E1B18] text-[#FAF6EE] border-[#1E1B18] font-bold'
                           : 'bg-[#FAF6EE] text-[#5A544E] border-[#EBE4D5] hover:bg-[#F2ECE0]'
                       }`}
                     >
-                      {isChecked ? '✓ ' : ''}{reg}
+                      {isChecked ? '✓ ' : ''}{cont}
                     </button>
                   );
                 })}
               </div>
+
+              {profile.regions.includes('Global') ? (
+                <div className="p-3 bg-[#E8F5E9] rounded-xl border border-[#C8E6C9] text-xs font-mono text-[#2E7D32] font-bold flex items-center gap-2">
+                  <span>✓</span> Global — all countries allowed (no geographic restrictions)
+                </div>
+              ) : (
+                <p className="text-[11px] font-mono text-[#766E65]">
+                  Union semantics: Companies headquartered in any selected continent OR country qualify.
+                </p>
+              )}
             </div>
           </div>
 

@@ -496,58 +496,52 @@ export function checkGeographyMatch(
   const detectedName = detected ? detected.name : null;
   const detectedRegion = detected ? detected.region : null;
 
-  const targetCountries = (config.geography.countries || []).map(c => c.toLowerCase());
-  const targetRegions = (config.geography.regions || [])
+  const mode = config.geography.mode || 'global';
+  const targetContinents = [
+    ...(config.geography.continents || []),
+    ...(config.geography.regions || [])
+  ]
     .map(r => r.toLowerCase())
     .filter(r => r !== 'global' && r !== 'all');
+
+  const targetCountries = (config.geography.countries || []).map(c => c.toLowerCase());
   const excluded = (config.geography.excludedCountries || []).map(e => e.toLowerCase());
-  const isNoUSRestriction = config.geography.usPresence === 'any' || 
-    (config.geography.usPresence as string) === 'dont_care' || 
-    (config.geography.usPresence as string) === 'no_restriction';
 
-  // Check Exclusions (skip US exclusion check if user explicitly selected no US restriction)
+  // 1. Check explicit exclusions
   if (detectedName && excluded.includes(detectedName.toLowerCase())) {
-    if (!(detectedName.toLowerCase() === 'united states' && isNoUSRestriction)) {
-      return { passed: false, detectedCountry: detectedName, reason: `Excluded country: ${detectedName}` };
-    }
+    return { passed: false, detectedCountry: detectedName, reason: `Excluded country: ${detectedName}` };
   }
 
-  // If United States excluded and detected is US
-  const usVerdict = checkNoUSPresence(evidenceText, websiteUrl, config.geography.usPresence as any);
-  if (!isNoUSRestriction && excluded.includes('united states') && (detectedName === 'United States' || usVerdict === true)) {
-    return { passed: false, detectedCountry: 'United States', reason: 'US presence detected while US is excluded' };
+  // 2. Global Coverage Semantics (Section 14)
+  const isGlobal = mode === 'global' || 
+    (config.geography.regions || []).some(r => r.toLowerCase() === 'global') ||
+    (targetContinents.length === 0 && targetCountries.length === 0);
+
+  if (isGlobal) {
+    // In Global mode, all countries are eligible. No hidden US restriction.
+    return {
+      passed: true,
+      detectedCountry: detectedName || 'Global',
+      detectedRegion: detectedRegion || 'Global',
+      reason: 'Global coverage — all countries eligible',
+    };
   }
 
-  // Specific countries targeted
-  if (targetCountries.length > 0) {
-    if (!detectedName || !targetCountries.includes(detectedName.toLowerCase())) {
+  // 3. Continent + Country Union Semantics (Section 15)
+  // Selected geography is the UNION of selected continents and selected countries.
+  const matchesCountry = detectedName && targetCountries.includes(detectedName.toLowerCase());
+  const matchesContinent = detectedRegion && targetContinents.includes(detectedRegion.toLowerCase());
+
+  if (targetCountries.length > 0 || targetContinents.length > 0) {
+    if (!matchesCountry && !matchesContinent) {
+      const targetLabels = [...(config.geography.continents || config.geography.regions || []), ...(config.geography.countries || [])].filter(Boolean);
       return {
         passed: false,
         detectedCountry: detectedName || undefined,
-        reason: `Country does not match target: ${config.geography.countries.join(', ')}`,
-      };
-    }
-  }
-  // Specific regions targeted
-  else if (targetRegions.length > 0) {
-    if (!detectedRegion || !targetRegions.includes(detectedRegion.toLowerCase())) {
-      return {
-        passed: false,
         detectedRegion: detectedRegion || undefined,
-        reason: `Region does not match target: ${config.geography.regions.join(', ')}`,
+        reason: `Location (${detectedName || detectedRegion || 'Unknown'}) does not match target geography: ${targetLabels.join(', ')}`,
       };
     }
-  }
-
-  // Validate US presence policy
-  if ((config.geography.usPresence === 'strictly_none' || (config.geography.usPresence as string) === 'exclude_us_presence') && usVerdict !== false) {
-    return { passed: false, reason: 'Strictly zero US presence required (unverified or US detected)' };
-  }
-  if ((config.geography.usPresence === 'minimal_or_none' || (config.geography.usPresence as string) === 'exclude_us' || (config.geography.usPresence as string) === 'exclude_us_hq') && usVerdict === true) {
-    return { passed: false, reason: 'US presence or headquarters detected while US is excluded' };
-  }
-  if ((config.geography.usPresence as string) === 'require_us' && usVerdict === true) {
-    return { passed: false, reason: 'US presence required but candidate is non-US' };
   }
 
   return {
