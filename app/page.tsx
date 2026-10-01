@@ -149,6 +149,7 @@ export default function HomePage() {
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
 
   // Splash Screen State (Session-guarded, defaults to true to prevent initial dashboard flash)
   const [showSplash, setShowSplash] = useState<boolean>(true);
@@ -429,6 +430,7 @@ export default function HomePage() {
                 status: 'Completed',
                 sector: activeCfg.sectors.join(', ') || selectedSector,
                 companies: event.result.companies,
+                rejectedCompanies: event.result.rejectedCompanies || [],
               };
 
               setRunHistory((prev) => {
@@ -511,6 +513,7 @@ export default function HomePage() {
       status: 'Completed',
       sector: activeHuntConfig.sectors.join(', ') || selectedSector,
       companies: qualifiedCompanies,
+      rejectedCompanies: rejectedCompanies,
     };
 
     setRunHistory((prev) => {
@@ -695,14 +698,14 @@ export default function HomePage() {
               <span>Scale</span>
             </div>
 
-            {results && results.companies.length > 0 && (
+            {((results && results.companies.length > 0) || rejectedCandidates.length > 0) && (
               <button
                 type="button"
                 onClick={() => setIsExportModalOpen(true)}
                 className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border-[1.8px] border-[#2C2724] bg-white hover:bg-[#FAF6EE] text-xs font-bold text-[#1E1B18] shadow-sketch-sm"
               >
                 <span>📦</span>
-                <span>Export ({results.companies.length})</span>
+                <span>Export ({totalDiscovered || (results?.companies.length || 0) + rejectedCandidates.length})</span>
               </button>
             )}
 
@@ -1174,13 +1177,13 @@ export default function HomePage() {
                   </div>
 
                   <div className="flex items-center gap-2 flex-wrap">
-                    {results && results.companies.length > 0 && (
+                    {((results && results.companies.length > 0) || rejectedCandidates.length > 0) && (
                       <button
                         type="button"
                         onClick={() => setIsExportModalOpen(true)}
                         className="sketch-btn px-4 py-2 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] rounded-xl border-2 border-[#1E1B18] shadow-sketch-sm flex items-center gap-1.5"
                       >
-                        <span>📦</span> Export Research
+                        <span>📦</span> Export Research ({totalDiscovered || (results?.companies.length || 0) + rejectedCandidates.length})
                       </button>
                     )}
 
@@ -1451,12 +1454,67 @@ export default function HomePage() {
                         </div>
                       </div>
 
+                      {/* Selective Export Action Bar (Section 65) */}
+                      {selectedRowIds.size > 0 && (
+                        <div className="p-3 bg-[#FFF8F5] border-2 border-[#FF6B35] rounded-xl flex items-center justify-between text-xs animate-in fade-in shadow-sketch-xs">
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-[#1E1B18] font-mono">
+                              ✓ {selectedRowIds.size} company record{selectedRowIds.size === 1 ? '' : 's'} selected
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedRowIds(new Set())}
+                              className="text-[#766E65] hover:text-[#1E1B18] underline text-[11px] font-mono"
+                            >
+                              Clear Selection
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsExportModalOpen(true)}
+                            className="sketch-btn px-3.5 py-1.5 text-xs font-bold text-white bg-[#FF6B35] hover:bg-[#F05820] rounded-lg shadow-sketch-xs flex items-center gap-1.5 transition-colors"
+                          >
+                            <span>📦</span>
+                            <span>Export Selected ({selectedRowIds.size})</span>
+                          </button>
+                        </div>
+                      )}
+
                       {/* Main Table (Section 11) */}
                       <div className="paper-card bg-[#FFFDF9] rounded-2xl border-2 border-[#1E1B18] shadow-sketch-sm overflow-hidden">
                         <div className="overflow-x-auto">
                           <table className="w-full text-left text-xs border-collapse">
                             <thead>
                               <tr className="bg-[#1E1B18] text-[#FAF6EE] font-mono font-bold text-[11px] uppercase tracking-wider">
+                                <th className="py-3 px-3 w-10 text-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={
+                                      filteredCompanies.length > 0 &&
+                                      filteredCompanies.every((c) => {
+                                        const id = `lead-${c.website ? c.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase() : c.name.toLowerCase().replace(/\s+/g, '-')}`;
+                                        return selectedRowIds.has(id);
+                                      })
+                                    }
+                                    onChange={(e) => {
+                                      const next = new Set(selectedRowIds);
+                                      if (e.target.checked) {
+                                        filteredCompanies.forEach((c) => {
+                                          const id = `lead-${c.website ? c.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase() : c.name.toLowerCase().replace(/\s+/g, '-')}`;
+                                          next.add(id);
+                                        });
+                                      } else {
+                                        filteredCompanies.forEach((c) => {
+                                          const id = `lead-${c.website ? c.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase() : c.name.toLowerCase().replace(/\s+/g, '-')}`;
+                                          next.delete(id);
+                                        });
+                                      }
+                                      setSelectedRowIds(next);
+                                    }}
+                                    className="w-4 h-4 text-[#FF6B35] rounded border-[#2C2724] cursor-pointer"
+                                    title="Select all visible filtered companies"
+                                  />
+                                </th>
                                 <th className="py-3 px-4">#</th>
                                 <th className="py-3 px-4">Company</th>
                                 <th className="py-3 px-4">Sector</th>
@@ -1475,12 +1533,28 @@ export default function HomePage() {
                                 const founder = company.founderOrCeoName || company.founder?.name || 'Executive';
                                 const email = company.founderOrCeoEmail || company.email?.address;
                                 const isEmailVerified = company.emailVerified || company.email?.status === 'verified';
+                                const rowId = `lead-${company.website ? company.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase() : company.name.toLowerCase().replace(/\s+/g, '-')}`;
+                                const isSelected = selectedRowIds.has(rowId);
 
                                 return (
                                   <tr
                                     key={company.name}
-                                    className="hover:bg-[#FFF9F2] transition-colors"
+                                    className={`transition-colors ${isSelected ? 'bg-[#FFF3E0]' : 'hover:bg-[#FFF9F2]'}`}
                                   >
+                                    <td className="py-3.5 px-3 text-center">
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => {
+                                          const next = new Set(selectedRowIds);
+                                          if (next.has(rowId)) next.delete(rowId);
+                                          else next.add(rowId);
+                                          setSelectedRowIds(next);
+                                        }}
+                                        className="w-4 h-4 text-[#FF6B35] rounded border-[#1E1B18] cursor-pointer"
+                                        aria-label={`Select ${company.name}`}
+                                      />
+                                    </td>
                                     <td className="py-3.5 px-4 font-mono text-[#766E65]">{idx + 1}</td>
                                     <td className="py-3.5 px-4">
                                       <div className="font-bold text-[#1E1B18] text-sm flex items-center gap-1.5 flex-wrap">
@@ -1693,12 +1767,16 @@ export default function HomePage() {
         />
       )}
 
-      {isExportModalOpen && results?.companies && (
+      {isExportModalOpen && (
         <ExportModal
           isOpen={isExportModalOpen}
           onClose={() => setIsExportModalOpen(false)}
-          companies={results.companies}
+          companies={results?.companies || []}
+          rejectedCompanies={rejectedCandidates}
+          selectedIds={Array.from(selectedRowIds)}
           onToast={showToast}
+          huntId={results ? 'hunt-results-active' : undefined}
+          searchQuery={searchQuery}
         />
       )}
 

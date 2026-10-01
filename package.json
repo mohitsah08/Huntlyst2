@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "test:profile": "npx -y tsx tests/target-profile.test.ts",
-    "test": "npx -y tsx tests/target-profile.test.ts && npx -y tsx scratch/test-autonomous-hunt.ts"
+    "test:export": "npx -y tsx tests/export-system.test.ts",
+    "test": "npx -y tsx tests/target-profile.test.ts && npx -y tsx tests/export-system.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",

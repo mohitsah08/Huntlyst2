@@ -223,6 +223,7 @@ export interface RunHistoryItem {
   status: 'Completed' | 'Degraded' | 'Failed';
   sector: string;
   companies: CompanyRecord[];
+  rejectedCompanies?: RejectedCompanyRecord[];
 }
 
 export interface SettingsConfig {

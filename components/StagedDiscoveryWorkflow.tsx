@@ -6,6 +6,8 @@ import { CompanyVerificationResult, PipelineStageName } from '@/providers/types'
 import { CompanyRecord, RejectedCompanyRecord, HuntConfig } from '@/lib/types';
 import CandidateVerificationCard from './CandidateVerificationCard';
 import HuntConfiguration from './HuntConfiguration';
+import ExportModal from './ExportModal';
+import { PipelineStageLabel } from '@/lib/export';
 
 interface StagedDiscoveryWorkflowProps {
   initialTargetProfile?: TargetProfile;
@@ -67,6 +69,15 @@ export default function StagedDiscoveryWorkflow({
 
   // Result Filtering Tab
   const [activeTab, setActiveTab] = useState<'all' | 'qualified' | 'partial' | 'review' | 'unverified' | 'rejected' | 'error'>('all');
+
+  // Stage & Live Export Modal State (Sections 44, 52, 53)
+  const [exportModalConfig, setExportModalConfig] = useState<{
+    isOpen: boolean;
+    stage?: PipelineStageLabel;
+    stagedResults: CompanyVerificationResult[];
+    title?: string;
+    subtitle?: string;
+  } | null>(null);
 
   // Reset temporary staged session (Section 21)
   const handleClearStagedSession = () => {
@@ -580,9 +591,27 @@ export default function StagedDiscoveryWorkflow({
 
       {/* 🧭 Workflow Progress Tracker with Strict Persistent States */}
       <div className="paper-card bg-white rounded-2xl p-4 sm:p-5 border-2 border-[#1E1B18] shadow-sketch-sm">
-        <div className="text-[11px] font-mono uppercase text-[#766E65] font-bold mb-3 flex items-center justify-between">
+        <div className="text-[11px] font-mono uppercase text-[#766E65] font-bold mb-3 flex flex-wrap items-center justify-between gap-2">
           <span>Staged Discovery Path (Strict Human Approval Gates)</span>
-          <span>Zero False Claims • UNKNOWN ≠ FAIL</span>
+          <div className="flex items-center gap-2">
+            {(internalResults.length > 0 || externalResults.length > 0 || webSearchResults.length > 0) && (
+              <button
+                type="button"
+                onClick={() => setExportModalConfig({
+                  isOpen: true,
+                  stagedResults: [...internalResults, ...externalResults, ...webSearchResults],
+                  title: 'Live Discovery Pipeline Export',
+                  subtitle: `Point-in-time snapshot of ${internalResults.length + externalResults.length + webSearchResults.length} candidates across active stages.`,
+                })}
+                className="px-2.5 py-1 rounded-lg border border-[#1E1B18] bg-[#FAF6EE] hover:bg-[#FFE7DC] text-[#1E1B18] text-[10px] font-bold flex items-center gap-1 shadow-sketch-xs transition-colors"
+                title="Export live snapshot without interrupting workflow"
+              >
+                <span>📦</span>
+                <span>Live Export ({internalResults.length + externalResults.length + webSearchResults.length})</span>
+              </button>
+            )}
+            <span>Zero False Claims • UNKNOWN ≠ FAIL</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
@@ -833,8 +862,24 @@ export default function StagedDiscoveryWorkflow({
                           </p>
                         </div>
                       </div>
-                      <div className="text-xs font-mono font-bold text-[#2E7D32] bg-[#E8F5E9] px-3 py-1.5 rounded-lg border border-[#2E7D32]/30 self-start sm:self-auto">
-                        {totalProc} / {totalRec} processed
+                      <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => setExportModalConfig({
+                            isOpen: true,
+                            stage: 'Stage 1: Internal Discovery',
+                            stagedResults: internalResults,
+                            title: 'Export Stage 1: Internal Discovery',
+                            subtitle: `${internalResults.length} records processed from uploaded candidate list.`,
+                          })}
+                          className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] rounded-lg border border-[#1E1B18] shadow-sketch-xs flex items-center gap-1.5 transition-colors"
+                        >
+                          <span>📦</span>
+                          <span>Export Stage 1 ({internalResults.length})</span>
+                        </button>
+                        <div className="text-xs font-mono font-bold text-[#2E7D32] bg-[#E8F5E9] px-3 py-1.5 rounded-lg border border-[#2E7D32]/30">
+                          {totalProc} / {totalRec} processed
+                        </div>
                       </div>
                     </div>
 
@@ -1052,13 +1097,29 @@ export default function StagedDiscoveryWorkflow({
           {/* External Results */}
           {externalResults.length > 0 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <h4 className="font-display font-bold text-base text-[#1E1B18]">
                   External Research Intelligence ({externalResults.length})
                 </h4>
-                <span className="text-xs font-mono text-[#2E7D32] font-bold">
-                  Approved: {externalApproved.size}
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setExportModalConfig({
+                      isOpen: true,
+                      stage: 'Stage 2: External Discovery',
+                      stagedResults: externalResults,
+                      title: 'Export Stage 2: External Discovery',
+                      subtitle: `${externalResults.length} external candidates researched and verified.`,
+                    })}
+                    className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] rounded-lg border border-[#1E1B18] shadow-sketch-xs flex items-center gap-1.5 transition-colors"
+                  >
+                    <span>📦</span>
+                    <span>Export Stage 2 ({externalResults.length})</span>
+                  </button>
+                  <span className="text-xs font-mono text-[#2E7D32] font-bold">
+                    Approved: {externalApproved.size}
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-3">
@@ -1147,13 +1208,29 @@ export default function StagedDiscoveryWorkflow({
           {/* Web Search Results */}
           {webSearchResults.length > 0 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <h4 className="font-display font-bold text-base text-[#1E1B18]">
                   Web Search Candidates Verified ({webSearchResults.length})
                 </h4>
-                <span className="text-xs font-mono text-[#2E7D32] font-bold">
-                  Approved: {webSearchApproved.size}
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setExportModalConfig({
+                      isOpen: true,
+                      stage: 'Stage 3: Research / Enrichment',
+                      stagedResults: webSearchResults,
+                      title: 'Export Stage 3: Web Discovery & Research',
+                      subtitle: `${webSearchResults.length} web search candidates evaluated against target profile.`,
+                    })}
+                    className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] rounded-lg border border-[#1E1B18] shadow-sketch-xs flex items-center gap-1.5 transition-colors"
+                  >
+                    <span>📦</span>
+                    <span>Export Stage 3 ({webSearchResults.length})</span>
+                  </button>
+                  <span className="text-xs font-mono text-[#2E7D32] font-bold">
+                    Approved: {webSearchApproved.size}
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-3">
@@ -1186,14 +1263,30 @@ export default function StagedDiscoveryWorkflow({
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={handleFinalizeAll}
-              className="sketch-btn px-6 py-3 text-xs font-bold text-[#1E1B18] bg-[#A5D6A7] hover:bg-[#81C784] border-2 border-[#1E1B18] rounded-xl shadow-sketch-sm shrink-0 flex items-center gap-1.5"
-            >
-              <span>Approve & View Final Results</span>
-              <span>→</span>
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setExportModalConfig({
+                  isOpen: true,
+                  stagedResults: [...internalResults, ...externalResults, ...webSearchResults],
+                  title: 'Export Staged Discovery Pipeline',
+                  subtitle: `Export all ${internalResults.length + externalResults.length + webSearchResults.length} candidates evaluated across stages.`,
+                })}
+                className="sketch-btn px-4 py-3 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] border-2 border-[#1E1B18] rounded-xl shadow-sketch-sm shrink-0 flex items-center gap-1.5"
+              >
+                <span>📦</span>
+                <span>Export Pipeline ({internalResults.length + externalResults.length + webSearchResults.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleFinalizeAll}
+                className="sketch-btn px-6 py-3 text-xs font-bold text-[#1E1B18] bg-[#A5D6A7] hover:bg-[#81C784] border-2 border-[#1E1B18] rounded-xl shadow-sketch-sm shrink-0 flex items-center gap-1.5"
+              >
+                <span>Approve & View Final Results</span>
+                <span>→</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1244,6 +1337,19 @@ export default function StagedDiscoveryWorkflow({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Staged & Live Export Modal (Sections 44, 52, 53) */}
+      {exportModalConfig?.isOpen && (
+        <ExportModal
+          isOpen={exportModalConfig.isOpen}
+          onClose={() => setExportModalConfig(null)}
+          stagedResults={exportModalConfig.stagedResults}
+          initialStage={exportModalConfig.stage}
+          title={exportModalConfig.title}
+          subtitle={exportModalConfig.subtitle}
+          onToast={(msg) => setStatusMessage(msg)}
+        />
       )}
     </div>
   );

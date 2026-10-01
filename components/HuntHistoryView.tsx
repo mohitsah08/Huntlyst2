@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { RunHistoryItem, CompanyRecord } from '@/lib/types';
 import { downloadCsvFile, downloadPdfFile, downloadDocxFile } from '@/lib/export';
 import HuntlystLogo from './HuntlystLogo';
+import ExportModal from './ExportModal';
 
 interface HuntHistoryViewProps {
   history: RunHistoryItem[];
@@ -21,6 +22,7 @@ export default function HuntHistoryView({
   onNavigateToDiscover,
 }: HuntHistoryViewProps) {
   const [selectedFormat, setSelectedFormat] = useState<'CSV' | 'PDF' | 'DOCX'>('CSV');
+  const [exportingRun, setExportingRun] = useState<RunHistoryItem | null>(null);
 
   const handleExportRun = async (run: RunHistoryItem, format: 'CSV' | 'PDF' | 'DOCX') => {
     if (!run.companies || run.companies.length === 0) {
@@ -159,34 +161,14 @@ export default function HuntHistoryView({
                       <span>👁️</span> View Leads
                     </button>
 
-                    <div className="flex items-center border-[1.5px] border-[#1E1B18] rounded-xl overflow-hidden shadow-sketch-sm bg-white">
-                      <button
-                        type="button"
-                        onClick={() => handleExportRun(run, 'CSV')}
-                        className="px-2.5 py-1.5 text-[11px] font-bold text-[#1E1B18] hover:bg-[#FFE7DC] transition-colors"
-                        title="Export CSV"
-                      >
-                        CSV
-                      </button>
-                      <span className="text-[#D9D0C1]">|</span>
-                      <button
-                        type="button"
-                        onClick={() => handleExportRun(run, 'PDF')}
-                        className="px-2.5 py-1.5 text-[11px] font-bold text-[#1E1B18] hover:bg-[#FFE7DC] transition-colors"
-                        title="Export PDF"
-                      >
-                        PDF
-                      </button>
-                      <span className="text-[#D9D0C1]">|</span>
-                      <button
-                        type="button"
-                        onClick={() => handleExportRun(run, 'DOCX')}
-                        className="px-2.5 py-1.5 text-[11px] font-bold text-[#1E1B18] hover:bg-[#FFE7DC] transition-colors"
-                        title="Export Word DOCX"
-                      >
-                        DOCX
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setExportingRun(run)}
+                      className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FFE7DC] rounded-xl border-[1.5px] border-[#1E1B18] shadow-sketch-sm flex items-center gap-1.5 transition-colors"
+                      title="Export historical hunt records (CSV, XLSX, JSON, PDF, DOCX)"
+                    >
+                      <span>📦</span> Export
+                    </button>
 
                     <button
                       type="button"
@@ -230,6 +212,20 @@ export default function HuntHistoryView({
             );
           })}
         </div>
+      )}
+
+      {/* Historical Hunt Export Modal */}
+      {exportingRun && (
+        <ExportModal
+          isOpen={!!exportingRun}
+          onClose={() => setExportingRun(null)}
+          companies={exportingRun.companies || []}
+          rejectedCompanies={exportingRun.rejectedCompanies || []}
+          title={`Export Hunt from ${new Date(exportingRun.timestamp).toLocaleDateString()}`}
+          subtitle={`Sector: ${exportingRun.sector || 'All Sectors'} • Status: ${exportingRun.status}`}
+          huntId={exportingRun.id}
+          onToast={onToast}
+        />
       )}
     </div>
   );
