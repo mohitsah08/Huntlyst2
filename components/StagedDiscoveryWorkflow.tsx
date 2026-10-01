@@ -1200,53 +1200,48 @@ export default function StagedDiscoveryWorkflow({
 
       {/* Target Configuration Modal */}
       {isConfigModalOpen && (
-        <div className="fixed inset-0 z-50 bg-[#1E1B18]/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#FFFDF9] rounded-2xl max-w-4xl w-full p-6 border-2 border-[#1E1B18] shadow-sketch max-h-[90vh] overflow-y-auto space-y-4">
-            <div className="flex items-center justify-between border-b border-[#F0EAD8] pb-3">
-              <h3 className="font-display font-bold text-xl text-[#1E1B18]">
-                🎯 Customize Target Profile
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsConfigModalOpen(false)}
-                className="w-8 h-8 rounded-full border border-[#1E1B18] flex items-center justify-center font-bold text-[#1E1B18] hover:bg-[#FAF6EE]"
-              >
-                ✕
-              </button>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Customize Target Profile Modal"
+          className="fixed inset-0 z-50 bg-[#1E1B18]/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-hidden animate-in fade-in duration-200"
+        >
+          <div className="bg-[#FFFDF9] rounded-2xl max-w-5xl w-full border-2 border-[#1E1B18] shadow-sketch max-h-[92vh] flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <HuntConfiguration
+                initialConfig={{
+                  geography: {
+                    mode: 'custom',
+                    regions: targetProfile.regions,
+                    countries: targetProfile.countries,
+                    excludedCountries: targetProfile.excludedCountries || [],
+                    usPresence: targetProfile.usPresenceMode as any,
+                  },
+                  sectors: targetProfile.industries,
+                  businessModels: targetProfile.subIndustries,
+                  stage: targetProfile.companyStages,
+                  funding: {
+                    min: targetProfile.fundingMin,
+                    max: targetProfile.fundingMax,
+                    mode: targetProfile.financialMetric as any,
+                  },
+                  techProfile: 'platform_required',
+                  contactRequirement: 'ceo_or_cofounder',
+                  emailVerification: 'required',
+                  depth: 'balanced',
+                  targetLeads: typeof targetProfile.targetCount === 'number' ? targetProfile.targetCount : 15,
+                  targetProfile,
+                }}
+                isRunning={false}
+                onClose={() => setIsConfigModalOpen(false)}
+                onLaunchHunt={(cfg: HuntConfig) => {
+                  if (cfg.targetProfile) {
+                    setTargetProfile(cfg.targetProfile);
+                  }
+                  setIsConfigModalOpen(false);
+                }}
+              />
             </div>
-
-            <HuntConfiguration
-              initialConfig={{
-                geography: {
-                  mode: 'custom',
-                  regions: targetProfile.regions,
-                  countries: targetProfile.countries,
-                  excludedCountries: targetProfile.excludedCountries || [],
-                  usPresence: targetProfile.usPresenceMode as any,
-                },
-                sectors: targetProfile.industries,
-                businessModels: targetProfile.subIndustries,
-                stage: targetProfile.companyStages,
-                funding: {
-                  min: targetProfile.fundingMin,
-                  max: targetProfile.fundingMax,
-                  mode: targetProfile.financialMetric as any,
-                },
-                techProfile: 'platform_required',
-                contactRequirement: 'ceo_or_cofounder',
-                emailVerification: 'required',
-                depth: 'balanced',
-                targetLeads: typeof targetProfile.targetCount === 'number' ? targetProfile.targetCount : 15,
-                targetProfile,
-              }}
-              isRunning={false}
-              onLaunchHunt={(cfg: HuntConfig) => {
-                if (cfg.targetProfile) {
-                  setTargetProfile(cfg.targetProfile);
-                }
-                setIsConfigModalOpen(false);
-              }}
-            />
           </div>
         </div>
       )}

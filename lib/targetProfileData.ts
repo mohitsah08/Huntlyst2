@@ -268,6 +268,398 @@ export const INDUSTRY_TAXONOMY: IndustryCategory[] = [
   },
 ];
 
+export interface HierarchicalSector {
+  id: string;
+  name: string;
+  categoryKey: string;
+  subSectors: string[];
+}
+
+export const HIERARCHICAL_SECTORS: HierarchicalSector[] = [
+  {
+    id: 'technology',
+    name: 'Technology',
+    categoryKey: 'TECHNOLOGY & SOFTWARE',
+    subSectors: [
+      'Software',
+      'SaaS',
+      'AI',
+      'Artificial Intelligence',
+      'Machine Learning',
+      'DeepTech',
+      'Cloud Computing',
+      'Cybersecurity',
+      'DevTools',
+      'IT Services',
+      'Enterprise Software',
+      'Web Technology',
+      'Mobile Technology',
+      'Data & Analytics',
+      'IoT',
+      'Blockchain',
+      'Web3',
+      'AR/VR',
+      'Robotics',
+      'Semiconductors',
+      'Electronics',
+    ],
+  },
+  {
+    id: 'finance',
+    name: 'Finance',
+    categoryKey: 'FINANCE',
+    subSectors: [
+      'Fintech',
+      'Banking',
+      'Payments',
+      'Lending',
+      'Insurance',
+      'InsurTech',
+      'WealthTech',
+      'Investment',
+      'Accounting',
+      'Financial Services',
+      'Crypto / Digital Assets',
+    ],
+  },
+  {
+    id: 'healthcare',
+    name: 'Healthcare',
+    categoryKey: 'HEALTHCARE',
+    subSectors: [
+      'Healthcare',
+      'HealthTech',
+      'Pharmaceuticals',
+      'Medicine',
+      'Medical Devices',
+      'Biotechnology',
+      'Life Sciences',
+      'Mental Wellness',
+      'Digital Health',
+      'Diagnostics',
+      'Hospital / Care Services',
+    ],
+  },
+  {
+    id: 'agriculture',
+    name: 'Agriculture & Food',
+    categoryKey: 'AGRICULTURE & FOOD',
+    subSectors: [
+      'Agriculture',
+      'AgriTech',
+      'Agro',
+      'Agro Processing',
+      'Dairy',
+      'Milk / Dairy Technology',
+      'Farming',
+      'Animal Husbandry',
+      'Fisheries',
+      'Food',
+      'FoodTech',
+      'Beverages',
+      'Food Processing',
+      'Agricultural Equipment',
+      'Agricultural Supply Chain',
+    ],
+  },
+  {
+    id: 'automotive',
+    name: 'Automotive & Mobility',
+    categoryKey: 'AUTOMOTIVE & MOBILITY',
+    subSectors: [
+      'Automotive',
+      'Motor',
+      'Electric Vehicles',
+      'EV',
+      'EV Infrastructure',
+      'Mobility',
+      'Transportation',
+      'Automotive Manufacturing',
+      'Auto Components',
+      'Vehicle Technology',
+      'Logistics',
+    ],
+  },
+  {
+    id: 'manufacturing',
+    name: 'Manufacturing & Industrial',
+    categoryKey: 'MANUFACTURING & INDUSTRIAL',
+    subSectors: [
+      'Manufacturing',
+      'Industrial',
+      'Industrial Automation',
+      'Machinery',
+      'Engineering',
+      'Chemical',
+      'Chemicals',
+      'Materials',
+      'Mining',
+      'Metals',
+      'Steel',
+      'Construction Materials',
+      'Industrial Technology',
+    ],
+  },
+  {
+    id: 'energy',
+    name: 'Energy & Environment',
+    categoryKey: 'ENERGY & ENVIRONMENT',
+    subSectors: [
+      'Energy',
+      'Renewable Energy',
+      'Solar',
+      'Wind Energy',
+      'CleanTech',
+      'ClimateTech',
+      'Environmental Services',
+      'Waste Management',
+      'Recycling',
+      'Water Technology',
+      'Sustainability',
+    ],
+  },
+  {
+    id: 'real_estate',
+    name: 'Real Estate & Construction',
+    categoryKey: 'REAL ESTATE & CONSTRUCTION',
+    subSectors: [
+      'Real Estate',
+      'PropTech',
+      'Construction',
+      'Architecture',
+      'Infrastructure',
+      'Smart Buildings',
+      'Property Management',
+    ],
+  },
+  {
+    id: 'education',
+    name: 'Education',
+    categoryKey: 'EDUCATION',
+    subSectors: [
+      'Education',
+      'EdTech',
+      'Online Learning',
+      'Training',
+      'Professional Education',
+      'Higher Education',
+    ],
+  },
+  {
+    id: 'retail',
+    name: 'Retail & Commerce',
+    categoryKey: 'RETAIL & COMMERCE',
+    subSectors: [
+      'Retail',
+      'E-commerce',
+      'Marketplace',
+      'Consumer Goods',
+      'Consumer Services',
+      'Fashion',
+      'Beauty',
+      'Luxury',
+      'Home & Lifestyle',
+    ],
+  },
+  {
+    id: 'travel',
+    name: 'Travel & Hospitality',
+    categoryKey: 'TRAVEL & HOSPITALITY',
+    subSectors: [
+      'Travel',
+      'TravelTech',
+      'Tourism',
+      'Hospitality',
+      'Hotels',
+      'Restaurants',
+      'Food Services',
+    ],
+  },
+  {
+    id: 'media',
+    name: 'Media & Entertainment',
+    categoryKey: 'MEDIA & ENTERTAINMENT',
+    subSectors: [
+      'Media',
+      'Entertainment',
+      'Gaming',
+      'GameTech',
+      'SportsTech',
+      'Music',
+      'Video',
+      'Content',
+      'Creator Economy',
+    ],
+  },
+  {
+    id: 'logistics',
+    name: 'Logistics & Supply Chain',
+    categoryKey: 'LOGISTICS & SUPPLY CHAIN',
+    subSectors: [
+      'Logistics',
+      'Supply Chain',
+      'Warehousing',
+      'Delivery',
+      'Shipping',
+      'Freight',
+      'Transportation Technology',
+    ],
+  },
+  {
+    id: 'telecommunications',
+    name: 'Telecommunications',
+    categoryKey: 'TELECOMMUNICATIONS',
+    subSectors: [
+      'Telecommunications',
+      'Networking',
+      '5G',
+      'Internet Services',
+      'Communication Technology',
+    ],
+  },
+  {
+    id: 'services',
+    name: 'Business & Professional Services',
+    categoryKey: 'BUSINESS & PROFESSIONAL SERVICES',
+    subSectors: [
+      'Legal',
+      'LegalTech',
+      'HR',
+      'HRTech',
+      'Recruitment',
+      'Marketing',
+      'MarTech',
+      'Advertising',
+      'Consulting',
+      'Business Services',
+    ],
+  },
+  {
+    id: 'other',
+    name: 'Other Industries',
+    categoryKey: 'OTHER INDUSTRIES',
+    subSectors: [
+      'Aerospace',
+      'Defence',
+      'Government Technology',
+      'GovTech',
+      'SpaceTech',
+      'Marine',
+      'FashionTech',
+      'BeautyTech',
+      'PetTech',
+      'Other',
+    ],
+  },
+];
+
+export type TriState = 'none' | 'partial' | 'all';
+
+export function getSectorSelectionState(sector: HierarchicalSector, selectedSubSectors: string[]): TriState {
+  if (!selectedSubSectors || selectedSubSectors.length === 0) return 'none';
+  const selectedCount = sector.subSectors.filter(s => selectedSubSectors.includes(s)).length;
+  if (selectedCount === 0) return 'none';
+  if (selectedCount >= sector.subSectors.length) return 'all';
+  return 'partial';
+}
+
+export function getGlobalSelectionState(selectedSubSectors: string[]): TriState {
+  if (!selectedSubSectors || selectedSubSectors.length === 0) return 'none';
+  const allSubSectors = HIERARCHICAL_SECTORS.flatMap(s => s.subSectors);
+  const selectedCount = allSubSectors.filter(s => selectedSubSectors.includes(s)).length;
+  if (selectedCount === 0) return 'none';
+  if (selectedCount >= allSubSectors.length) return 'all';
+  return 'partial';
+}
+
+export function getAllTaxonomySubSectors(): string[] {
+  const set = new Set<string>();
+  for (const s of HIERARCHICAL_SECTORS) {
+    for (const sub of s.subSectors) set.add(sub);
+  }
+  return Array.from(set);
+}
+
+export interface IndustrySummaryDetail {
+  globalState: TriState;
+  text: string;
+  chips: Array<{
+    id: string;
+    label: string;
+    type: 'all_industries' | 'sector_all' | 'sector_partial' | 'custom';
+    sectorId?: string;
+  }>;
+}
+
+export function getConciseIndustrySummary(
+  selectedSubSectors: string[],
+  customIndustries: string[] = []
+): IndustrySummaryDetail {
+  const globalState = getGlobalSelectionState(selectedSubSectors);
+  if (globalState === 'all' && customIndustries.length === 0) {
+    return {
+      globalState: 'all',
+      text: 'All Industries',
+      chips: [
+        {
+          id: 'all_industries',
+          label: 'All Industries',
+          type: 'all_industries',
+        },
+      ],
+    };
+  }
+
+  if (selectedSubSectors.length === 0 && customIndustries.length === 0) {
+    return {
+      globalState: 'none',
+      text: 'No industries selected (Hunting all sectors)',
+      chips: [],
+    };
+  }
+
+  const chips: IndustrySummaryDetail['chips'] = [];
+  const sectorSummaries: string[] = [];
+
+  for (const sector of HIERARCHICAL_SECTORS) {
+    const state = getSectorSelectionState(sector, selectedSubSectors);
+    if (state === 'all') {
+      chips.push({
+        id: `sector_${sector.id}`,
+        label: `${sector.name} — All`,
+        type: 'sector_all',
+        sectorId: sector.id,
+      });
+      sectorSummaries.push(`${sector.name} (All)`);
+    } else if (state === 'partial') {
+      const count = sector.subSectors.filter(s => selectedSubSectors.includes(s)).length;
+      chips.push({
+        id: `sector_${sector.id}`,
+        label: `${sector.name} — ${count} sub-sectors`,
+        type: 'sector_partial',
+        sectorId: sector.id,
+      });
+      sectorSummaries.push(`${sector.name} (${count})`);
+    }
+  }
+
+  for (const custom of customIndustries) {
+    chips.push({
+      id: `custom_${custom}`,
+      label: custom,
+      type: 'custom',
+    });
+    sectorSummaries.push(custom);
+  }
+
+  const text = sectorSummaries.join(', ');
+  return {
+    globalState,
+    text,
+    chips,
+  };
+}
+
 export const ALL_PREDEFINED_INDUSTRIES: string[] = INDUSTRY_TAXONOMY.flatMap(c => c.industries);
 
 // Dynamic Sub-Industries Mapping based on parent industry or category
@@ -597,6 +989,13 @@ export interface TargetProfile {
   industries: string[];
   subIndustries: string[];
   customIndustry?: string;
+  industrySelection?: {
+    allIndustries: boolean;
+    sectors: Record<string, {
+      all: boolean;
+      subIndustries: string[];
+    }>;
+  };
 
   companyAge: string;
   foundedFrom?: number;
@@ -1427,7 +1826,11 @@ export function formatTargetSummary(profile: TargetProfile): string {
   parts.push(`${count} companies`);
 
   // Industries
-  if (profile.industries && profile.industries.length > 0) {
+  const customs = profile.customIndustry ? [profile.customIndustry] : [];
+  const indSummary = getConciseIndustrySummary(profile.subIndustries || [], customs);
+  if (indSummary.text && indSummary.globalState !== 'none') {
+    parts.push(indSummary.text);
+  } else if (profile.industries && profile.industries.length > 0 && !profile.industries.includes('all')) {
     parts.push(profile.industries.slice(0, 3).join(', ') + (profile.industries.length > 3 ? ` +${profile.industries.length - 3}` : ''));
   } else {
     parts.push('All Industries');
@@ -1552,7 +1955,21 @@ export function targetProfileToHuntConfig(profile: TargetProfile): HuntConfig {
     usdMax = Math.round(rawMax * 1.28);
   }
 
-  const isTech = profile.industries.some(i => ['Technology', 'Software', 'SaaS', 'AI', 'Artificial Intelligence', 'Cybersecurity', 'DeepTech'].includes(i));
+  const isGlobalIndustries =
+    !profile.industries.length ||
+    profile.industries.includes('all') ||
+    profile.industries.includes('All Industries') ||
+    getGlobalSelectionState(profile.subIndustries || []) === 'all';
+
+  const normalizedSectors = isGlobalIndustries
+    ? ['all']
+    : Array.from(new Set(profile.industries.filter(s => s !== 'all' && s !== 'All Industries')));
+
+  const normalizedBusinessModels = profile.subIndustries && profile.subIndustries.length > 0
+    ? Array.from(new Set(profile.subIndustries))
+    : ['Platform', 'SaaS'];
+
+  const isTech = isGlobalIndustries || profile.industries.some(i => ['Technology', 'Software', 'SaaS', 'AI', 'Artificial Intelligence', 'Cybersecurity', 'DeepTech'].includes(i)) || (profile.subIndustries || []).some(s => ['SaaS', 'AI', 'Software', 'DevTools', 'Cloud Computing'].includes(s));
 
   return {
     id: profile.id || `hunt_${Date.now()}`,
@@ -1564,8 +1981,8 @@ export function targetProfileToHuntConfig(profile: TargetProfile): HuntConfig {
       excludedCountries: profile.excludedCountries || ['United States'],
       usPresence: profile.usPresenceMode === 'strictly_none' ? 'strictly_none' : profile.usPresenceMode === 'any' ? 'any' : 'minimal_or_none',
     },
-    sectors: profile.industries.length > 0 ? profile.industries : ['all'],
-    businessModels: profile.subIndustries.length > 0 ? profile.subIndustries : ['Platform', 'SaaS'],
+    sectors: normalizedSectors,
+    businessModels: normalizedBusinessModels,
     stage: profile.companyStages.length > 0 ? profile.companyStages : ['Seed', 'Series A'],
     funding: {
       min: usdMin,

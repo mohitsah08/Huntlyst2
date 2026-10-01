@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "npx -y tsx scratch/test-autonomous-hunt.ts"
+    "test:profile": "npx -y tsx tests/target-profile.test.ts",
+    "test": "npx -y tsx tests/target-profile.test.ts && npx -y tsx scratch/test-autonomous-hunt.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",
