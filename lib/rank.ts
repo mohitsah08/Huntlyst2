@@ -7,6 +7,7 @@
 
 import { CompanyRecord, ValidatedCompany, EmailVerificationResult, HuntConfig, TVB_EVALUATION_CONFIG } from './types';
 import { extractDomain } from './discovery';
+import { parseFundingDetails } from './validation';
 
 const REQUIRED_FIELD_COUNT = 8;
 
@@ -30,6 +31,12 @@ function computeConfidenceScore(record: CompanyRecord): number {
 
 /**
  * Compute evidence-based Hunt Score (0-100) and dimensional breakdown
+ * Continuous, granular, deterministic multi-factor formula:
+ * - Funding Fit (0-20): Proximity to target range and strict boundary compliance
+ * - Technology & Sector Fit (0-20): Taxonomy match depth (sub-industry, sector, or keyword)
+ * - Geographic Fit (0-20): Target country, region, and US presence compliance
+ * - Founder / Decision-Maker (0-20): Role rank (CEO > Founder > Executive) and authenticity
+ * - Contact Deliverability (0-20): DNS MX / deliverability verification vs synthesis
  */
 export function calculateHuntScore(
   record: Partial<CompanyRecord>,
@@ -52,87 +59,139 @@ export function calculateHuntScore(
     contact: 0,
   };
 
-  // 1. Funding fit (max 20)
-  const fundingText = (record.fundingOrRevenue || record.funding?.totalRaised || '').toLowerCase();
-  if (
-    fundingText.includes('$') ||
-    fundingText.includes('€') ||
-    fundingText.includes('£') ||
-    fundingText.includes('₹') ||
-    fundingText.includes('inr') ||
-    fundingText.includes('crore') ||
-    fundingText.includes('lakh') ||
-    fundingText.includes(' cr') ||
-    fundingText.includes('m')
-  ) {
-    breakdown.funding = 20;
-  } else if (fundingText.length > 3) {
-    breakdown.funding = 16;
+  // 1. Funding Fit (max 20)
+  const minFunding = config.funding?.min ?? 100_000;
+  const maxFunding = config.funding?.max ?? 10_000_000;
+  const rawFunding = record.fundingOrRevenue || record.funding?.totalRaised || '';
+  const parsedFunding = parseFundingDetails(rawFunding);
+
+  if (parsedFunding && parsedFunding.amountUsd > 0) {
+    const usd = parsedFunding.amountUsd;
+    if (usd >= minFunding && usd <= maxFunding) {
+      // Base score for being strictly in-range: 15
+      // Closeness bonus (0 to 5) centered around geometric or arithmetic midpoint
+      const mid = (minFunding + maxFunding) / 2;
+      const span = (maxFunding - minFunding) / 2;
+      const proximity = Math.max(0, 1 - Math.abs(usd - mid) / (span || 1));
+      breakdown.funding = Math.round(15 + proximity * 5);
+    } else if (usd < minFunding) {
+      // Below min: partial credit if close, declining down to 2
+      const ratio = usd / (minFunding || 1);
+      breakdown.funding = Math.max(2, Math.round(ratio * 12));
+    } else {
+      // Exceeds max: severe penalty for exceeding investment criteria
+      const excessRatio = usd / (maxFunding || 1);
+      if (excessRatio <= 1.5) breakdown.funding = 8;
+      else if (excessRatio <= 3.0) breakdown.funding = 4;
+      else breakdown.funding = 1;
+    }
+  } else if (rawFunding && (rawFunding.includes('$') || rawFunding.includes('€') || rawFunding.includes('£') || rawFunding.includes('seed') || rawFunding.includes('series'))) {
+    breakdown.funding = 10; // Unparsed qualitative mention
   } else {
-    breakdown.funding = 8;
+    breakdown.funding = 0;
   }
 
-  // 2. Technology & Industry fit (max 20)
+  // 2. Technology & Industry Fit (max 20)
   const industry = (record.industry || record.sector || '').toLowerCase();
   const desc = (record.description || '').toLowerCase();
   const targetedSectors = (config.targetProfile?.industries || config.sectors || []).map(s => s.toLowerCase()).filter(s => s !== 'all');
+  const targetedSubIndustries = (config.targetProfile?.subIndustries || []).map(s => s.toLowerCase());
 
-  let matchesIndustry = false;
-  if (targetedSectors.length > 0) {
-    matchesIndustry = targetedSectors.some(s => industry.includes(s) || desc.includes(s));
+  let techScore = 0;
+  if (targetedSubIndustries.length > 0 && targetedSubIndustries.some(sub => industry.includes(sub) || desc.includes(sub))) {
+    techScore = 20; // Exact sub-industry match
+  } else if (targetedSectors.length > 0 && targetedSectors.some(sec => industry.includes(sec) || desc.includes(sec))) {
+    techScore = 17; // Sector category match
+  } else if (
+    industry.includes('saas') || industry.includes('software') || industry.includes('ai') || 
+    industry.includes('artificial intelligence') || desc.includes('platform') || desc.includes('api') || desc.includes('cloud')
+  ) {
+    techScore = targetedSectors.length === 0 ? 18 : 12; // General tech platform
+  } else if (industry.length > 2) {
+    techScore = 8; // Non-tech known industry
   } else {
-    matchesIndustry =
-      industry.includes('saas') ||
-      industry.includes('software') ||
-      industry.includes('ai') ||
-      industry.includes('platform') ||
-      industry.includes('developer') ||
-      desc.includes('api') ||
-      desc.includes('cloud');
+    techScore = 3;
   }
+  breakdown.technology = techScore;
 
-  if (matchesIndustry) {
-    breakdown.technology = 20;
-  } else {
-    breakdown.technology = 16;
-  }
-
-  // 3. Geographic fit (max 20)
+  // 3. Geographic Fit (max 20)
   const targetCountries = (config.geography.countries || []).map(c => c.toLowerCase());
   const targetRegions = (config.geography.regions || []).map(r => r.toLowerCase());
+  const excluded = (config.geography.excludedCountries || []).map(e => e.toLowerCase());
   const country = (record.country || '').toLowerCase();
+  const isNoUSRestriction = config.geography.usPresence === 'any' || 
+    (config.geography.usPresence as string) === 'dont_care' || 
+    (config.geography.usPresence as string) === 'no_restriction';
+  const isUS = country.includes('united states') || country === 'us' || country === 'usa';
 
-  if (targetCountries.length > 0) {
-    if (targetCountries.includes(country)) {
-      breakdown.geography = 20;
+  if (isUS && !isNoUSRestriction && excluded.includes('united states')) {
+    breakdown.geography = 0; // Excluded country hard violation
+  } else if (targetCountries.length > 0) {
+    if (targetCountries.some(tc => country.includes(tc))) {
+      breakdown.geography = 20; // Direct target country match
     } else {
-      breakdown.geography = 14;
+      breakdown.geography = 4; // Country outside target
     }
-  } else if (record.usPresence === true) {
-    breakdown.geography = 20;
-  } else if (record.country && !record.country.toLowerCase().includes('united states')) {
-    breakdown.geography = 18;
+  } else if (targetRegions.length > 0) {
+    if (targetRegions.some(tr => country.includes(tr) || (record.location || '').toLowerCase().includes(tr))) {
+      breakdown.geography = 18; // Regional match
+    } else {
+      breakdown.geography = 8;
+    }
   } else {
-    breakdown.geography = 10;
+    // Global hunt
+    if (isUS && isNoUSRestriction) {
+      breakdown.geography = 18;
+    } else if (!isUS && country.length > 2) {
+      breakdown.geography = 19; // Valid global non-US entity
+    } else {
+      breakdown.geography = 9;
+    }
   }
 
-  // 4. Founder confidence (max 20)
-  const founder = record.founderOrCeoName || record.founder?.name;
-  if (founder && founder.trim().length >= 4) {
-    breakdown.founder = 20;
-  } else if (founder) {
-    breakdown.founder = 14;
+  // 4. Founder / Decision-Maker Fit (max 20)
+  const founder = record.founderOrCeoName || record.founder?.name || record.contactProfile?.primary_contact?.full_name;
+  const isPlaceholder = !founder || founder.toUpperCase().includes('UPGRADE TO UNLOCK') || founder.length < 3;
+
+  if (isPlaceholder) {
+    breakdown.founder = 0;
   } else {
-    breakdown.founder = 4;
+    const role = (record.contactProfile?.primary_contact?.current_role || '').toLowerCase();
+    const cleanFounder = founder.replace(/\s+(?:and|or|with|&)\s*$/i, '').trim();
+    let fScore = 14;
+
+    if (role.includes('ceo') || cleanFounder.toLowerCase().includes('ceo')) {
+      fScore = 20; // Direct CEO match
+    } else if (role.includes('founder') || cleanFounder.toLowerCase().includes('founder')) {
+      fScore = 19; // Founder / Co-founder
+    } else if (role.includes('chief') || role.includes('president') || role.includes('vp')) {
+      fScore = 16; // Executive officer
+    } else if (cleanFounder.split(' ').length >= 2) {
+      fScore = 15; // Complete personal name verified
+    }
+
+    // Bonus for verified LinkedIn profile
+    if (record.linkedinUrl || record.contactProfile?.primary_contact?.linkedin_url) {
+      fScore = Math.min(20, fScore + 1);
+    }
+    breakdown.founder = fScore;
   }
 
-  // 5. Contact confidence (max 20)
-  if (record.emailVerified && (record.founderOrCeoEmail || record.email?.address)) {
-    breakdown.contact = 20;
-  } else if (record.founderOrCeoEmail || record.email?.address) {
-    breakdown.contact = config.emailVerification === 'none' ? 20 : 12;
+  // 5. Contact Deliverability (max 20)
+  const hasVerifiedEmail = record.emailVerified && (record.founderOrCeoEmail || record.email?.address);
+  const rawEmail = record.founderOrCeoEmail || record.email?.address || record.contactProfile?.company_email?.value;
+
+  if (hasVerifiedEmail) {
+    breakdown.contact = 20; // DNS MX / SMTP verified professional email
+  } else if (rawEmail && rawEmail.includes('@')) {
+    const isDomainMatch = record.website && rawEmail.split('@')[1] && record.website.includes(rawEmail.split('@')[1]);
+    if (isDomainMatch) {
+      breakdown.contact = 15; // Corporate domain verified syntax
+    } else {
+      breakdown.contact = 11; // Synthesized / unverified
+    }
   } else {
-    breakdown.contact = config.emailVerification === 'none' ? 18 : 0;
+    breakdown.contact = config.emailVerification === 'none' ? 16 : 0;
   }
 
   const score = Math.min(

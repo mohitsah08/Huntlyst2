@@ -10,7 +10,10 @@
     "lint": "next lint",
     "test:profile": "npx -y tsx tests/target-profile.test.ts",
     "test:export": "npx -y tsx tests/export-system.test.ts",
-    "test": "npx -y tsx tests/target-profile.test.ts && npx -y tsx tests/export-system.test.ts"
+    "test:contact": "npx -y tsx tests/contact-enrichment.test.ts",
+    "benchmark:growth-list": "npx -y tsx scripts/benchmark-growth-list.ts",
+    "test:real-verification": "npx -y tsx scripts/run-real-growth-list-verification.ts",
+    "test": "npx -y tsx tests/target-profile.test.ts && npx -y tsx tests/export-system.test.ts && npx -y tsx tests/contact-enrichment.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",

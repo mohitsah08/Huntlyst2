@@ -2,6 +2,8 @@
  * Core types for the TVB Company Discovery Agent
  */
 
+import type { CompanyContactProfile } from './contactTypes';
+
 export interface CandidateUrl {
   url: string;
   snippet: string;
@@ -147,7 +149,36 @@ export type CompanyRecord = {
   lastVerifiedAt?: string;
   lastUpdatedAt?: string;
   statusTag?: 'NEW' | 'UPDATED' | 'UNCHANGED' | 'PREVIOUSLY_DISCOVERED';
+  // Contact & Decision-Maker Profile (Sections 1–22)
+  contactProfile?: CompanyContactProfile;
+  // Gold Reference & Verification Benchmark Interoperability (Sections 16, 24)
+  referenceStatus?: 'QUALIFIED' | 'UNQUALIFIED';
+  targetProfileStatus?: 'PASS' | 'FAIL' | 'REVIEW';
+  huntlystVerificationStatus?: 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'UNDER_REVIEW' | 'UNVERIFIED';
+  benchmarkChecks?: {
+    company?: boolean;
+    website?: boolean;
+    funding?: boolean;
+    industry?: boolean;
+    companyLinkedin?: boolean;
+    companyTwitter?: boolean;
+    ceo?: boolean;
+    ceoLinkedin?: boolean;
+    professionalEmail?: boolean;
+  };
+  mismatchReason?: string;
+  rootCause?: string;
 };
+
+export type {
+  CompanyContactProfile,
+  DecisionMakerContact,
+  BestContactPath,
+  ContactCompleteness,
+  ContactVerificationStatus,
+  VerifiedField,
+} from './contactTypes';
+
 
 export interface RejectedCompanyRecord {
   name: string;

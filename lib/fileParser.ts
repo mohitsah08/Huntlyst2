@@ -107,24 +107,40 @@ function extractCandidateFromRecord(
     )) {
       phone = v;
     }
+    // Check for placeholders like 'UPGRADE TO UNLOCK' or 'N/A'
+    const isPlaceholder = v.toUpperCase().includes('UPGRADE TO UNLOCK') || v.toUpperCase() === 'N/A' || v.toUpperCase() === 'NULL' || v === '-';
+
     // 10. Email
-    else if (!email && (k === 'email' || k === 'verified email' || k.includes('email'))) {
-      if (v.includes('@')) {
+    if (!email && (k === 'email' || k === 'contact email' || k === 'verified email' || k === 'ceo email' || k.includes('email'))) {
+      if (!isPlaceholder && v.includes('@')) {
         email = v;
       }
     }
     // 11. Founder / CEO
     else if (!founder && (
-      k === 'ceo' || k === 'founder' || k === 'co-founder' || k === 'owner' || 
+      k === 'ceo' || k === 'ceo name' || k === 'founder' || k === 'co-founder' || k === 'owner' || 
       k === 'principal' || k === 'director' || k === 'executive' || k.includes('ceo') || k.includes('founder')
     )) {
-      founder = v;
+      if (!isPlaceholder) {
+        founder = v.replace(/\s+(?:and|or|with|&)\s*$/i, '').trim();
+      }
     }
-    // 12. Funding / Revenue
-    else if (!funding && (
+    // 12. Funding Amount (priority over generic funding/funding date)
+    else if (
+      k === 'funding amount' || k === 'funding amount (in usd)' || k === 'amount raised' || 
+      k === 'total funding' || k === 'funding in usd' || k.includes('funding amount')
+    ) {
+      if (!isPlaceholder) {
+        funding = v;
+      }
+    }
+    // 12b. Funding / Revenue fallback (ignore if it's funding date)
+    else if (!funding && !k.includes('funding date') && !k.includes('funding round') && !k.includes('funding type') && (
       k === 'funding' || k === 'revenue' || k === 'raised' || k.includes('funding') || k.includes('revenue')
     )) {
-      funding = v;
+      if (!isPlaceholder) {
+        funding = v;
+      }
     }
     // 13. US Presence
     else if (!usPresence && (k.includes('us presence') || k.includes('us_presence'))) {

@@ -23,6 +23,7 @@ import { verifyContactLead } from '@/lib/email';
 import { calculateHuntScore } from '@/lib/rank';
 import { checkFundingRange, checkGeographyMatch, checkNoUSPresence, validateCompany } from '@/lib/validation';
 import { mapToStandardIndustry } from '@/lib/discoveryPipeline';
+import { ContactEnrichmentService } from '@/lib/contactEnrichment';
 
 export interface DiscoveryEngineOptions {
   sessionId?: string;
@@ -358,16 +359,30 @@ export class DiscoveryEngine {
           stageName: 'Finding Founders',
         });
 
-        const founderRes = await FounderDiscoveryService.discoverKeyExecutive({
+        // =====================================================================
+        // HOUSTON ENRICHMENT AGENT: DECISION-MAKER & CONTACT ENRICHMENT
+        // =====================================================================
+        emit({
+          type: 'log',
+          message: `Enriching contact profile & discovering decision-makers for "${cand.name}"...`,
+          stage: 4,
+          stageName: 'Finding Founders',
+        });
+
+        const contactProfile = await ContactEnrichmentService.enrichCompanyContacts({
           companyName: cand.name,
           website: cand.url,
           description: cand.snippet,
-          rawSnippet: cand.snippet,
+          industry: industryMapping.standard_industry,
           country: cand.detectedCountry,
+          rawSnippet: cand.snippet,
         });
 
-        const founderName = founderRes.person?.name || null;
-        const founderTitle = founderRes.person?.title || 'CEO / Founder';
+        const primaryContact = contactProfile.primary_contact;
+        const founderName = primaryContact?.full_name || null;
+        const founderTitle = primaryContact?.current_role ? `${primaryContact.current_role}` : 'CEO / Founder';
+        const professionalEmail = primaryContact?.professional_email || contactProfile.company_email.value;
+        const isEmailVerified = primaryContact?.professional_email_status === 'VALID' || contactProfile.company_email.verification_status === 'VERIFIED';
 
         // =====================================================================
         // HOUSTON VERIFICATION AGENT: EMAIL & DNS MX VERIFICATION
@@ -384,6 +399,7 @@ export class DiscoveryEngine {
           companyWebsite: cand.url,
           leadName: founderName,
           roleTitle: founderTitle,
+          email: professionalEmail,
           sourceUrls: [cand.url],
         });
 
@@ -396,24 +412,27 @@ export class DiscoveryEngine {
           fundingOrRevenue: cand.detectedFunding || 'Seed / Series A',
           usPresence: usPresencePassed,
           founderOrCeoName: founderName,
-          founderOrCeoEmail: contactRes.email,
-          emailVerified: contactRes.verified,
-          contactVerificationStatus: contactRes.verificationStatus,
-          contactVerificationReason: contactRes.reason,
-          confidenceScore: founderRes.relationshipConfidence || 80,
+          founderOrCeoEmail: contactRes.email || professionalEmail,
+          emailVerified: isEmailVerified || contactRes.verified,
+          contactVerificationStatus: isEmailVerified ? 'VERIFIED' : contactRes.verificationStatus,
+          contactVerificationReason: contactProfile.best_contact_path.explanation || contactRes.reason,
+          confidenceScore: primaryContact?.confidence || 80,
           sourceType: cand.source || 'Huntlyst Discovery',
           country: cand.detectedCountry || 'Europe',
           headquarters: cand.detectedCountry || 'Europe',
+          linkedinUrl: primaryContact?.linkedin_url || null,
+          companyLinkedinUrl: contactProfile.company_linkedin.value || null,
           sourceUrls: [cand.url],
           statusTag: (cand.statusTag as 'NEW' | 'PREVIOUSLY_DISCOVERED') || 'NEW',
           firstDiscoveredAt: now,
           lastSeenAt: now,
           lastVerifiedAt: now,
+          contactProfile,
           evidence: {
             fundingSource: cand.snippet,
             techEvidence: `Verified platform: ${industryMapping.standard_industry}`,
             geoEvidence: geoResult.reason || `Confirmed location in target region`,
-            founderSource: founderRes.evidenceSnippet || 'Public company disclosures',
+            founderSource: primaryContact?.company_relationship || 'Public company disclosures',
             emailVerificationDetail: contactRes.evidence,
             sources: [cand.url],
           },
@@ -422,6 +441,7 @@ export class DiscoveryEngine {
         const huntScoreRes = calculateHuntScore(record, config);
         record.huntScore = huntScoreRes.score;
         record.scoreBreakdown = huntScoreRes.breakdown;
+
 
         allQualified.push(record);
 

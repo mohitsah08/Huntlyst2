@@ -275,9 +275,9 @@ export function checkFundingRange(
     }
   }
 
-  // 10% grace buffer for currency fluctuation and seed ranges
-  const lowerBound = minVal * 0.9;
-  const upperBound = maxVal * 1.1;
+  // Strict deterministic boundaries (no hidden grace buffer)
+  const lowerBound = minVal;
+  const upperBound = maxVal;
 
   if (candidateVal >= lowerBound && candidateVal <= upperBound) {
     return { passed: true, inRange: true, parsedUsd: details.amountUsd, parsedText: fundingText || undefined };
@@ -288,7 +288,7 @@ export function checkFundingRange(
     inRange: false,
     parsedUsd: details.amountUsd,
     parsedText: fundingText || undefined,
-    reason: `Funding out of range (${candidateVal < lowerBound ? 'below minimum' : 'exceeds maximum'})`,
+    reason: `Funding out of range: $${Math.round(candidateVal).toLocaleString()} USD is ${candidateVal < lowerBound ? 'below minimum $' + minVal.toLocaleString() : 'above maximum $' + maxVal.toLocaleString()}`,
   };
 }
 
@@ -439,13 +439,13 @@ export function checkTechPlatform(
 export function checkNoUSPresence(
   evidenceText: string | null,
   websiteUrl: string,
-  mode: HuntConfig['geography']['usPresence'] | 'exclude_us' | 'some_allowed' | 'dont_care' | 'unknown' = 'minimal_or_none'
+  mode: HuntConfig['geography']['usPresence'] | 'exclude_us' | 'some_allowed' | 'dont_care' | 'no_restriction' | 'exclude_us_hq' | 'exclude_us_presence' | 'require_us' | 'unknown' = 'minimal_or_none'
 ): boolean | null {
   const text = (evidenceText || '').toLowerCase();
 
-  // If user allows any US presence or doesn't care
-  if (mode === 'any' || mode === 'dont_care') {
-    return false; // passes
+  // Mode 1: No US restriction / Any US presence allowed
+  if (mode === 'any' || mode === 'dont_care' || mode === 'no_restriction') {
+    return false; // passes US check
   }
 
   // Strong US signals
@@ -455,8 +455,17 @@ export function checkNoUSPresence(
 
   const hasStrongUsSignal = usStateNames.test(text) || usPhonePattern.test(text) || usAddressWords.test(text);
 
+  // Mode 4: Require US presence
+  if (mode === 'require_us') {
+    if (hasStrongUsSignal) return false; // Passes requirement
+    const detected = detectCountryFromEvidence(evidenceText, websiteUrl);
+    if (detected && detected.code === 'US') return false; // Passes requirement
+    return true; // Fails because US presence is required
+  }
+
+  // Modes 2 & 3: Exclude US presence
   if (hasStrongUsSignal) {
-    if (mode === 'strictly_none' || mode === 'minimal_or_none' || mode === 'exclude_us') {
+    if (mode === 'strictly_none' || mode === 'minimal_or_none' || mode === 'exclude_us' || mode === 'exclude_us_hq' || mode === 'exclude_us_presence') {
       return true; // Detected US -> Fails
     }
   }
@@ -467,8 +476,8 @@ export function checkNoUSPresence(
     return false; // Confirmed Non-US -> Passes
   }
 
-  // For unknown: unverified evidence must NOT automatically count as compliant!
-  if (mode === 'unknown') {
+  // For unknown: unverified evidence must NOT automatically count as compliant when strictly zero US is required!
+  if (mode === 'unknown' || mode === 'strictly_none' || mode === 'exclude_us_presence') {
     return true; // Fails due to lack of conclusive non-US proof
   }
 
@@ -488,17 +497,24 @@ export function checkGeographyMatch(
   const detectedRegion = detected ? detected.region : null;
 
   const targetCountries = (config.geography.countries || []).map(c => c.toLowerCase());
-  const targetRegions = (config.geography.regions || []).map(r => r.toLowerCase());
+  const targetRegions = (config.geography.regions || [])
+    .map(r => r.toLowerCase())
+    .filter(r => r !== 'global' && r !== 'all');
   const excluded = (config.geography.excludedCountries || []).map(e => e.toLowerCase());
+  const isNoUSRestriction = config.geography.usPresence === 'any' || 
+    (config.geography.usPresence as string) === 'dont_care' || 
+    (config.geography.usPresence as string) === 'no_restriction';
 
-  // Check Exclusions
+  // Check Exclusions (skip US exclusion check if user explicitly selected no US restriction)
   if (detectedName && excluded.includes(detectedName.toLowerCase())) {
-    return { passed: false, detectedCountry: detectedName, reason: `Excluded country: ${detectedName}` };
+    if (!(detectedName.toLowerCase() === 'united states' && isNoUSRestriction)) {
+      return { passed: false, detectedCountry: detectedName, reason: `Excluded country: ${detectedName}` };
+    }
   }
 
   // If United States excluded and detected is US
   const usVerdict = checkNoUSPresence(evidenceText, websiteUrl, config.geography.usPresence as any);
-  if (excluded.includes('united states') && (detectedName === 'United States' || usVerdict === true)) {
+  if (!isNoUSRestriction && excluded.includes('united states') && (detectedName === 'United States' || usVerdict === true)) {
     return { passed: false, detectedCountry: 'United States', reason: 'US presence detected while US is excluded' };
   }
 
@@ -524,11 +540,14 @@ export function checkGeographyMatch(
   }
 
   // Validate US presence policy
-  if (config.geography.usPresence === 'strictly_none' && usVerdict !== false) {
+  if ((config.geography.usPresence === 'strictly_none' || (config.geography.usPresence as string) === 'exclude_us_presence') && usVerdict !== false) {
     return { passed: false, reason: 'Strictly zero US presence required (unverified or US detected)' };
   }
-  if (config.geography.usPresence === 'minimal_or_none' && usVerdict === true) {
-    return { passed: false, reason: 'Significant US headquarters detected' };
+  if ((config.geography.usPresence === 'minimal_or_none' || (config.geography.usPresence as string) === 'exclude_us' || (config.geography.usPresence as string) === 'exclude_us_hq') && usVerdict === true) {
+    return { passed: false, reason: 'US presence or headquarters detected while US is excluded' };
+  }
+  if ((config.geography.usPresence as string) === 'require_us' && usVerdict === true) {
+    return { passed: false, reason: 'US presence required but candidate is non-US' };
   }
 
   return {

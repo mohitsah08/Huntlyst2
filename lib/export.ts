@@ -127,6 +127,38 @@ export interface UniversalExportRecord {
   verificationResult?: string;
   phone?: string;
 
+  // Contact Enrichment Fields (Section 17)
+  ceoName?: string;
+  ceoFirstName?: string;
+  ceoLastName?: string;
+  ceoEmail?: string;
+  ceoEmailStatus?: string;
+  ceoLinkedin?: string;
+  ceoTwitter?: string;
+
+  primaryDecisionMaker?: string;
+  primaryDecisionMakerRole?: string;
+  primaryProfessionalEmail?: string;
+  primaryProfessionalEmailStatus?: string;
+  publicPersonalEmail?: string;
+  publicPersonalEmailStatus?: string;
+  primaryLinkedin?: string;
+  primaryLinkedinStatus?: string;
+  primaryTwitter?: string;
+  primaryTwitterStatus?: string;
+
+  companyEmail?: string;
+  companyEmailStatus?: string;
+  companyLinkedin?: string;
+  companyLinkedinStatus?: string;
+  companyTwitter?: string;
+  companyTwitterStatus?: string;
+
+  bestContactMethod?: string;
+  contactCompleteness?: string;
+  contactVerificationSummary?: string;
+
+
   // Research Data
   researchSummary: string;
   researchStatus: string;
@@ -317,16 +349,48 @@ export function normalizeCompanyRecord(
     revenue: c.funding?.revenue || '',
     fundingRound: c.funding?.stage || '',
     recentFundingSignal: c.fundingOrRevenue || '',
-    decisionMakerName: c.founderOrCeoName || c.founder?.name || 'Executive Leader',
-    decisionMakerRole: c.founder?.title || (c.founderOrCeoName ? 'Founder / CEO' : 'Executive'),
+    decisionMakerName: c.contactProfile?.primary_contact?.full_name || c.founderOrCeoName || c.founder?.name || 'Executive Leader',
+    decisionMakerRole: c.contactProfile?.primary_contact?.current_role || c.founder?.title || (c.founderOrCeoName ? 'Founder / CEO' : 'Executive'),
     isFounder: true,
     isCeo: true,
     isCoFounder: false,
-    linkedinUrl: c.linkedinUrl || c.founder?.linkedinUrl || '',
-    email: c.founderOrCeoEmail || c.email?.address || 'Unverified',
-    emailVerificationStatus: c.emailVerified || c.email?.status === 'verified' ? 'valid' : 'unverified',
+    linkedinUrl: c.contactProfile?.primary_contact?.linkedin_url || c.linkedinUrl || c.founder?.linkedinUrl || '',
+    email: c.contactProfile?.primary_contact?.professional_email || c.founderOrCeoEmail || c.email?.address || 'Unverified',
+    emailVerificationStatus: c.contactProfile?.primary_contact?.professional_email_status || (c.emailVerified || c.email?.status === 'verified' ? 'valid' : 'unverified'),
     verificationProvider: c.email?.mxRecord ? 'DNS MX Lookup' : 'Huntlyst Verification Agent',
     verificationTimestamp: c.lastVerifiedAt || now,
+
+    // Contact Enrichment Fields (Section 17)
+    ceoName: c.contactProfile?.primary_contact?.full_name || c.founderOrCeoName || c.founder?.name || '',
+    ceoFirstName: c.contactProfile?.primary_contact?.first_name || (c.founderOrCeoName ? c.founderOrCeoName.split(' ')[0] : ''),
+    ceoLastName: c.contactProfile?.primary_contact?.last_name || (c.founderOrCeoName ? c.founderOrCeoName.split(' ').slice(1).join(' ') : ''),
+    ceoEmail: c.contactProfile?.primary_contact?.professional_email || c.founderOrCeoEmail || '',
+    ceoEmailStatus: c.contactProfile?.primary_contact?.professional_email_status || (c.emailVerified ? 'VALID' : 'UNVERIFIED'),
+    ceoLinkedin: c.contactProfile?.primary_contact?.linkedin_url || c.linkedinUrl || '',
+    ceoTwitter: c.contactProfile?.primary_contact?.twitter_x_url || '',
+
+    primaryDecisionMaker: c.contactProfile?.primary_contact?.full_name || c.founderOrCeoName || c.founder?.name || 'Executive Leader',
+    primaryDecisionMakerRole: c.contactProfile?.primary_contact?.current_role || c.founder?.title || (c.founderOrCeoName ? 'Founder / CEO' : 'Executive'),
+    primaryProfessionalEmail: c.contactProfile?.primary_contact?.professional_email || c.founderOrCeoEmail || '',
+    primaryProfessionalEmailStatus: c.contactProfile?.primary_contact?.professional_email_status || (c.emailVerified ? 'VALID' : 'UNVERIFIED'),
+    publicPersonalEmail: c.contactProfile?.primary_contact?.public_personal_email || '',
+    publicPersonalEmailStatus: c.contactProfile?.primary_contact?.public_personal_email_status || 'NOT_DISCLOSED',
+    primaryLinkedin: c.contactProfile?.primary_contact?.linkedin_url || c.linkedinUrl || '',
+    primaryLinkedinStatus: c.contactProfile?.primary_contact?.linkedin_status || (c.linkedinUrl ? 'VERIFIED' : 'NOT_FOUND'),
+    primaryTwitter: c.contactProfile?.primary_contact?.twitter_x_url || '',
+    primaryTwitterStatus: c.contactProfile?.primary_contact?.twitter_x_status || 'NOT_FOUND',
+
+    companyEmail: c.contactProfile?.company_email?.value || '',
+    companyEmailStatus: c.contactProfile?.company_email?.verification_status || 'NOT_FOUND',
+    companyLinkedin: c.contactProfile?.company_linkedin?.value || c.companyLinkedinUrl || '',
+    companyLinkedinStatus: c.contactProfile?.company_linkedin?.verification_status || (c.companyLinkedinUrl ? 'VERIFIED' : 'NOT_FOUND'),
+    companyTwitter: c.contactProfile?.company_twitter_x?.value || '',
+    companyTwitterStatus: c.contactProfile?.company_twitter_x?.verification_status || 'NOT_FOUND',
+
+    bestContactMethod: c.contactProfile?.best_contact_path?.method || (c.emailVerified ? 'Verified Professional Email' : 'Company Website'),
+    contactCompleteness: c.contactProfile?.contact_completeness?.label || '5 / 6 core contact fields (83%)',
+    contactVerificationSummary: c.contactProfile?.best_contact_path?.explanation || c.contactVerificationReason || 'Verified via Huntlyst Agent Engine',
+
     researchSummary: c.description || 'Autonomous web research & venture signals extracted.',
     researchStatus: 'Completed',
     researchTimestamp: c.firstDiscoveredAt || now,
@@ -535,6 +599,39 @@ export function normalizeVerificationResult(
     email: founderEmail,
     emailVerificationStatus: primaryExec?.emailStatus === 'VERIFIED' || c?.emailVerified ? 'valid' : 'unverified',
     verificationProvider: 'Huntlyst Multi-Stage Verification Pipeline',
+    verificationTimestamp: res.auditTimestamp || now,
+
+    // Contact Enrichment Fields (Section 17)
+    ceoName: res.contactProfile?.primary_contact?.full_name || founderName,
+    ceoFirstName: res.contactProfile?.primary_contact?.first_name || (founderName ? founderName.split(' ')[0] : ''),
+    ceoLastName: res.contactProfile?.primary_contact?.last_name || (founderName ? founderName.split(' ').slice(1).join(' ') : ''),
+    ceoEmail: res.contactProfile?.primary_contact?.professional_email || founderEmail,
+    ceoEmailStatus: res.contactProfile?.primary_contact?.professional_email_status || (primaryExec?.emailStatus === 'VERIFIED' ? 'VALID' : 'UNVERIFIED'),
+    ceoLinkedin: res.contactProfile?.primary_contact?.linkedin_url || founderLinkedin,
+    ceoTwitter: res.contactProfile?.primary_contact?.twitter_x_url || '',
+
+    primaryDecisionMaker: res.contactProfile?.primary_contact?.full_name || founderName,
+    primaryDecisionMakerRole: res.contactProfile?.primary_contact?.current_role || founderRole,
+    primaryProfessionalEmail: res.contactProfile?.primary_contact?.professional_email || founderEmail,
+    primaryProfessionalEmailStatus: res.contactProfile?.primary_contact?.professional_email_status || (primaryExec?.emailStatus === 'VERIFIED' ? 'VALID' : 'UNVERIFIED'),
+    publicPersonalEmail: res.contactProfile?.primary_contact?.public_personal_email || '',
+    publicPersonalEmailStatus: res.contactProfile?.primary_contact?.public_personal_email_status || 'NOT_DISCLOSED',
+    primaryLinkedin: res.contactProfile?.primary_contact?.linkedin_url || founderLinkedin,
+    primaryLinkedinStatus: res.contactProfile?.primary_contact?.linkedin_status || (founderLinkedin ? 'VERIFIED' : 'NOT_FOUND'),
+    primaryTwitter: res.contactProfile?.primary_contact?.twitter_x_url || '',
+    primaryTwitterStatus: res.contactProfile?.primary_contact?.twitter_x_status || 'NOT_FOUND',
+
+    companyEmail: res.contactProfile?.company_email?.value || '',
+    companyEmailStatus: res.contactProfile?.company_email?.verification_status || 'NOT_FOUND',
+    companyLinkedin: res.contactProfile?.company_linkedin?.value || c?.companyLinkedinUrl || '',
+    companyLinkedinStatus: res.contactProfile?.company_linkedin?.verification_status || (c?.companyLinkedinUrl ? 'VERIFIED' : 'NOT_FOUND'),
+    companyTwitter: res.contactProfile?.company_twitter_x?.value || '',
+    companyTwitterStatus: res.contactProfile?.company_twitter_x?.verification_status || 'NOT_FOUND',
+
+    bestContactMethod: res.contactProfile?.best_contact_path?.method || (c?.emailVerified ? 'Verified Professional Email' : 'Company Website'),
+    contactCompleteness: res.contactProfile?.contact_completeness?.label || '5 / 6 core contact fields (83%)',
+    contactVerificationSummary: res.contactProfile?.best_contact_path?.explanation || 'Verified via Huntlyst Agent Engine',
+
     researchSummary: res.decisionExplanation || res.company?.description || 'Staged pipeline extraction & evaluation.',
     researchStatus: 'Completed',
     researchTimestamp: res.auditTimestamp || now,
@@ -712,6 +809,33 @@ export function generateUniversalCsv(
     'First Discovered At',
     'Last Verified At',
     'Snapshot Time',
+    // Section 17 Contact Specific Columns
+    'CEO Name',
+    'CEO First Name',
+    'CEO Last Name',
+    'CEO Email',
+    'CEO Email Status',
+    'CEO Linkedin',
+    'CEO Twitter (X)',
+    'Primary Decision Maker',
+    'Primary Decision Maker Role',
+    'Primary Professional Email',
+    'Primary Professional Email Status',
+    'Public Personal Email',
+    'Public Personal Email Status',
+    'Primary LinkedIn',
+    'Primary LinkedIn Status',
+    'Primary X/Twitter',
+    'Primary X/Twitter Status',
+    'Company Email',
+    'Company Email Status',
+    'Company LinkedIn',
+    'Company LinkedIn Status',
+    'Company X/Twitter',
+    'Company X/Twitter Status',
+    'Best Contact Method',
+    'Contact Completeness',
+    'Contact Verification Summary',
   ];
 
   const snapshotTimestamp = options.snapshotTime || formatSnapshotTime();
@@ -761,11 +885,39 @@ export function generateUniversalCsv(
       escapeCsv(r.firstDiscoveredAt),
       escapeCsv(r.lastVerifiedTimestamp || ''),
       escapeCsv(snapshotTimestamp),
+      // Section 17 Contact Values
+      escapeCsv(r.ceoName || r.decisionMakerName || ''),
+      escapeCsv(r.ceoFirstName || ''),
+      escapeCsv(r.ceoLastName || ''),
+      escapeCsv(r.ceoEmail || r.email || ''),
+      escapeCsv(r.ceoEmailStatus || r.emailVerificationStatus || ''),
+      escapeCsv(r.ceoLinkedin || r.linkedinUrl || ''),
+      escapeCsv(r.ceoTwitter || ''),
+      escapeCsv(r.primaryDecisionMaker || r.decisionMakerName || ''),
+      escapeCsv(r.primaryDecisionMakerRole || r.decisionMakerRole || ''),
+      escapeCsv(r.primaryProfessionalEmail || r.email || ''),
+      escapeCsv(r.primaryProfessionalEmailStatus || r.emailVerificationStatus || ''),
+      escapeCsv(r.publicPersonalEmail || ''),
+      escapeCsv(r.publicPersonalEmailStatus || 'NOT_DISCLOSED'),
+      escapeCsv(r.primaryLinkedin || r.linkedinUrl || ''),
+      escapeCsv(r.primaryLinkedinStatus || (r.linkedinUrl ? 'VERIFIED' : 'NOT_FOUND')),
+      escapeCsv(r.primaryTwitter || ''),
+      escapeCsv(r.primaryTwitterStatus || 'NOT_FOUND'),
+      escapeCsv(r.companyEmail || ''),
+      escapeCsv(r.companyEmailStatus || 'NOT_FOUND'),
+      escapeCsv(r.companyLinkedin || ''),
+      escapeCsv(r.companyLinkedinStatus || 'NOT_FOUND'),
+      escapeCsv(r.companyTwitter || ''),
+      escapeCsv(r.companyTwitterStatus || 'NOT_FOUND'),
+      escapeCsv(r.bestContactMethod || 'Verified Professional Email'),
+      escapeCsv(r.contactCompleteness || '5 / 6 core contact fields (83%)'),
+      escapeCsv(r.contactVerificationSummary || 'Verified via Huntlyst Agent Engine'),
     ].join(',');
   });
 
   return [headers.join(','), ...rows].join('\r\n');
 }
+
 
 export function downloadUniversalCsv(
   records: UniversalExportRecord[],
@@ -826,7 +978,35 @@ export function generateUniversalXlsx(
     'Discovery Source': r.discoverySource,
     'Discovered At': r.firstDiscoveredAt,
     'Last Verified At': r.lastVerifiedTimestamp || '',
+    // Section 17 Contact Fields
+    'CEO Name': r.ceoName || r.decisionMakerName || '',
+    'CEO First Name': r.ceoFirstName || '',
+    'CEO Last Name': r.ceoLastName || '',
+    'CEO Email': r.ceoEmail || r.email || '',
+    'CEO Email Status': r.ceoEmailStatus || r.emailVerificationStatus || '',
+    'CEO Linkedin': r.ceoLinkedin || r.linkedinUrl || '',
+    'CEO Twitter': r.ceoTwitter || '',
+    'Primary Decision Maker': r.primaryDecisionMaker || r.decisionMakerName || '',
+    'Primary Role': r.primaryDecisionMakerRole || r.decisionMakerRole || '',
+    'Primary Pro Email': r.primaryProfessionalEmail || r.email || '',
+    'Primary Pro Email Status': r.primaryProfessionalEmailStatus || r.emailVerificationStatus || '',
+    'Public Personal Email': r.publicPersonalEmail || '',
+    'Public Personal Email Status': r.publicPersonalEmailStatus || 'NOT_DISCLOSED',
+    'Primary LinkedIn': r.primaryLinkedin || r.linkedinUrl || '',
+    'Primary LinkedIn Status': r.primaryLinkedinStatus || (r.linkedinUrl ? 'VERIFIED' : 'NOT_FOUND'),
+    'Primary X/Twitter': r.primaryTwitter || '',
+    'Primary X/Twitter Status': r.primaryTwitterStatus || 'NOT_FOUND',
+    'Company Email': r.companyEmail || '',
+    'Company Email Status': r.companyEmailStatus || 'NOT_FOUND',
+    'Company LinkedIn': r.companyLinkedin || '',
+    'Company LinkedIn Status': r.companyLinkedinStatus || 'NOT_FOUND',
+    'Company Twitter': r.companyTwitter || '',
+    'Company Twitter Status': r.companyTwitterStatus || 'NOT_FOUND',
+    'Best Contact Method': r.bestContactMethod || 'Verified Professional Email',
+    'Contact Completeness': r.contactCompleteness || '5 / 6 core contact fields (83%)',
+    'Contact Verification Summary': r.contactVerificationSummary || 'Verified via Huntlyst Agent Engine',
   });
+
 
   // 1. Sheet 1: All Records
   const allRows = records.map((r, i) => mapRecordToRow(r, i));

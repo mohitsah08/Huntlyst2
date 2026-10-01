@@ -5,7 +5,7 @@
  * (Claude, and future Perplexity, Brave, etc.)
  */
 
-import { CompanyRecord, HuntConfig, RejectedCompanyRecord } from '@/lib/types';
+import { CompanyRecord, HuntConfig, RejectedCompanyRecord, CompanyContactProfile } from '@/lib/types';
 import { TargetProfile } from '@/lib/targetProfileData';
 
 export type CriterionStatus = 'PASS' | 'FAIL' | 'UNKNOWN' | 'CONTRADICTED';
@@ -218,7 +218,10 @@ export interface CompanyVerificationResult {
   hasConflict?: boolean;
   conflicts?: string[];
   isImportedFromHuntlyst?: boolean;
+  // Contact & Decision-Maker Profile (Sections 1–22)
+  contactProfile?: CompanyContactProfile;
 }
+
 
 export interface ProviderSearchResult {
   name: string;

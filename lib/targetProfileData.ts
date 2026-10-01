@@ -1978,8 +1978,14 @@ export function targetProfileToHuntConfig(profile: TargetProfile): HuntConfig {
       mode: profile.countries.length > 0 ? 'countries' : profile.regions.length > 0 && !profile.regions.includes('Global') ? 'regions' : 'global',
       regions: profile.regions.filter(r => r !== 'Global'),
       countries: profile.countries,
-      excludedCountries: profile.excludedCountries || ['United States'],
-      usPresence: profile.usPresenceMode === 'strictly_none' ? 'strictly_none' : profile.usPresenceMode === 'any' ? 'any' : 'minimal_or_none',
+      excludedCountries: profile.excludedCountries !== undefined
+        ? profile.excludedCountries
+        : (profile.usPresenceMode === 'strictly_none' || profile.usPresenceMode === 'minimal_or_none' || profile.usPresenceMode === 'exclude_us'
+            ? ['United States']
+            : []),
+      usPresence: profile.usPresenceMode === 'strictly_none'
+        ? 'strictly_none'
+        : (profile.usPresenceMode === 'any' || profile.usPresenceMode === 'dont_care' ? 'any' : 'minimal_or_none'),
     },
     sectors: normalizedSectors,
     businessModels: normalizedBusinessModels,

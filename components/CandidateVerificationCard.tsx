@@ -350,7 +350,35 @@ export default function CandidateVerificationCard({
         </div>
       )}
 
+      {/* Contact Profile & Best Contact Path (Sections 9, 10 & 20) */}
+      {(() => {
+        const profile = company.contactProfile || result.contactProfile;
+        if (!profile) return null;
+        const bestPath = profile.best_contact_path;
+        const completeness = profile.contact_completeness;
+
+        return (
+          <div className="mt-3 p-2.5 bg-[#FFFDF9] rounded-lg border border-[#EBE4D5] flex items-center justify-between flex-wrap gap-2 text-xs">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-mono text-[10px] uppercase font-bold text-[#E65100] bg-[#FFF8E1] px-2 py-0.5 rounded border border-[#FFA000]/40 flex items-center gap-1">
+                <span>⭐</span> {bestPath.method}:
+              </span>
+              <span className="font-medium text-[#1E1B18] text-[11px]">
+                {bestPath.explanation}
+              </span>
+            </div>
+
+            {completeness && (
+              <span className="text-[10px] font-mono font-bold text-[#2E7D32] bg-[#E8F5E9] px-2 py-0.5 rounded border border-[#2E7D32]/30">
+                Contact Completeness: {completeness.score}/{completeness.maxScore} ({completeness.percentage}%)
+              </span>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Criterion Breakdown Grid */}
+
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 mt-3">
         {renderCriterionPill('Funding', criteria.funding)}
         {renderCriterionPill('Industry', criteria.industry)}
