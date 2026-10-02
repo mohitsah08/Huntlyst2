@@ -220,6 +220,22 @@ export interface CompanyVerificationResult {
   isImportedFromHuntlyst?: boolean;
   // Contact & Decision-Maker Profile (Sections 1–22)
   contactProfile?: CompanyContactProfile;
+  // Field-level independent verification audits (Seed vs Current vs Source)
+  fieldAudits?: Record<string, FieldAudit>;
+  divergences?: string[];
+  rejectionStage?: string;
+}
+
+export interface FieldAudit<T = any> {
+  field: string;
+  seed_value: T | null;
+  current_value: T | null;
+  status: 'VERIFIED' | 'CONFLICT' | 'UNKNOWN' | 'NOT_FOUND' | 'NOT_PUBLICLY_DISCLOSED' | 'INVALID' | 'UNVERIFIED';
+  source_url: string | null;
+  source_type: 'COMPANY_WEBSITE' | 'AUTHORITATIVE_WEB' | 'REGISTRY' | 'DNS' | 'USER_INPUT' | 'NONE';
+  checked_at: string;
+  evidence: string;
+  confidence_reason: string;
 }
 
 

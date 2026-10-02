@@ -185,6 +185,9 @@ export type CompanyRecord = {
   };
   mismatchReason?: string;
   rootCause?: string;
+  fieldAudits?: Record<string, any>;
+  divergences?: string[];
+  rejectionStage?: string;
 };
 
 export type {
