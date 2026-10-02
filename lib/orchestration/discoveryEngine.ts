@@ -21,7 +21,7 @@ import { houstonBridge } from '@/lib/houston/runtimeBridge';
 import { FounderDiscoveryService } from '@/lib/founderDiscovery';
 import { verifyContactLead } from '@/lib/email';
 import { calculateHuntScore } from '@/lib/rank';
-import { checkFundingRange, checkGeographyMatch, checkNoUSPresence, validateCompany } from '@/lib/validation';
+import { evaluateCanonicalTargetQualification, parseFundingDetails } from '@/lib/validation';
 import { mapToStandardIndustry } from '@/lib/discoveryPipeline';
 import { ContactEnrichmentService } from '@/lib/contactEnrichment';
 
@@ -302,47 +302,38 @@ export class DiscoveryEngine {
           stageName: 'Researching',
         });
 
-        // Houston Research & Qualification
+        // Houston Research & Qualification via Canonical Qualification Engine
         const industryMapping = mapToStandardIndustry(cand.detectedIndustry, cand.snippet);
+        const parsedFunding = parseFundingDetails(cand.detectedFunding || cand.snippet);
 
-        // Deterministic Geography Check
-        const geoResult = checkGeographyMatch(cand.snippet, cand.url, config);
-        const usPresenceVerdict = checkNoUSPresence(
-          cand.snippet,
-          cand.url,
-          (config.geography.usPresence as any) || 'minimal_or_none'
+        const qualificationResult = evaluateCanonicalTargetQualification(
+          {
+            name: cand.name,
+            website: cand.url,
+            description: cand.snippet,
+            industry: industryMapping.standard_industry,
+            rawIndustry: industryMapping.raw_industry,
+            fundingAmount: parsedFunding ? parsedFunding.amountUsd : null,
+            fundingOrRevenueText: cand.detectedFunding || cand.snippet,
+            country: cand.detectedCountry,
+            headquarters: cand.detectedCountry,
+            sourceType: cand.source || 'Huntlyst Discovery',
+            sourceEvidence: cand.snippet,
+          },
+          targetProfile
         );
-        const usPresencePassed = usPresenceVerdict !== true; // true means US presence was detected (fails)
-
-        // Deterministic Funding Check
-        const fundingResult = checkFundingRange(
-          cand.detectedFunding || cand.snippet,
-          targetProfile.fundingMin || config.funding.min,
-          targetProfile.fundingMax || config.funding.max
-        );
-
-        const isGeoPassed = geoResult.passed && usPresencePassed;
-        const isFundingPassed = fundingResult.passed;
-        const isTechPassed = industryMapping.standard_industry !== 'Other / Custom' ||
-          /software|platform|saas|ai|cloud|api|app|tech/i.test(cand.snippet);
 
         // Qualification Gate
-        if (!isGeoPassed || !isFundingPassed || !isTechPassed) {
-          const reasons: string[] = [];
-          if (!geoResult.passed) reasons.push(`Geography outside targeted bounds: ${geoResult.reason || 'Country/Region mismatch'}`);
-          if (!usPresencePassed) reasons.push(`US Presence policy violated: US presence identified`);
-          if (!isFundingPassed) reasons.push(`Funding criteria not met: ${fundingResult.reason}`);
-          if (!isTechPassed) reasons.push(`Industry taxonomy rejected: ${industryMapping.raw_industry} is not an eligible tech platform`);
-
+        if (qualificationResult.status === 'REJECTED') {
           allRejected.push({
             name: cand.name,
             website: cand.url,
             industry: industryMapping.standard_industry,
             fundingOrRevenue: cand.detectedFunding || 'Unconfirmed',
             location: cand.detectedCountry || 'Unspecified',
-            rejectionReasons: reasons,
-            matchedRules: isFundingPassed ? ['✓ Funding threshold satisfied'] : [],
-            failedRules: reasons.map(r => `✗ ${r}`),
+            rejectionReasons: qualificationResult.failedCriteria,
+            matchedRules: qualificationResult.passedCriteria.map(r => `✓ ${r}`),
+            failedRules: qualificationResult.failedCriteria.map(r => `✗ ${r}`),
             sourceEvidence: cand.snippet,
           });
 
@@ -410,7 +401,7 @@ export class DiscoveryEngine {
           description: cand.snippet,
           industry: industryMapping.standard_industry,
           fundingOrRevenue: cand.detectedFunding || 'Seed / Series A',
-          usPresence: usPresencePassed,
+          usPresence: qualificationResult.criteria.geography?.status === 'PASS',
           founderOrCeoName: founderName,
           founderOrCeoEmail: contactRes.email || professionalEmail,
           emailVerified: isEmailVerified || contactRes.verified,
@@ -431,7 +422,7 @@ export class DiscoveryEngine {
           evidence: {
             fundingSource: cand.snippet,
             techEvidence: `Verified platform: ${industryMapping.standard_industry}`,
-            geoEvidence: geoResult.reason || `Confirmed location in target region`,
+            geoEvidence: qualificationResult.criteria.geography?.reason || `Confirmed location in target region`,
             founderSource: primaryContact?.company_relationship || 'Public company disclosures',
             emailVerificationDetail: contactRes.evidence,
             sources: [cand.url],

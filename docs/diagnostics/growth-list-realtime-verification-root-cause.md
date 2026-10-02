@@ -93,11 +93,11 @@ Query planners lacked a saturation detector and repeated identical query strings
 | 1 | **Traction** | United States | $3,440,421 | May 2024 | Venture - Series Unknown | `VALID_MX` | `aspmx.l.google.com` | `Under Review` | `Rejected` |
 | 2 | **Blaize** | United States | $106,000,000 | May 2024 | Series D | `VALID_MX` | `mxa-0063e101.gslb.pphosted.com` | `Rejected` | `Rejected` |
 | 3 | **Airstack** | United States | $4,000,000 | May 2024 | Seed | `VALID_MX` | `aspmx.l.google.com` | `Under Review` | `Rejected` |
-| 4 | **Renda** | Colombia | $1,300,000 | May 2024 | Pre-Seed | `VALID_MX` | `smtp.google.com` | `Under Review` | `Under Review` |
+| 4 | **Renda** | Colombia | $1,300,000 | May 2024 | Pre-Seed | `VALID_MX` | `aspmx.l.google.com` | `Under Review` | `Under Review` |
 | 5 | **Eywa** | Finland | $7,000,000 | May 2024 | Seed | `VALID_MX` | `aspmx.l.google.com` | `Under Review` | `Under Review` |
 | 6 | **Hexigone Inhibitors** | United Kingdom | $1,003,431 | May 2024 | Venture - Series Unknown | `VALID_MX` | `hexigone-com.mail.protection.outlook.com` | `Under Review` | `Under Review` |
 | 7 | **Zing Dev** | United Kingdom | $1,561,153 | May 2024 | Venture - Series Unknown | `VALID_MX` | `zing-dev.mail.protection.outlook.com` | `Under Review` | `Under Review` |
-| 8 | **CoreWeave** | United States | $1,100,000,000 | May 2024 | Series C | `VALID_MX` | `mxa-0072dd01.gslb.pphosted.com` | `Rejected` | `Rejected` |
+| 8 | **CoreWeave** | United States | $1,100,000,000 | May 2024 | Series C | `VALID_MX` | `mxb-0072dd01.gslb.pphosted.com` | `Rejected` | `Rejected` |
 | 9 | **Sware** | United States | $6,021,668 | May 2024 | Venture - Series Unknown | `VALID_MX` | `sware-com.mail.protection.outlook.com` | `Under Review` | `Rejected` |
 | 10 | **Altruist** | United States | $169,000,000 | May 2024 | Series E | `VALID_MX` | `aspmx.l.google.com` | `Rejected` | `Rejected` |
 | 11 | **Paragraph** | United States | $5,000,000 | May 2024 | Seed | `VALID_MX` | `aspmx.l.google.com` | `Under Review` | `Rejected` |
@@ -107,7 +107,7 @@ Query planners lacked a saturation detector and repeated identical query strings
 | 15 | **Klineo** | France | $2,142,899 | May 2024 | Seed | `VALID_MX` | `aspmx.l.google.com` | `Under Review` | `Under Review` |
 | 16 | **Aduro** | United States | $5,082,022 | May 2024 | Venture - Series Unknown | `VALID_MX` | `adurolife-com.mail.protection.outlook.com` | `Under Review` | `Rejected` |
 | 17 | **New Perspective Senior Living** | United States | $200,000,000 | May 2024 | Private Equity | `VALID_MX` | `mxb-00a60c01.gslb.pphosted.com` | `Rejected` | `Rejected` |
-| 18 | **Securitize** | United States | $47,000,000 | May 2024 | Venture - Series Unknown | `VALID_MX` | `us-smtp-inbound-2.mimecast.com` | `Rejected` | `Rejected` |
+| 18 | **Securitize** | United States | $47,000,000 | May 2024 | Venture - Series Unknown | `VALID_MX` | `us-smtp-inbound-1.mimecast.com` | `Rejected` | `Rejected` |
 | 19 | **Abyan Capital** | Saudi Arabia | $18,131,176 | May 2024 | Series A | `VALID_MX` | `aspmx.l.google.com` | `Rejected` | `Rejected` |
 | 20 | **Lunar** | Denmark | $25,795,320 | May 2024 | Venture - Series Unknown | `VALID_MX` | `aspmx.l.google.com` | `Rejected` | `Rejected` |
 | 21 | **Arbol** | United States | $60,000,000 | May 2024 | Series B | `VALID_MX` | `aspmx.l.google.com` | `Rejected` | `Rejected` |

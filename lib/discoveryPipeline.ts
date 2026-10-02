@@ -41,7 +41,7 @@ import {
 import { TargetProfile, DEFAULT_TVB_TARGET_PROFILE } from '@/lib/targetProfileData';
 import { CompanyRecord, HuntConfig } from '@/lib/types';
 import { extractDomain, VERIFIED_GLOBAL_TECH_COMPANIES } from '@/lib/discovery';
-import { checkFundingRange, checkGeographyMatch, checkNoUSPresence } from '@/lib/validation';
+import { checkFundingRange, checkGeographyMatch, checkNoUSPresence, evaluateCanonicalTargetQualification, parseFundingDetails } from '@/lib/validation';
 import { detectCountryFromEvidence } from '@/lib/geography';
 import { calculateHuntScore } from '@/lib/rank';
 import * as cheerio from 'cheerio';
@@ -1059,27 +1059,12 @@ export async function processCandidateThroughPipeline(
     verificationStage: 'VALIDATE',
   };
 
-  // 3. Geography & US Presence
+  // 3. Geography & Eligibility
   const detectedCountry = placeMatch?.country || sourceCountry || (placeMatch?.formattedAddress ? detectCountryFromEvidence(placeMatch.formattedAddress, '')?.name : null);
   const isUS = detectedCountry?.toLowerCase().includes('united states') || detectedCountry?.toLowerCase().includes('usa') || (placeMatch?.formattedAddress?.toLowerCase().includes(' usa') ?? false);
 
-  let usStatus: CriterionStatus = 'UNKNOWN';
-  let usReason = '';
-  if (isUS) {
-    if (usPresenceMode === 'strictly_none' || usPresenceMode === 'minimal_or_none') {
-      usStatus = 'FAIL';
-      usReason = 'US headquarters or primary presence confirmed';
-    } else {
-      usStatus = 'PASS';
-      usReason = 'US presence permitted';
-    }
-  } else if (detectedCountry) {
-    usStatus = 'PASS';
-    usReason = `Non-US verified: Headquarters located in ${detectedCountry}`;
-  } else {
-    usStatus = 'UNKNOWN';
-    usReason = 'Geographic location undetermined';
-  }
+  const usStatus: CriterionStatus = 'PASS';
+  const usReason = 'Global/Country eligibility evaluated under active Target Profile';
 
   // Contradiction and Geography evaluation against target countries
   const hasContradiction = placeMatch?.isMismatch === true;
@@ -1245,47 +1230,38 @@ export async function processCandidateThroughPipeline(
   let qualificationReason: string | undefined;
   let decisionExplanation = '';
 
-  // FAIL CLOSED RULES:
-  // Rule 1: Any mandatory criterion is FAIL or CONTRADICTED → REJECTED
-  if (hasContradiction) {
-    verificationStatus = 'REJECTED';
-    rejectionReason = placeMatch?.evidence || 'Contradictory evidence detected against authoritative records.';
-    decisionExplanation = `REJECTED: ${rejectionReason}`;
-  } else if (industryCriterion.status === 'FAIL') {
-    verificationStatus = 'REJECTED';
-    rejectionReason = industryCriterion.reason || 'Business category does not match the selected target.';
-    decisionExplanation = `REJECTED: ${rejectionReason}`;
-  } else if (fundingCriterion.status === 'FAIL') {
-    verificationStatus = 'REJECTED';
-    rejectionReason = fundingCriterion.reason || 'Funding outside configured target range.';
-    decisionExplanation = `REJECTED: ${rejectionReason}`;
-  } else if (usPresenceCriterion.status === 'FAIL') {
-    verificationStatus = 'REJECTED';
-    rejectionReason = usPresenceCriterion.reason || 'US presence detected while excluded by target.';
-    decisionExplanation = `REJECTED: ${rejectionReason}`;
-  } else if (failedCriteria.length > 0) {
-    verificationStatus = 'REJECTED';
-    rejectionReason = `Failed mandatory target criteria: ${failedCriteria.join(', ')}`;
-    decisionExplanation = `REJECTED: ${rejectionReason}`;
-  }
-  // Rule 2: All mandatory criteria PASS with verified evidence → QUALIFIED
-  else if (
-    industryCriterion.status === 'PASS' &&
-    fundingCriterion.status === 'PASS' &&
-    geoCriterion.status === 'PASS' &&
-    usPresenceCriterion.status === 'PASS' &&
-    founderCriterion.status === 'PASS'
-  ) {
-    verificationStatus = 'QUALIFIED';
-    qualificationReason = `Satisfies target criteria: Verified sector (${standard_industry}), Verified Funding (${fundingCriterion.value}), Non-US Location confirmed, Executive verified (${founderCriterion.value}).`;
-    decisionExplanation = `QUALIFIED: ${qualificationReason}`;
-  }
-  // Rule 3: Missing mandatory evidence → REVIEW (Fails Closed)
-  else {
-    verificationStatus = 'REVIEW';
-    const missing = unknownCriteria.map(c => c === 'founderOrCeo' ? 'CEO/Founder' : (c === 'professionalEmail' ? 'Email' : c)).join(', ');
-    decisionExplanation = `REVIEW: Mandatory criteria (${missing || 'certain fields'}) missing verified evidence. Fails closed.`;
-  }
+  // CANONICAL TARGET PROFILE QUALIFICATION (Sections 1, 8-10, 17-29)
+  const parsedFund = verifiedFunding ? parseFundingDetails(verifiedFunding) : null;
+  const canonicalEval = evaluateCanonicalTargetQualification(
+    {
+      name: sourceName,
+      website: websiteVerification.verifiedUrl || sourceWebsite || '',
+      canonicalDomain: websiteVerification.verifiedUrl ? extractDomain(websiteVerification.verifiedUrl) : undefined,
+      description: (candidate.source_data?.raw_fields?.['Description'] as string) || (candidate as any).description || candidate.existingData?.description || null,
+      industry: standard_industry,
+      rawIndustry: raw_industry,
+      fundingAmount: parsedFund ? parsedFund.amountUsd : null,
+      fundingOrRevenueText: verifiedFunding,
+      country: detectedCountry,
+      city: placeMatch?.city || sourceCity,
+      headquarters: placeMatch?.formattedAddress || detectedCountry,
+      founderOrCeoName: foundersData.founderName,
+      founderOrCeoRole: foundersData.founderRole,
+      contactEmail: contactData.email,
+      hasActiveMx: contactData.emailStatus === 'VERIFIED',
+      linkedinUrl: (candidate as any).linkedinUrl || (candidate as any).founderOrCeoLinkedin || null,
+      sourceType: placeMatch?.sourceType || 'USER_INPUT',
+      sourceEvidence: placeMatch?.evidence,
+      isMismatch: hasContradiction,
+      conflictDetails: hasContradiction ? placeMatch?.evidence : undefined,
+    },
+    target
+  );
+
+  verificationStatus = (canonicalEval.status === 'UNDER_REVIEW' ? 'REVIEW' : canonicalEval.status) as VerificationStatus;
+  rejectionReason = canonicalEval.rejectionReason;
+  qualificationReason = canonicalEval.exactReason;
+  decisionExplanation = canonicalEval.exactReason;
 
   // Construct Structured Enriched Data
   const enriched_data: CandidateEnrichedData = {

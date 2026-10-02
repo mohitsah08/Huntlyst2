@@ -89,7 +89,8 @@ export interface UniversalExportRecord {
   country: string;
   city?: string;
   region?: string;
-  usPresence: string; // e.g. "Non-US Confirmed", "US Detected", "Minimal US"
+  geographyStatus: string;
+  usPresence?: string; // Legacy compatibility
   employeeCount: string;
   companyType?: string;
   companyStage?: string;
@@ -319,12 +320,12 @@ export function normalizeCompanyRecord(
   const selectionReasonsList: string[] = [];
   if (c.industry || c.sector) selectionReasonsList.push(`Industry Matched: ${c.industry || c.sector}`);
   if (c.fundingOrRevenue) selectionReasonsList.push(`Funding Range Matched: ${c.fundingOrRevenue}`);
-  if (c.country || c.location) selectionReasonsList.push(`Geography Matched: ${c.country || c.location} (Non-US Target)`);
+  if (c.country || c.location) selectionReasonsList.push(`Geography Matched: ${c.country || c.location}`);
   if (c.founderOrCeoName || c.founder?.name) selectionReasonsList.push(`Leader Identified: ${c.founderOrCeoName || c.founder?.name}`);
   if (c.founderOrCeoEmail || c.email?.address) selectionReasonsList.push(`Email MX Verified: ${c.founderOrCeoEmail || c.email?.address}`);
 
   const passedCriteria: string[] = [];
-  if (c.usPresence === true) passedCriteria.push('Non-US Headquarters');
+  if (c.country || c.location) passedCriteria.push(`Geography: ${c.country || c.location}`);
   if (c.fundingOrRevenue) passedCriteria.push('Target Funding/Revenue Bounds');
   if (c.description) passedCriteria.push('Proprietary Tech Platform');
   if (c.founderOrCeoName) passedCriteria.push('Verified Leadership Profile');
@@ -340,10 +341,11 @@ export function normalizeCompanyRecord(
     sector: c.sector || c.industry || 'Technology',
     subSector: '',
     description: c.description || 'Verified technology platform matching target criteria.',
-    headquarters: c.country || c.location || 'Non-US',
-    country: c.country || c.location || 'Non-US',
+    headquarters: c.country || c.location || 'Global',
+    country: c.country || c.location || 'Global',
     city: '',
-    usPresence: c.usPresence === true ? 'Non-US Confirmed (Pass)' : c.usPresence === false ? 'US Presence Detected (Fail)' : 'Non-US Target',
+    geographyStatus: c.country ? `Verified Geography: ${c.country}` : 'Global Target (All Allowed)',
+    usPresence: c.country ? `Verified Geography: ${c.country}` : 'Global Target (All Allowed)',
     employeeCount: c.employeeCount ? String(c.employeeCount) : '10-50',
     funding: c.fundingOrRevenue || c.funding?.totalRaised || '$1M–$5M',
     revenue: c.funding?.revenue || '',
@@ -465,7 +467,8 @@ export function normalizeRejectedCompanyRecord(
     description: `Candidate evaluated during ${stage}. Failed qualification checks.`,
     headquarters: rej.location || 'Unknown',
     country: rej.location || 'Unknown',
-    usPresence: rej.rejectionReasons?.some(r => r.toLowerCase().includes('us')) ? 'US Presence Detected (Fail)' : 'Undetermined',
+    geographyStatus: rej.rejectionReasons?.some(r => r.toLowerCase().includes('geography')) ? 'Geography Mismatch (Fail)' : 'Target Matched / Global',
+    usPresence: rej.rejectionReasons?.some(r => r.toLowerCase().includes('geography')) ? 'Geography Mismatch (Fail)' : 'Target Matched / Global',
     employeeCount: 'Outside target range',
     funding: rej.fundingOrRevenue || 'Did not meet range',
     decisionMakerName: rej.founderOrCeoName || 'None identified',
@@ -584,10 +587,11 @@ export function normalizeVerificationResult(
     industry: c?.industry || c?.sector || res.source_data?.raw_industry || 'Technology',
     sector: c?.sector || c?.industry || 'Technology',
     description: c?.description || 'Candidate evaluated through Huntlyst Staged Verification Pipeline.',
-    headquarters: c?.country || c?.location || res.source_data?.city || 'Non-US',
-    country: c?.country || c?.location || res.source_data?.country || 'Non-US',
+    headquarters: c?.country || c?.location || res.source_data?.city || 'Global',
+    country: c?.country || c?.location || res.source_data?.country || 'Global',
     city: res.source_data?.city || '',
-    usPresence: c?.usPresence === true ? 'Non-US Confirmed (Pass)' : c?.usPresence === false ? 'US Detected (Fail)' : 'Evaluating',
+    geographyStatus: (c?.country || res.source_data?.country) ? `Verified Geography: ${c?.country || res.source_data?.country}` : 'Global Target (All Allowed)',
+    usPresence: (c?.country || res.source_data?.country) ? `Verified Geography: ${c?.country || res.source_data?.country}` : 'Global Target (All Allowed)',
     employeeCount: c?.employeeCount ? String(c?.employeeCount) : '10-50',
     funding: c?.fundingOrRevenue || res.source_data?.funding || '$1M–$5M',
     decisionMakerName: founderName,
@@ -785,7 +789,7 @@ export function generateUniversalCsv(
     'Industry',
     'Funding / Revenue',
     'Headquarters / Country',
-    'US Presence Evaluation',
+    'Geography Status',
     'Employee Count',
     'Decision Maker Name',
     'Decision Maker Role',
@@ -861,7 +865,7 @@ export function generateUniversalCsv(
       escapeCsv(r.industry),
       escapeCsv(r.funding),
       escapeCsv(r.country || r.headquarters),
-      escapeCsv(r.usPresence),
+      escapeCsv(r.geographyStatus || r.usPresence || ''),
       escapeCsv(r.employeeCount),
       escapeCsv(r.decisionMakerName),
       escapeCsv(r.decisionMakerRole),
@@ -960,7 +964,7 @@ export function generateUniversalXlsx(
     'Industry': r.industry,
     'Funding / Revenue': r.funding,
     'Location': r.country || r.headquarters,
-    'US Presence': r.usPresence,
+    'Geography Status': r.geographyStatus || r.usPresence || '',
     'Employee Count': r.employeeCount,
     'Decision Maker': r.decisionMakerName,
     'Role': r.decisionMakerRole,
@@ -1207,6 +1211,7 @@ export function generateUniversalJson(
         country: r.country,
         city: r.city,
         region: r.region,
+        geographyStatus: r.geographyStatus || r.usPresence || '',
         usPresence: r.usPresence,
         employeeCount: r.employeeCount,
         companyType: r.companyType,
@@ -1381,7 +1386,7 @@ export function downloadPdfFile(
   doc.setTextColor(inkDark[0], inkDark[1], inkDark[2]);
   doc.text(`Export Snapshot Time: ${snapshotTime}`, 14, 48);
   doc.text(`Total Records: ${records.length}  |  Approved: ${records.filter(r => r.recordStatus === 'Approved').length}  |  Rejected: ${records.filter(r => r.recordStatus === 'Rejected').length}`, 14, 53);
-  doc.text('Target Profile: $1M–$5M Funding/Revenue | Tech Platform | Minimal/No US Presence | Verified Leadership', 14, 58);
+  doc.text('Target Profile: $100K–$10M Funding/Revenue | Tech Platform | Global / Specified Geography | Verified Leadership', 14, 58);
 
   // Summary Table
   const tableHeaders = [['#', 'Company', 'Status', 'Sector', 'Funding', 'Location', 'Leader', 'Email', 'Score']];
@@ -1663,7 +1668,7 @@ export async function downloadDocxFile(
           new Paragraph({
             children: [
               new TextRun({ text: 'Target Profile Criteria: ', bold: true }),
-              new TextRun('$1M–$5M Funding/Revenue  •  Technology Platform  •  Minimal/No US Presence  •  Identified Leadership  •  DNS MX Verified Contact'),
+              new TextRun('$100K–$10M Funding/Revenue  •  Technology Platform  •  Global / Specified Geography  •  Identified Leadership  •  DNS MX Verified Contact'),
             ],
             spacing: { after: 280 },
           }),

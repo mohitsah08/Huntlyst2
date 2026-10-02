@@ -161,7 +161,7 @@ assert(huntConfig.funding.mode === 'funding_or_revenue', 'Funding mode preserved
 // 15. Correct API payload structure
 console.log('\n[TEST 15] Correct API payload structure...');
 assert(huntConfig.geography.countries.includes('Germany'), 'API payload geography contains Germany');
-assert(huntConfig.geography.excludedCountries.includes('United States'), 'US exclusion preserved');
+assert(!huntConfig.geography.excludedCountries?.includes('United States'), 'No hidden US exclusion injected');
 
 // 16. Validation rules: invalid financial bounds
 console.log('\n[TEST 16] Validation rules...');

@@ -322,7 +322,6 @@ export const REQUIRED_FIELDS = [
   'description',
   'industry',
   'fundingOrRevenue',
-  'usPresence',
   'founderOrCeoName',
   'founderOrCeoEmail',
 ] as const;
@@ -330,7 +329,7 @@ export const REQUIRED_FIELDS = [
 export type RequiredField = (typeof REQUIRED_FIELDS)[number];
 
 export interface HuntGeographyConfig {
-  mode: 'regions' | 'countries' | 'global' | 'continents' | 'custom';
+  mode: 'regions' | 'countries' | 'global' | 'continents' | 'union' | 'custom';
   regions: string[];
   continents?: string[];
   countries: string[];

@@ -431,57 +431,17 @@ export function checkTechPlatform(
 }
 
 /**
- * Deterministic US Presence Check:
- * - true  => US presence detected (fails for strict non-US)
- * - false => Confirmed Non-US (passes)
- * - null  => Undetermined
+ * Deterministic US Presence Check
+ * @deprecated Obsolete legacy venture requirement. The dedicated US Presence concept has been
+ * purged in favor of clean Geography (Global vs Continents/Countries Union).
+ * Always returns false (no restriction violation) for backwards compatibility.
  */
 export function checkNoUSPresence(
   evidenceText: string | null,
   websiteUrl: string,
-  mode: HuntConfig['geography']['usPresence'] | 'exclude_us' | 'some_allowed' | 'dont_care' | 'no_restriction' | 'exclude_us_hq' | 'exclude_us_presence' | 'require_us' | 'unknown' = 'minimal_or_none'
+  mode: any = 'any'
 ): boolean | null {
-  const text = (evidenceText || '').toLowerCase();
-
-  // Mode 1: No US restriction / Any US presence allowed
-  if (mode === 'any' || mode === 'dont_care' || mode === 'no_restriction') {
-    return false; // passes US check
-  }
-
-  // Strong US signals
-  const usStateNames = /\b(california|texas|new york|florida|illinois|massachusetts|washington state|delaware|nevada|san francisco|silicon valley|austin|seattle|boston|los angeles|chicago)\b/i;
-  const usPhonePattern = /\+1[\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/;
-  const usAddressWords = /\b(headquartered in the us|based in the us|united states|usa office|u\.s\.[\s-]based|us headquarters)\b/i;
-
-  const hasStrongUsSignal = usStateNames.test(text) || usPhonePattern.test(text) || usAddressWords.test(text);
-
-  // Mode 4: Require US presence
-  if (mode === 'require_us') {
-    if (hasStrongUsSignal) return false; // Passes requirement
-    const detected = detectCountryFromEvidence(evidenceText, websiteUrl);
-    if (detected && detected.code === 'US') return false; // Passes requirement
-    return true; // Fails because US presence is required
-  }
-
-  // Modes 2 & 3: Exclude US presence
-  if (hasStrongUsSignal) {
-    if (mode === 'strictly_none' || mode === 'minimal_or_none' || mode === 'exclude_us' || mode === 'exclude_us_hq' || mode === 'exclude_us_presence') {
-      return true; // Detected US -> Fails
-    }
-  }
-
-  // Strong non-US signals: Countries & Global Hubs
-  const detected = detectCountryFromEvidence(evidenceText, websiteUrl);
-  if (detected && detected.code !== 'US') {
-    return false; // Confirmed Non-US -> Passes
-  }
-
-  // For unknown: unverified evidence must NOT automatically count as compliant when strictly zero US is required!
-  if (mode === 'unknown' || mode === 'strictly_none' || mode === 'exclude_us_presence') {
-    return true; // Fails due to lack of conclusive non-US proof
-  }
-
-  return null; // Undetermined
+  return false;
 }
 
 /**
@@ -696,4 +656,510 @@ export function validateCompany(
 ): ValidatedCompany | null {
   const audit = auditCompany(data, websiteUrl, sourceType, config);
   return audit.validatedCompany;
+}
+
+export interface CanonicalCandidateInput {
+  name: string;
+  website: string;
+  canonicalDomain?: string;
+  description?: string | null;
+  industry?: string | null;
+  rawIndustry?: string | null;
+  subIndustry?: string | null;
+  fundingAmount?: number | string | null;
+  verifiedFundingAmount?: number | string | null;
+  fundingStatus?: 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'CONFLICT' | 'UNVERIFIED' | 'UNKNOWN' | null;
+  fundingDate?: string | null;
+  fundingType?: string | null;
+  totalFundingUsd?: number | null;
+  latestRoundUsd?: number | null;
+  revenueAmount?: number | null;
+  fundingOrRevenueText?: string | null;
+  country?: string | null;
+  location?: string | null;
+  city?: string | null;
+  headquarters?: string | null;
+  founderOrCeoName?: string | null;
+  ceoName?: string | null;
+  founderOrCeoRole?: string | null;
+  founderOrCeoEmail?: string | null;
+  contactEmail?: string | null;
+  email?: string | null;
+  emailStatus?: string | null;
+  emailVerified?: boolean | null;
+  hasActiveMx?: boolean | null;
+  linkedinUrl?: string | null;
+  twitterUrl?: string | null;
+  sourceType?: string;
+  sourceEvidence?: string | null;
+  isMismatch?: boolean;
+  conflictDetails?: string | null;
+}
+
+export interface CanonicalCriterionEvaluation {
+  name: string;
+  category: 'identity' | 'geography' | 'funding' | 'industry' | 'executive' | 'contact' | 'stage';
+  active: boolean;
+  status: 'PASS' | 'FAIL' | 'UNKNOWN' | 'CONTRADICTED' | 'INFORMATIONAL';
+  requiredValue: string;
+  actualValue: string;
+  reason?: string;
+  evidence?: string | null;
+  weight: number;
+}
+
+export interface CanonicalQualificationResult {
+  qualified: boolean;
+  status: 'QUALIFIED' | 'UNDER_REVIEW' | 'REVIEW' | 'REJECTED';
+  verdict: 'Qualified' | 'Under Review' | 'Rejected';
+  matchScore: number;
+  matchPercentage: string;
+  exactReason: string;
+  rejectionReason?: string;
+  reviewReason?: string;
+  reasons: string[];
+  passedCriteria: string[];
+  failedCriteria: string[];
+  unknownCriteria: string[];
+  criteria: Record<string, CanonicalCriterionEvaluation>;
+  criteriaChecks: CanonicalCriterionEvaluation[];
+  checkedAt: string;
+}
+
+/**
+ * Canonical Target Evaluation & Qualification Engine
+ * Single source of truth across Internal Input, External Discovery, and Scheduled Automation.
+ */
+export function evaluateCanonicalTargetQualification(
+  candidate: CanonicalCandidateInput,
+  targetInput: any
+): CanonicalQualificationResult {
+  const checkedAt = new Date().toISOString();
+  const target = targetInput || {};
+  const isHunt = 'geography' in target && 'funding' in target && !('fundingMin' in target);
+
+  // 1. Funding parameters
+  const fMin: number = isHunt ? target.funding.min : (target.fundingMin ?? 100_000);
+  const fMax: number = isHunt ? target.funding.max : (target.fundingMax ?? 10_000_000);
+  const fCur: string = isHunt ? 'USD' : (target.fundingCurrency ?? 'USD');
+  const fMetricRaw = isHunt ? target.funding.mode : (target.financialMetric ?? 'funding_only');
+  const fMetric = String(fMetricRaw).toUpperCase();
+
+  // 2. Geography parameters
+  const continents: string[] = isHunt
+    ? (target.geography.continents || target.geography.regions || []).filter((r: string) => r.toLowerCase() !== 'global')
+    : (target.continents || target.regions || []).filter((r: string) => r.toLowerCase() !== 'global');
+  const countries: string[] = isHunt ? (target.geography.countries || []) : (target.countries || []);
+  const excludedCountries: string[] = isHunt ? (target.geography.excludedCountries || []) : (target.excludedCountries || []);
+
+  const hasSpecificGeography = continents.length > 0 || countries.length > 0;
+  const isGlobal = isHunt
+    ? (target.geography.mode === 'global' && !hasSpecificGeography)
+    : (!hasSpecificGeography);
+
+  // 3. Industry parameters
+  const rawIndustries: string[] = isHunt ? (target.sectors || []) : (target.industries || []);
+  const isAllIndustries = !rawIndustries.length ||
+    rawIndustries.some((i: string) => i.toLowerCase() === 'all' || i.toLowerCase() === 'all industries');
+  const industries = isAllIndustries ? [] : rawIndustries;
+  const subIndustries: string[] = isHunt ? (target.businessModels || []) : (target.subIndustries || []);
+
+  const criteria: Record<string, CanonicalCriterionEvaluation> = {};
+
+  // Criterion 1: Identity & Website
+  const hasValidName = !!(candidate.name && candidate.name.trim().length >= 2);
+  const hasValidWebsite = !!(candidate.website && candidate.website.trim().length >= 3 && (candidate.website.includes('.') || candidate.website.startsWith('http')));
+  
+  if (candidate.isMismatch) {
+    criteria.identity = {
+      name: 'Company Identity',
+      category: 'identity',
+      active: true,
+      status: 'CONTRADICTED',
+      requiredValue: 'Verifiable authentic company identity',
+      actualValue: candidate.name || 'Unknown',
+      reason: candidate.conflictDetails || 'Conflicting company identity between source and authoritative registry',
+      evidence: candidate.sourceEvidence,
+      weight: 20,
+    };
+  } else if (hasValidName && hasValidWebsite) {
+    criteria.identity = {
+      name: 'Company Identity',
+      category: 'identity',
+      active: true,
+      status: 'PASS',
+      requiredValue: 'Authentic name and active website',
+      actualValue: `${candidate.name} (${candidate.website})`,
+      reason: `Company identity verified: ${candidate.name}`,
+      evidence: candidate.website,
+      weight: 20,
+    };
+  } else {
+    criteria.identity = {
+      name: 'Company Identity',
+      category: 'identity',
+      active: true,
+      status: 'FAIL',
+      requiredValue: 'Authentic name and active website',
+      actualValue: candidate.name || 'Missing name',
+      reason: !hasValidName ? 'Company name missing or too short' : 'Website URL invalid or unresolvable',
+      weight: 20,
+    };
+  }
+
+  // Criterion 2: Geography (Section 4, 5, 6, 25, 26)
+  const candidateCountry = candidate.country || '';
+  if (isGlobal) {
+    // In Global mode: ALL COUNTRIES ARE ELIGIBLE. Country is INFORMATIONAL.
+    // Does NOT reduce score. Does NOT cause rejection. Does NOT have active weight.
+    criteria.geography = {
+      name: 'Geography',
+      category: 'geography',
+      active: false,
+      status: 'PASS',
+      requiredValue: 'Global — all countries allowed',
+      actualValue: candidateCountry || candidate.city || 'Global',
+      reason: 'Global coverage — all countries allowed (no geographic restrictions)',
+      evidence: candidate.headquarters || candidateCountry,
+      weight: 0,
+    };
+  } else {
+    // Specific geography (Continents/Countries Union)
+    const targetLabels = [...continents, ...countries];
+    const isExcluded = candidateCountry && excludedCountries.some(e =>
+      candidateCountry.toLowerCase().includes(e.toLowerCase()) || e.toLowerCase().includes(candidateCountry.toLowerCase())
+    );
+
+    if (isExcluded) {
+      criteria.geography = {
+        name: 'Geography',
+        category: 'geography',
+        active: true,
+        status: 'FAIL',
+        requiredValue: `Allowed: ${targetLabels.join(', ')} (Excluded: ${excludedCountries.join(', ')})`,
+        actualValue: candidateCountry,
+        reason: `Headquarters in excluded country (${candidateCountry})`,
+        evidence: candidate.headquarters || candidateCountry,
+        weight: 25,
+      };
+    } else {
+      const mockHuntConfig: HuntConfig = isHunt ? target : {
+        geography: {
+          mode: continents.length > 0 && countries.length > 0 ? 'union' : continents.length > 0 ? 'continents' : 'countries',
+          regions: continents,
+          continents,
+          countries,
+          excludedCountries,
+        },
+        sectors: [],
+        businessModels: [],
+        stage: [],
+        funding: { min: fMin, max: fMax, mode: 'funding' },
+      };
+
+      const geoResult = checkGeographyMatch(
+        `Location: ${candidate.city || ''} ${candidateCountry} ${candidate.headquarters || ''} ${candidate.sourceEvidence || ''}`,
+        candidate.website,
+        mockHuntConfig
+      );
+
+      if (geoResult.passed) {
+        criteria.geography = {
+          name: 'Geography',
+          category: 'geography',
+          active: true,
+          status: 'PASS',
+          requiredValue: targetLabels.join(', '),
+          actualValue: geoResult.detectedCountry || candidateCountry,
+          reason: `Matches target geography (${geoResult.detectedCountry || candidateCountry})`,
+          evidence: geoResult.detectedRegion || candidate.headquarters,
+          weight: 25,
+        };
+      } else {
+        criteria.geography = {
+          name: 'Geography',
+          category: 'geography',
+          active: true,
+          status: 'FAIL',
+          requiredValue: targetLabels.join(', '),
+          actualValue: candidateCountry || 'Unknown',
+          reason: geoResult.reason || `Location (${candidateCountry || 'Unknown'}) does not match target geography: ${targetLabels.join(', ')}`,
+          evidence: candidate.headquarters,
+          weight: 25,
+        };
+      }
+    }
+  }
+
+  // Criterion 3: Funding / Revenue (Sections 8, 9, 10)
+  const formatUsd = (n: number) => `$${Math.round(n).toLocaleString()} USD`;
+
+  if (candidate.fundingStatus === 'CONFLICT') {
+    criteria.funding = {
+      name: 'Funding',
+      category: 'funding',
+      active: true,
+      status: 'CONTRADICTED',
+      requiredValue: `${formatUsd(fMin)} – ${formatUsd(fMax)}`,
+      actualValue: `Input: ${candidate.fundingAmount || 'N/A'} vs Verified: ${candidate.verifiedFundingAmount || 'N/A'}`,
+      reason: 'Funding Conflict: Source input differs significantly from current web evidence (Under Review)',
+      evidence: candidate.sourceEvidence,
+      weight: 25,
+    };
+  } else {
+    let amountUsd: number | null = null;
+    if (typeof candidate.fundingAmount === 'number') amountUsd = candidate.fundingAmount;
+    else if (typeof candidate.fundingAmount === 'string') {
+      const p = parseFundingDetails(candidate.fundingAmount);
+      if (p) amountUsd = p.amountUsd;
+    }
+    if (amountUsd === null && typeof candidate.totalFundingUsd === 'number') amountUsd = candidate.totalFundingUsd;
+    if (amountUsd === null && typeof candidate.latestRoundUsd === 'number') amountUsd = candidate.latestRoundUsd;
+    if (amountUsd === null && candidate.fundingOrRevenueText) {
+      const parsed = parseFundingDetails(candidate.fundingOrRevenueText);
+      if (parsed) amountUsd = parsed.amountUsd;
+    }
+
+    if (amountUsd === null) {
+      criteria.funding = {
+        name: 'Funding',
+        category: 'funding',
+        active: true,
+        status: 'UNKNOWN',
+        requiredValue: `${formatUsd(fMin)} – ${formatUsd(fMax)}`,
+        actualValue: candidate.fundingOrRevenueText || 'Unverified',
+        reason: 'No verifiable funding or revenue figure documented',
+        weight: 25,
+      };
+    } else if (amountUsd > fMax) {
+      criteria.funding = {
+        name: 'Funding',
+        category: 'funding',
+        active: true,
+        status: 'FAIL',
+        requiredValue: `${formatUsd(fMin)} – ${formatUsd(fMax)}`,
+        actualValue: formatUsd(amountUsd),
+        reason: `Funding ${formatUsd(amountUsd)} exceeds configured maximum ${formatUsd(fMax)}`,
+        evidence: candidate.fundingOrRevenueText || candidate.sourceEvidence,
+        weight: 25,
+      };
+    } else if (amountUsd < fMin) {
+      criteria.funding = {
+        name: 'Funding',
+        category: 'funding',
+        active: true,
+        status: 'FAIL',
+        requiredValue: `${formatUsd(fMin)} – ${formatUsd(fMax)}`,
+        actualValue: formatUsd(amountUsd),
+        reason: `Funding ${formatUsd(amountUsd)} is below configured minimum ${formatUsd(fMin)}`,
+        evidence: candidate.fundingOrRevenueText || candidate.sourceEvidence,
+        weight: 25,
+      };
+    } else {
+      criteria.funding = {
+        name: 'Funding',
+        category: 'funding',
+        active: true,
+        status: 'PASS',
+        requiredValue: `${formatUsd(fMin)} – ${formatUsd(fMax)}`,
+        actualValue: formatUsd(amountUsd),
+        reason: `Funding ${formatUsd(amountUsd)} is within required range ${formatUsd(fMin)} – ${formatUsd(fMax)}`,
+        evidence: candidate.fundingOrRevenueText || candidate.sourceEvidence,
+        weight: 25,
+      };
+    }
+  }
+
+  // Criterion 4: Industry (Section 17)
+  if (isAllIndustries) {
+    criteria.industry = {
+      name: 'Industry',
+      category: 'industry',
+      active: false,
+      status: 'PASS',
+      requiredValue: 'All Industries',
+      actualValue: candidate.industry || candidate.rawIndustry || 'All',
+      reason: 'All industries allowed — industry is informational',
+      weight: 0,
+    };
+  } else {
+    const indCheck = checkIndustryFit(
+      candidate.description,
+      candidate.industry || candidate.rawIndustry,
+      'platform_required',
+      industries,
+      subIndustries
+    );
+
+    if (indCheck.passed) {
+      criteria.industry = {
+        name: 'Industry',
+        category: 'industry',
+        active: true,
+        status: 'PASS',
+        requiredValue: industries.join(', '),
+        actualValue: candidate.industry || indCheck.matchedTerm || 'Matched',
+        reason: `Industry matches target profile (${indCheck.matchedTerm || candidate.industry})`,
+        weight: 20,
+      };
+    } else {
+      criteria.industry = {
+        name: 'Industry',
+        category: 'industry',
+        active: true,
+        status: 'FAIL',
+        requiredValue: industries.join(', '),
+        actualValue: candidate.industry || 'Unknown',
+        reason: indCheck.reason || `Business category "${candidate.industry || 'Unknown'}" does not match selected targets (${industries.join(', ')})`,
+        weight: 20,
+      };
+    }
+  }
+
+  // Criterion 5: Decision Maker / Executive (CEO / Founder / Co-Founder) (Section 20)
+  const rawExec = candidate.founderOrCeoName || candidate.ceoName;
+  const isPlaceholderExecutive = !rawExec ||
+    /upgrade to unlock|locked|paywall|hidden|unrevealed|see details|view details|n\/a|unknown/i.test(rawExec.trim());
+
+  if (isPlaceholderExecutive) {
+    criteria.executive = {
+      name: 'Decision Maker',
+      category: 'executive',
+      active: true,
+      status: 'UNKNOWN',
+      requiredValue: 'CEO, Founder, or Co-Founder',
+      actualValue: 'Paywalled / Undisclosed in source',
+      reason: 'Executive identity paywalled / not publicly disclosed in free source',
+      weight: 15,
+    };
+  } else {
+    criteria.executive = {
+      name: 'Decision Maker',
+      category: 'executive',
+      active: true,
+      status: 'PASS',
+      requiredValue: 'CEO, Founder, or Co-Founder',
+      actualValue: `${rawExec} (${candidate.founderOrCeoRole || 'Executive'})`,
+      reason: `Executive verified: ${rawExec} (${candidate.founderOrCeoRole || 'Executive'})`,
+      evidence: candidate.linkedinUrl,
+      weight: 15,
+    };
+  }
+
+  // Criterion 6: Professional Contact & DNS MX (Section 21)
+  const isEmailValid = candidate.hasActiveMx === true || candidate.emailVerified === true || candidate.emailStatus === 'valid';
+  const isEmailFailed = candidate.hasActiveMx === false || candidate.emailStatus === 'invalid';
+  const emailRequired = (target.emailRequirement ?? 'Required') === 'Required';
+
+  if (isEmailValid) {
+    criteria.contact = {
+      name: 'Corporate Mail Exchange (DNS MX)',
+      category: 'contact',
+      active: emailRequired,
+      status: 'PASS',
+      requiredValue: 'Active DNS MX records',
+      actualValue: 'Active MX Mail Exchanger Confirmed',
+      reason: 'Corporate domain DNS MX mail server verified',
+      weight: emailRequired ? 15 : 0,
+    };
+  } else if (isEmailFailed) {
+    criteria.contact = {
+      name: 'Corporate Mail Exchange (DNS MX)',
+      category: 'contact',
+      active: emailRequired,
+      status: 'FAIL',
+      requiredValue: 'Active DNS MX records',
+      actualValue: 'No MX mail exchanger found',
+      reason: 'Domain publishes no active DNS MX mail server records',
+      weight: emailRequired ? 15 : 0,
+    };
+  } else {
+    criteria.contact = {
+      name: 'Corporate Mail Exchange (DNS MX)',
+      category: 'contact',
+      active: emailRequired,
+      status: 'UNKNOWN',
+      requiredValue: 'Active DNS MX records',
+      actualValue: 'Unverified',
+      reason: 'Mail deliverability unverified',
+      weight: emailRequired ? 15 : 0,
+    };
+  }
+
+  // 4. Deterministic Match Percentage (Section 26)
+  let totalActiveWeight = 0;
+  let earnedPoints = 0;
+  const passedCriteria: string[] = [];
+  const failedCriteria: string[] = [];
+  const conflictedCriteria: string[] = [];
+  const unknownCriteria: string[] = [];
+
+  for (const crit of Object.values(criteria)) {
+    if (crit.active) {
+      totalActiveWeight += crit.weight;
+      if (crit.status === 'PASS') {
+        earnedPoints += crit.weight;
+        passedCriteria.push(crit.reason || `${crit.name} verified`);
+      } else if (crit.status === 'FAIL') {
+        failedCriteria.push(crit.reason || `${crit.name} failed`);
+      } else if (crit.status === 'CONTRADICTED') {
+        conflictedCriteria.push(crit.reason || `${crit.name} conflict detected`);
+      } else {
+        unknownCriteria.push(crit.reason || `${crit.name} unverified`);
+      }
+    } else {
+      if (crit.status === 'PASS') {
+        passedCriteria.push(crit.reason || `${crit.name} (Informational)`);
+      }
+    }
+  }
+
+  const matchScore = totalActiveWeight > 0 ? Math.round((earnedPoints / totalActiveWeight) * 100) : 100;
+  const matchPercentage = `${matchScore}%`;
+
+  // 5. Final Qualification Verdict (Sections 27, 28)
+  let status: 'QUALIFIED' | 'UNDER_REVIEW' | 'REVIEW' | 'REJECTED' = 'UNDER_REVIEW';
+  let verdict: 'Qualified' | 'Under Review' | 'Rejected' = 'Under Review';
+  let exactReason = '';
+  let rejectionReason: string | undefined;
+  let reviewReason: string | undefined;
+
+  const hasContradictions = conflictedCriteria.length > 0 || Object.values(criteria).some(c => c.status === 'CONTRADICTED');
+
+  if (failedCriteria.length > 0) {
+    status = 'REJECTED';
+    verdict = 'Rejected';
+    rejectionReason = failedCriteria[0];
+    exactReason = failedCriteria.join('; ');
+  } else if (hasContradictions || unknownCriteria.length > 0 || candidate.isMismatch) {
+    status = 'UNDER_REVIEW';
+    verdict = 'Under Review';
+    reviewReason = candidate.conflictDetails ||
+      (hasContradictions
+        ? `Data Conflict: ${conflictedCriteria.join('; ') || 'Verified external evidence conflicts with supplied input record.'} (Under Review)`
+        : `Criteria (${unknownCriteria.join(', ')}) require additional verification evidence. Fails closed.`);
+    exactReason = reviewReason;
+  } else {
+    status = 'QUALIFIED';
+    verdict = 'Qualified';
+    exactReason = 'All mandatory criteria verified with supporting evidence.';
+  }
+
+  return {
+    qualified: status === 'QUALIFIED',
+    status,
+    verdict,
+    matchScore,
+    matchPercentage,
+    exactReason,
+    rejectionReason,
+    reviewReason,
+    reasons: failedCriteria.length > 0 ? failedCriteria : (conflictedCriteria.length > 0 ? [...conflictedCriteria, ...unknownCriteria] : (unknownCriteria.length > 0 ? unknownCriteria : passedCriteria)),
+    passedCriteria,
+    failedCriteria,
+    unknownCriteria,
+    criteria,
+    criteriaChecks: Object.values(criteria),
+    checkedAt,
+  };
 }

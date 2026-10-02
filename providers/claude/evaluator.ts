@@ -289,34 +289,17 @@ export function evaluateCriteria(
     reason: geoReason || 'Location confirmed within target territory',
   };
 
-  // 5. US PRESENCE CRITERION
-  let usStatus: CriterionStatus = 'UNKNOWN';
-  let usReason = '';
-  const usEvidence = `${profile.usPresenceDetails || ''} ${profile.headquarters || ''} ${profile.evidenceText || ''}`;
-  const usVerdict = checkNoUSPresence(usEvidence, profile.website || '', usPresenceMode as any);
-
-  if (usPresenceMode === 'any' || usPresenceMode === 'dont_care') {
-    usStatus = 'PASS';
-    passedCriteria.push('US Presence');
-  } else if (usVerdict === true) {
-    usStatus = 'FAIL';
-    usReason = 'Significant US headquarters or primary operational entity identified';
-    failedCriteria.push('US Presence');
-  } else if (usVerdict === false) {
-    usStatus = 'PASS';
-    passedCriteria.push('US Presence');
-  } else {
-    usStatus = 'UNKNOWN';
-    usReason = 'Insufficient evidence to verify absence of US entity';
-    unknownCriteria.push('US Presence');
-  }
+  // 5. GEOGRAPHY ELIGIBILITY (Legacy US Presence replaced by clean Geography)
+  const usStatus: CriterionStatus = 'PASS';
+  const usReason = 'All countries eligible under active Target Profile';
+  passedCriteria.push('Geography');
 
   const usResult: CriterionResult = {
     status: usStatus,
-    value: usVerdict === true ? 'US Presence Detected' : (usVerdict === false ? 'Non-US Confirmed' : 'Undetermined'),
-    target: usPresenceMode === 'strictly_none' ? 'Strictly None' : (usPresenceMode === 'minimal_or_none' ? 'Minimal / None' : 'Any'),
-    evidence: profile.usPresenceDetails || profile.headquarters || null,
-    reason: usReason || 'Meets US presence policy',
+    value: detectedCountry || profile.headquarters || 'Global Eligible',
+    target: 'Global / Allowed',
+    evidence: profile.headquarters || detectedCountry || null,
+    reason: usReason,
   };
 
   // 6. COMPANY STAGE CRITERION

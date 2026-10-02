@@ -17,7 +17,7 @@
  * - Produces deterministic continuous match percentage and audit rationale.
  */
 
-import { parseFundingDetails, checkFundingRange, checkGeographyMatch } from './validation';
+import { parseFundingDetails, checkFundingRange, checkGeographyMatch, evaluateCanonicalTargetQualification } from './validation';
 import { checkMxRecords, checkDomainMatch } from './email';
 import { extractCanonicalDomain, normalizeCompanyName, normalizePersonName } from './deduplication';
 import { HuntConfig, CompanyRecord } from './types';
@@ -350,109 +350,67 @@ export async function verifyCompanyRealtime(
     fundingReason = 'Funding figure unavailable or unverified';
   }
 
-  // --- STEP 9: DETERMINISTIC MATCH PERCENTAGE & CRITERIA (Sections 27-29) ---
-  const passedCriteria: string[] = [];
-  const failedCriteria: string[] = [];
-  const unknownCriteria: string[] = [];
+  // --- STEP 9: CANONICAL TARGET PROFILE QUALIFICATION (ONE Canonical Engine) ---
+  const canonicalEval = evaluateCanonicalTargetQualification(
+    {
+      name: companyName,
+      website: website,
+      canonicalDomain,
+      description: raw['Description'],
+      industry: sourceIndustry,
+      fundingAmount: verifiedAmountUsd,
+      fundingDate: verifiedFundingDate,
+      fundingType: verifiedFundingType,
+      totalFundingUsd: verifiedAmountUsd,
+      latestRoundUsd: verifiedAmountUsd,
+      fundingOrRevenueText: raw['Funding Amount'] || raw['Funding'] || null,
+      country,
+      city,
+      headquarters: `${city}, ${country}`,
+      founderOrCeoName: ceoNameVerified,
+      founderOrCeoRole: ceoRoleVerified,
+      contactEmail: contactEmailRaw,
+      hasActiveMx: hasActiveMx,
+      linkedinUrl: isCeoLinkedinValid ? ceoLinkedinRaw : null,
+      sourceType: 'Gold Reference Dataset (Seed)',
+      sourceEvidence: `${raw['Description'] || ''} ${raw['Funding Type'] || ''}`.trim(),
+    },
+    config
+  );
 
-  let scorePoints = 0;
-
-  // 1. Identity & Website (max 20)
-  if (websiteValid) {
-    scorePoints += 20;
-    passedCriteria.push('Active Website Verified');
-  } else {
-    failedCriteria.push('Website Invalid');
-  }
-
-  // 2. Geography Fit (max 20)
-  if (geoPassed) {
-    scorePoints += 20;
-    passedCriteria.push(`Target Geography Satisfied (${geoResult.detectedCountry || country})`);
-  } else {
-    failedCriteria.push(geoReason);
-  }
-
-  // 3. Funding Fit (max 20)
-  if (fundingPassed) {
-    scorePoints += 20;
-    passedCriteria.push(`Funding In-Range ($${verifiedAmountUsd?.toLocaleString()} USD)`);
-  } else {
-    failedCriteria.push(fundingReason);
-  }
-
-  // 4. Industry Fit (max 15)
-  if (sourceIndustry) {
-    scorePoints += 15;
-    passedCriteria.push(`Industry Classified (${sourceIndustry})`);
-  }
-
-  // 5. Contact & DNS MX (max 15)
-  if (hasActiveMx) {
-    scorePoints += 15;
-    passedCriteria.push(`Active Mail Exchange Verified (${primaryMxHost})`);
-  } else if (contactEmailRaw) {
-    failedCriteria.push('Domain publishes no valid MX mail exchanger');
-  } else {
-    unknownCriteria.push('Contact email missing');
-  }
-
-  // 6. Leadership / Executive (max 10)
-  if (ceoStatus === 'VERIFIED') {
-    scorePoints += 10;
-    passedCriteria.push(`Executive Verified (${ceoNameVerified})`);
-  } else {
-    unknownCriteria.push('Executive identity paywalled / undisclosed in source');
-  }
-
-  const huntScore = Math.min(100, Math.max(0, scorePoints));
+  const huntScore = canonicalEval.matchScore;
+  const matchPercentage = canonicalEval.matchPercentage;
+  const passedCriteria = canonicalEval.passedCriteria;
+  const failedCriteria = canonicalEval.failedCriteria;
+  const unknownCriteria = canonicalEval.unknownCriteria;
 
   // --- STEP 10: QUALIFICATION VERDICT & EXACT REASONS ---
-  let targetProfileStatus: TargetProfileVerdict = 'REVIEW';
+  let targetProfileStatus: TargetProfileVerdict = canonicalEval.status === 'QUALIFIED' ? 'PASS' : canonicalEval.status === 'REJECTED' ? 'FAIL' : 'REVIEW';
+  let qualificationVerdict: 'Qualified' | 'Under Review' | 'Rejected' = canonicalEval.verdict;
+  let exactReason = canonicalEval.exactReason;
+  let rejectionReason = canonicalEval.rejectionReason || '';
+  let reviewReason = canonicalEval.reviewReason || '';
   let huntlystVerificationStatus: VerificationState = 'PARTIALLY_VERIFIED';
-  let qualificationVerdict: 'Qualified' | 'Under Review' | 'Rejected' = 'Under Review';
-  let exactReason = '';
-  let rejectionReason = '';
-  let reviewReason = '';
   let rootCauseClassification = 'OTHER';
 
-  if (!geoPassed) {
-    targetProfileStatus = 'FAIL';
-    qualificationVerdict = 'Rejected';
+  if (websiteValid && hasActiveMx && ceoStatus === 'VERIFIED') {
+    huntlystVerificationStatus = 'VERIFIED';
+  } else if (!hasActiveMx) {
+    huntlystVerificationStatus = 'UNVERIFIED';
+  } else {
     huntlystVerificationStatus = 'PARTIALLY_VERIFIED';
-    exactReason = geoReason;
-    rejectionReason = geoReason;
+  }
+
+  if (!geoPassed && (config.geography.continents?.length || config.geography.countries?.length)) {
     rootCauseClassification = 'LOCATION_RULE';
   } else if (!fundingPassed) {
-    targetProfileStatus = 'FAIL';
-    qualificationVerdict = 'Rejected';
-    huntlystVerificationStatus = 'PARTIALLY_VERIFIED';
-    exactReason = fundingReason;
-    rejectionReason = fundingReason;
     rootCauseClassification = 'FUNDING_RANGE_FAILURE';
   } else if (!hasActiveMx) {
-    targetProfileStatus = 'FAIL';
-    qualificationVerdict = 'Rejected';
-    huntlystVerificationStatus = 'UNVERIFIED';
-    exactReason = `Contact domain publishes no active DNS MX mail server records`;
-    rejectionReason = exactReason;
     rootCauseClassification = 'EMAIL_UNVERIFIED';
+  } else if (ceoStatus !== 'VERIFIED') {
+    rootCauseClassification = 'SOURCE_UNAVAILABLE';
   } else {
-    // Both geography, funding, and DNS MX passed
-    if (ceoStatus === 'VERIFIED') {
-      targetProfileStatus = 'PASS';
-      qualificationVerdict = 'Qualified';
-      huntlystVerificationStatus = 'VERIFIED';
-      exactReason = `Fully verified entity in ${country}, funding $${verifiedAmountUsd?.toLocaleString()} USD in-range, verified executive (${ceoNameVerified}), and active DNS MX (${primaryMxHost})`;
-      rootCauseClassification = 'NONE';
-    } else {
-      targetProfileStatus = 'REVIEW';
-      qualificationVerdict = 'Under Review';
-      huntlystVerificationStatus = 'PARTIALLY_VERIFIED';
-      exactReason = `Verified entity in ${country}, funding $${verifiedAmountUsd?.toLocaleString()} USD in-range, active DNS MX (${primaryMxHost}), pending verified executive identity (source paywalled)`;
-      reviewReason = exactReason;
-      rootCauseClassification = 'SOURCE_UNAVAILABLE';
-    }
+    rootCauseClassification = 'NONE';
   }
 
   const evidenceUrls: string[] = [website, companyLinkedInRaw, announcementUrl].filter(u => u && !u.toUpperCase().includes('UPGRADE'));

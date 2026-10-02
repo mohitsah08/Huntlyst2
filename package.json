@@ -13,8 +13,8 @@
     "test:contact": "npx -y tsx tests/contact-enrichment.test.ts",
     "benchmark:growth-list": "npx -y tsx scripts/benchmark-growth-list.ts",
     "test:real-verification": "npx -y tsx scripts/run-real-growth-list-verification.ts",
-    "test:realtime-benchmark": "npx -y tsx scripts/run-realtime-verification-benchmark.ts",
-    "test": "npx -y tsx tests/target-profile.test.ts && npx -y tsx tests/export-system.test.ts && npx -y tsx tests/contact-enrichment.test.ts"
+    "test:canonical": "npx -y tsx tests/canonical-qualification.test.ts",
+    "test": "npx -y tsx tests/target-profile.test.ts && npx -y tsx tests/export-system.test.ts && npx -y tsx tests/contact-enrichment.test.ts && npx -y tsx tests/canonical-qualification.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",
