@@ -681,26 +681,53 @@ export interface CanonicalCandidateInput {
   headquarters?: string | null;
   founderOrCeoName?: string | null;
   ceoName?: string | null;
+  ceoVerified?: boolean | null;
+  founderName?: string | null;
+  founderVerified?: boolean | null;
+  coFounderName?: string | null;
+  coFounderVerified?: boolean | null;
   founderOrCeoRole?: string | null;
   founderOrCeoEmail?: string | null;
   contactEmail?: string | null;
+  companyEmail?: string | null;
+  companyEmailVerified?: boolean | null;
+  ceoEmail?: string | null;
+  ceoEmailVerified?: boolean | null;
   email?: string | null;
   emailStatus?: string | null;
   emailVerified?: boolean | null;
   hasActiveMx?: boolean | null;
   linkedinUrl?: string | null;
+  companyLinkedinUrl?: string | null;
+  companyLinkedinVerified?: boolean | null;
+  ceoLinkedinUrl?: string | null;
+  ceoLinkedinVerified?: boolean | null;
   twitterUrl?: string | null;
+  companyTwitterUrl?: string | null;
+  companyTwitterVerified?: boolean | null;
+  ceoTwitterUrl?: string | null;
+  ceoTwitterVerified?: boolean | null;
   sourceType?: string;
   sourceEvidence?: string | null;
   isMismatch?: boolean;
   conflictDetails?: string | null;
 }
 
+export type CriterionMode = 'enabled' | 'disabled' | 'informational';
+export type CriterionRequirement = 'required' | 'optional';
+
+export interface CriterionConfig {
+  mode?: CriterionMode;
+  requirement?: CriterionRequirement;
+  weight?: number;
+}
+
 export interface CanonicalCriterionEvaluation {
   name: string;
-  category: 'identity' | 'geography' | 'funding' | 'industry' | 'executive' | 'contact' | 'stage';
+  category: 'identity' | 'geography' | 'funding' | 'industry' | 'executive' | 'contact' | 'stage' | 'social';
   active: boolean;
-  status: 'PASS' | 'FAIL' | 'UNKNOWN' | 'CONTRADICTED' | 'INFORMATIONAL';
+  requirement?: CriterionRequirement;
+  status: 'PASS' | 'FAIL' | 'UNKNOWN' | 'CONTRADICTED' | 'INFORMATIONAL' | 'DISABLED';
   requiredValue: string;
   actualValue: string;
   reason?: string;
@@ -766,12 +793,91 @@ export function evaluateCanonicalTargetQualification(
 
   const criteria: Record<string, CanonicalCriterionEvaluation> = {};
 
-  // Criterion 1: Identity & Website
+  // Criterion Configuration Helper
+  function getCriterionSetting(
+    key: string,
+    defaultSetting: { mode: CriterionMode; requirement: CriterionRequirement; weight: number }
+  ) {
+    const custom = target.criteriaSettings?.[key] || {};
+    let mode: CriterionMode | undefined = custom.mode;
+    let requirement: CriterionRequirement | undefined = custom.requirement;
+    let weight: number = custom.weight ?? defaultSetting.weight;
+
+    // Support shorthand flags:
+    if (key === 'ceo' && target.ceoRequired !== undefined) {
+      requirement = target.ceoRequired ? 'required' : 'optional';
+      mode = target.ceoRequired ? 'enabled' : (target.ceoMode || 'optional');
+    }
+    if (key === 'founder' && target.founderRequired !== undefined) {
+      requirement = target.founderRequired ? 'required' : 'optional';
+      mode = target.founderRequired ? 'enabled' : (target.founderMode || 'optional');
+    }
+    if (key === 'ceoEmail' && target.ceoEmailRequired !== undefined) {
+      requirement = target.ceoEmailRequired ? 'required' : 'optional';
+      mode = target.ceoEmailRequired ? 'enabled' : (target.ceoEmailMode || 'disabled');
+    }
+    if (key === 'companyEmail' && target.companyEmailRequired !== undefined) {
+      requirement = target.companyEmailRequired ? 'required' : 'optional';
+      mode = target.companyEmailRequired ? 'enabled' : (target.companyEmailMode || 'enabled');
+    }
+    if (key === 'ceoLinkedIn' && target.ceoLinkedInRequired !== undefined) {
+      requirement = target.ceoLinkedInRequired ? 'required' : 'optional';
+      mode = target.ceoLinkedInRequired ? 'enabled' : (target.ceoLinkedInMode || 'disabled');
+    }
+    if (key === 'founderLinkedIn' && target.founderLinkedInRequired !== undefined) {
+      requirement = target.founderLinkedInRequired ? 'required' : 'optional';
+      mode = target.founderLinkedInRequired ? 'enabled' : (target.founderLinkedInMode || 'disabled');
+    }
+    if (key === 'companyLinkedIn' && target.companyLinkedInRequired !== undefined) {
+      requirement = target.companyLinkedInRequired ? 'required' : 'optional';
+      mode = target.companyLinkedInRequired ? 'enabled' : (target.companyLinkedInMode || 'disabled');
+    }
+    if (key === 'ceoTwitter' && target.ceoTwitterRequired !== undefined) {
+      requirement = target.ceoTwitterRequired ? 'required' : 'optional';
+      mode = target.ceoTwitterRequired ? 'enabled' : (target.ceoTwitterMode || 'disabled');
+    }
+    if (key === 'companyTwitter' && target.companyTwitterRequired !== undefined) {
+      requirement = target.companyTwitterRequired ? 'required' : 'optional';
+      mode = target.companyTwitterRequired ? 'enabled' : (target.companyTwitterMode || 'disabled');
+    }
+
+    return {
+      mode: mode ?? defaultSetting.mode,
+      requirement: requirement ?? defaultSetting.requirement,
+      weight,
+    };
+  }
+
+  function applyCriterion(
+    key: string,
+    crit: CanonicalCriterionEvaluation,
+    defaultSetting: { mode: CriterionMode; requirement: CriterionRequirement; weight: number }
+  ) {
+    const setting = getCriterionSetting(key, defaultSetting);
+    crit.requirement = setting.requirement;
+    if (setting.mode === 'disabled') {
+      crit.active = false;
+      crit.weight = 0;
+      crit.status = 'DISABLED';
+      crit.reason = `${crit.name} is disabled in active target profile`;
+    } else if (setting.mode === 'informational') {
+      crit.active = false;
+      crit.weight = 0;
+      if (crit.status === 'FAIL') crit.status = 'INFORMATIONAL';
+      crit.reason = `${crit.reason || crit.name} (Informational — no penalty)`;
+    } else {
+      crit.active = true;
+      crit.weight = setting.weight;
+    }
+    criteria[key] = crit;
+  }
+
+  // 1. Criterion: Company Identity & Website
   const hasValidName = !!(candidate.name && candidate.name.trim().length >= 2);
   const hasValidWebsite = !!(candidate.website && candidate.website.trim().length >= 3 && (candidate.website.includes('.') || candidate.website.startsWith('http')));
   
   if (candidate.isMismatch) {
-    criteria.identity = {
+    applyCriterion('identity', {
       name: 'Company Identity',
       category: 'identity',
       active: true,
@@ -781,9 +887,9 @@ export function evaluateCanonicalTargetQualification(
       reason: candidate.conflictDetails || 'Conflicting company identity between source and authoritative registry',
       evidence: candidate.sourceEvidence,
       weight: 20,
-    };
+    }, { mode: 'enabled', requirement: 'required', weight: 20 });
   } else if (hasValidName && hasValidWebsite) {
-    criteria.identity = {
+    applyCriterion('identity', {
       name: 'Company Identity',
       category: 'identity',
       active: true,
@@ -793,9 +899,9 @@ export function evaluateCanonicalTargetQualification(
       reason: `Company identity verified: ${candidate.name}`,
       evidence: candidate.website,
       weight: 20,
-    };
+    }, { mode: 'enabled', requirement: 'required', weight: 20 });
   } else {
-    criteria.identity = {
+    applyCriterion('identity', {
       name: 'Company Identity',
       category: 'identity',
       active: true,
@@ -804,15 +910,13 @@ export function evaluateCanonicalTargetQualification(
       actualValue: candidate.name || 'Missing name',
       reason: !hasValidName ? 'Company name missing or too short' : 'Website URL invalid or unresolvable',
       weight: 20,
-    };
+    }, { mode: 'enabled', requirement: 'required', weight: 20 });
   }
 
-  // Criterion 2: Geography (Section 4, 5, 6, 25, 26)
+  // 2. Criterion: Geography (Global: Informational, Specific: Active)
   const candidateCountry = candidate.country || '';
   if (isGlobal) {
-    // In Global mode: ALL COUNTRIES ARE ELIGIBLE. Country is INFORMATIONAL.
-    // Does NOT reduce score. Does NOT cause rejection. Does NOT have active weight.
-    criteria.geography = {
+    applyCriterion('geography', {
       name: 'Geography',
       category: 'geography',
       active: false,
@@ -822,16 +926,15 @@ export function evaluateCanonicalTargetQualification(
       reason: 'Global coverage — all countries allowed (no geographic restrictions)',
       evidence: candidate.headquarters || candidateCountry,
       weight: 0,
-    };
+    }, { mode: 'informational', requirement: 'optional', weight: 0 });
   } else {
-    // Specific geography (Continents/Countries Union)
     const targetLabels = [...continents, ...countries];
     const isExcluded = candidateCountry && excludedCountries.some(e =>
       candidateCountry.toLowerCase().includes(e.toLowerCase()) || e.toLowerCase().includes(candidateCountry.toLowerCase())
     );
 
     if (isExcluded) {
-      criteria.geography = {
+      applyCriterion('geography', {
         name: 'Geography',
         category: 'geography',
         active: true,
@@ -841,7 +944,7 @@ export function evaluateCanonicalTargetQualification(
         reason: `Headquarters in excluded country (${candidateCountry})`,
         evidence: candidate.headquarters || candidateCountry,
         weight: 25,
-      };
+      }, { mode: 'enabled', requirement: 'required', weight: 25 });
     } else {
       const mockHuntConfig: HuntConfig = isHunt ? target : {
         geography: {
@@ -864,19 +967,19 @@ export function evaluateCanonicalTargetQualification(
       );
 
       if (geoResult.passed) {
-        criteria.geography = {
+        applyCriterion('geography', {
           name: 'Geography',
           category: 'geography',
           active: true,
           status: 'PASS',
           requiredValue: targetLabels.join(', '),
           actualValue: geoResult.detectedCountry || candidateCountry,
-          reason: `Matches target geography (${geoResult.detectedCountry || candidateCountry})`,
+          reason: `Geography: ACTIVE — Matches target geography (${geoResult.detectedCountry || candidateCountry})`,
           evidence: geoResult.detectedRegion || candidate.headquarters,
           weight: 25,
-        };
+        }, { mode: 'enabled', requirement: 'required', weight: 25 });
       } else {
-        criteria.geography = {
+        applyCriterion('geography', {
           name: 'Geography',
           category: 'geography',
           active: true,
@@ -886,16 +989,16 @@ export function evaluateCanonicalTargetQualification(
           reason: geoResult.reason || `Location (${candidateCountry || 'Unknown'}) does not match target geography: ${targetLabels.join(', ')}`,
           evidence: candidate.headquarters,
           weight: 25,
-        };
+        }, { mode: 'enabled', requirement: 'required', weight: 25 });
       }
     }
   }
 
-  // Criterion 3: Funding / Revenue (Sections 8, 9, 10)
+  // 3. Criterion: Funding / Revenue
   const formatUsd = (n: number) => `$${Math.round(n).toLocaleString()} USD`;
 
   if (candidate.fundingStatus === 'CONFLICT') {
-    criteria.funding = {
+    applyCriterion('funding', {
       name: 'Funding',
       category: 'funding',
       active: true,
@@ -905,7 +1008,7 @@ export function evaluateCanonicalTargetQualification(
       reason: 'Funding Conflict: Source input differs significantly from current web evidence (Under Review)',
       evidence: candidate.sourceEvidence,
       weight: 25,
-    };
+    }, { mode: 'enabled', requirement: 'required', weight: 25 });
   } else {
     let amountUsd: number | null = null;
     if (typeof candidate.fundingAmount === 'number') amountUsd = candidate.fundingAmount;
@@ -921,7 +1024,7 @@ export function evaluateCanonicalTargetQualification(
     }
 
     if (amountUsd === null) {
-      criteria.funding = {
+      applyCriterion('funding', {
         name: 'Funding',
         category: 'funding',
         active: true,
@@ -930,9 +1033,9 @@ export function evaluateCanonicalTargetQualification(
         actualValue: candidate.fundingOrRevenueText || 'Unverified',
         reason: 'No verifiable funding or revenue figure documented',
         weight: 25,
-      };
+      }, { mode: 'enabled', requirement: 'required', weight: 25 });
     } else if (amountUsd > fMax) {
-      criteria.funding = {
+      applyCriterion('funding', {
         name: 'Funding',
         category: 'funding',
         active: true,
@@ -942,9 +1045,9 @@ export function evaluateCanonicalTargetQualification(
         reason: `Funding ${formatUsd(amountUsd)} exceeds configured maximum ${formatUsd(fMax)}`,
         evidence: candidate.fundingOrRevenueText || candidate.sourceEvidence,
         weight: 25,
-      };
+      }, { mode: 'enabled', requirement: 'required', weight: 25 });
     } else if (amountUsd < fMin) {
-      criteria.funding = {
+      applyCriterion('funding', {
         name: 'Funding',
         category: 'funding',
         active: true,
@@ -954,9 +1057,9 @@ export function evaluateCanonicalTargetQualification(
         reason: `Funding ${formatUsd(amountUsd)} is below configured minimum ${formatUsd(fMin)}`,
         evidence: candidate.fundingOrRevenueText || candidate.sourceEvidence,
         weight: 25,
-      };
+      }, { mode: 'enabled', requirement: 'required', weight: 25 });
     } else {
-      criteria.funding = {
+      applyCriterion('funding', {
         name: 'Funding',
         category: 'funding',
         active: true,
@@ -966,13 +1069,13 @@ export function evaluateCanonicalTargetQualification(
         reason: `Funding ${formatUsd(amountUsd)} is within required range ${formatUsd(fMin)} – ${formatUsd(fMax)}`,
         evidence: candidate.fundingOrRevenueText || candidate.sourceEvidence,
         weight: 25,
-      };
+      }, { mode: 'enabled', requirement: 'required', weight: 25 });
     }
   }
 
-  // Criterion 4: Industry (Section 17)
+  // 4. Criterion: Industry
   if (isAllIndustries) {
-    criteria.industry = {
+    applyCriterion('industry', {
       name: 'Industry',
       category: 'industry',
       active: false,
@@ -981,7 +1084,7 @@ export function evaluateCanonicalTargetQualification(
       actualValue: candidate.industry || candidate.rawIndustry || 'All',
       reason: 'All industries allowed — industry is informational',
       weight: 0,
-    };
+    }, { mode: 'informational', requirement: 'optional', weight: 0 });
   } else {
     const indCheck = checkIndustryFit(
       candidate.description,
@@ -992,7 +1095,7 @@ export function evaluateCanonicalTargetQualification(
     );
 
     if (indCheck.passed) {
-      criteria.industry = {
+      applyCriterion('industry', {
         name: 'Industry',
         category: 'industry',
         active: true,
@@ -1001,9 +1104,9 @@ export function evaluateCanonicalTargetQualification(
         actualValue: candidate.industry || indCheck.matchedTerm || 'Matched',
         reason: `Industry matches target profile (${indCheck.matchedTerm || candidate.industry})`,
         weight: 20,
-      };
+      }, { mode: 'enabled', requirement: 'required', weight: 20 });
     } else {
-      criteria.industry = {
+      applyCriterion('industry', {
         name: 'Industry',
         category: 'industry',
         active: true,
@@ -1012,81 +1115,239 @@ export function evaluateCanonicalTargetQualification(
         actualValue: candidate.industry || 'Unknown',
         reason: indCheck.reason || `Business category "${candidate.industry || 'Unknown'}" does not match selected targets (${industries.join(', ')})`,
         weight: 20,
-      };
+      }, { mode: 'enabled', requirement: 'required', weight: 20 });
     }
   }
 
-  // Criterion 5: Decision Maker / Executive (CEO / Founder / Co-Founder) (Section 20)
-  const rawExec = candidate.founderOrCeoName || candidate.ceoName;
+  // 5. Criterion: Decision Maker / CEO (Section 20)
+  const rawExec = candidate.ceoName || candidate.founderOrCeoName;
   const isPlaceholderExecutive = !rawExec ||
     /upgrade to unlock|locked|paywall|hidden|unrevealed|see details|view details|n\/a|unknown/i.test(rawExec.trim());
 
   if (isPlaceholderExecutive) {
-    criteria.executive = {
-      name: 'Decision Maker',
+    applyCriterion('ceo', {
+      name: 'CEO / Executive Leader',
       category: 'executive',
       active: true,
       status: 'UNKNOWN',
-      requiredValue: 'CEO, Founder, or Co-Founder',
+      requiredValue: 'CEO or Executive Leader',
       actualValue: 'Paywalled / Undisclosed in source',
       reason: 'Executive identity paywalled / not publicly disclosed in free source',
       weight: 15,
-    };
+    }, { mode: 'enabled', requirement: 'required', weight: 15 });
   } else {
-    criteria.executive = {
-      name: 'Decision Maker',
+    applyCriterion('ceo', {
+      name: 'CEO / Executive Leader',
       category: 'executive',
       active: true,
       status: 'PASS',
-      requiredValue: 'CEO, Founder, or Co-Founder',
+      requiredValue: 'CEO or Executive Leader',
       actualValue: `${rawExec} (${candidate.founderOrCeoRole || 'Executive'})`,
       reason: `Executive verified: ${rawExec} (${candidate.founderOrCeoRole || 'Executive'})`,
-      evidence: candidate.linkedinUrl,
+      evidence: candidate.linkedinUrl || candidate.ceoLinkedinUrl,
       weight: 15,
-    };
+    }, { mode: 'enabled', requirement: 'required', weight: 15 });
   }
 
-  // Criterion 6: Professional Contact & DNS MX (Section 21)
-  const isEmailValid = candidate.hasActiveMx === true || candidate.emailVerified === true || candidate.emailStatus === 'valid';
-  const isEmailFailed = candidate.hasActiveMx === false || candidate.emailStatus === 'invalid';
-  const emailRequired = (target.emailRequirement ?? 'Required') === 'Required';
-
-  if (isEmailValid) {
-    criteria.contact = {
-      name: 'Corporate Mail Exchange (DNS MX)',
-      category: 'contact',
-      active: emailRequired,
+  // 6. Criterion: Founder / Co-Founder
+  const rawFounder = candidate.founderName || candidate.coFounderName;
+  if (rawFounder && !/upgrade to unlock|locked|paywall|n\/a|unknown/i.test(rawFounder.trim())) {
+    applyCriterion('founder', {
+      name: 'Founder / Co-Founder',
+      category: 'executive',
+      active: false,
       status: 'PASS',
-      requiredValue: 'Active DNS MX records',
-      actualValue: 'Active MX Mail Exchanger Confirmed',
-      reason: 'Corporate domain DNS MX mail server verified',
-      weight: emailRequired ? 15 : 0,
-    };
-  } else if (isEmailFailed) {
-    criteria.contact = {
-      name: 'Corporate Mail Exchange (DNS MX)',
+      requiredValue: 'Founder or Co-Founder',
+      actualValue: rawFounder,
+      reason: `Founder identity verified: ${rawFounder}`,
+      weight: 10,
+    }, { mode: 'enabled', requirement: 'optional', weight: 10 });
+  } else {
+    applyCriterion('founder', {
+      name: 'Founder / Co-Founder',
+      category: 'executive',
+      active: false,
+      status: 'UNKNOWN',
+      requiredValue: 'Founder or Co-Founder',
+      actualValue: 'Not specified or paywalled',
+      reason: 'Founder / Co-Founder identity unverified or undisclosed',
+      weight: 10,
+    }, { mode: 'enabled', requirement: 'optional', weight: 10 });
+  }
+
+  // 7. Criterion: Company Email & DNS MX
+  const isCompanyEmailValid = candidate.hasActiveMx === true || candidate.emailVerified === true || candidate.companyEmailVerified === true || candidate.emailStatus === 'valid';
+  const isCompanyEmailFailed = candidate.hasActiveMx === false || candidate.emailStatus === 'invalid';
+  const emailReqDefault = (target.emailRequirement ?? 'Required') === 'Required' ? 'required' : 'optional';
+
+  if (isCompanyEmailValid) {
+    applyCriterion('companyEmail', {
+      name: 'Company Email (DNS MX Deliverability)',
       category: 'contact',
-      active: emailRequired,
+      active: true,
+      status: 'PASS',
+      requiredValue: 'Active DNS MX mail exchanger',
+      actualValue: candidate.companyEmail || candidate.contactEmail || candidate.email || 'Active MX Mail Exchanger Confirmed',
+      reason: 'Company contact domain DNS MX mail server verified',
+      weight: 15,
+    }, { mode: 'enabled', requirement: emailReqDefault, weight: 15 });
+  } else if (isCompanyEmailFailed) {
+    applyCriterion('companyEmail', {
+      name: 'Company Email (DNS MX Deliverability)',
+      category: 'contact',
+      active: true,
       status: 'FAIL',
-      requiredValue: 'Active DNS MX records',
+      requiredValue: 'Active DNS MX mail exchanger',
       actualValue: 'No MX mail exchanger found',
       reason: 'Domain publishes no active DNS MX mail server records',
-      weight: emailRequired ? 15 : 0,
-    };
+      weight: 15,
+    }, { mode: 'enabled', requirement: emailReqDefault, weight: 15 });
   } else {
-    criteria.contact = {
-      name: 'Corporate Mail Exchange (DNS MX)',
+    applyCriterion('companyEmail', {
+      name: 'Company Email (DNS MX Deliverability)',
       category: 'contact',
-      active: emailRequired,
+      active: true,
       status: 'UNKNOWN',
-      requiredValue: 'Active DNS MX records',
+      requiredValue: 'Active DNS MX mail exchanger',
       actualValue: 'Unverified',
       reason: 'Mail deliverability unverified',
-      weight: emailRequired ? 15 : 0,
-    };
+      weight: 15,
+    }, { mode: 'enabled', requirement: emailReqDefault, weight: 15 });
   }
 
-  // 4. Deterministic Match Percentage (Section 26)
+  // 8. Criterion: CEO Professional Email (Strictly separated from Company Email!)
+  // DNS MX only proves domain infrastructure; it MUST NOT make CEO email VERIFIED.
+  // Never guess patterns (firstname@company.com). Never convert info@ into CEO email.
+  const hasVerifiedCeoEmail = !!(candidate.ceoEmail && candidate.ceoEmailVerified);
+  if (hasVerifiedCeoEmail) {
+    applyCriterion('ceoEmail', {
+      name: 'CEO Professional Email',
+      category: 'contact',
+      active: false,
+      status: 'PASS',
+      requiredValue: 'Verified direct executive email',
+      actualValue: candidate.ceoEmail!,
+      reason: `Direct executive email verified with supporting public evidence: ${candidate.ceoEmail}`,
+      weight: 15,
+    }, { mode: 'disabled', requirement: 'optional', weight: 15 });
+  } else {
+    applyCriterion('ceoEmail', {
+      name: 'CEO Professional Email',
+      category: 'contact',
+      active: false,
+      status: 'UNKNOWN',
+      requiredValue: 'Verified direct executive email',
+      actualValue: 'NOT_PUBLICLY_DISCLOSED',
+      reason: 'CEO email is not publicly disclosed. Company email is NEVER treated as CEO email. DNS MX alone does not verify personal executive email.',
+      weight: 15,
+    }, { mode: 'disabled', requirement: 'optional', weight: 15 });
+  }
+
+  // 9. Criterion: Company LinkedIn
+  const compLi = candidate.companyLinkedinUrl || candidate.linkedinUrl;
+  if (compLi && (compLi.includes('linkedin.com/company/') || compLi.includes('linkedin.com/school/'))) {
+    applyCriterion('companyLinkedIn', {
+      name: 'Company LinkedIn',
+      category: 'social',
+      active: false,
+      status: 'PASS',
+      requiredValue: 'Verified company LinkedIn profile',
+      actualValue: compLi,
+      reason: `Company LinkedIn presence verified: ${compLi}`,
+      weight: 10,
+    }, { mode: 'enabled', requirement: 'optional', weight: 10 });
+  } else {
+    applyCriterion('companyLinkedIn', {
+      name: 'Company LinkedIn',
+      category: 'social',
+      active: false,
+      status: 'UNKNOWN',
+      requiredValue: 'Verified company LinkedIn profile',
+      actualValue: 'Unverified / Not found',
+      reason: 'Company LinkedIn profile not documented or unverified',
+      weight: 10,
+    }, { mode: 'enabled', requirement: 'optional', weight: 10 });
+  }
+
+  // 10. Criterion: CEO LinkedIn
+  const ceoLi = candidate.ceoLinkedinUrl;
+  if (ceoLi && (ceoLi.includes('linkedin.com/in/') || candidate.ceoLinkedinVerified)) {
+    applyCriterion('ceoLinkedIn', {
+      name: 'CEO LinkedIn',
+      category: 'social',
+      active: false,
+      status: 'PASS',
+      requiredValue: 'Verified CEO LinkedIn profile',
+      actualValue: ceoLi,
+      reason: `CEO personal LinkedIn profile verified: ${ceoLi}`,
+      weight: 10,
+    }, { mode: 'enabled', requirement: 'optional', weight: 10 });
+  } else {
+    applyCriterion('ceoLinkedIn', {
+      name: 'CEO LinkedIn',
+      category: 'social',
+      active: false,
+      status: 'UNKNOWN',
+      requiredValue: 'Verified CEO LinkedIn profile',
+      actualValue: 'Unverified / Not found',
+      reason: 'CEO personal LinkedIn profile unverified or not publicly disclosed',
+      weight: 10,
+    }, { mode: 'enabled', requirement: 'optional', weight: 10 });
+  }
+
+  // 11. Criterion: Company Twitter / X
+  const compTw = candidate.companyTwitterUrl || candidate.twitterUrl;
+  if (compTw && (compTw.includes('twitter.com/') || compTw.includes('x.com/'))) {
+    applyCriterion('companyTwitter', {
+      name: 'Company X/Twitter',
+      category: 'social',
+      active: false,
+      status: 'PASS',
+      requiredValue: 'Verified company X/Twitter profile',
+      actualValue: compTw,
+      reason: `Company X/Twitter profile verified: ${compTw}`,
+      weight: 5,
+    }, { mode: 'enabled', requirement: 'optional', weight: 5 });
+  } else {
+    applyCriterion('companyTwitter', {
+      name: 'Company X/Twitter',
+      category: 'social',
+      active: false,
+      status: 'UNKNOWN',
+      requiredValue: 'Verified company X/Twitter profile',
+      actualValue: 'Unverified / Not found',
+      reason: 'Company X/Twitter profile not found',
+      weight: 5,
+    }, { mode: 'enabled', requirement: 'optional', weight: 5 });
+  }
+
+  // 12. Criterion: CEO Twitter / X
+  const ceoTw = candidate.ceoTwitterUrl;
+  if (ceoTw && (ceoTw.includes('twitter.com/') || ceoTw.includes('x.com/'))) {
+    applyCriterion('ceoTwitter', {
+      name: 'CEO X/Twitter',
+      category: 'social',
+      active: false,
+      status: 'PASS',
+      requiredValue: 'Verified CEO X/Twitter profile',
+      actualValue: ceoTw,
+      reason: `CEO personal X/Twitter profile verified: ${ceoTw}`,
+      weight: 5,
+    }, { mode: 'enabled', requirement: 'optional', weight: 5 });
+  } else {
+    applyCriterion('ceoTwitter', {
+      name: 'CEO X/Twitter',
+      category: 'social',
+      active: false,
+      status: 'UNKNOWN',
+      requiredValue: 'Verified CEO X/Twitter profile',
+      actualValue: 'Unverified / Not found',
+      reason: 'CEO personal X/Twitter profile not found',
+      weight: 5,
+    }, { mode: 'enabled', requirement: 'optional', weight: 5 });
+  }
+
+  // Deterministic Match Percentage (Calculated ONLY from active scoring criteria)
   let totalActiveWeight = 0;
   let earnedPoints = 0;
   const passedCriteria: string[] = [];
@@ -1101,14 +1362,18 @@ export function evaluateCanonicalTargetQualification(
         earnedPoints += crit.weight;
         passedCriteria.push(crit.reason || `${crit.name} verified`);
       } else if (crit.status === 'FAIL') {
-        failedCriteria.push(crit.reason || `${crit.name} failed`);
+        if (crit.requirement === 'required') {
+          failedCriteria.push(crit.reason || `${crit.name} failed`);
+        }
       } else if (crit.status === 'CONTRADICTED') {
         conflictedCriteria.push(crit.reason || `${crit.name} conflict detected`);
-      } else {
-        unknownCriteria.push(crit.reason || `${crit.name} unverified`);
+      } else if (crit.status === 'UNKNOWN') {
+        if (crit.requirement === 'required') {
+          unknownCriteria.push(crit.reason || `${crit.name} unverified`);
+        }
       }
     } else {
-      if (crit.status === 'PASS') {
+      if (crit.status === 'PASS' || crit.status === 'INFORMATIONAL') {
         passedCriteria.push(crit.reason || `${crit.name} (Informational)`);
       }
     }
@@ -1117,7 +1382,7 @@ export function evaluateCanonicalTargetQualification(
   const matchScore = totalActiveWeight > 0 ? Math.round((earnedPoints / totalActiveWeight) * 100) : 100;
   const matchPercentage = `${matchScore}%`;
 
-  // 5. Final Qualification Verdict (Sections 27, 28)
+  // Final Qualification Verdict
   let status: 'QUALIFIED' | 'UNDER_REVIEW' | 'REVIEW' | 'REJECTED' = 'UNDER_REVIEW';
   let verdict: 'Qualified' | 'Under Review' | 'Rejected' = 'Under Review';
   let exactReason = '';
