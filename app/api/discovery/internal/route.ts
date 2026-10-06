@@ -52,24 +52,81 @@ function formatPackageToVerificationResult(
       value: v.actualValue || 'Unverified',
       target: v.requiredValue || k,
       reason: v.reason,
-      evidence: v.evidence || `Internal file row #${pkg.source.row_number}`,
+      evidence: v.evidence || `Internal file: ${pkg.source.file_name}, Row #${pkg.source.row_number}`,
       timestamp: now,
     };
   }
 
-  // Ensure standard criteria keys exist
-  const standardKeys = ['funding', 'industry', 'companyAge', 'geography', 'companyStage', 'founderOrCeo', 'professionalEmail', 'linkedinProfile'];
-  for (const sk of standardKeys) {
+  // Ensure standard criteria keys exist with actual values or clear disabled/optional reason
+  const standardKeyDefaults: Record<string, { label: string; fallbackVal: string }> = {
+    funding: { label: 'Funding', fallbackVal: norm.funding || 'Not documented' },
+    industry: { label: 'Industry', fallbackVal: norm.industry || 'Not documented' },
+    geography: { label: 'Geography', fallbackVal: norm.country || norm.location || 'Not documented' },
+    companyAge: { label: 'Company Age', fallbackVal: norm.founded_year || 'Not documented' },
+    companyStage: { label: 'Stage', fallbackVal: norm.funding_type || 'Not documented' },
+    founderOrCeo: { label: 'CEO / Founder', fallbackVal: norm.ceo_name || (norm.founder_names ? norm.founder_names.join(', ') : 'Not documented') },
+    professionalEmail: { label: 'Pro Email', fallbackVal: norm.ceo_email || (norm.founder_emails ? norm.founder_emails[0] : 'Not documented') },
+    linkedinProfile: { label: 'LinkedIn', fallbackVal: norm.ceo_linkedin || norm.company_linkedin || 'Not documented' },
+  };
+
+  for (const [sk, def] of Object.entries(standardKeyDefaults)) {
     if (!critEval[sk]) {
       critEval[sk] = {
         status: 'UNKNOWN',
-        value: 'Not evaluated',
-        target: sk,
-        reason: 'Not required or not evaluated in internal mode',
+        value: def.fallbackVal,
+        target: def.label,
+        reason: 'Optional / Not required in active profile',
+        evidence: `Internal file: ${pkg.source.file_name}, Row #${pkg.source.row_number}`,
         timestamp: now,
       };
     }
   }
+
+  // Populate discovered executives from file data
+  const executives: any[] = [];
+  if (norm.ceo_name) {
+    executives.push({
+      role: 'CEO',
+      name: norm.ceo_name,
+      title: 'Chief Executive Officer',
+      linkedin: norm.ceo_linkedin || null,
+      email: norm.ceo_email || null,
+      emailStatus: norm.ceo_email ? 'VERIFIED' : 'UNKNOWN',
+      evidence: `Internal file: ${pkg.source.file_name}, Row #${pkg.source.row_number}, Column: CEO Name`,
+      status: 'PASS',
+    });
+  }
+  if (norm.founder_names && norm.founder_names.length > 0) {
+    norm.founder_names.forEach((fn, idx) => {
+      executives.push({
+        role: 'Founder',
+        name: fn,
+        title: 'Founder',
+        linkedin: norm.founder_linkedin?.[idx] || null,
+        email: norm.founder_emails?.[idx] || null,
+        emailStatus: norm.founder_emails?.[idx] ? 'VERIFIED' : 'UNKNOWN',
+        evidence: `Internal file: ${pkg.source.file_name}, Row #${pkg.source.row_number}, Column: Founder Name`,
+        status: 'PASS',
+      });
+    });
+  }
+  if (norm.cofounder_names && norm.cofounder_names.length > 0) {
+    norm.cofounder_names.forEach((cfn, idx) => {
+      executives.push({
+        role: 'Co-founder',
+        name: cfn,
+        title: 'Co-founder',
+        linkedin: norm.cofounder_linkedin?.[idx] || null,
+        email: norm.cofounder_emails?.[idx] || null,
+        emailStatus: norm.cofounder_emails?.[idx] ? 'VERIFIED' : 'UNKNOWN',
+        evidence: `Internal file: ${pkg.source.file_name}, Row #${pkg.source.row_number}, Column: Co-Founder Name`,
+        status: 'PASS',
+      });
+    });
+  }
+
+  const primaryExecName = norm.ceo_name || (norm.founder_names ? norm.founder_names[0] : null) || (norm.cofounder_names ? norm.cofounder_names[0] : null) || norm.founder_or_ceo || null;
+  const primaryExecEmail = norm.ceo_email || (norm.founder_emails ? norm.founder_emails[0] : null) || (norm.cofounder_emails ? norm.cofounder_emails[0] : null) || null;
 
   return {
     company: {
@@ -81,9 +138,9 @@ function formatPackageToVerificationResult(
       fundingAmount: norm.funding_amount_usd || norm.funding || null,
       fundingDate: norm.funding_date || null,
       fundingType: norm.funding_type || null,
-      founderOrCeoName: norm.founder_or_ceo || null,
-      founderOrCeoEmail: norm.company_email || norm.ceo_email || null,
-      emailVerified: false, // Internal file verification only, no live SMTP
+      founderOrCeoName: primaryExecName,
+      founderOrCeoEmail: primaryExecEmail, // NEVER use company_email as executive professional email
+      emailVerified: Boolean(primaryExecEmail), // Internal file verification
       confidenceScore: evalResult.qualification.match_score,
       huntScore: evalResult.qualification.match_score,
       sourceType: `Internal File: ${pkg.source.file_name}`,
@@ -94,9 +151,24 @@ function formatPackageToVerificationResult(
       companyLinkedinUrl: norm.company_linkedin || undefined,
       firstDiscoveredAt: now,
       lastVerifiedAt: now,
-    },
+      // Distinct people fields
+      ceoName: norm.ceo_name || null,
+      ceoFirstName: norm.ceo_first_name || null,
+      ceoLastName: norm.ceo_last_name || null,
+      ceoEmail: norm.ceo_email || null,
+      ceoEmailStatus: norm.ceo_email_status || null,
+      ceoLinkedin: norm.ceo_linkedin || null,
+      ceoTwitter: norm.ceo_twitter || null,
+      founderNames: norm.founder_names,
+      founderEmails: norm.founder_emails,
+      cofounderNames: norm.cofounder_names,
+      cofounderEmails: norm.cofounder_emails,
+      companyEmail: norm.company_email || null,
+      companyEmailStatus: norm.company_email_status || null,
+    } as any,
     verificationStatus: evalResult.finalStatus as any,
     criteria: critEval,
+    executives,
     rejectionReason: evalResult.rejectionReason,
     qualificationReason: evalResult.finalStatus === 'VERIFIED' ? evalResult.verdictReason : undefined,
     decisionExplanation: evalResult.verdictReason,
@@ -115,7 +187,7 @@ function formatPackageToVerificationResult(
       country: norm.country || null,
       phone: null,
       email: norm.company_email || norm.ceo_email || null,
-      founder: norm.founder_or_ceo || null,
+      founder: primaryExecName,
       funding: norm.funding || null,
       raw_fields: { ...pkg.seed_data.raw_fields },
     },

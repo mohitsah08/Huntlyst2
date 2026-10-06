@@ -1663,6 +1663,7 @@ export async function processCandidateThroughPipeline(
   const unknownCriteria: string[] = [];
 
   for (const [key, crit] of Object.entries(allCriteria)) {
+    if (!crit) continue;
     if (crit.status === 'FAIL' || crit.status === 'CONTRADICTED') {
       if (!failedCriteria.includes(key)) failedCriteria.push(key);
     } else if (crit.status === 'PASS') {

@@ -49,15 +49,45 @@ export interface LeadPackageNormalized {
   funding_amount_usd?: number | null;
   funding_date?: string | null;
   funding_type?: string | null;
-  founder_or_ceo: string | null;
-  company_email: string | null;
+  funding_source?: string | null;
+
+  // CEO Specific Fields
+  ceo_name?: string | null;
+  ceo_first_name?: string | null;
+  ceo_last_name?: string | null;
   ceo_email?: string | null;
-  company_linkedin: string | null;
-  ceo_linkedin: string | null;
-  company_twitter?: string | null;
+  ceo_email_status?: string | null;
+  ceo_linkedin?: string | null;
   ceo_twitter?: string | null;
+
+  // Founder Specific Fields
+  founder_names?: string[];
+  founder_first_names?: string[];
+  founder_last_names?: string[];
+  founder_emails?: string[];
+  founder_linkedin?: string[];
+  founder_twitter?: string[];
+
+  // Co-Founder Specific Fields
+  cofounder_names?: string[];
+  cofounder_emails?: string[];
+  cofounder_linkedin?: string[];
+  cofounder_twitter?: string[];
+
+  // Company Specific Fields
+  company_email: string | null;
+  company_email_status?: string | null;
+  company_linkedin: string | null;
+  company_twitter?: string | null;
+
+  // Legacy convenience synthesizer
+  founder_or_ceo: string | null;
+
+  // Other Fields
   employee_count?: string | null;
   founded_year?: string | null;
+  technologies?: string[];
+  monthly_visits?: string | null;
 }
 
 export interface LeadPackageAudit {
@@ -190,6 +220,10 @@ export const PLACEHOLDER_PATTERNS = [
   /^unknown$/i,
   /^not\s*disclosed$/i,
   /^paywalled$/i,
+  /^private$/i,
+  /^unspecified$/i,
+  /^not\s*provided$/i,
+  /^tbd$/i,
 ];
 
 export function isPlaceholderValue(val: any): boolean {

@@ -71,6 +71,35 @@ export function evaluateInternalLeadPackage(
     const missingCriteria: string[] = [];
     const reviewCriteria: string[] = [];
 
+    // Active Target Profile Settings resolution
+    const isContactRequired = (
+      target.contactRequirement === 'Required' ||
+      target.contactRequirement === 'required' ||
+      target.ceoRequired === true ||
+      target.criteriaSettings?.founderOrCeo?.requirement === 'required' ||
+      target.criteriaSettings?.ceo?.requirement === 'required'
+    );
+    const isContactDisabled = (
+      target.contactRequirement === 'Not Required' ||
+      target.contactRequirement === 'not_required' ||
+      target.criteriaSettings?.founderOrCeo?.mode === 'disabled' ||
+      target.criteriaSettings?.ceo?.mode === 'disabled'
+    );
+
+    const isEmailRequired = (
+      target.emailRequirement === 'Required' ||
+      target.emailRequirement === 'required' ||
+      target.ceoEmailRequired === true ||
+      target.criteriaSettings?.professionalEmail?.requirement === 'required' ||
+      target.criteriaSettings?.ceoEmail?.requirement === 'required'
+    );
+    const isEmailDisabled = (
+      target.emailRequirement === 'Not Required' ||
+      target.emailRequirement === 'not_required' ||
+      target.criteriaSettings?.professionalEmail?.mode === 'disabled' ||
+      target.criteriaSettings?.ceoEmail?.mode === 'disabled'
+    );
+
     // Helper for criteria mode & weights
     const getSetting = (key: string, defMode: 'enabled' | 'disabled' | 'informational', defReq: 'required' | 'optional', defWeight: number) => {
       const custom = target.criteriaSettings?.[key] || {};
@@ -78,25 +107,25 @@ export function evaluateInternalLeadPackage(
       let req = custom.requirement ?? defReq;
       let weight = custom.weight ?? defWeight;
 
-      if (key === 'ceo' && target.ceoRequired !== undefined) {
-        req = target.ceoRequired ? 'required' : 'optional';
-        mode = target.ceoRequired ? 'enabled' : (target.ceoMode || 'optional');
+      if (key === 'ceo' || key === 'founderOrCeo') {
+        req = isContactRequired ? 'required' : (custom.requirement ?? defReq);
+        mode = isContactDisabled ? 'disabled' : (custom.mode ?? defMode);
+      }
+      if (key === 'ceoEmail' || key === 'professionalEmail') {
+        req = isEmailRequired ? 'required' : (custom.requirement ?? defReq);
+        mode = isEmailDisabled ? 'disabled' : (custom.mode ?? defMode);
       }
       if (key === 'companyEmail' && target.companyEmailRequired !== undefined) {
-        req = target.companyEmailRequired ? 'required' : 'optional';
-        mode = target.companyEmailRequired ? 'enabled' : (target.companyEmailMode || 'enabled');
-      }
-      if (key === 'ceoEmail' && target.ceoEmailRequired !== undefined) {
-        req = target.ceoEmailRequired ? 'required' : 'optional';
-        mode = target.ceoEmailRequired ? 'enabled' : (target.ceoEmailMode || 'disabled');
+        req = target.companyEmailRequired ? 'required' : (custom.requirement ?? defReq);
+        mode = target.companyEmailRequired ? 'enabled' : (target.companyEmailMode || (custom.mode ?? defMode));
       }
       if (key === 'companyLinkedIn' && target.companyLinkedInRequired !== undefined) {
-        req = target.companyLinkedInRequired ? 'required' : 'optional';
-        mode = target.companyLinkedInRequired ? 'enabled' : (target.companyLinkedInMode || 'disabled');
+        req = target.companyLinkedInRequired ? 'required' : (custom.requirement ?? defReq);
+        mode = target.companyLinkedInRequired ? 'enabled' : (target.companyLinkedInMode || (custom.mode ?? defMode));
       }
       if (key === 'ceoLinkedIn' && target.ceoLinkedInRequired !== undefined) {
-        req = target.ceoLinkedInRequired ? 'required' : 'optional';
-        mode = target.ceoLinkedInRequired ? 'enabled' : (target.ceoLinkedInMode || 'disabled');
+        req = target.ceoLinkedInRequired ? 'required' : (custom.requirement ?? defReq);
+        mode = target.ceoLinkedInRequired ? 'enabled' : (target.ceoLinkedInMode || (custom.mode ?? defMode));
       }
 
       return { mode, req, weight };
@@ -421,39 +450,83 @@ export function evaluateInternalLeadPackage(
       }
     }
 
-    // --- 5. CRITERION: CEO / Founder ---
-    const founderVal = norm.founder_or_ceo;
-    const isFounderPlaceholder = pkg.audit.placeholders.some(p =>
+    // --- 5. CRITERION: CEO / Founder Leadership ---
+    let leaderNameDesc = '';
+    let leaderEvidence = '';
+
+    const hasCeoName = Boolean(norm.ceo_name && norm.ceo_name.trim());
+    const hasFounderNames = Boolean(norm.founder_names && norm.founder_names.length > 0);
+    const hasCofounderNames = Boolean(norm.cofounder_names && norm.cofounder_names.length > 0);
+
+    const isLeadershipPlaceholder = pkg.audit.placeholders.some(p =>
       p.field.toLowerCase().includes('ceo') || p.field.toLowerCase().includes('founder')
     );
 
-    if (founderVal && !isFounderPlaceholder) {
+    const requiredRoles = (target.contactPersonTypes || ['CEO', 'Founder', 'Co-founder']).map((r: string) => r.toLowerCase().trim());
+    const requiresCeoOnly = requiredRoles.length === 1 && requiredRoles[0] === 'ceo';
+    const requiresFounderOnly = requiredRoles.length === 1 && (requiredRoles[0] === 'founder' || requiredRoles[0] === 'founders');
+
+    let leaderFound = false;
+    if (requiresCeoOnly) {
+      if (hasCeoName) {
+        leaderFound = true;
+        leaderNameDesc = `CEO: ${norm.ceo_name}`;
+        leaderEvidence = `Source: ${pkg.source.file_name}, Row ${pkg.source.row_number}, Column: CEO Name, Value: ${norm.ceo_name}`;
+      }
+    } else if (requiresFounderOnly) {
+      if (hasFounderNames) {
+        leaderFound = true;
+        leaderNameDesc = `Founder: ${norm.founder_names!.join(', ')}`;
+        leaderEvidence = `Source: ${pkg.source.file_name}, Row ${pkg.source.row_number}, Column: Founder Name, Value: ${norm.founder_names!.join(', ')}`;
+      }
+    } else {
+      // Default: CEO, Founder, or Co-Founder family
+      if (hasCeoName) {
+        leaderFound = true;
+        leaderNameDesc = `CEO: ${norm.ceo_name}`;
+        leaderEvidence = `Source: ${pkg.source.file_name}, Row ${pkg.source.row_number}, Column: CEO Name, Value: ${norm.ceo_name}`;
+      } else if (hasFounderNames) {
+        leaderFound = true;
+        leaderNameDesc = `Founder: ${norm.founder_names!.join(', ')}`;
+        leaderEvidence = `Source: ${pkg.source.file_name}, Row ${pkg.source.row_number}, Column: Founder Name, Value: ${norm.founder_names!.join(', ')}`;
+      } else if (hasCofounderNames) {
+        leaderFound = true;
+        leaderNameDesc = `Co-Founder: ${norm.cofounder_names!.join(', ')}`;
+        leaderEvidence = `Source: ${pkg.source.file_name}, Row ${pkg.source.row_number}, Column: Co-Founder Name, Value: ${norm.cofounder_names!.join(', ')}`;
+      } else if (norm.founder_or_ceo) {
+        leaderFound = true;
+        leaderNameDesc = norm.founder_or_ceo;
+        leaderEvidence = `Source: ${pkg.source.file_name}, Row ${pkg.source.row_number}, Value: ${norm.founder_or_ceo}`;
+      }
+    }
+
+    if (leaderFound) {
       addCrit(
-        'ceo',
+        'founderOrCeo',
         'CEO / Founder',
         'leadership',
         'PASS',
         'Identified Executive Leadership',
-        founderVal,
-        `Executive leader documented in internal file: ${founderVal}`,
-        founderVal,
-        { mode: 'enabled', req: 'optional', weight: 15 }
+        leaderNameDesc,
+        `Executive leadership documented in internal file: ${leaderNameDesc}`,
+        leaderEvidence,
+        { mode: isContactDisabled ? 'disabled' : 'enabled', req: isContactRequired ? 'required' : 'optional', weight: 15 }
       );
-    } else if (isFounderPlaceholder) {
+    } else if (isLeadershipPlaceholder) {
       addCrit(
-        'ceo',
+        'founderOrCeo',
         'CEO / Founder',
         'leadership',
         'UNKNOWN',
         'Identified Executive Leadership',
         'UPGRADE TO UNLOCK / Placeholder',
-        'CEO/Founder is paywalled/placeholder in uploaded record',
-        undefined,
-        { mode: 'enabled', req: 'optional', weight: 15 }
+        'CEO/Founder is paywalled or placeholder in uploaded record',
+        `Source: ${pkg.source.file_name}, Row ${pkg.source.row_number}, Column: CEO/Founder Name, Value: [PLACEHOLDER]`,
+        { mode: isContactDisabled ? 'disabled' : 'enabled', req: isContactRequired ? 'required' : 'optional', weight: 15 }
       );
     } else {
       addCrit(
-        'ceo',
+        'founderOrCeo',
         'CEO / Founder',
         'leadership',
         'UNKNOWN',
@@ -461,9 +534,11 @@ export function evaluateInternalLeadPackage(
         'Not documented in record',
         'CEO/Founder not provided in internal record',
         undefined,
-        { mode: 'enabled', req: 'optional', weight: 15 }
+        { mode: isContactDisabled ? 'disabled' : 'enabled', req: isContactRequired ? 'required' : 'optional', weight: 15 }
       );
     }
+    // Backward compatibility alias for 'ceo' key
+    criteria['ceo'] = { ...criteria['founderOrCeo'], name: 'CEO' };
 
     // --- 6. CRITERION: Company Email ---
     const compEmail = norm.company_email;
@@ -476,7 +551,7 @@ export function evaluateInternalLeadPackage(
         'Valid company contact email',
         compEmail,
         `Company email documented in internal file: ${compEmail}`,
-        compEmail,
+        `Source: ${pkg.source.file_name}, Row ${pkg.source.row_number}, Column: Contact Email, Value: ${compEmail}`,
         { mode: 'enabled', req: 'optional', weight: 10 }
       );
     } else {
@@ -493,33 +568,77 @@ export function evaluateInternalLeadPackage(
       );
     }
 
-    // --- 7. CRITERION: CEO Email ---
-    const ceoEmailVal = norm.ceo_email;
-    if (ceoEmailVal) {
+    // --- 7. CRITERION: Executive Professional Email ---
+    // Strictly distinct from company_email: CEO, Founder, or Co-Founder direct email
+    let execEmailVal = '';
+    let execEmailEvidence = '';
+
+    const isEmailPlaceholder = pkg.audit.placeholders.some(p =>
+      p.field.toLowerCase().includes('ceo email') || p.field.toLowerCase().includes('founder email') || p.field.toLowerCase().includes('executive email')
+    );
+
+    if (requiresCeoOnly) {
+      if (norm.ceo_email) {
+        execEmailVal = norm.ceo_email;
+        execEmailEvidence = `Source: ${pkg.source.file_name}, Row ${pkg.source.row_number}, Column: CEO Email, Value: ${norm.ceo_email}`;
+      }
+    } else if (requiresFounderOnly) {
+      if (norm.founder_emails && norm.founder_emails.length > 0) {
+        execEmailVal = norm.founder_emails[0];
+        execEmailEvidence = `Source: ${pkg.source.file_name}, Row ${pkg.source.row_number}, Column: Founder Email, Value: ${norm.founder_emails[0]}`;
+      }
+    } else {
+      if (norm.ceo_email) {
+        execEmailVal = norm.ceo_email;
+        execEmailEvidence = `Source: ${pkg.source.file_name}, Row ${pkg.source.row_number}, Column: CEO Email, Value: ${norm.ceo_email}`;
+      } else if (norm.founder_emails && norm.founder_emails.length > 0) {
+        execEmailVal = norm.founder_emails[0];
+        execEmailEvidence = `Source: ${pkg.source.file_name}, Row ${pkg.source.row_number}, Column: Founder Email, Value: ${norm.founder_emails[0]}`;
+      } else if (norm.cofounder_emails && norm.cofounder_emails.length > 0) {
+        execEmailVal = norm.cofounder_emails[0];
+        execEmailEvidence = `Source: ${pkg.source.file_name}, Row ${pkg.source.row_number}, Column: Co-Founder Email, Value: ${norm.cofounder_emails[0]}`;
+      }
+    }
+
+    if (execEmailVal) {
       addCrit(
-        'ceoEmail',
-        'CEO Professional Email',
+        'professionalEmail',
+        'Executive Professional Email',
         'contact',
         'PASS',
         'Direct executive email',
-        ceoEmailVal,
-        `Direct CEO email documented in internal file: ${ceoEmailVal}`,
-        ceoEmailVal,
-        { mode: 'disabled', req: 'optional', weight: 10 }
+        execEmailVal,
+        `Direct executive email documented in internal file: ${execEmailVal}`,
+        execEmailEvidence,
+        { mode: isEmailDisabled ? 'disabled' : 'enabled', req: isEmailRequired ? 'required' : 'optional', weight: 15 }
+      );
+    } else if (isEmailPlaceholder) {
+      addCrit(
+        'professionalEmail',
+        'Executive Professional Email',
+        'contact',
+        'UNKNOWN',
+        'Direct executive email',
+        'UPGRADE TO UNLOCK / Placeholder',
+        'Direct executive professional email is paywalled or placeholder in uploaded record',
+        `Source: ${pkg.source.file_name}, Row ${pkg.source.row_number}, Column: CEO Email, Value: [PLACEHOLDER]`,
+        { mode: isEmailDisabled ? 'disabled' : 'enabled', req: isEmailRequired ? 'required' : 'optional', weight: 15 }
       );
     } else {
       addCrit(
-        'ceoEmail',
-        'CEO Professional Email',
+        'professionalEmail',
+        'Executive Professional Email',
         'contact',
         'UNKNOWN',
         'Direct executive email',
         'Not documented in record',
-        'Direct executive email not documented in internal record',
+        'Direct executive professional email not documented in internal record',
         undefined,
-        { mode: 'disabled', req: 'optional', weight: 10 }
+        { mode: isEmailDisabled ? 'disabled' : 'enabled', req: isEmailRequired ? 'required' : 'optional', weight: 15 }
       );
     }
+    // Backward compatibility alias for 'ceoEmail' key
+    criteria['ceoEmail'] = { ...criteria['professionalEmail'], name: 'CEO Professional Email' };
 
     // --- 8. CRITERION: Company LinkedIn ---
     const compLi = norm.company_linkedin;
@@ -532,7 +651,7 @@ export function evaluateInternalLeadPackage(
         'Company LinkedIn profile',
         compLi,
         `Company LinkedIn documented in internal file: ${compLi}`,
-        compLi,
+        `Source: ${pkg.source.file_name}, Row ${pkg.source.row_number}, Column: LinkedIn, Value: ${compLi}`,
         { mode: 'enabled', req: 'optional', weight: 10 }
       );
     } else {
@@ -549,33 +668,34 @@ export function evaluateInternalLeadPackage(
       );
     }
 
-    // --- 9. CRITERION: CEO LinkedIn ---
-    const ceoLi = norm.ceo_linkedin;
+    // --- 9. CRITERION: Executive LinkedIn ---
+    const ceoLi = norm.ceo_linkedin || (norm.founder_linkedin && norm.founder_linkedin[0]) || (norm.cofounder_linkedin && norm.cofounder_linkedin[0]);
     if (ceoLi) {
       addCrit(
-        'ceoLinkedIn',
-        'CEO LinkedIn',
+        'linkedinProfile',
+        'Executive LinkedIn',
         'social',
         'PASS',
-        'CEO LinkedIn profile',
+        'Executive LinkedIn profile',
         ceoLi,
-        `CEO LinkedIn profile documented in internal file: ${ceoLi}`,
-        ceoLi,
+        `Executive LinkedIn profile documented in internal file: ${ceoLi}`,
+        `Source: ${pkg.source.file_name}, Row ${pkg.source.row_number}, Column: CEO LinkedIn, Value: ${ceoLi}`,
         { mode: 'enabled', req: 'optional', weight: 10 }
       );
     } else {
       addCrit(
-        'ceoLinkedIn',
-        'CEO LinkedIn',
+        'linkedinProfile',
+        'Executive LinkedIn',
         'social',
         'UNKNOWN',
-        'CEO LinkedIn profile',
+        'Executive LinkedIn profile',
         'Not documented in record',
-        'CEO LinkedIn profile not documented in internal record',
+        'Executive LinkedIn profile not documented in internal record',
         undefined,
         { mode: 'enabled', req: 'optional', weight: 10 }
       );
     }
+    criteria['ceoLinkedIn'] = { ...criteria['linkedinProfile'], name: 'CEO LinkedIn' };
 
     // --- 10. SCORING & FINAL STATUS MAPPING ---
     let totalActiveWeight = 0;
@@ -593,11 +713,12 @@ export function evaluateInternalLeadPackage(
     const matchScore = totalActiveWeight > 0 ? Math.round((earnedPoints / totalActiveWeight) * 100) : 100;
     const matchPercentage = `${matchScore}%`;
 
-    // EXACT FOUR VISIBLE STATUSES:
-    // VERIFIED: The supplied uploaded data satisfies all active required Target Profile criteria.
-    // REVIEW: The supplied data contains ambiguous, conflicting, or unresolved information that needs human judgment.
-    // UNVERIFIED: Required information is missing or insufficient to verify the criterion.
+    // EXACT FOUR VISIBLE STATUSES DETERMINISTIC LOGIC:
     // REJECTED: At least one active required criterion definitely fails.
+    // UNVERIFIED: At least one active required criterion is missing or placeholder or unknown.
+    // REVIEW: Ambiguous or conflicting evidence needing human review.
+    // VERIFIED: ALL active required criteria are satisfied by the uploaded data.
+    // Match score must NEVER override this decision!
 
     let finalStatus: FinalLeadStatus;
     let verdictReason = '';
@@ -608,15 +729,15 @@ export function evaluateInternalLeadPackage(
     if (failedCriteria.length > 0) {
       finalStatus = 'REJECTED';
       rejectionReason = failedCriteria[0];
-      verdictReason = `Definite criterion mismatch: ${failedCriteria.join('; ')}`;
+      verdictReason = `Active required criterion failed: ${failedCriteria.join('; ')}`;
+    } else if (missingCriteria.length > 0) {
+      finalStatus = 'UNVERIFIED';
+      unverifiedReason = missingCriteria.join('; ');
+      verdictReason = `Active required criteria missing/unknown in uploaded record: ${missingCriteria.join('; ')}`;
     } else if (reviewCriteria.length > 0) {
       finalStatus = 'REVIEW';
       reviewReason = reviewCriteria.join('; ');
       verdictReason = `Ambiguous or conflicting internal data: ${reviewCriteria.join('; ')}`;
-    } else if (missingCriteria.length > 0) {
-      finalStatus = 'UNVERIFIED';
-      unverifiedReason = missingCriteria.join('; ');
-      verdictReason = `Required criteria missing in internal record: ${missingCriteria.join('; ')}`;
     } else {
       finalStatus = 'VERIFIED';
       verdictReason = 'All active required Target Profile criteria satisfied by uploaded record.';

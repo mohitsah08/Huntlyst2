@@ -127,19 +127,46 @@ export function buildLeadPackageFromRow(
   let rawState = '';
   let rawCountry = '';
   let rawLocation = '';
+
   let rawFunding = '';
   let rawFundingDate = '';
   let rawFundingType = '';
-  let rawFounderOrCeo = '';
-  let rawCompanyEmail = '';
+  let rawFundingSource = '';
+
+  // CEO Specific
+  let rawCeoName = '';
+  let rawCeoFirstName = '';
+  let rawCeoLastName = '';
   let rawCeoEmail = '';
-  let rawCompanyLinkedin = '';
+  let rawCeoEmailStatus = '';
   let rawCeoLinkedin = '';
-  let rawCompanyTwitter = '';
   let rawCeoTwitter = '';
+
+  // Founder Specific
+  const founderNames: string[] = [];
+  const founderFirstNames: string[] = [];
+  const founderLastNames: string[] = [];
+  const founderEmails: string[] = [];
+  const founderLinkedin: string[] = [];
+  const founderTwitter: string[] = [];
+
+  // Co-Founder Specific
+  const cofounderNames: string[] = [];
+  const cofounderEmails: string[] = [];
+  const cofounderLinkedin: string[] = [];
+  const cofounderTwitter: string[] = [];
+
+  // Company Specific
+  let rawCompanyEmail = '';
+  let rawCompanyEmailStatus = '';
+  let rawCompanyLinkedin = '';
+  let rawCompanyTwitter = '';
+
   let rawDescription = '';
   let rawEmployeeCount = '';
   let rawFoundingYear = '';
+  const technologies: string[] = [];
+  let rawMonthlyVisits = '';
 
   for (const [key, val] of entries) {
     const k = key.trim();
@@ -159,12 +186,161 @@ export function buildLeadPackageFromRow(
         rawValue: rawValStr,
         detectedAs: 'Placeholder / Paywall Text',
       });
-      continue; // Don't assign placeholder text to normalized data
+      continue; // NEVER assign placeholder text to normalized data fields
     }
 
-    // Dynamic field mapping
-    // 1. Company Name
-    if (!rawName && (
+    // Dynamic field mapping without collapsing roles:
+    // 1. CEO First Name
+    if (!rawCeoFirstName && (
+      lk === 'ceo first name' || lk === 'ceo firstname' || lk === 'ceo given name' || lk.includes('ceo first')
+    )) {
+      rawCeoFirstName = rawValStr;
+    }
+    // 2. CEO Last Name
+    else if (!rawCeoLastName && (
+      lk === 'ceo last name' || lk === 'ceo lastname' || lk === 'ceo surname' || lk === 'ceo family name' || lk.includes('ceo last')
+    )) {
+      rawCeoLastName = rawValStr;
+    }
+    // 3. CEO Name
+    else if (!rawCeoName && (
+      lk === 'ceo name' || lk === 'chief executive officer' || lk === 'ceo full name' ||
+      (lk.includes('ceo') && lk.includes('name') && !lk.includes('first') && !lk.includes('last'))
+    )) {
+      rawCeoName = rawValStr;
+    }
+    // 4. CEO Email Status
+    else if (!rawCeoEmailStatus && (
+      lk === 'ceo email status' || lk.includes('ceo email status')
+    )) {
+      rawCeoEmailStatus = rawValStr;
+    }
+    // 5. CEO Email
+    else if (!rawCeoEmail && (
+      lk === 'ceo email' || lk === 'ceo e-mail' || lk === 'ceo mail' || lk.includes('ceo email')
+    )) {
+      const emailCheck = validateEmail(rawValStr);
+      if (!emailCheck.isValid) {
+        malformedFields.push({ field: k, rawValue: rawValStr, reason: emailCheck.reason || 'Malformed CEO email' });
+      } else {
+        rawCeoEmail = rawValStr;
+      }
+    }
+    // 6. CEO LinkedIn
+    else if (!rawCeoLinkedin && (
+      lk === 'ceo linkedin' || lk === 'ceo linkedin url' || lk.includes('ceo linkedin')
+    )) {
+      if (rawValStr.toLowerCase().includes('linkedin.com')) {
+        rawCeoLinkedin = rawValStr;
+      } else {
+        malformedFields.push({ field: k, rawValue: rawValStr, reason: 'Invalid CEO LinkedIn URL' });
+      }
+    }
+    // 7. CEO Twitter / X
+    else if (!rawCeoTwitter && (
+      lk === 'ceo twitter (x)' || lk === 'ceo twitter' || lk.includes('ceo twitter') || lk === 'ceo x'
+    )) {
+      rawCeoTwitter = rawValStr;
+    }
+    // 8. Plain 'CEO' column (could be name or email)
+    else if (lk === 'ceo') {
+      if (rawValStr.includes('@')) {
+        const emailCheck = validateEmail(rawValStr);
+        if (emailCheck.isValid && !rawCeoEmail) rawCeoEmail = rawValStr;
+      } else if (!rawCeoName) {
+        rawCeoName = rawValStr;
+      }
+    }
+    // 9. Co-Founder Fields (Check before generic founder!)
+    else if (
+      lk.includes('co-founder') || lk.includes('cofounder') || lk.includes('co founder')
+    ) {
+      if (lk.includes('email') || lk.includes('mail')) {
+        const emailCheck = validateEmail(rawValStr);
+        if (emailCheck.isValid) {
+          cofounderEmails.push(rawValStr);
+        } else {
+          malformedFields.push({ field: k, rawValue: rawValStr, reason: emailCheck.reason || 'Malformed Co-Founder email' });
+        }
+      } else if (lk.includes('linkedin')) {
+        if (rawValStr.toLowerCase().includes('linkedin.com')) {
+          cofounderLinkedin.push(rawValStr);
+        } else {
+          malformedFields.push({ field: k, rawValue: rawValStr, reason: 'Invalid Co-Founder LinkedIn URL' });
+        }
+      } else if (lk.includes('twitter') || lk.includes(' x')) {
+        cofounderTwitter.push(rawValStr);
+      } else {
+        // Name(s)
+        const parts = rawValStr.split(/[,;&|]/).map(s => s.trim()).filter(Boolean);
+        cofounderNames.push(...parts);
+      }
+    }
+    // 10. Founder Fields (excluding founding year!)
+    else if (
+      (lk.includes('founder') && !lk.includes('year') && !lk.includes('co-founder') && !lk.includes('cofounder'))
+    ) {
+      if (lk.includes('first')) {
+        founderFirstNames.push(rawValStr);
+      } else if (lk.includes('last')) {
+        founderLastNames.push(rawValStr);
+      } else if (lk.includes('email') || lk.includes('mail')) {
+        const emailCheck = validateEmail(rawValStr);
+        if (emailCheck.isValid) {
+          founderEmails.push(rawValStr);
+        } else {
+          malformedFields.push({ field: k, rawValue: rawValStr, reason: emailCheck.reason || 'Malformed Founder email' });
+        }
+      } else if (lk.includes('linkedin')) {
+        if (rawValStr.toLowerCase().includes('linkedin.com')) {
+          founderLinkedin.push(rawValStr);
+        } else {
+          malformedFields.push({ field: k, rawValue: rawValStr, reason: 'Invalid Founder LinkedIn URL' });
+        }
+      } else if (lk.includes('twitter') || lk.includes(' x')) {
+        founderTwitter.push(rawValStr);
+      } else {
+        // Founder name(s)
+        const parts = rawValStr.split(/[,;&|]/).map(s => s.trim()).filter(Boolean);
+        founderNames.push(...parts);
+      }
+    }
+    // 11. Company Email Status
+    else if (!rawCompanyEmailStatus && (
+      lk === 'email status' || lk === 'company email status' || lk.includes('contact email status')
+    )) {
+      rawCompanyEmailStatus = rawValStr;
+    }
+    // 12. Company Contact Email
+    else if (!rawCompanyEmail && (
+      lk === 'contact email' || lk === 'company email' || lk === 'email' || lk === 'info email' ||
+      lk === 'support email' || lk === 'general email' || lk.includes('contact email') || lk.includes('company email')
+    )) {
+      const emailCheck = validateEmail(rawValStr);
+      if (!emailCheck.isValid) {
+        malformedFields.push({ field: k, rawValue: rawValStr, reason: emailCheck.reason || 'Malformed email' });
+      } else {
+        rawCompanyEmail = rawValStr;
+      }
+    }
+    // 13. Company LinkedIn
+    else if (!rawCompanyLinkedin && (
+      lk === 'linkedin' || lk === 'company linkedin' || lk === 'company linkedin url' || lk.includes('company linkedin')
+    )) {
+      if (rawValStr.toLowerCase().includes('linkedin.com')) {
+        rawCompanyLinkedin = rawValStr;
+      } else {
+        malformedFields.push({ field: k, rawValue: rawValStr, reason: 'Invalid LinkedIn URL' });
+      }
+    }
+    // 14. Company Twitter / X
+    else if (!rawCompanyTwitter && (
+      lk === 'twitter (x)' || lk === 'twitter' || lk === 'company twitter' || lk.includes('company twitter')
+    )) {
+      rawCompanyTwitter = rawValStr;
+    }
+    // 15. Company Name
+    else if (!rawName && (
       lk === 'company' || lk === 'name' || lk === 'company name' || lk === 'business name' ||
       lk === 'legal name' || lk === 'organization' || lk === 'title' ||
       (lk.includes('company') && !lk.includes('email') && !lk.includes('linkedin') && !lk.includes('twitter')) ||
@@ -172,7 +348,7 @@ export function buildLeadPackageFromRow(
     )) {
       rawName = rawValStr;
     }
-    // 2. Website URL / Domain
+    // 16. Website URL / Domain
     else if (!rawWebsite && (
       lk === 'url' || lk === 'website' || lk === 'domain' || lk === 'site' || lk === 'web' ||
       lk.includes('website') || lk.includes('url')
@@ -184,134 +360,95 @@ export function buildLeadPackageFromRow(
         rawWebsite = rawValStr;
       }
     }
-    // 3. Industry & Category
+    // 17. Industry & Category
     else if (!rawIndustry && (
       lk === 'industry' || lk === 'sector' || lk === 'category' || lk === 'categories' || lk === 'business type' ||
       lk.includes('industry') || lk.includes('sector')
     )) {
       rawIndustry = rawValStr;
     }
-    // 4. Sub-industry / Business Model
+    // 18. Sub-industry / Business Model
     else if (!rawSubIndustry && (
       lk === 'sub-industry' || lk === 'subindustry' || lk === 'business model' || lk === 'b2b or b2c' || lk === 'model'
     )) {
       rawSubIndustry = rawValStr;
     }
-    // 5. Country
+    // 19. Country
     else if (!rawCountry && (lk === 'country' || lk === 'nation')) {
       rawCountry = rawValStr;
     }
-    // 6. City
+    // 20. City
     else if (!rawCity && (lk === 'city' || lk === 'town' || lk === 'municipality')) {
       rawCity = rawValStr;
     }
-    // 7. State
+    // 21. State
     else if (!rawState && (lk === 'state' || lk === 'province' || lk === 'region')) {
       rawState = rawValStr;
     }
-    // 8. Location
+    // 22. Location
     else if (!rawLocation && (lk === 'location' || lk === 'headquarters' || lk === 'hq' || lk.includes('location'))) {
       rawLocation = rawValStr;
     }
-    // 9. Address
+    // 23. Address
     else if (!rawAddress && (lk === 'address' || lk === 'street' || lk.includes('address'))) {
       rawAddress = rawValStr;
     }
-    // 10. Funding Amount (priority over generic funding)
+    // 24. Funding Amount
     else if (!rawFunding && (
       lk === 'funding amount (in usd)' || lk === 'funding amount' || lk === 'amount raised' ||
       lk === 'total funding' || lk === 'funding in usd' || lk === 'funding' || lk === 'total raised' ||
-      (lk.includes('funding') && !lk.includes('date') && !lk.includes('type') && !lk.includes('announcement') && !lk.includes('round'))
+      (lk.includes('funding') && !lk.includes('date') && !lk.includes('type') && !lk.includes('announcement') && !lk.includes('round') && !lk.includes('link'))
     )) {
       rawFunding = rawValStr;
     }
-    // 11. Funding Date
+    // 25. Funding Date
     else if (!rawFundingDate && (lk === 'funding date' || lk.includes('funding date') || lk === 'last round date')) {
       rawFundingDate = rawValStr;
     }
-    // 12. Funding Type / Stage
+    // 26. Funding Type / Stage
     else if (!rawFundingType && (lk === 'funding type' || lk === 'stage' || lk === 'round' || lk.includes('funding type') || lk.includes('round'))) {
       rawFundingType = rawValStr;
     }
-    // 13. Founder / CEO Name
-    else if (!rawFounderOrCeo && (
-      lk === 'ceo name' || lk === 'ceo' || lk === 'founder' || lk === 'co-founder' || lk === 'founder name' ||
-      lk === 'executive' || lk.includes('ceo name') || (lk.includes('founder') && !lk.includes('year'))
+    // 27. Funding Announcement / Source Link
+    else if (!rawFundingSource && (
+      lk === 'link to funding announcement' || lk === 'funding announcement' || lk === 'funding source' || lk.includes('funding announcement')
     )) {
-      rawFounderOrCeo = rawValStr;
+      rawFundingSource = rawValStr;
     }
-    // 14. CEO Email
-    else if (!rawCeoEmail && (
-      lk === 'ceo email' || lk === 'founder email' || lk === 'executive email' || lk.includes('ceo email')
-    )) {
-      const emailCheck = validateEmail(rawValStr);
-      if (!emailCheck.isValid) {
-        malformedFields.push({ field: k, rawValue: rawValStr, reason: emailCheck.reason || 'Malformed email' });
-      } else {
-        rawCeoEmail = rawValStr;
-      }
-    }
-    // 15. Company Contact Email
-    else if (!rawCompanyEmail && (
-      lk === 'contact email' || lk === 'company email' || lk === 'email' || lk.includes('contact email') || lk.includes('company email')
-    )) {
-      const emailCheck = validateEmail(rawValStr);
-      if (!emailCheck.isValid) {
-        malformedFields.push({ field: k, rawValue: rawValStr, reason: emailCheck.reason || 'Malformed email' });
-      } else {
-        rawCompanyEmail = rawValStr;
-      }
-    }
-    // 16. Company LinkedIn
-    else if (!rawCompanyLinkedin && (
-      lk === 'linkedin' || lk === 'company linkedin' || lk.includes('company linkedin')
-    )) {
-      if (rawValStr.toLowerCase().includes('linkedin.com')) {
-        rawCompanyLinkedin = rawValStr;
-      } else {
-        malformedFields.push({ field: k, rawValue: rawValStr, reason: 'Invalid LinkedIn URL' });
-      }
-    }
-    // 17. CEO LinkedIn
-    else if (!rawCeoLinkedin && (
-      lk === 'ceo linkedin' || lk === 'founder linkedin' || lk.includes('ceo linkedin')
-    )) {
-      if (rawValStr.toLowerCase().includes('linkedin.com')) {
-        rawCeoLinkedin = rawValStr;
-      } else {
-        malformedFields.push({ field: k, rawValue: rawValStr, reason: 'Invalid CEO LinkedIn URL' });
-      }
-    }
-    // 18. Company Twitter / X
-    else if (!rawCompanyTwitter && (
-      lk === 'twitter (x)' || lk === 'twitter' || lk === 'company twitter' || lk.includes('twitter')
-    )) {
-      rawCompanyTwitter = rawValStr;
-    }
-    // 19. CEO Twitter / X
-    else if (!rawCeoTwitter && (
-      lk === 'ceo twitter (x)' || lk === 'ceo twitter' || lk.includes('ceo twitter')
-    )) {
-      rawCeoTwitter = rawValStr;
-    }
-    // 20. Description
+    // 28. Description
     else if (!rawDescription && (
       lk === 'description' || lk === 'about' || lk === 'summary' || lk.includes('description')
     )) {
       rawDescription = rawValStr;
     }
-    // 21. Employee Count
+    // 29. Employee Count
     else if (!rawEmployeeCount && (
       lk === 'number of employees' || lk === 'employees' || lk === 'employee count' || lk.includes('employee')
     )) {
       rawEmployeeCount = rawValStr;
     }
-    // 22. Founding Year
+    // 30. Founding Year
     else if (!rawFoundingYear && (
       lk === 'founding year' || lk === 'founded year' || lk === 'founded' || lk.includes('founding year')
     )) {
       rawFoundingYear = rawValStr;
     }
+    // 31. Technologies
+    else if (lk === 'technologies' || lk === 'tech stack' || lk === 'technologies used') {
+      const techs = rawValStr.split(/[,;&|]/).map(t => t.trim()).filter(Boolean);
+      technologies.push(...techs);
+    }
+    // 32. Monthly Website Visits
+    else if (!rawMonthlyVisits && (
+      lk === 'monthly website visits' || lk === 'website visits' || lk.includes('monthly website visits')
+    )) {
+      rawMonthlyVisits = rawValStr;
+    }
+  }
+
+  // Synthesize CEO name from first & last name if CEO name was not directly provided
+  if (!rawCeoName && (rawCeoFirstName || rawCeoLastName)) {
+    rawCeoName = [rawCeoFirstName, rawCeoLastName].filter(Boolean).join(' ').trim();
   }
 
   // Synthesize location if missing
@@ -362,6 +499,9 @@ export function buildLeadPackageFromRow(
   const parsedFunding = rawFunding ? parseFundingDetails(rawFunding) : null;
   const fundingAmountUsd = parsedFunding ? parsedFunding.amountUsd : null;
 
+  // Backward compatible convenience accessor
+  const legacyFounderOrCeo = rawCeoName || founderNames[0] || cofounderNames[0] || null;
+
   const normalized: LeadPackageNormalized = {
     company_name: companyName || 'Unknown Entity',
     website: rawWebsite || null,
@@ -377,15 +517,45 @@ export function buildLeadPackageFromRow(
     funding_amount_usd: fundingAmountUsd,
     funding_date: rawFundingDate || null,
     funding_type: rawFundingType || null,
-    founder_or_ceo: rawFounderOrCeo || null,
-    company_email: rawCompanyEmail || null,
+    funding_source: rawFundingSource || null,
+
+    // CEO Specific Fields
+    ceo_name: rawCeoName || null,
+    ceo_first_name: rawCeoFirstName || null,
+    ceo_last_name: rawCeoLastName || null,
     ceo_email: rawCeoEmail || null,
-    company_linkedin: rawCompanyLinkedin || null,
+    ceo_email_status: rawCeoEmailStatus || null,
     ceo_linkedin: rawCeoLinkedin || null,
-    company_twitter: rawCompanyTwitter || null,
     ceo_twitter: rawCeoTwitter || null,
+
+    // Founder Specific Fields
+    founder_names: founderNames.length > 0 ? founderNames : undefined,
+    founder_first_names: founderFirstNames.length > 0 ? founderFirstNames : undefined,
+    founder_last_names: founderLastNames.length > 0 ? founderLastNames : undefined,
+    founder_emails: founderEmails.length > 0 ? founderEmails : undefined,
+    founder_linkedin: founderLinkedin.length > 0 ? founderLinkedin : undefined,
+    founder_twitter: founderTwitter.length > 0 ? founderTwitter : undefined,
+
+    // Co-Founder Specific Fields
+    cofounder_names: cofounderNames.length > 0 ? cofounderNames : undefined,
+    cofounder_emails: cofounderEmails.length > 0 ? cofounderEmails : undefined,
+    cofounder_linkedin: cofounderLinkedin.length > 0 ? cofounderLinkedin : undefined,
+    cofounder_twitter: cofounderTwitter.length > 0 ? cofounderTwitter : undefined,
+
+    // Company Contact Fields
+    company_email: rawCompanyEmail || null,
+    company_email_status: rawCompanyEmailStatus || null,
+    company_linkedin: rawCompanyLinkedin || null,
+    company_twitter: rawCompanyTwitter || null,
+
+    // Legacy Synthesizer
+    founder_or_ceo: legacyFounderOrCeo,
+
+    // Other Fields
     employee_count: rawEmployeeCount || null,
     founded_year: rawFoundingYear || null,
+    technologies: technologies.length > 0 ? technologies : undefined,
+    monthly_visits: rawMonthlyVisits || null,
   };
 
   const candidateId = canonicalDomain || (companyName ? `lead_${companyName.toLowerCase().replace(/[^a-z0-9]/g, '_')}` : `lead_row_${sourceMeta.rowNumber}`);
@@ -539,11 +709,65 @@ export async function auditAndBuildLeadPackages(
       }
     } catch {}
   } else if (extension === 'pdf') {
+    let pdfText = '';
     try {
       const pdfParse = require('pdf-parse');
       const data = await pdfParse(buffer);
-      const text = data.text || '';
-      const lines = text.split(/\r?\n/).map((l: string) => l.trim()).filter(Boolean);
+      pdfText = data.text || '';
+    } catch {
+      pdfText = buffer.toString('binary');
+    }
+
+    const lines = pdfText.split(/\r?\n/).map((l: string) => l.trim()).filter(Boolean);
+    let tableParsed = false;
+
+    if (lines.length > 1) {
+      // Check for tabular delimiters in first line: \t, |, or 2+ consecutive spaces
+      const firstLine = lines[0];
+      const tabCols = firstLine.split('\t').map(c => c.trim()).filter(Boolean);
+      const pipeCols = firstLine.split('|').map(c => c.trim()).filter(Boolean);
+      const spaceCols = firstLine.split(/\s{2,}/).map(c => c.trim()).filter(Boolean);
+
+      let delim: string | RegExp | null = null;
+      let headers: string[] = [];
+
+      if (tabCols.length >= 2) {
+        delim = '\t';
+        headers = tabCols;
+      } else if (pipeCols.length >= 2) {
+        delim = '|';
+        headers = pipeCols;
+      } else if (spaceCols.length >= 2) {
+        delim = /\s{2,}/;
+        headers = spaceCols;
+      }
+
+      if (delim && headers.length >= 2) {
+        headers.forEach(h => detectedColumnsSet.add(h));
+        for (let i = 1; i < lines.length; i++) {
+          totalRowsRead++;
+          const rowLine = lines[i];
+          const cells = rowLine.split(delim as any).map(c => c.trim().replace(/^"|"$/g, ''));
+          if (cells.length === 0 || cells.every(c => !c)) continue;
+
+          const rowDict: Record<string, any> = {};
+          for (let c = 0; c < headers.length; c++) {
+            rowDict[headers[c] || `Column_${c}`] = cells[c] || '';
+          }
+
+          const pkg = buildLeadPackageFromRow(
+            rowDict,
+            { fileName, fileType: 'PDF', rowNumber: i, pageNumber: 1 },
+            knownNames,
+            knownDomains
+          );
+          if (pkg) packages.push(pkg);
+        }
+        tableParsed = true;
+      }
+    }
+
+    if (!tableParsed) {
       for (let i = 0; i < lines.length; i++) {
         totalRowsRead++;
         const line = lines[i];
@@ -555,35 +779,70 @@ export async function auditAndBuildLeadPackages(
         );
         if (pkg) packages.push(pkg);
       }
-    } catch {
-      // Stream extract fallback
-      const str = buffer.toString('binary');
-      const urls = str.match(/https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}[^\s)]*/g) || [];
-      urls.forEach((u, i) => {
+    }
+  } else {
+    // DOCX / TXT processing with structured table detection
+    const text = buffer.toString('utf-8');
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    let tableParsed = false;
+
+    if (lines.length > 1) {
+      const firstLine = lines[0];
+      const tabCols = firstLine.split('\t').map(c => c.trim()).filter(Boolean);
+      const pipeCols = firstLine.split('|').map(c => c.trim()).filter(Boolean);
+      const spaceCols = firstLine.split(/\s{2,}/).map(c => c.trim()).filter(Boolean);
+
+      let delim: string | RegExp | null = null;
+      let headers: string[] = [];
+
+      if (tabCols.length >= 2) {
+        delim = '\t';
+        headers = tabCols;
+      } else if (pipeCols.length >= 2) {
+        delim = '|';
+        headers = pipeCols;
+      } else if (spaceCols.length >= 2) {
+        delim = /\s{2,}/;
+        headers = spaceCols;
+      }
+
+      if (delim && headers.length >= 2) {
+        headers.forEach(h => detectedColumnsSet.add(h));
+        for (let i = 1; i < lines.length; i++) {
+          totalRowsRead++;
+          const rowLine = lines[i];
+          const cells = rowLine.split(delim as any).map(c => c.trim().replace(/^"|"$/g, ''));
+          if (cells.length === 0 || cells.every(c => !c)) continue;
+
+          const rowDict: Record<string, any> = {};
+          for (let c = 0; c < headers.length; c++) {
+            rowDict[headers[c] || `Column_${c}`] = cells[c] || '';
+          }
+
+          const pkg = buildLeadPackageFromRow(
+            rowDict,
+            { fileName, fileType: extension.toUpperCase(), rowNumber: i },
+            knownNames,
+            knownDomains
+          );
+          if (pkg) packages.push(pkg);
+        }
+        tableParsed = true;
+      }
+    }
+
+    if (!tableParsed) {
+      for (let i = 0; i < lines.length; i++) {
         totalRowsRead++;
+        const line = lines[i];
         const pkg = buildLeadPackageFromRow(
-          { URL: u },
-          { fileName, fileType: 'PDF', rowNumber: i + 1 },
+          { text: line },
+          { fileName, fileType: extension.toUpperCase(), rowNumber: i + 1 },
           knownNames,
           knownDomains
         );
         if (pkg) packages.push(pkg);
-      });
-    }
-  } else {
-    // DOCX / TXT fallback
-    const text = buffer.toString('utf-8');
-    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-    for (let i = 0; i < lines.length; i++) {
-      totalRowsRead++;
-      const line = lines[i];
-      const pkg = buildLeadPackageFromRow(
-        { text: line },
-        { fileName, fileType: extension.toUpperCase(), rowNumber: i + 1 },
-        knownNames,
-        knownDomains
-      );
-      if (pkg) packages.push(pkg);
+      }
     }
   }
 

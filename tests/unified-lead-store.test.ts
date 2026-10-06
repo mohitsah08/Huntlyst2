@@ -30,6 +30,7 @@ function buildInternalPackageABC(): LeadPackage {
         Location: 'Berlin, Germany',
         Funding: '$3,500,000',
         CEO: 'Alice Miller',
+        'CEO Email': 'alice@abctechnologies.com',
       },
       normalized: {
         company_name: 'ABC Technologies',
@@ -40,6 +41,8 @@ function buildInternalPackageABC(): LeadPackage {
         funding: '$3,500,000',
         funding_amount_usd: 3500000,
         founder_or_ceo: 'Alice Miller',
+        ceo_name: 'Alice Miller',
+        ceo_email: 'alice@abctechnologies.com',
         company_email: 'hello@abctechnologies.com',
         company_linkedin: null,
         ceo_linkedin: null,
@@ -47,7 +50,7 @@ function buildInternalPackageABC(): LeadPackage {
       },
     },
     audit: {
-      fields_present: ['Company Name', 'Website', 'Location', 'Funding', 'CEO'],
+      fields_present: ['Company Name', 'Website', 'Location', 'Funding', 'CEO', 'CEO Email'],
       fields_missing: [],
       placeholders: [],
       malformed_fields: [],

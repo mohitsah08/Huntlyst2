@@ -6802,7 +6802,8 @@
           "Website": "https://abctechnologies.com",
           "Location": "Berlin, Germany",
           "Funding": "$3,500,000",
-          "CEO": "Alice Miller"
+          "CEO": "Alice Miller",
+          "CEO Email": "alice@abctechnologies.com"
         },
         "normalized_data": {
           "company_name": "ABC Technologies",
@@ -6813,6 +6814,8 @@
           "funding": "$3,500,000",
           "funding_amount_usd": 3500000,
           "founder_or_ceo": "Alice Miller",
+          "ceo_name": "Alice Miller",
+          "ceo_email": "alice@abctechnologies.com",
           "company_email": "hello@abctechnologies.com",
           "company_linkedin": null,
           "ceo_linkedin": null,
@@ -6824,7 +6827,8 @@
             "Website",
             "Location",
             "Funding",
-            "CEO"
+            "CEO",
+            "CEO Email"
           ],
           "fields_missing": [],
           "placeholders": [],
@@ -6844,7 +6848,8 @@
               "Website": "https://abctechnologies.com",
               "Location": "Berlin, Germany",
               "Funding": "$3,500,000",
-              "CEO": "Alice Miller"
+              "CEO": "Alice Miller",
+              "CEO Email": "alice@abctechnologies.com"
             },
             "normalized": {
               "company_name": "ABC Technologies",
@@ -6855,6 +6860,8 @@
               "funding": "$3,500,000",
               "funding_amount_usd": 3500000,
               "founder_or_ceo": "Alice Miller",
+              "ceo_name": "Alice Miller",
+              "ceo_email": "alice@abctechnologies.com",
               "company_email": "hello@abctechnologies.com",
               "company_linkedin": null,
               "ceo_linkedin": null,
@@ -6867,7 +6874,8 @@
               "Website",
               "Location",
               "Funding",
-              "CEO"
+              "CEO",
+              "CEO Email"
             ],
             "fields_missing": [],
             "placeholders": [],
@@ -6880,11 +6888,11 @@
           {
             "status": "VERIFIED",
             "source": "INTERNAL_AUTO",
-            "timestamp": "2026-10-06T10:52:07.498Z",
+            "timestamp": "2026-10-06T11:18:52.614Z",
             "reason": "All active required Target Profile criteria satisfied by uploaded record."
           }
         ],
-        "evaluated_at": "2026-10-06T10:52:07.498Z"
+        "evaluated_at": "2026-10-06T11:18:52.614Z"
       },
       "currentStatus": "REVIEW",
       "qualification": {
@@ -6988,19 +6996,19 @@
         {
           "status": "VERIFIED",
           "source": "INTERNAL_AUTO",
-          "timestamp": "2026-10-06T10:52:07.498Z",
+          "timestamp": "2026-10-06T11:18:52.614Z",
           "reason": "All active required Target Profile criteria satisfied by uploaded record."
         },
         {
           "status": "REVIEW",
           "source": "EXTERNAL_AUTO",
-          "timestamp": "2026-10-06T10:52:07.524Z",
+          "timestamp": "2026-10-06T11:18:52.641Z",
           "reason": "External research & qualification completed"
         }
       ],
-      "createdAt": "2026-10-06T10:52:07.498Z",
-      "updatedAt": "2026-10-06T10:52:07.524Z",
-      "lastVerifiedAt": "2026-10-06T10:52:07.524Z",
+      "createdAt": "2026-10-06T11:18:52.614Z",
+      "updatedAt": "2026-10-06T11:18:52.641Z",
+      "lastVerifiedAt": "2026-10-06T11:18:52.641Z",
       "external": {
         "researched": true,
         "current_data": {
@@ -7026,11 +7034,11 @@
           {
             "status": "REVIEW",
             "source": "EXTERNAL_AUTO",
-            "timestamp": "2026-10-06T10:52:07.524Z",
+            "timestamp": "2026-10-06T11:18:52.641Z",
             "reason": "External research & qualification completed"
           }
         ],
-        "researched_at": "2026-10-06T10:52:07.524Z",
+        "researched_at": "2026-10-06T11:18:52.641Z",
         "sources": [
           "https://abctechnologies.com",
           "https://techcrunch.com/funding-round"

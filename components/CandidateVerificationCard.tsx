@@ -446,16 +446,79 @@ export default function CandidateVerificationCard({
         );
       })()}
 
-      {/* Criterion Breakdown Grid */}
+      {/* Uploaded Executive & Contact Information (Section 9) */}
+      {(() => {
+        const cAny = company as any;
+        const hasCeoData = Boolean(cAny.ceoName || cAny.ceoEmail || cAny.ceoLinkedin);
+        const hasFounderData = Boolean(cAny.founderNames?.length || cAny.founderEmails?.length);
+        const hasCofounderData = Boolean(cAny.cofounderNames?.length || cAny.cofounderEmails?.length);
+        const hasCompContact = Boolean(cAny.companyEmail || company.companyLinkedinUrl);
 
+        if (!hasCeoData && !hasFounderData && !hasCofounderData && !hasCompContact) return null;
+
+        return (
+          <div className="mt-3 p-3 bg-white rounded-lg border border-[#EBE4D5] text-xs space-y-2">
+            <span className="font-mono text-[10px] uppercase font-bold text-[#766E65] block">
+              Executive Leadership & Contacts (Uploaded Source):
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-[11px]">
+              {cAny.ceoName && (
+                <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
+                  <span className="text-[#766E65] font-bold">CEO:</span> <span className="font-semibold text-[#1E1B18]">{cAny.ceoName}</span>
+                </div>
+              )}
+              {cAny.ceoEmail && (
+                <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
+                  <span className="text-[#766E65] font-bold">CEO Email:</span> <span className="font-mono text-[#2E7D32]">{cAny.ceoEmail}</span>
+                </div>
+              )}
+              {cAny.ceoLinkedin && (
+                <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
+                  <span className="text-[#766E65] font-bold">CEO LinkedIn:</span>{' '}
+                  <a href={cAny.ceoLinkedin} target="_blank" rel="noopener noreferrer" className="text-[#FF6B35] underline font-mono">Profile ↗</a>
+                </div>
+              )}
+              {cAny.founderNames && cAny.founderNames.length > 0 && (
+                <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
+                  <span className="text-[#766E65] font-bold">Founder(s):</span> <span className="font-semibold text-[#1E1B18]">{cAny.founderNames.join(', ')}</span>
+                </div>
+              )}
+              {cAny.founderEmails && cAny.founderEmails.length > 0 && (
+                <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
+                  <span className="text-[#766E65] font-bold">Founder Email:</span> <span className="font-mono text-[#2E7D32]">{cAny.founderEmails.join(', ')}</span>
+                </div>
+              )}
+              {cAny.cofounderNames && cAny.cofounderNames.length > 0 && (
+                <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
+                  <span className="text-[#766E65] font-bold">Co-Founder(s):</span> <span className="font-semibold text-[#1E1B18]">{cAny.cofounderNames.join(', ')}</span>
+                </div>
+              )}
+              {cAny.companyEmail && (
+                <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
+                  <span className="text-[#766E65] font-bold">Company Email:</span> <span className="font-mono text-[#1E1B18]">{cAny.companyEmail}</span>
+                </div>
+              )}
+              {company.companyLinkedinUrl && (
+                <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
+                  <span className="text-[#766E65] font-bold">Company LinkedIn:</span>{' '}
+                  <a href={company.companyLinkedinUrl} target="_blank" rel="noopener noreferrer" className="text-[#FF6B35] underline font-mono">Company Page ↗</a>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Criterion Breakdown Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 mt-3">
         {renderCriterionPill('Funding', criteria.funding)}
         {renderCriterionPill('Industry', criteria.industry)}
         {renderCriterionPill('Geography', criteria.geography)}
         {renderCriterionPill('Company Age', criteria.companyAge)}
         {renderCriterionPill('Stage', criteria.companyStage)}
-        {renderCriterionPill('CEO / Founder', criteria.founderOrCeo)}
-        {renderCriterionPill('Pro Email (MX)', criteria.professionalEmail)}
+        {renderCriterionPill('CEO / Founder', criteria.founderOrCeo || criteria.ceo)}
+        {renderCriterionPill('Pro Email', criteria.professionalEmail || criteria.ceoEmail)}
+        {criteria.companyEmail && renderCriterionPill('Company Email', criteria.companyEmail)}
       </div>
 
       {/* Expanded Audit Evidence */}
@@ -479,6 +542,16 @@ export default function CandidateVerificationCard({
                 <span className="font-bold">Funding Evidence:</span> {criteria.funding.evidence}
               </div>
             )}
+            {(criteria.founderOrCeo?.evidence || criteria.ceo?.evidence) && (
+              <div className="text-[10px] text-[#766E65]">
+                <span className="font-bold">Leadership Evidence:</span> {criteria.founderOrCeo?.evidence || criteria.ceo?.evidence}
+              </div>
+            )}
+            {(criteria.professionalEmail?.evidence || criteria.ceoEmail?.evidence) && (
+              <div className="text-[10px] text-[#766E65]">
+                <span className="font-bold">Professional Email Evidence:</span> {criteria.professionalEmail?.evidence || criteria.ceoEmail?.evidence}
+              </div>
+            )}
           </div>
 
           {/* Source Data (Uploaded) vs Enriched Data */}
@@ -492,10 +565,11 @@ export default function CandidateVerificationCard({
                 <div><span className="font-bold text-[#1E1B18]">Name:</span> {result.source_data?.name || company.name}</div>
                 <div><span className="font-bold text-[#1E1B18]">Website:</span> {result.source_data?.website || '<None in file>'}</div>
                 <div><span className="font-bold text-[#1E1B18]">Raw Category:</span> {result.source_data?.raw_industry || '<None in file>'}</div>
+                <div><span className="font-bold text-[#1E1B18]">CEO:</span> {(company as any).ceoName || result.source_data?.raw_fields?.['CEO Name'] || '<None in file>'}</div>
+                <div><span className="font-bold text-[#1E1B18]">CEO Email:</span> {(company as any).ceoEmail || result.source_data?.raw_fields?.['CEO Email'] || '<None in file>'}</div>
+                <div><span className="font-bold text-[#1E1B18]">Founder:</span> {(company as any).founderNames?.join(', ') || result.source_data?.founder || '<None in file>'}</div>
+                <div><span className="font-bold text-[#1E1B18]">Company Email:</span> {(company as any).companyEmail || result.source_data?.email || '<None in file>'}</div>
                 <div><span className="font-bold text-[#1E1B18]">Address:</span> {result.source_data?.address || '<None in file>'}</div>
-                <div><span className="font-bold text-[#1E1B18]">Phone:</span> {result.source_data?.phone || '<None in file>'}</div>
-                <div><span className="font-bold text-[#1E1B18]">Email:</span> {result.source_data?.email || '<None in file>'}</div>
-                <div><span className="font-bold text-[#1E1B18]">Founder:</span> {result.source_data?.founder || '<None in file>'}</div>
                 <div><span className="font-bold text-[#1E1B18]">Funding:</span> {result.source_data?.funding || '<None in file>'}</div>
               </div>
             </div>

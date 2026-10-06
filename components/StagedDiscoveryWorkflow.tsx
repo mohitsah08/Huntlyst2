@@ -27,6 +27,13 @@ export default function StagedDiscoveryWorkflow({
   const [targetProfile, setTargetProfile] = useState<TargetProfile>(initialTargetProfile);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
 
+  // Canonical Target Profile Propagation: Keep in sync with parent configuration
+  useEffect(() => {
+    if (initialTargetProfile) {
+      setTargetProfile(initialTargetProfile);
+    }
+  }, [initialTargetProfile]);
+
   // Workflow Active View Step
   const [currentStep, setCurrentStep] = useState<StageStep>('internal');
 

@@ -163,7 +163,10 @@ export interface CriterionEvaluation {
   founder?: CriterionResult;
   decisionMaker?: CriterionResult;
   professionalEmail: CriterionResult;
+  ceoEmail?: CriterionResult;
+  companyEmail?: CriterionResult;
   linkedinProfile?: CriterionResult;
+  [key: string]: CriterionResult | undefined;
 }
 
 export interface ResearchCandidateInput {
