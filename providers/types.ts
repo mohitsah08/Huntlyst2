@@ -114,15 +114,27 @@ export interface CandidateStageState {
 }
 
 export interface DiscoveredPerson {
-  role: 'CEO' | 'Founder' | 'Co-founder' | 'Decision Maker';
+  id?: string;
+  role: 'CEO' | 'Founder' | 'Co-founder' | 'Co-Founder' | 'Decision Maker' | 'Executive';
   name: string;
+  full_name?: string;
+  first_name?: string;
+  last_name?: string;
   title?: string;
+  current_or_former?: 'current' | 'former';
+  professional_email?: string | null;
   linkedin?: string | null;
+  linkedin_url?: string | null;
+  x_url?: string | null;
   email?: string | null;
-  emailStatus?: 'VERIFIED' | 'UNVERIFIED' | 'UNKNOWN';
+  emailStatus?: 'VERIFIED' | 'UNVERIFIED' | 'UNKNOWN' | 'NOT_PUBLICLY_DISCLOSED';
   emailEvidence?: string | null;
   source?: string | null;
+  source_url?: string | null;
+  source_type?: string;
   evidence?: string | null;
+  confidence?: number;
+  verification_status?: 'VERIFIED' | 'UNKNOWN' | 'NOT_PUBLICLY_DISCLOSED';
   status: 'PASS' | 'UNKNOWN' | 'FAIL' | 'CONTRADICTED';
 }
 
@@ -217,6 +229,48 @@ export interface CompanyVerificationResult {
   stages?: Record<PipelineStageName, CandidateStageState>;
   // Discovered executives/founders
   executives?: DiscoveredPerson[];
+  leadership?: {
+    ceo: DiscoveredPerson | null;
+    former_ceos?: DiscoveredPerson[];
+    founders?: DiscoveredPerson[];
+    coFounders?: DiscoveredPerson[];
+    co_founders?: DiscoveredPerson[];
+  };
+  fundingDetails?: {
+    totalFundingUsd: number | null;
+    latestRoundUsd: number | null;
+    latestRoundDate: string | null;
+    latestRoundType: string | null;
+    total_funding_usd?: number | null;
+    latest_round_usd?: number | null;
+    latest_round_date?: string | null;
+    latest_round_type?: string | null;
+    fundingCurrency: string;
+    fundingSource: string | null;
+    fundingSourceUrl: string | null;
+    fundingEvidence: string;
+    sources: string[];
+    conflicts: Array<{ field: string; seed_value: any; live_value: any; explanation: string }>;
+  };
+  contactDetails?: {
+    company_emails?: Array<{ email: string; source: string; status: string; mxValid: boolean }>;
+    companyEmails?: Array<{ email: string; source: string; status: string; mxValid: boolean }>;
+    executive_emails?: Array<{ person: string; role: string; email: string; source: string; status: string; mxValid: boolean }>;
+    executiveEmails?: Array<{ person: string; role: string; email: string; source: string; status: string; mxValid: boolean }>;
+    phones: string[];
+  };
+  socialDetails?: {
+    company_linkedin?: { url: string | null; status: string; evidence: string };
+    companyLinkedIn?: { url: string | null; status: string; evidence: string };
+    company_x?: { url: string | null; status: string; evidence: string };
+    companyX?: { url: string | null; status: string; evidence: string };
+    executive_profiles?: Array<{ name: string; role: string; linkedin: string | null; x: string | null }>;
+    executiveProfiles?: Array<{ name: string; role: string; linkedin: string | null; x: string | null }>;
+  };
+  researchCompleteness?: number;
+  conflictDetails?: Array<{ field: string; seed_value: any; live_value: any; explanation: string }>;
+  qualificationScore?: number;
+  criteriaBreakdown?: Record<string, any>;
   // Conflict tracking if previous Huntlyst import
   hasConflict?: boolean;
   conflicts?: string[];
@@ -233,6 +287,12 @@ export interface CompanyVerificationResult {
   originDisplay?: string;
   auditTrail?: any[];
   statusHistory?: any[];
+  qualification?: {
+    matchScore: number;
+    criteria: Record<string, any>;
+    finalStatus: string;
+    reasons: string[];
+  };
 }
 
 export interface FieldAudit<T = any> {

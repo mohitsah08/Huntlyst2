@@ -160,9 +160,14 @@ export default function CandidateVerificationCard({
                   {result.originDisplay === 'BOTH' ? 'INTERNAL + EXTERNAL' : result.originDisplay}
                 </span>
               )}
+              {result.researchCompleteness !== undefined && (
+                <span className="px-2 py-0.5 text-xs font-mono font-bold bg-[#E8EAF6] text-[#283593] border border-[#C5CAE9] rounded-md" title="Research Completeness">
+                  Research: {result.researchCompleteness}%
+                </span>
+              )}
               {company.huntScore !== undefined && (
                 <span className="px-2 py-0.5 text-xs font-mono font-bold bg-[#FAF6EE] border border-[#1E1B18] rounded-md text-[#1E1B18]">
-                  {company.huntScore}/100
+                  Match: {company.huntScore}/100
                 </span>
               )}
               {result.isImportedFromHuntlyst && (
@@ -446,64 +451,171 @@ export default function CandidateVerificationCard({
         );
       })()}
 
-      {/* Uploaded Executive & Contact Information (Section 9) */}
+      {/* Comprehensive Research Dossier Summary (Sections 4, 5, 6, 7, 8, 11) */}
       {(() => {
         const cAny = company as any;
-        const hasCeoData = Boolean(cAny.ceoName || cAny.ceoEmail || cAny.ceoLinkedin);
-        const hasFounderData = Boolean(cAny.founderNames?.length || cAny.founderEmails?.length);
-        const hasCofounderData = Boolean(cAny.cofounderNames?.length || cAny.cofounderEmails?.length);
-        const hasCompContact = Boolean(cAny.companyEmail || company.companyLinkedinUrl);
+        const lead = result.leadership || cAny.leadership;
+        const fundingDet = result.fundingDetails || cAny.fundingDetails;
+        const contDet = result.contactDetails;
+        const socDet = result.socialDetails;
 
-        if (!hasCeoData && !hasFounderData && !hasCofounderData && !hasCompContact) return null;
+        const ceoObj = lead?.ceo;
+        const ceoName = ceoObj?.full_name || cAny.ceoName;
+        const ceoEmail = ceoObj?.professional_email || cAny.ceoEmail;
+        const ceoLinkedin = ceoObj?.linkedin_url || cAny.ceoLinkedin;
+
+        const foundersList = lead?.founders?.length
+          ? lead.founders
+          : cAny.founderNames?.map((fn: string) => ({ full_name: fn }));
+        const cofoundersList = lead?.co_founders?.length
+          ? lead.co_founders
+          : cAny.cofounderNames?.map((fn: string) => ({ full_name: fn }));
+        const formerCeosList = lead?.former_ceos || [];
+
+        const hasFundingDet = Boolean(fundingDet?.total_funding_usd || fundingDet?.latest_round_usd || fundingDet?.latest_round_type);
+        const hasLeadership = Boolean(ceoName || foundersList?.length || cofoundersList?.length || formerCeosList?.length);
+        const hasContacts = Boolean(contDet?.company_emails?.length || contDet?.executive_emails?.length || contDet?.phones?.length || cAny.companyEmail || cAny.ceoEmail);
+
+        if (!hasFundingDet && !hasLeadership && !hasContacts && !company.companyLinkedinUrl) return null;
 
         return (
-          <div className="mt-3 p-3 bg-white rounded-lg border border-[#EBE4D5] text-xs space-y-2">
-            <span className="font-mono text-[10px] uppercase font-bold text-[#766E65] block">
-              Executive Leadership & Contacts (Uploaded Source):
-            </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-[11px]">
-              {cAny.ceoName && (
-                <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
-                  <span className="text-[#766E65] font-bold">CEO:</span> <span className="font-semibold text-[#1E1B18]">{cAny.ceoName}</span>
+          <div className="mt-3 p-3 bg-white rounded-lg border border-[#EBE4D5] text-xs space-y-3">
+            {/* Funding Intelligence */}
+            {hasFundingDet && (
+              <div className="space-y-1.5 pb-2.5 border-b border-[#F0EAD8]">
+                <span className="font-mono text-[10px] uppercase font-bold text-[#766E65] block">
+                  💰 Funding Research Breakdown:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">
+                  <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
+                    <span className="text-[#766E65] font-bold">Total Funding:</span>{' '}
+                    <span className="font-semibold text-[#1E1B18]">
+                      {fundingDet?.total_funding_usd ? `$${(fundingDet.total_funding_usd / 1e6).toFixed(1)}M` : (company.fundingOrRevenue || 'Undisclosed')}
+                    </span>
+                  </div>
+                  <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
+                    <span className="text-[#766E65] font-bold">Latest Round:</span>{' '}
+                    <span className="font-semibold text-[#1E1B18]">
+                      {fundingDet?.latest_round_usd ? `$${(fundingDet.latest_round_usd / 1e6).toFixed(1)}M` : '—'}
+                    </span>
+                  </div>
+                  <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
+                    <span className="text-[#766E65] font-bold">Round Type:</span>{' '}
+                    <span className="font-semibold text-[#1E1B18]">{fundingDet?.latest_round_type || company.funding?.stage || '—'}</span>
+                  </div>
+                  <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
+                    <span className="text-[#766E65] font-bold">Round Date:</span>{' '}
+                    <span className="font-semibold text-[#1E1B18]">{fundingDet?.latest_round_date || '—'}</span>
+                  </div>
                 </div>
-              )}
-              {cAny.ceoEmail && (
-                <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
-                  <span className="text-[#766E65] font-bold">CEO Email:</span> <span className="font-mono text-[#2E7D32]">{cAny.ceoEmail}</span>
+              </div>
+            )}
+
+            {/* Leadership Roster */}
+            {hasLeadership && (
+              <div className="space-y-1.5 pb-2.5 border-b border-[#F0EAD8]">
+                <span className="font-mono text-[10px] uppercase font-bold text-[#766E65] block">
+                  👥 Executive Leadership Roster:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-[11px]">
+                  {ceoName && (
+                    <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8] flex flex-col justify-between">
+                      <div>
+                        <span className="text-[#766E65] font-bold">Current CEO:</span>{' '}
+                        <span className="font-semibold text-[#1E1B18]">{ceoName}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        {ceoLinkedin && (
+                          <a href={ceoLinkedin} target="_blank" rel="noopener noreferrer" className="text-[#FF6B35] underline font-mono text-[10px]">
+                            LinkedIn ↗
+                          </a>
+                        )}
+                        {ceoEmail && (
+                          <span className="font-mono text-[10px] text-[#2E7D32] bg-[#E8F5E9] px-1 rounded truncate">
+                            {ceoEmail}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {foundersList && foundersList.length > 0 && (
+                    <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
+                      <span className="text-[#766E65] font-bold">Founder(s):</span>{' '}
+                      <span className="font-semibold text-[#1E1B18]">
+                        {foundersList.map((f: any) => f.full_name || f.name).join(', ')}
+                      </span>
+                    </div>
+                  )}
+
+                  {cofoundersList && cofoundersList.length > 0 && (
+                    <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
+                      <span className="text-[#766E65] font-bold">Co-Founder(s):</span>{' '}
+                      <span className="font-semibold text-[#1E1B18]">
+                        {cofoundersList.map((f: any) => f.full_name || f.name).join(', ')}
+                      </span>
+                    </div>
+                  )}
+
+                  {formerCeosList && formerCeosList.length > 0 && (
+                    <div className="p-1.5 px-2 bg-[#FFF3E0] rounded border border-[#FFE0B2]">
+                      <span className="text-[#E65100] font-bold">Former CEO(s):</span>{' '}
+                      <span className="font-semibold text-[#BF360C]">
+                        {formerCeosList.map((f: any) => f.full_name || f.name).join(', ')}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-              {cAny.ceoLinkedin && (
+              </div>
+            )}
+
+            {/* Separated Contacts & Social Profiles */}
+            <div className="space-y-1.5">
+              <span className="font-mono text-[10px] uppercase font-bold text-[#766E65] block">
+                📬 Verified Contacts & Social Presence:
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">
                 <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
-                  <span className="text-[#766E65] font-bold">CEO LinkedIn:</span>{' '}
-                  <a href={cAny.ceoLinkedin} target="_blank" rel="noopener noreferrer" className="text-[#FF6B35] underline font-mono">Profile ↗</a>
+                  <span className="text-[#766E65] font-bold">Company Email:</span>{' '}
+                  <span className="font-mono text-[#1E1B18]">
+                    {contDet?.company_emails?.[0]?.email || cAny.companyEmail || (
+                      <span className="text-[#A8A29E] italic text-[10px]">Not publicly disclosed</span>
+                    )}
+                  </span>
                 </div>
-              )}
-              {cAny.founderNames && cAny.founderNames.length > 0 && (
+
                 <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
-                  <span className="text-[#766E65] font-bold">Founder(s):</span> <span className="font-semibold text-[#1E1B18]">{cAny.founderNames.join(', ')}</span>
+                  <span className="text-[#766E65] font-bold">CEO Pro Email:</span>{' '}
+                  <span className="font-mono text-[#2E7D32]">
+                    {ceoEmail || (
+                      <span className="text-[#A8A29E] italic text-[10px]">Not publicly disclosed</span>
+                    )}
+                  </span>
                 </div>
-              )}
-              {cAny.founderEmails && cAny.founderEmails.length > 0 && (
+
                 <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
-                  <span className="text-[#766E65] font-bold">Founder Email:</span> <span className="font-mono text-[#2E7D32]">{cAny.founderEmails.join(', ')}</span>
+                  <span className="text-[#766E65] font-bold">Company Phone:</span>{' '}
+                  <span className="font-mono text-[#1E1B18]">
+                    {contDet?.phones?.[0] || cAny.companyPhone || '—'}
+                  </span>
                 </div>
-              )}
-              {cAny.cofounderNames && cAny.cofounderNames.length > 0 && (
-                <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
-                  <span className="text-[#766E65] font-bold">Co-Founder(s):</span> <span className="font-semibold text-[#1E1B18]">{cAny.cofounderNames.join(', ')}</span>
-                </div>
-              )}
-              {cAny.companyEmail && (
-                <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
-                  <span className="text-[#766E65] font-bold">Company Email:</span> <span className="font-mono text-[#1E1B18]">{cAny.companyEmail}</span>
-                </div>
-              )}
-              {company.companyLinkedinUrl && (
+
                 <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
                   <span className="text-[#766E65] font-bold">Company LinkedIn:</span>{' '}
-                  <a href={company.companyLinkedinUrl} target="_blank" rel="noopener noreferrer" className="text-[#FF6B35] underline font-mono">Company Page ↗</a>
+                  {socDet?.company_linkedin?.url || company.companyLinkedinUrl ? (
+                    <a
+                      href={(socDet?.company_linkedin?.url || company.companyLinkedinUrl) ?? undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#FF6B35] underline font-mono"
+                    >
+                      Company Page ↗
+                    </a>
+                  ) : (
+                    <span className="text-[#A8A29E] italic text-[10px]">Not found</span>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         );

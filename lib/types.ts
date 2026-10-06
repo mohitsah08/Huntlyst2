@@ -85,6 +85,22 @@ export type CompanyRecord = {
   usPresence?: boolean | null; // legacy backwards compatibility
   founderOrCeoName: string | null;
   founderOrCeoEmail: string | null;
+  ceoName?: string | null;
+  ceoEmail?: string | null;
+  ceoLinkedin?: string | null;
+  founderNames?: string[];
+  cofounderNames?: string[];
+  founderEmails?: string[];
+  cofounderEmails?: string[];
+  founderLinkedin?: string[];
+  cofounderLinkedin?: string[];
+  companyEmail?: string | null;
+  companyPhone?: string | null;
+  companyTwitterUrl?: string | null;
+  researchCompleteness?: number;
+  leadership?: any;
+  fundingDetails?: any;
+  conflictDetails?: any[];
   emailVerified: boolean;
   contactVerificationStatus?: VerificationStatusType;
   contactVerificationReason?: string;

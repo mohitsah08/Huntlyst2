@@ -89,6 +89,7 @@ export interface UniversalExportRecord {
   industry: string;
   sector: string;
   subSector?: string;
+  subIndustry?: string;
   description: string;
   headquarters: string;
   country: string;
@@ -107,6 +108,10 @@ export interface UniversalExportRecord {
   revenue?: string;
   fundingRound?: string;
   fundingDate?: string;
+  totalFunding?: string;
+  latestRound?: string;
+  latestRoundDate?: string;
+  latestRoundType?: string;
   recentFundingSignal?: string;
   recentlyLaunched?: string;
   recentlyUpdated?: string;
@@ -164,6 +169,15 @@ export interface UniversalExportRecord {
   contactCompleteness?: string;
   contactVerificationSummary?: string;
 
+  // Leadership Roster & Completeness (Section 38)
+  founderNames?: string;
+  cofounderNames?: string;
+  founderEmails?: string;
+  cofounderEmails?: string;
+  founderLinkedin?: string;
+  cofounderLinkedin?: string;
+  researchCompleteness?: number | string;
+  conflictNotes?: string;
 
   // Research Data
   researchSummary: string;
@@ -445,6 +459,19 @@ export function normalizeCompanyRecord(
     huntId: huntMetadata.huntId || 'hunt-auto',
     agentName: 'huntlyst-discovery',
     duplicateStatus: 'Canonical (Unique)',
+    subIndustry: (c as any).subIndustry || '',
+    totalFunding: (c as any).fundingDetails?.total_funding_usd ? `$${((c as any).fundingDetails.total_funding_usd / 1e6).toFixed(1)}M` : ((c as any).totalFunding || c.fundingOrRevenue || ''),
+    latestRound: (c as any).fundingDetails?.latest_round_usd ? `$${((c as any).fundingDetails.latest_round_usd / 1e6).toFixed(1)}M` : ((c as any).latestRound || ''),
+    latestRoundDate: (c as any).fundingDetails?.latest_round_date || (c as any).latestRoundDate || '',
+    latestRoundType: (c as any).fundingDetails?.latest_round_type || (c as any).latestRoundType || '',
+    founderNames: (c as any).founderNames?.join(', ') || (c as any).leadership?.founders?.map((f: any) => f.full_name).join(', ') || '',
+    cofounderNames: (c as any).cofounderNames?.join(', ') || (c as any).leadership?.co_founders?.map((cf: any) => cf.full_name).join(', ') || '',
+    founderEmails: (c as any).founderEmails?.join(', ') || (c as any).leadership?.founders?.map((f: any) => f.professional_email).filter(Boolean).join(', ') || '',
+    cofounderEmails: (c as any).cofounderEmails?.join(', ') || (c as any).leadership?.co_founders?.map((cf: any) => cf.professional_email).filter(Boolean).join(', ') || '',
+    founderLinkedin: (c as any).founderLinkedin?.join(', ') || (c as any).leadership?.founders?.map((f: any) => f.linkedin_url).filter(Boolean).join(', ') || '',
+    cofounderLinkedin: (c as any).cofounderLinkedin?.join(', ') || (c as any).leadership?.co_founders?.map((cf: any) => cf.linkedin_url).filter(Boolean).join(', ') || '',
+    researchCompleteness: (c as any).researchCompleteness ?? 100,
+    conflictNotes: (c as any).conflictDetails?.map((cd: any) => `${cd.field}: ${cd.explanation}`).join('; ') || '',
     rawRecord: c,
   };
 }
@@ -706,6 +733,19 @@ export function normalizeVerificationResult(
     overrideReason: res.auditTrail && res.auditTrail.length > 0 ? res.auditTrail[res.auditTrail.length - 1].override_reason : undefined,
     overrideTimestamp: res.auditTrail && res.auditTrail.length > 0 ? res.auditTrail[res.auditTrail.length - 1].override_at : undefined,
     auditHistoryJson: res.statusHistory ? JSON.stringify(res.statusHistory) : undefined,
+    subIndustry: (c as any)?.subIndustry || '',
+    totalFunding: res.fundingDetails?.total_funding_usd ? `$${(res.fundingDetails.total_funding_usd / 1e6).toFixed(1)}M` : ((c as any)?.fundingDetails?.total_funding_usd ? `$${((c as any).fundingDetails.total_funding_usd / 1e6).toFixed(1)}M` : c?.fundingOrRevenue || ''),
+    latestRound: res.fundingDetails?.latest_round_usd ? `$${(res.fundingDetails.latest_round_usd / 1e6).toFixed(1)}M` : ((c as any)?.fundingDetails?.latest_round_usd ? `$${((c as any).fundingDetails.latest_round_usd / 1e6).toFixed(1)}M` : ''),
+    latestRoundDate: res.fundingDetails?.latest_round_date || (c as any)?.fundingDetails?.latest_round_date || '',
+    latestRoundType: res.fundingDetails?.latest_round_type || (c as any)?.fundingDetails?.latest_round_type || '',
+    founderNames: res.leadership?.founders?.map(f => f.full_name).join(', ') || (c as any)?.founderNames?.join(', ') || '',
+    cofounderNames: res.leadership?.co_founders?.map(cf => cf.full_name).join(', ') || (c as any)?.cofounderNames?.join(', ') || '',
+    founderEmails: res.leadership?.founders?.map(f => f.professional_email).filter(Boolean).join(', ') || (c as any)?.founderEmails?.join(', ') || '',
+    cofounderEmails: res.leadership?.co_founders?.map(cf => cf.professional_email).filter(Boolean).join(', ') || (c as any)?.cofounderEmails?.join(', ') || '',
+    founderLinkedin: res.leadership?.founders?.map(f => f.linkedin_url).filter(Boolean).join(', ') || (c as any)?.founderLinkedin?.join(', ') || '',
+    cofounderLinkedin: res.leadership?.co_founders?.map(cf => cf.linkedin_url).filter(Boolean).join(', ') || (c as any)?.cofounderLinkedin?.join(', ') || '',
+    researchCompleteness: res.researchCompleteness ?? (c as any)?.researchCompleteness ?? 0,
+    conflictNotes: res.conflictDetails?.map(cd => `${cd.field}: ${cd.explanation}`).join('; ') || (c as any)?.conflictDetails?.map((cd: any) => `${cd.field}: ${cd.explanation}`).join('; ') || '',
   };
 }
 
@@ -851,6 +891,19 @@ export function normalizeUnifiedLead(
     overrideTimestamp: lastOverride?.override_at,
     originalStatus: origStatus,
     auditHistoryJson: JSON.stringify(lead.statusHistory || []),
+    subIndustry: norm.sub_industry || '',
+    totalFunding: norm.funding || comp.fundingOrRevenue || '',
+    latestRound: norm.funding_type || comp.latestRoundType || '',
+    latestRoundDate: norm.funding_date || comp.latestRoundDate || '',
+    latestRoundType: norm.funding_type || comp.latestRoundType || '',
+    founderNames: comp.founderNames?.join(', ') || norm.founder_or_ceo || '',
+    cofounderNames: comp.cofounderNames?.join(', ') || '',
+    founderEmails: comp.founderEmails?.join(', ') || norm.ceo_email || '',
+    cofounderEmails: comp.cofounderEmails?.join(', ') || '',
+    founderLinkedin: comp.founderLinkedin?.join(', ') || '',
+    cofounderLinkedin: comp.cofounderLinkedin?.join(', ') || '',
+    researchCompleteness: comp.researchCompleteness ?? 100,
+    conflictNotes: comp.conflictDetails?.map((cd: any) => `${cd.field}: ${cd.explanation}`).join('; ') || '',
   };
 }
 
@@ -1036,6 +1089,20 @@ export function generateUniversalCsv(
     'Best Contact Method',
     'Contact Completeness',
     'Contact Verification Summary',
+    // Section 38 Dossier Specific Columns
+    'Sub-industry',
+    'Total Disclosed Funding',
+    'Latest Round Amount',
+    'Latest Round Date',
+    'Latest Round Type',
+    'Founder(s)',
+    'Co-Founder(s)',
+    'Founder Email(s)',
+    'Co-Founder Email(s)',
+    'Founder LinkedIn',
+    'Co-Founder LinkedIn',
+    'Research Completeness',
+    'Conflict Notes',
     // Workflow Origin & Audit Metadata (Requirement 9, 27)
     'Workflow Origin',
     'Current Status',
@@ -1121,6 +1188,20 @@ export function generateUniversalCsv(
       escapeCsv(r.bestContactMethod || 'Verified Professional Email'),
       escapeCsv(r.contactCompleteness || '5 / 6 core contact fields (83%)'),
       escapeCsv(r.contactVerificationSummary || 'Verified via Huntlyst Agent Engine'),
+      // Section 38 Values
+      escapeCsv(r.subIndustry || ''),
+      escapeCsv(r.totalFunding || ''),
+      escapeCsv(r.latestRound || ''),
+      escapeCsv(r.latestRoundDate || ''),
+      escapeCsv(r.latestRoundType || ''),
+      escapeCsv(r.founderNames || ''),
+      escapeCsv(r.cofounderNames || ''),
+      escapeCsv(r.founderEmails || ''),
+      escapeCsv(r.cofounderEmails || ''),
+      escapeCsv(r.founderLinkedin || ''),
+      escapeCsv(r.cofounderLinkedin || ''),
+      escapeCsv(r.researchCompleteness !== undefined ? `${r.researchCompleteness}%` : ''),
+      escapeCsv(r.conflictNotes || ''),
       // Workflow Origin & Audit Metadata
       escapeCsv(r.workflowOrigin || 'INTERNAL'),
       escapeCsv(r.recordStatus || ''),
@@ -1224,6 +1305,20 @@ export function generateUniversalXlsx(
     'Best Contact Method': r.bestContactMethod || 'Verified Professional Email',
     'Contact Completeness': r.contactCompleteness || '5 / 6 core contact fields (83%)',
     'Contact Verification Summary': r.contactVerificationSummary || 'Verified via Huntlyst Agent Engine',
+    // Section 38 Dossier Fields
+    'Sub-industry': r.subIndustry || '',
+    'Total Disclosed Funding': r.totalFunding || '',
+    'Latest Round Amount': r.latestRound || '',
+    'Latest Round Date': r.latestRoundDate || '',
+    'Latest Round Type': r.latestRoundType || '',
+    'Founder(s)': r.founderNames || '',
+    'Co-Founder(s)': r.cofounderNames || '',
+    'Founder Email(s)': r.founderEmails || '',
+    'Co-Founder Email(s)': r.cofounderEmails || '',
+    'Founder LinkedIn': r.founderLinkedin || '',
+    'Co-Founder LinkedIn': r.cofounderLinkedin || '',
+    'Research Completeness': r.researchCompleteness !== undefined ? `${r.researchCompleteness}%` : '',
+    'Conflict Notes': r.conflictNotes || '',
     // Workflow Origin & Audit Metadata (Sections 8, 9, 14, 15)
     'Workflow Origin': r.workflowOrigin || 'INTERNAL',
     'Source File': r.sourceFile || '',
@@ -1439,6 +1534,7 @@ export function generateUniversalJson(
         industry: r.industry,
         sector: r.sector,
         subSector: r.subSector,
+        subIndustry: r.subIndustry,
         description: r.description,
         headquarters: r.headquarters,
         country: r.country,
@@ -1454,6 +1550,10 @@ export function generateUniversalJson(
       },
       financialActivityData: {
         funding: r.funding,
+        totalFunding: r.totalFunding,
+        latestRound: r.latestRound,
+        latestRoundDate: r.latestRoundDate,
+        latestRoundType: r.latestRoundType,
         revenue: r.revenue,
         fundingRound: r.fundingRound,
         fundingDate: r.fundingDate,
@@ -1470,6 +1570,12 @@ export function generateUniversalJson(
         isFounder: r.isFounder,
         isCeo: r.isCeo,
         isCoFounder: r.isCoFounder,
+        founderNames: r.founderNames,
+        cofounderNames: r.cofounderNames,
+        founderEmails: r.founderEmails,
+        cofounderEmails: r.cofounderEmails,
+        founderLinkedin: r.founderLinkedin,
+        cofounderLinkedin: r.cofounderLinkedin,
         linkedinUrl: r.linkedinUrl,
         professionalProfile: r.professionalProfile,
         personCompanyRelationship: r.personCompanyRelationship,
@@ -1486,6 +1592,8 @@ export function generateUniversalJson(
       researchData: {
         summary: r.researchSummary,
         status: r.researchStatus,
+        researchCompleteness: r.researchCompleteness,
+        conflictNotes: r.conflictNotes,
         timestamp: r.researchTimestamp,
         sourceCount: r.sourceCount,
         sourceUrls: r.sourceUrls,

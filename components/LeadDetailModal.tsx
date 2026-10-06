@@ -50,6 +50,11 @@ export default function LeadDetailModal({
               <span className="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-mono font-bold bg-[#FFE7DC] text-[#FF6B35] border border-[#FF6B35]/30">
                 Hunt Score: {huntScore} / 100
               </span>
+              {company.researchCompleteness !== undefined && (
+                <span className="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-mono font-bold bg-[#E8EAF6] text-[#283593] border border-[#C5CAE9]">
+                  Research Completeness: {company.researchCompleteness}%
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 text-xs font-mono text-[#766E65] flex-wrap">
               <span>📍 {company.country || company.location || 'Non-US'}</span>
@@ -89,6 +94,175 @@ export default function LeadDetailModal({
             {company.description || 'Technology platform validated against the non-US target profile.'}
           </p>
         </div>
+
+        {/* Discovered Funding Intelligence (Section 5) */}
+        {(company.fundingDetails || company.fundingOrRevenue) && (
+          <div className="bg-white p-4 rounded-xl border-2 border-[#1E1B18] shadow-sketch-sm space-y-3">
+            <div className="flex items-center justify-between border-b border-[#F0EAD8] pb-2">
+              <span className="text-xs font-mono uppercase tracking-wider text-[#1E1B18] font-bold flex items-center gap-1.5">
+                <span>💰</span> Disclosed Funding & Capital Structure
+              </span>
+              <span className="text-xs font-mono font-bold text-[#2E7D32]">
+                {company.fundingDetails?.total_funding_usd
+                  ? `$${(company.fundingDetails.total_funding_usd / 1e6).toFixed(1)}M Total`
+                  : company.fundingOrRevenue || 'Disclosed'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="p-2.5 bg-[#FAF6EE] rounded-lg border border-[#EBE4D5]">
+                <span className="text-[10px] font-mono uppercase text-[#766E65] block font-bold">TOTAL DISCLOSED:</span>
+                <span className="font-bold text-xs text-[#1E1B18] mt-0.5 block">
+                  {company.fundingDetails?.total_funding_usd
+                    ? `$${(company.fundingDetails.total_funding_usd / 1e6).toFixed(1)}M`
+                    : company.fundingOrRevenue || 'Undisclosed'}
+                </span>
+              </div>
+              <div className="p-2.5 bg-[#FAF6EE] rounded-lg border border-[#EBE4D5]">
+                <span className="text-[10px] font-mono uppercase text-[#766E65] block font-bold">LATEST ROUND:</span>
+                <span className="font-bold text-xs text-[#1E1B18] mt-0.5 block">
+                  {company.fundingDetails?.latest_round_usd
+                    ? `$${(company.fundingDetails.latest_round_usd / 1e6).toFixed(1)}M`
+                    : '—'}
+                </span>
+              </div>
+              <div className="p-2.5 bg-[#FAF6EE] rounded-lg border border-[#EBE4D5]">
+                <span className="text-[10px] font-mono uppercase text-[#766E65] block font-bold">STAGE / TYPE:</span>
+                <span className="font-bold text-xs text-[#1E1B18] mt-0.5 block">
+                  {company.fundingDetails?.latest_round_type || company.funding?.stage || '—'}
+                </span>
+              </div>
+              <div className="p-2.5 bg-[#FAF6EE] rounded-lg border border-[#EBE4D5]">
+                <span className="text-[10px] font-mono uppercase text-[#766E65] block font-bold">ROUND DATE:</span>
+                <span className="font-bold text-xs text-[#1E1B18] mt-0.5 block">
+                  {company.fundingDetails?.latest_round_date || '—'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Discovered Executive Leadership Roster (Section 6 & 7) */}
+        {(company.leadership || company.ceoName || company.founderNames?.length || company.founderOrCeoName) && (
+          <div className="bg-white p-4 rounded-xl border-2 border-[#1E1B18] shadow-sketch-sm space-y-3">
+            <div className="flex items-center justify-between border-b border-[#F0EAD8] pb-2">
+              <span className="text-xs font-mono uppercase tracking-wider text-[#1E1B18] font-bold flex items-center gap-1.5">
+                <span>👥</span> Executive Leadership Roster
+              </span>
+              <span className="text-xs font-mono text-[#766E65]">
+                Individual Executive Verification
+              </span>
+            </div>
+            <div className="space-y-2 text-xs">
+              {/* Current CEO */}
+              {(company.leadership?.ceo || company.ceoName) && (
+                <div className="p-3 bg-[#FAF6EE] rounded-lg border border-[#EBE4D5] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm text-[#1E1B18]">
+                        {company.leadership?.ceo?.full_name || company.ceoName}
+                      </span>
+                      <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-[#E8F5E9] text-[#2E7D32] border border-[#2E7D32]/30 rounded">
+                        Current CEO
+                      </span>
+                    </div>
+                    {company.leadership?.ceo?.title && (
+                      <span className="text-[11px] text-[#766E65] block mt-0.5">{company.leadership.ceo.title}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {(company.leadership?.ceo?.linkedin_url || company.ceoLinkedin) && (
+                      <a
+                        href={company.leadership?.ceo?.linkedin_url || company.ceoLinkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] font-mono text-[#FF6B35] hover:underline"
+                      >
+                        LinkedIn ↗
+                      </a>
+                    )}
+                    {(company.leadership?.ceo?.professional_email || company.ceoEmail) && (
+                      <span className="px-2 py-0.5 text-[11px] font-mono text-[#2E7D32] bg-[#E8F5E9] border border-[#2E7D32]/30 rounded">
+                        {company.leadership?.ceo?.professional_email || company.ceoEmail}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Founders */}
+              {((company.leadership?.founders && company.leadership.founders.length > 0) || company.founderNames?.length) && (
+                <div className="p-3 bg-[#FAF6EE] rounded-lg border border-[#EBE4D5] space-y-2">
+                  <span className="text-[10px] font-mono uppercase font-bold text-[#766E65] block">
+                    Founders:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {(company.leadership?.founders || company.founderNames?.map(name => ({ full_name: name, role: 'Founder' })) || []).map((f: any, idx: number) => (
+                      <div key={idx} className="p-2 bg-white rounded border border-[#E0D9C8] flex items-center justify-between">
+                        <span className="font-bold text-[#1E1B18]">{f.full_name}</span>
+                        {f.linkedin_url && (
+                          <a href={f.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-[10px] font-mono text-[#FF6B35] hover:underline">
+                            Profile ↗
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Co-Founders */}
+              {((company.leadership?.co_founders && company.leadership.co_founders.length > 0) || company.cofounderNames?.length) && (
+                <div className="p-3 bg-[#FAF6EE] rounded-lg border border-[#EBE4D5] space-y-2">
+                  <span className="text-[10px] font-mono uppercase font-bold text-[#766E65] block">
+                    Co-Founders:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {(company.leadership?.co_founders || company.cofounderNames?.map(name => ({ full_name: name, role: 'Co-Founder' })) || []).map((cf: any, idx: number) => (
+                      <div key={idx} className="p-2 bg-white rounded border border-[#E0D9C8] flex items-center justify-between">
+                        <span className="font-bold text-[#1E1B18]">{cf.full_name}</span>
+                        {cf.linkedin_url && (
+                          <a href={cf.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-[10px] font-mono text-[#FF6B35] hover:underline">
+                            Profile ↗
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Former CEOs */}
+              {company.leadership?.former_ceos && company.leadership.former_ceos.length > 0 && (
+                <div className="p-3 bg-[#FFF3E0] rounded-lg border border-[#FFE0B2] space-y-1">
+                  <span className="text-[10px] font-mono uppercase font-bold text-[#E65100] block">
+                    Historical / Former CEO(s):
+                  </span>
+                  {company.leadership.former_ceos.map((fc: any, idx: number) => (
+                    <div key={idx} className="text-[#BF360C] text-[11px] font-medium">
+                      • {fc.full_name} {fc.evidence ? `— (${fc.evidence})` : ''}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Conflicts Alert Card (Section 31) */}
+        {company.conflictDetails && company.conflictDetails.length > 0 && (
+          <div className="bg-[#FFF9C4] p-4 rounded-xl border border-[#FBC02D] space-y-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#F57F17]">
+              <span>⚠️</span> Discovered Evidence Conflicts:
+            </div>
+            <div className="space-y-1">
+              {company.conflictDetails.map((conf, idx) => (
+                <div key={idx} className="p-2 bg-white/70 rounded text-[11px] font-mono text-[#E65100]">
+                  <span className="font-bold uppercase">[{conf.field}]:</span> Seed: "{conf.seed_value || 'None'}" vs Live: "{conf.live_value}" — {conf.explanation}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Reference Benchmark & Multi-Status Validation Card (Section 24) */}
         {(company.referenceStatus || company.sourceType === 'reference_benchmark' || company.huntlystVerificationStatus) && (

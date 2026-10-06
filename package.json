@@ -17,7 +17,8 @@
     "test:unified": "npx -y tsx tests/unified-lead-store.test.ts",
     "test:exports-4status": "npx -y tsx tests/export-four-statuses.test.ts",
     "test:regression-internal": "npx -y tsx tests/regression-internal-qualification.test.ts",
-    "test": "npx -y tsx tests/target-profile.test.ts && npx -y tsx tests/canonical-qualification.test.ts && npx -y tsx tests/internal-workflow.test.ts && npx -y tsx tests/status-transitions.test.ts && npx -y tsx tests/unified-lead-store.test.ts && npx -y tsx tests/export-four-statuses.test.ts && npx -y tsx tests/export-system.test.ts && npx -y tsx tests/contact-enrichment.test.ts && npx -y tsx tests/regression-internal-qualification.test.ts"
+    "test:regression-external": "npx -y tsx tests/regression-external-research.test.ts",
+    "test": "npx -y tsx tests/target-profile.test.ts && npx -y tsx tests/canonical-qualification.test.ts && npx -y tsx tests/internal-workflow.test.ts && npx -y tsx tests/status-transitions.test.ts && npx -y tsx tests/unified-lead-store.test.ts && npx -y tsx tests/export-four-statuses.test.ts && npx -y tsx tests/export-system.test.ts && npx -y tsx tests/contact-enrichment.test.ts && npx -y tsx tests/regression-internal-qualification.test.ts && npx -y tsx tests/regression-external-research.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",

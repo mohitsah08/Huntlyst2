@@ -25,6 +25,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const targetProfile: TargetProfile = body.targetProfile || DEFAULT_TVB_TARGET_PROFILE;
+    
+    // Log/capture active target profile details for every external run (Requirement 17)
+    console.log(`[API External Discovery] Active Target Profile: ID="${targetProfile.id}", Name="${targetProfile.name}", Metric=${targetProfile.financialMetric}, Range=$${targetProfile.fundingMin}-$${targetProfile.fundingMax}, Countries=${targetProfile.countries?.join(', ') || 'Global'}`);
+    
     const candidatesInput: ResearchCandidateInput[] = [];
 
     // Support handed-off LeadPackages or raw company objects/strings
@@ -88,7 +92,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const verificationResults: CompanyVerificationResult[] = [];
+    const verificationResults: (CompanyVerificationResult & Record<string, any>)[] = [];
     const concurrency = 3;
 
     for (let i = 0; i < candidatesInput.length; i += concurrency) {
@@ -108,15 +112,40 @@ export async function POST(request: NextRequest) {
             rawResult.verificationStatus = 'UNVERIFIED';
           }
 
-          // Upsert into unified lead store
-          const unifiedLead = unifiedLeadStore.upsertLeadFromExternal(rawResult, targetProfile.id);
-          rawResult.unified_lead_id = unifiedLead.id;
-          rawResult.origins = unifiedLead.origins;
-          rawResult.originDisplay = unifiedLead.originDisplay;
-          rawResult.statusHistory = unifiedLead.statusHistory;
-          rawResult.auditTrail = unifiedLead.auditTrail;
+          // Build Detailed External JSON Model (Section 33) while preserving CompanyVerificationResult compatibility
+          const formattedResult: CompanyVerificationResult & Record<string, any> = {
+            ...rawResult,
+            funding: {
+              totalFundingUsd: rawResult.fundingDetails?.total_funding_usd || null,
+              latestRoundUsd: rawResult.fundingDetails?.latest_round_usd || null,
+              latestRoundDate: rawResult.fundingDetails?.latest_round_date || null,
+              latestRoundType: rawResult.fundingDetails?.latest_round_type || null,
+              sources: rawResult.fundingDetails?.sources || [],
+              conflicts: rawResult.conflictDetails?.filter(c => c.field === 'funding') || [],
+            },
+            contacts: {
+              companyEmails: rawResult.contactDetails?.company_emails || [],
+              executiveEmails: rawResult.contactDetails?.executive_emails || [],
+              phones: rawResult.contactDetails?.phones || [],
+            },
+            social: {
+              companyLinkedIn: rawResult.socialDetails?.company_linkedin?.url || null,
+              companyX: rawResult.socialDetails?.company_x?.url || null,
+              executiveProfiles: rawResult.socialDetails?.executive_profiles || [],
+            },
+            conflicts: rawResult.conflicts || rawResult.conflictDetails?.map(c => `${c.field}: ${c.explanation}`) || [],
+            conflictDetails: rawResult.conflictDetails || [],
+          };
 
-          verificationResults.push(rawResult);
+          // Upsert into unified lead store
+          const unifiedLead = unifiedLeadStore.upsertLeadFromExternal(formattedResult, targetProfile.id);
+          formattedResult.unified_lead_id = unifiedLead.id;
+          formattedResult.origins = unifiedLead.origins;
+          formattedResult.originDisplay = unifiedLead.originDisplay;
+          formattedResult.statusHistory = unifiedLead.statusHistory;
+          formattedResult.auditTrail = unifiedLead.auditTrail;
+
+          verificationResults.push(formattedResult);
         }
       }
     }
@@ -133,6 +162,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      activeTargetProfileId: targetProfile.id,
       totalRequested: candidatesInput.length,
       results: verificationResults,
       stats,
