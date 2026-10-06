@@ -850,6 +850,15 @@ export function getCountriesForRegion(regionId: string): string[] {
 }
 
 /**
+ * Get country names for a given continent/region name (e.g. Asia, Europe)
+ */
+export function getCountriesByRegion(region: string): string[] {
+  const norm = region.toLowerCase().trim();
+  return COUNTRIES.filter(c => c.region.toLowerCase() === norm).map(c => c.name);
+}
+
+
+/**
  * Detect country from company evidence (text snippets, address, cities, TLDs)
  */
 export function detectCountryFromEvidence(

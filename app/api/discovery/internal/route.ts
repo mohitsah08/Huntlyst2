@@ -1,77 +1,136 @@
 /**
  * API Route: /api/discovery/internal
  * 
- * Rebuilt Internal Discovery Pipeline Stage:
- * 1. Accepts candidate list from file upload (CSV, XLSX, PDF, DOCX, TXT, JSON) or direct text
- * 2. Parses and preserves all pre-existing evidence from previous Huntlyst exports
- * 3. Processes ALL supplied candidates without artificial limits (40, 100+, etc.)
- * 4. Executes deterministic 6-stage candidate state machine:
- *    DISCOVER → RESEARCH → VALIDATE → FIND FOUNDERS → VERIFY CONTACT → QUALIFY
- * 5. Resilient error handling: if one candidate fails, marks ERROR and continues processing
- * 6. Supports real-time progress streaming via SSE and standard JSON response
- * 7. Returns exact candidate accounting: totalReceived = totalProcessed
+ * Internal Discovery Pipeline Stage:
+ * 
+ * STRICT ARCHITECTURAL RULES:
+ * 1. INTERNAL MUST NOT PERFORM ONLINE RESEARCH.
+ *    The uploaded file is the ONLY source of truth.
+ *    No Google, DuckDuckGo, SerpAPI, website scraping, crawlers, web intelligence,
+ *    live funding lookups, live founder lookups, or live DNS/MX enrichment.
+ * 2. AGENT 1 (FileIntakeAuditor):
+ *    - Reads the entire file, all rows, columns, sheets (XLSX), pages (PDF).
+ *    - Preserves all original values in seed_data.raw_fields untouched.
+ *    - Normalizes into separate normalized fields.
+ *    - Audits placeholders, blanks, malformed fields, duplicates.
+ *    - Generates Lead Packages.
+ * 3. INTERNAL QUALIFICATION:
+ *    - Evaluates each Lead Package against active Target Profile using ONLY internal data.
+ *    - EXACTLY FOUR FINAL STATUSES: VERIFIED | REVIEW | UNVERIFIED | REJECTED.
+ *    - Errors normalize to UNVERIFIED with error audit.
+ * 4. UNIFIED LEAD STORE:
+ *    - Saves/merges into canonical unified lead store with origin INTERNAL.
+ *    - Full status history and audit trail tracking.
+ * 5. Supports real-time progress streaming via SSE and standard JSON response.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { parseCandidateFile, parseTxt, parseRawTextContent } from '@/lib/fileParser';
-import { processCandidateThroughPipeline } from '@/lib/discoveryPipeline';
-import { CompanyVerificationResult, ResearchCandidateInput, PipelineStageName } from '@/providers/types';
+import { auditAndBuildLeadPackages } from '@/lib/agents/fileIntakeAuditor';
+import { evaluateInternalLeadPackage } from '@/lib/internalQualification';
+import { unifiedLeadStore } from '@/lib/unifiedLeadStore';
 import { TargetProfile, DEFAULT_TVB_TARGET_PROFILE } from '@/lib/targetProfileData';
+import { CompanyVerificationResult } from '@/providers/types';
+import { LeadPackage, FinalLeadStatus } from '@/lib/leadPackage';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // 5 minutes max
 
-function createErrorCandidateResult(cand: ResearchCandidateInput, errorMsg: string): CompanyVerificationResult {
-  const fallbackName = cand.name || (cand.website ? cand.website.replace(/^https?:\/\//, '').split('/')[0] : 'Unknown Entity');
+function formatPackageToVerificationResult(
+  pkg: LeadPackage,
+  evalResult: ReturnType<typeof evaluateInternalLeadPackage>,
+  unifiedLeadId: string
+): CompanyVerificationResult {
+  const norm = pkg.seed_data.normalized;
   const now = new Date().toISOString();
 
-  const emptyCrit = { status: 'UNKNOWN' as const, value: 'Unverified', reason: errorMsg, timestamp: now };
+  // Map criteria to CriterionEvaluation format
+  const critEval: any = {};
+  for (const [k, v] of Object.entries(evalResult.qualification.criteria)) {
+    critEval[k] = {
+      status: v.status === 'PASS' ? 'PASS' : v.status === 'FAIL' ? 'FAIL' : v.status === 'CONTRADICTED' ? 'CONTRADICTED' : 'UNKNOWN',
+      value: v.actualValue || 'Unverified',
+      target: v.requiredValue || k,
+      reason: v.reason,
+      evidence: v.evidence || `Internal file row #${pkg.source.row_number}`,
+      timestamp: now,
+    };
+  }
+
+  // Ensure standard criteria keys exist
+  const standardKeys = ['funding', 'industry', 'companyAge', 'geography', 'companyStage', 'founderOrCeo', 'professionalEmail', 'linkedinProfile'];
+  for (const sk of standardKeys) {
+    if (!critEval[sk]) {
+      critEval[sk] = {
+        status: 'UNKNOWN',
+        value: 'Not evaluated',
+        target: sk,
+        reason: 'Not required or not evaluated in internal mode',
+        timestamp: now,
+      };
+    }
+  }
+
   return {
     company: {
-      name: fallbackName,
-      website: cand.website || cand.url || '',
-      description: cand.rawText || null,
-      industry: 'Unknown',
-      fundingOrRevenue: null,
-      usPresence: null,
-      founderOrCeoName: null,
-      founderOrCeoEmail: null,
-      emailVerified: false,
-      confidenceScore: 0,
-      sourceType: cand.source || 'Internal File',
+      name: norm.company_name,
+      website: norm.website || '',
+      description: norm.description || null,
+      industry: norm.industry || 'Unknown',
+      fundingOrRevenue: norm.funding || null,
+      fundingAmount: norm.funding_amount_usd || norm.funding || null,
+      fundingDate: norm.funding_date || null,
+      fundingType: norm.funding_type || null,
+      founderOrCeoName: norm.founder_or_ceo || null,
+      founderOrCeoEmail: norm.company_email || norm.ceo_email || null,
+      emailVerified: false, // Internal file verification only, no live SMTP
+      confidenceScore: evalResult.qualification.match_score,
+      huntScore: evalResult.qualification.match_score,
+      sourceType: `Internal File: ${pkg.source.file_name}`,
       statusTag: 'NEW',
+      country: norm.country || undefined,
+      location: norm.location || undefined,
+      linkedinUrl: norm.ceo_linkedin || undefined,
+      companyLinkedinUrl: norm.company_linkedin || undefined,
       firstDiscoveredAt: now,
       lastVerifiedAt: now,
     },
-    verificationStatus: 'ERROR',
-    criteria: {
-      funding: { ...emptyCrit, target: 'Funding Target' },
-      industry: { ...emptyCrit, target: 'Industry Target' },
-      companyAge: { ...emptyCrit, target: 'Age Target' },
-      geography: { ...emptyCrit, target: 'Geography Target' },
-      usPresence: { ...emptyCrit, target: 'US Presence Policy' },
-      companyStage: { ...emptyCrit, target: 'Stage Target' },
-      founderOrCeo: { ...emptyCrit, target: 'CEO / Co-founder' },
-      professionalEmail: { ...emptyCrit, target: 'Verified Email' },
-      linkedinProfile: { ...emptyCrit, target: 'Public Profile' },
-    },
-    rejectionReason: `Processing error: ${errorMsg}`,
-    decisionExplanation: `ERROR: ${errorMsg}`,
-    failedCriteria: ['Processing Error'],
-    passedCriteria: [],
-    unknownCriteria: ['Funding', 'Industry', 'Geography', 'US Presence', 'CEO/Founder', 'Professional Email'],
-    sources: [cand.website || cand.url || 'Internal Document'],
+    verificationStatus: evalResult.finalStatus as any,
+    criteria: critEval,
+    rejectionReason: evalResult.rejectionReason,
+    qualificationReason: evalResult.finalStatus === 'VERIFIED' ? evalResult.verdictReason : undefined,
+    decisionExplanation: evalResult.verdictReason,
+    failedCriteria: evalResult.qualification.failedCriteria,
+    passedCriteria: evalResult.qualification.passedCriteria,
+    unknownCriteria: evalResult.qualification.missingCriteria,
+    sources: [`Internal File: ${pkg.source.file_name} (Row ${pkg.source.row_number}${pkg.source.sheet_name ? `, Sheet: ${pkg.source.sheet_name}` : ''})`],
     auditTimestamp: now,
-    errorMessage: errorMsg,
-    stages: {
-      DISCOVER: { stage: 'DISCOVER', status: 'completed', attempts: 1 },
-      RESEARCH: { stage: 'RESEARCH', status: 'failed', error: errorMsg, attempts: 1 },
-      VALIDATE: { stage: 'VALIDATE', status: 'skipped', attempts: 0 },
-      FIND_FOUNDERS: { stage: 'FIND_FOUNDERS', status: 'skipped', attempts: 0 },
-      VERIFY_CONTACT: { stage: 'VERIFY_CONTACT', status: 'skipped', attempts: 0 },
-      QUALIFY: { stage: 'QUALIFY', status: 'failed', error: errorMsg, attempts: 1 },
+    source_data: {
+      name: norm.company_name,
+      website: norm.website,
+      raw_industry: norm.industry,
+      address: norm.location || null,
+      city: norm.city || null,
+      state: norm.state || null,
+      country: norm.country || null,
+      phone: null,
+      email: norm.company_email || norm.ceo_email || null,
+      founder: norm.founder_or_ceo || null,
+      funding: norm.funding || null,
+      raw_fields: { ...pkg.seed_data.raw_fields },
     },
+    lead_package: pkg,
+    unified_lead_id: unifiedLeadId,
+    origins: ['INTERNAL'],
+    originDisplay: 'INTERNAL',
+    statusHistory: [
+      {
+        status: evalResult.finalStatus,
+        source: 'INTERNAL_AUTO',
+        timestamp: now,
+        reason: evalResult.verdictReason,
+      },
+    ],
   };
 }
 
@@ -81,9 +140,9 @@ export async function POST(request: NextRequest) {
       request.headers.get('accept')?.includes('text/event-stream');
 
     const contentType = request.headers.get('content-type') || '';
-    let candidatesToResearch: ResearchCandidateInput[] = [];
+    let fileBuffer: Buffer | null = null;
+    let fileName = 'manual-input.txt';
     let targetProfile: TargetProfile = DEFAULT_TVB_TARGET_PROFILE;
-    let fileName = 'manual-input';
 
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData();
@@ -99,38 +158,43 @@ export async function POST(request: NextRequest) {
       if (file) {
         fileName = file.name;
         const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const parsed = await parseCandidateFile(buffer, file.name);
-        candidatesToResearch = parsed.candidates;
+        fileBuffer = Buffer.from(arrayBuffer);
       }
     } else {
       const body = await request.json();
       if (body.targetProfile) {
         targetProfile = body.targetProfile;
       }
-      if (body.candidates && Array.isArray(body.candidates)) {
-        candidatesToResearch = body.candidates;
-      } else if (body.rawText) {
-        const parsed = parseRawTextContent(body.rawText, 'pasted-text');
-        candidatesToResearch = parsed.candidates;
+      if (body.rawText) {
+        fileBuffer = Buffer.from(body.rawText, 'utf-8');
+        fileName = 'pasted-text.txt';
       }
     }
 
-    const totalReceived = candidatesToResearch.length;
+    if (!fileBuffer || fileBuffer.length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'No valid file or text content was provided for internal intake.',
+        results: [],
+        stats: { totalReceived: 0, totalProcessed: 0, verified: 0, review: 0, unverified: 0, rejected: 0 },
+      }, { status: 400 });
+    }
+
+    // STAGE 1: Full file intake & audit by Agent 1 (NO WEB)
+    const auditResult = await auditAndBuildLeadPackages(fileBuffer, fileName);
+    const packages = auditResult.packages;
+    const totalReceived = packages.length;
 
     if (totalReceived === 0) {
       return NextResponse.json({
         success: false,
-        error: 'No valid candidate companies or URLs were found in the uploaded data.',
+        error: 'No valid company leads could be extracted from the uploaded document.',
         results: [],
-        stats: { totalReceived: 0, totalProcessed: 0, qualified: 0, rejected: 0, partiallyVerified: 0, unverified: 0, errors: 0 },
+        stats: { totalReceived: 0, totalProcessed: 0, verified: 0, review: 0, unverified: 0, rejected: 0 },
       }, { status: 400 });
     }
 
-    // Process ALL candidates in manageable batches without artificial ceiling
-    const BATCH_SIZE = 8;
-    const CONCURRENCY = 3;
-
+    // Process all lead packages with internal qualification (ZERO WEB)
     if (isStream) {
       const encoder = new TextEncoder();
       const stream = new TransformStream();
@@ -152,61 +216,51 @@ export async function POST(request: NextRequest) {
             type: 'start',
             fileName,
             totalReceived,
-            message: `Received ${totalReceived} candidates. Starting deterministic 6-stage verification...`,
+            auditSummary: auditResult.globalAuditSummary,
+            message: `Agent 1 completed full intake of ${totalReceived} records (${auditResult.totalRowsRead} rows read). Starting internal profile evaluation...`,
           });
 
-          for (let b = 0; b < totalReceived; b += BATCH_SIZE) {
-            const batch = candidatesToResearch.slice(b, b + BATCH_SIZE);
+          for (let i = 0; i < packages.length; i++) {
+            const pkg = packages[i];
+            const evalResult = evaluateInternalLeadPackage(pkg, targetProfile);
+            const unifiedLead = unifiedLeadStore.upsertLeadFromInternal(pkg, evalResult);
+            const res = formatPackageToVerificationResult(pkg, evalResult, unifiedLead.id);
 
-            for (let i = 0; i < batch.length; i += CONCURRENCY) {
-              const chunk = batch.slice(i, i + CONCURRENCY);
-              const chunkPromises = chunk.map(async (cand) => {
-                try {
-                  return await processCandidateThroughPipeline(cand, targetProfile);
-                } catch (candErr: any) {
-                  return createErrorCandidateResult(cand, candErr.message || 'Pipeline execution failed');
-                }
-              });
+            allResults.push(res);
+            processedCount++;
 
-              const chunkResults = await Promise.all(chunkPromises);
+            const currentStats = {
+              totalReceived,
+              totalProcessed: processedCount,
+              verified: allResults.filter(r => r.verificationStatus === 'VERIFIED').length,
+              review: allResults.filter(r => r.verificationStatus === 'REVIEW').length,
+              unverified: allResults.filter(r => r.verificationStatus === 'UNVERIFIED').length,
+              rejected: allResults.filter(r => r.verificationStatus === 'REJECTED').length,
+              // Compatibility aliases
+              qualified: allResults.filter(r => r.verificationStatus === 'VERIFIED').length,
+              errors: 0,
+            };
 
-              for (const res of chunkResults) {
-                allResults.push(res);
-                processedCount++;
-
-                const currentStats = {
-                  totalReceived,
-                  totalProcessed: processedCount,
-                  qualified: allResults.filter(r => r.verificationStatus === 'QUALIFIED').length,
-                  rejected: allResults.filter(r => r.verificationStatus === 'REJECTED').length,
-                  review: allResults.filter(r => r.verificationStatus === 'REVIEW').length,
-                  partiallyVerified: allResults.filter(r => r.verificationStatus === 'PARTIALLY_VERIFIED').length,
-                  unverified: allResults.filter(r => r.verificationStatus === 'UNVERIFIED').length,
-                  errors: allResults.filter(r => r.verificationStatus === 'ERROR').length,
-                };
-
-                await sendEvent({
-                  type: 'progress',
-                  current: processedCount,
-                  total: totalReceived,
-                  candidate: res,
-                  result: res,
-                  stats: currentStats,
-                  message: `Verified ${res.company.name} (${processedCount} / ${totalReceived})`,
-                });
-              }
-            }
+            await sendEvent({
+              type: 'progress',
+              current: processedCount,
+              total: totalReceived,
+              candidate: res,
+              result: res,
+              stats: currentStats,
+              message: `Evaluated ${res.company.name} [${evalResult.finalStatus}] (${processedCount} / ${totalReceived})`,
+            });
           }
 
           const finalStats = {
             totalReceived,
             totalProcessed: allResults.length,
-            qualified: allResults.filter(r => r.verificationStatus === 'QUALIFIED').length,
-            rejected: allResults.filter(r => r.verificationStatus === 'REJECTED').length,
+            verified: allResults.filter(r => r.verificationStatus === 'VERIFIED').length,
             review: allResults.filter(r => r.verificationStatus === 'REVIEW').length,
-            partiallyVerified: allResults.filter(r => r.verificationStatus === 'PARTIALLY_VERIFIED').length,
             unverified: allResults.filter(r => r.verificationStatus === 'UNVERIFIED').length,
-            errors: allResults.filter(r => r.verificationStatus === 'ERROR').length,
+            rejected: allResults.filter(r => r.verificationStatus === 'REJECTED').length,
+            qualified: allResults.filter(r => r.verificationStatus === 'VERIFIED').length,
+            errors: 0,
           };
 
           await sendEvent({
@@ -216,12 +270,13 @@ export async function POST(request: NextRequest) {
             totalProcessed: allResults.length,
             results: allResults,
             stats: finalStats,
-            message: `${allResults.length} / ${totalReceived} candidates fully processed`,
+            auditSummary: auditResult.globalAuditSummary,
+            message: `Internal processing complete: ${allResults.length} records evaluated into 4 final statuses.`,
           });
         } catch (streamErr: any) {
           await sendEvent({
             type: 'error',
-            message: streamErr.message || 'Internal discovery stream failed',
+            message: streamErr.message || 'Internal evaluation stream error',
           });
         } finally {
           await writer.close();
@@ -237,36 +292,24 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Standard JSON response: Process ALL candidates
+    // Standard JSON Response (ZERO WEB)
     const verificationResults: CompanyVerificationResult[] = [];
-
-    for (let b = 0; b < totalReceived; b += BATCH_SIZE) {
-      const batch = candidatesToResearch.slice(b, b + BATCH_SIZE);
-
-      for (let i = 0; i < batch.length; i += CONCURRENCY) {
-        const chunk = batch.slice(i, i + CONCURRENCY);
-        const chunkPromises = chunk.map(async (cand) => {
-          try {
-            return await processCandidateThroughPipeline(cand, targetProfile);
-          } catch (candErr: any) {
-            return createErrorCandidateResult(cand, candErr.message || 'Verification failed');
-          }
-        });
-
-        const chunkResults = await Promise.all(chunkPromises);
-        verificationResults.push(...chunkResults);
-      }
+    for (const pkg of packages) {
+      const evalResult = evaluateInternalLeadPackage(pkg, targetProfile);
+      const unifiedLead = unifiedLeadStore.upsertLeadFromInternal(pkg, evalResult);
+      const res = formatPackageToVerificationResult(pkg, evalResult, unifiedLead.id);
+      verificationResults.push(res);
     }
 
     const stats = {
       totalReceived,
       totalProcessed: verificationResults.length,
-      qualified: verificationResults.filter(r => r.verificationStatus === 'QUALIFIED').length,
-      rejected: verificationResults.filter(r => r.verificationStatus === 'REJECTED').length,
+      verified: verificationResults.filter(r => r.verificationStatus === 'VERIFIED').length,
       review: verificationResults.filter(r => r.verificationStatus === 'REVIEW').length,
-      partiallyVerified: verificationResults.filter(r => r.verificationStatus === 'PARTIALLY_VERIFIED').length,
       unverified: verificationResults.filter(r => r.verificationStatus === 'UNVERIFIED').length,
-      errors: verificationResults.filter(r => r.verificationStatus === 'ERROR').length,
+      rejected: verificationResults.filter(r => r.verificationStatus === 'REJECTED').length,
+      qualified: verificationResults.filter(r => r.verificationStatus === 'VERIFIED').length,
+      errors: 0,
     };
 
     return NextResponse.json({
@@ -276,12 +319,13 @@ export async function POST(request: NextRequest) {
       totalProcessed: verificationResults.length,
       results: verificationResults,
       stats,
+      auditSummary: auditResult.globalAuditSummary,
     });
   } catch (err: any) {
     console.error('[API Internal Discovery] Error:', err);
     return NextResponse.json({
       success: false,
-      error: err.message || 'Failed to process internal discovery candidates',
+      error: err.message || 'Failed to process internal discovery file',
     }, { status: 500 });
   }
 }

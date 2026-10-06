@@ -1,17 +1,19 @@
 /**
  * API Route: /api/discovery/external
  * 
- * Rebuilt External Discovery Pipeline Stage:
- * 1. Accepts company names, websites, or company URLs from user input
- * 2. Processes ALL supplied companies without arbitrary caps
- * 3. Runs deterministic 6-stage pipeline:
- *    DISCOVER → RESEARCH → VALIDATE → FIND FOUNDERS → VERIFY CONTACT → QUALIFY
- * 4. Extracts independent executives, professional emails, MX records, and field evidence
- * 5. Returns detailed intelligence dossier for user approval
+ * External Discovery Pipeline Stage:
+ * 
+ * Responsibilities:
+ * 1. Accepts company names, websites, company URLs, or Lead Packages handed off from Internal.
+ * 2. Runs real public/authorized web research without synthetic fabrication or guesses.
+ * 3. Enforces the SAME 4 final statuses: VERIFIED | REVIEW | UNVERIFIED | REJECTED.
+ * 4. Integrates with UnifiedLeadStore: merges into existing canonical lead records.
+ *    Maintains provenance (origin: EXTERNAL, or BOTH if already existed in Internal).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { processCandidateThroughPipeline } from '@/lib/discoveryPipeline';
+import { unifiedLeadStore } from '@/lib/unifiedLeadStore';
 import { CompanyVerificationResult, ResearchCandidateInput } from '@/providers/types';
 import { TargetProfile, DEFAULT_TVB_TARGET_PROFILE } from '@/lib/targetProfileData';
 
@@ -25,6 +27,7 @@ export async function POST(request: NextRequest) {
     const targetProfile: TargetProfile = body.targetProfile || DEFAULT_TVB_TARGET_PROFILE;
     const candidatesInput: ResearchCandidateInput[] = [];
 
+    // Support handed-off LeadPackages or raw company objects/strings
     if (Array.isArray(body.companies)) {
       for (const item of body.companies) {
         if (typeof item === 'string') {
@@ -36,12 +39,35 @@ export async function POST(request: NextRequest) {
             source: 'External Target Entry',
           });
         } else if (typeof item === 'object' && item !== null) {
-          candidatesInput.push({
-            name: item.name,
-            website: item.website || item.url,
-            url: item.url || item.website,
-            source: item.source || 'External Target Entry',
-          });
+          // If handed off from Internal LeadPackage:
+          if (item.lead_package || item.seed_data) {
+            const pkg = item.lead_package || item;
+            const norm = pkg.seed_data?.normalized || item;
+            candidatesInput.push({
+              name: norm.company_name || item.name,
+              website: norm.website || item.website || item.url,
+              url: norm.website || item.url || item.website,
+              source: `Internal Handoff (${pkg.source?.file_name || 'File'})`,
+              source_data: {
+                name: norm.company_name || item.name || '',
+                website: norm.website || item.website || null,
+                raw_industry: norm.industry || null,
+                country: norm.country || null,
+                city: norm.city || null,
+                founder: norm.founder_or_ceo || null,
+                funding: norm.funding || null,
+                raw_fields: pkg.seed_data?.raw_fields || {},
+              },
+            });
+          } else {
+            candidatesInput.push({
+              name: item.name,
+              website: item.website || item.url,
+              url: item.url || item.website,
+              source: item.source || 'External Target Entry',
+              source_data: item.source_data,
+            });
+          }
         }
       }
     } else if (body.name || body.website || body.url) {
@@ -58,7 +84,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: 'Please provide at least one company name or website URL.',
         results: [],
-        stats: { total: 0, qualified: 0, rejected: 0, partiallyVerified: 0, unverified: 0 },
+        stats: { total: 0, verified: 0, review: 0, unverified: 0, rejected: 0 },
       }, { status: 400 });
     }
 
@@ -72,17 +98,37 @@ export async function POST(request: NextRequest) {
 
       for (const res of chunkRes) {
         if (res.status === 'fulfilled') {
-          verificationResults.push(res.value);
+          const rawResult = res.value;
+
+          // Normalize external status to the shared 4 statuses:
+          // QUALIFIED -> VERIFIED, REVIEW -> REVIEW, REJECTED -> REJECTED, others -> UNVERIFIED
+          if (rawResult.verificationStatus === 'QUALIFIED') {
+            rawResult.verificationStatus = 'VERIFIED';
+          } else if (rawResult.verificationStatus === 'PARTIALLY_VERIFIED' || rawResult.verificationStatus === 'ERROR') {
+            rawResult.verificationStatus = 'UNVERIFIED';
+          }
+
+          // Upsert into unified lead store
+          const unifiedLead = unifiedLeadStore.upsertLeadFromExternal(rawResult, targetProfile.id);
+          rawResult.unified_lead_id = unifiedLead.id;
+          rawResult.origins = unifiedLead.origins;
+          rawResult.originDisplay = unifiedLead.originDisplay;
+          rawResult.statusHistory = unifiedLead.statusHistory;
+          rawResult.auditTrail = unifiedLead.auditTrail;
+
+          verificationResults.push(rawResult);
         }
       }
     }
 
     const stats = {
       total: verificationResults.length,
-      qualified: verificationResults.filter(r => r.verificationStatus === 'QUALIFIED').length,
-      rejected: verificationResults.filter(r => r.verificationStatus === 'REJECTED').length,
-      partiallyVerified: verificationResults.filter(r => r.verificationStatus === 'PARTIALLY_VERIFIED').length,
+      verified: verificationResults.filter(r => r.verificationStatus === 'VERIFIED').length,
+      review: verificationResults.filter(r => r.verificationStatus === 'REVIEW').length,
       unverified: verificationResults.filter(r => r.verificationStatus === 'UNVERIFIED').length,
+      rejected: verificationResults.filter(r => r.verificationStatus === 'REJECTED').length,
+      // Compatibility aliases
+      qualified: verificationResults.filter(r => r.verificationStatus === 'VERIFIED').length,
     };
 
     return NextResponse.json({

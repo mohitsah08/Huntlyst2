@@ -10,7 +10,7 @@ import { TargetProfile } from '@/lib/targetProfileData';
 
 export type CriterionStatus = 'PASS' | 'FAIL' | 'UNKNOWN' | 'CONTRADICTED';
 
-export type VerificationStatus = 'QUALIFIED' | 'REJECTED' | 'REVIEW' | 'UNVERIFIED' | 'PARTIALLY_VERIFIED' | 'ERROR';
+export type VerificationStatus = 'VERIFIED' | 'REVIEW' | 'UNVERIFIED' | 'REJECTED' | 'QUALIFIED' | 'PARTIALLY_VERIFIED' | 'ERROR';
 
 export type PipelineStageName = 
   | 'DISCOVER'
@@ -224,6 +224,12 @@ export interface CompanyVerificationResult {
   fieldAudits?: Record<string, FieldAudit>;
   divergences?: string[];
   rejectionStage?: string;
+  lead_package?: any;
+  unified_lead_id?: string;
+  origins?: string[];
+  originDisplay?: string;
+  auditTrail?: any[];
+  statusHistory?: any[];
 }
 
 export interface FieldAudit<T = any> {

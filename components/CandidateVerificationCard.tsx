@@ -10,6 +10,7 @@ interface CandidateVerificationCardProps {
   onOpenDetails?: () => void;
   onRetryStage?: (result: CompanyVerificationResult, stage: PipelineStageName) => void;
   isRetrying?: boolean;
+  onPromote?: (result: CompanyVerificationResult, targetStatus: 'VERIFIED' | 'REVIEW' | 'UNVERIFIED') => void;
 }
 
 const STAGE_LABELS: Record<PipelineStageName, string> = {
@@ -28,6 +29,7 @@ export default function CandidateVerificationCard({
   onOpenDetails,
   onRetryStage,
   isRetrying = false,
+  onPromote,
 }: CandidateVerificationCardProps) {
   const [expanded, setExpanded] = useState(false);
   const {
@@ -47,13 +49,22 @@ export default function CandidateVerificationCard({
     conflicts = [],
   } = result;
 
-  const getStatusBadge = (status: CompanyVerificationResult['verificationStatus']) => {
-    switch (status) {
-      case 'QUALIFIED':
+  const canonicalStatus: 'VERIFIED' | 'REVIEW' | 'UNVERIFIED' | 'REJECTED' =
+    verificationStatus === 'QUALIFIED' || verificationStatus === 'VERIFIED'
+      ? 'VERIFIED'
+      : verificationStatus === 'REVIEW' || verificationStatus === 'PARTIALLY_VERIFIED'
+      ? 'REVIEW'
+      : verificationStatus === 'REJECTED'
+      ? 'REJECTED'
+      : 'UNVERIFIED';
+
+  const getStatusBadge = () => {
+    switch (canonicalStatus) {
+      case 'VERIFIED':
         return (
           <span className="px-2.5 py-1 text-[11px] font-mono font-bold text-[#2E7D32] bg-[#E8F5E9] border border-[#2E7D32]/30 rounded-full flex items-center gap-1 shadow-xs">
             <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]" />
-            QUALIFIED
+            VERIFIED
           </span>
         );
       case 'REJECTED':
@@ -67,21 +78,7 @@ export default function CandidateVerificationCard({
         return (
           <span className="px-2.5 py-1 text-[11px] font-mono font-bold text-[#E65100] bg-[#FFF8E1] border border-[#FFA000]/40 rounded-full flex items-center gap-1 shadow-xs">
             <span className="w-1.5 h-1.5 rounded-full bg-[#FFA000]" />
-            REVIEW / MISSING EVIDENCE
-          </span>
-        );
-      case 'PARTIALLY_VERIFIED':
-        return (
-          <span className="px-2.5 py-1 text-[11px] font-mono font-bold text-[#E65100] bg-[#FFF3E0] border border-[#E65100]/30 rounded-full flex items-center gap-1 shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#E65100]" />
-            PARTIALLY VERIFIED
-          </span>
-        );
-      case 'ERROR':
-        return (
-          <span className="px-2.5 py-1 text-[11px] font-mono font-bold text-[#D32F2F] bg-[#FFCDD2]/50 border border-[#D32F2F]/40 rounded-full flex items-center gap-1 shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#D32F2F]" />
-            ERROR / RETRY REQUIRED
+            REVIEW
           </span>
         );
       case 'UNVERIFIED':
@@ -151,7 +148,18 @@ export default function CandidateVerificationCard({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h4 className="font-display font-bold text-base sm:text-lg text-[#1E1B18]">{company.name}</h4>
-              {getStatusBadge(verificationStatus)}
+              {getStatusBadge()}
+              {result.originDisplay && (
+                <span className={`px-2 py-0.5 text-[10px] font-mono font-bold rounded-md border ${
+                  result.originDisplay === 'BOTH'
+                    ? 'bg-[#E1BEE7] text-[#4A148C] border-[#BA68C8]'
+                    : result.originDisplay === 'INTERNAL'
+                    ? 'bg-[#E3F2FD] text-[#0D47A1] border-[#90CAF9]'
+                    : 'bg-[#FFF3E0] text-[#E65100] border-[#FFB74D]'
+                }`}>
+                  {result.originDisplay === 'BOTH' ? 'INTERNAL + EXTERNAL' : result.originDisplay}
+                </span>
+              )}
               {company.huntScore !== undefined && (
                 <span className="px-2 py-0.5 text-xs font-mono font-bold bg-[#FAF6EE] border border-[#1E1B18] rounded-md text-[#1E1B18]">
                   {company.huntScore}/100
@@ -181,7 +189,68 @@ export default function CandidateVerificationCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-center">
+        <div className="flex items-center gap-2 self-end sm:self-center flex-wrap">
+          {onPromote && canonicalStatus === 'REVIEW' && (
+            <button
+              type="button"
+              onClick={() => onPromote(result, 'VERIFIED')}
+              className="text-xs font-bold text-white bg-[#2E7D32] hover:bg-[#1B5E20] px-2.5 py-1 rounded shadow-xs"
+              title="Promote to VERIFIED"
+            >
+              Pass → VERIFIED
+            </button>
+          )}
+
+          {onPromote && canonicalStatus === 'UNVERIFIED' && (
+            <>
+              <button
+                type="button"
+                onClick={() => onPromote(result, 'REVIEW')}
+                className="text-xs font-bold text-[#E65100] bg-[#FFF8E1] hover:bg-[#FFE082] border border-[#FFA000] px-2 py-1 rounded"
+                title="Promote to REVIEW"
+              >
+                Pass → REVIEW
+              </button>
+              <button
+                type="button"
+                onClick={() => onPromote(result, 'VERIFIED')}
+                className="text-xs font-bold text-white bg-[#2E7D32] hover:bg-[#1B5E20] px-2 py-1 rounded shadow-xs"
+                title="Promote to VERIFIED"
+              >
+                Pass → VERIFIED
+              </button>
+            </>
+          )}
+
+          {onPromote && canonicalStatus === 'REJECTED' && (
+            <>
+              <button
+                type="button"
+                onClick={() => onPromote(result, 'UNVERIFIED')}
+                className="text-xs font-bold text-[#766E65] bg-[#FAF6EE] hover:bg-[#EBE4D5] border border-[#DCD6C9] px-2 py-1 rounded"
+                title="Promote to UNVERIFIED"
+              >
+                Pass → UNVERIFIED
+              </button>
+              <button
+                type="button"
+                onClick={() => onPromote(result, 'REVIEW')}
+                className="text-xs font-bold text-[#E65100] bg-[#FFF8E1] hover:bg-[#FFE082] border border-[#FFA000] px-2 py-1 rounded"
+                title="Promote to REVIEW"
+              >
+                Pass → REVIEW
+              </button>
+              <button
+                type="button"
+                onClick={() => onPromote(result, 'VERIFIED')}
+                className="text-xs font-bold text-white bg-[#2E7D32] hover:bg-[#1B5E20] px-2 py-1 rounded shadow-xs"
+                title="Promote to VERIFIED"
+              >
+                Pass → VERIFIED
+              </button>
+            </>
+          )}
+
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}

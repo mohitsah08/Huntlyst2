@@ -6778,5 +6778,264 @@
     "07e92aa74c2879df": "2026-10-01T11:56:39.356Z",
     "c343cdba313f9ae7": "2026-10-01T11:56:39.356Z",
     "377e41269a48dfc5": "2026-09-29T12:28:20.052Z"
-  }
+  },
+  "unifiedLeads": [
+    {
+      "id": "lead_abctechnologies.com",
+      "identity": {
+        "company_name": "ABC Technologies",
+        "canonical_domain": "abctechnologies.com",
+        "website": "https://abctechnologies.com"
+      },
+      "origins": [
+        "INTERNAL",
+        "EXTERNAL"
+      ],
+      "originDisplay": "BOTH",
+      "internal": {
+        "source_file": "internal_batch_may.csv",
+        "source_row": 14,
+        "sheet_name": null,
+        "page_number": null,
+        "raw_data": {
+          "Company Name": "ABC Technologies",
+          "Website": "https://abctechnologies.com",
+          "Location": "Berlin, Germany",
+          "Funding": "$3,500,000",
+          "CEO": "Alice Miller"
+        },
+        "normalized_data": {
+          "company_name": "ABC Technologies",
+          "website": "https://abctechnologies.com",
+          "canonical_domain": "abctechnologies.com",
+          "country": "Germany",
+          "city": "Berlin",
+          "funding": "$3,500,000",
+          "funding_amount_usd": 3500000,
+          "founder_or_ceo": "Alice Miller",
+          "company_email": "hello@abctechnologies.com",
+          "company_linkedin": null,
+          "ceo_linkedin": null,
+          "industry": "Enterprise Software"
+        },
+        "audit": {
+          "fields_present": [
+            "Company Name",
+            "Website",
+            "Location",
+            "Funding",
+            "CEO"
+          ],
+          "fields_missing": [],
+          "placeholders": [],
+          "malformed_fields": [],
+          "duplicate_signals": []
+        },
+        "lead_package": {
+          "candidate_id": "pkg-abc-tech",
+          "source": {
+            "file_name": "internal_batch_may.csv",
+            "file_type": "text/csv",
+            "row_number": 14
+          },
+          "seed_data": {
+            "raw_fields": {
+              "Company Name": "ABC Technologies",
+              "Website": "https://abctechnologies.com",
+              "Location": "Berlin, Germany",
+              "Funding": "$3,500,000",
+              "CEO": "Alice Miller"
+            },
+            "normalized": {
+              "company_name": "ABC Technologies",
+              "website": "https://abctechnologies.com",
+              "canonical_domain": "abctechnologies.com",
+              "country": "Germany",
+              "city": "Berlin",
+              "funding": "$3,500,000",
+              "funding_amount_usd": 3500000,
+              "founder_or_ceo": "Alice Miller",
+              "company_email": "hello@abctechnologies.com",
+              "company_linkedin": null,
+              "ceo_linkedin": null,
+              "industry": "Enterprise Software"
+            }
+          },
+          "audit": {
+            "fields_present": [
+              "Company Name",
+              "Website",
+              "Location",
+              "Funding",
+              "CEO"
+            ],
+            "fields_missing": [],
+            "placeholders": [],
+            "malformed_fields": [],
+            "duplicate_signals": []
+          }
+        },
+        "status": "VERIFIED",
+        "status_history": [
+          {
+            "status": "VERIFIED",
+            "source": "INTERNAL_AUTO",
+            "timestamp": "2026-10-06T10:43:27.751Z",
+            "reason": "All active required Target Profile criteria satisfied by uploaded record."
+          }
+        ],
+        "evaluated_at": "2026-10-06T10:43:27.751Z"
+      },
+      "currentStatus": "REVIEW",
+      "qualification": {
+        "target_profile_id": {
+          "id": "tvb_eval_default",
+          "name": "TVB Evaluation Profile",
+          "targetCount": 15,
+          "financialMetric": "funding_or_revenue",
+          "fundingMin": 1000000,
+          "fundingMax": 5000000,
+          "fundingCurrency": "USD",
+          "industries": [
+            "Technology"
+          ],
+          "subIndustries": [
+            "SaaS",
+            "AI",
+            "Cloud Computing",
+            "Cybersecurity",
+            "DevTools"
+          ],
+          "companyAge": "Any",
+          "foundedFrom": 2021,
+          "foundedTo": 2026,
+          "companyStages": [
+            "Seed",
+            "Series A"
+          ],
+          "companyTypes": [
+            "Startup",
+            "Scale-up"
+          ],
+          "regions": [
+            "Global"
+          ],
+          "countries": [],
+          "excludedCountries": [],
+          "usPresenceMode": "any",
+          "contactPersonTypes": [
+            "CEO",
+            "Founder",
+            "Co-founder"
+          ],
+          "contactRequirement": "Required",
+          "emailRequirement": "Required",
+          "emailVerificationLevel": "mx_verified",
+          "companySocialRequirements": [
+            "LinkedIn"
+          ],
+          "personSocialRequirements": [
+            "LinkedIn"
+          ],
+          "socialProfileMode": "Preferred",
+          "employeeCountPreset": "Any",
+          "freshnessWindow": "Last 30 days",
+          "activityTypes": [
+            "Recently Funded",
+            "Recently Launched"
+          ],
+          "selectedSources": [
+            "All Available Sources"
+          ]
+        },
+        "match_percentage": "85%",
+        "match_score": 85,
+        "criteria": {
+          "funding": {
+            "name": "Funding",
+            "category": "research",
+            "active": true,
+            "status": "PASS",
+            "actualValue": "$3.5M",
+            "reason": "funding status: PASS",
+            "weight": 10
+          },
+          "identity": {
+            "name": "Identity",
+            "category": "research",
+            "active": true,
+            "status": "UNKNOWN",
+            "actualValue": "Ambiguous LinkedIn profile match",
+            "reason": "identity status: UNKNOWN",
+            "weight": 10
+          }
+        },
+        "passedCriteria": [
+          "Platform Required",
+          "Geography Target",
+          "Funding Range"
+        ],
+        "failedCriteria": [],
+        "missingCriteria": [
+          "Executive LinkedIn URL missing public evidence"
+        ],
+        "reviewCriteria": [
+          "Under Review"
+        ]
+      },
+      "auditTrail": [],
+      "statusHistory": [
+        {
+          "status": "VERIFIED",
+          "source": "INTERNAL_AUTO",
+          "timestamp": "2026-10-06T10:43:27.751Z",
+          "reason": "All active required Target Profile criteria satisfied by uploaded record."
+        },
+        {
+          "status": "REVIEW",
+          "source": "EXTERNAL_AUTO",
+          "timestamp": "2026-10-06T10:43:27.777Z",
+          "reason": "External research & qualification completed"
+        }
+      ],
+      "createdAt": "2026-10-06T10:43:27.751Z",
+      "updatedAt": "2026-10-06T10:43:27.777Z",
+      "lastVerifiedAt": "2026-10-06T10:43:27.777Z",
+      "external": {
+        "researched": true,
+        "current_data": {
+          "name": "ABC Technologies Inc",
+          "website": "https://www.abctechnologies.com",
+          "industry": "Enterprise Software",
+          "country": "Germany",
+          "fundingOrRevenue": "$3.5M",
+          "fundingAmountUSD": 3500000,
+          "founderOrCeoName": "Alice Miller",
+          "primaryEmail": "alice@abctechnologies.com",
+          "emailStatus": "VERIFIED",
+          "decisionMakerRole": "CEO & Founder"
+        },
+        "evidence": {
+          "sources": [
+            "https://abctechnologies.com",
+            "https://techcrunch.com/funding-round"
+          ]
+        },
+        "status": "REVIEW",
+        "status_history": [
+          {
+            "status": "REVIEW",
+            "source": "EXTERNAL_AUTO",
+            "timestamp": "2026-10-06T10:43:27.777Z",
+            "reason": "External research & qualification completed"
+          }
+        ],
+        "researched_at": "2026-10-06T10:43:27.777Z",
+        "sources": [
+          "https://abctechnologies.com",
+          "https://techcrunch.com/funding-round"
+        ]
+      }
+    }
+  ]
 }

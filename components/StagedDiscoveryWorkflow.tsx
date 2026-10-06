@@ -7,7 +7,7 @@ import { CompanyRecord, RejectedCompanyRecord, HuntConfig } from '@/lib/types';
 import CandidateVerificationCard from './CandidateVerificationCard';
 import HuntConfiguration from './HuntConfiguration';
 import ExportModal from './ExportModal';
-import { PipelineStageLabel } from '@/lib/export';
+import { PipelineStageLabel, downloadCsvFile, downloadPdfFile, downloadXlsxFile } from '@/lib/export';
 
 interface StagedDiscoveryWorkflowProps {
   initialTargetProfile?: TargetProfile;
@@ -67,8 +67,9 @@ export default function StagedDiscoveryWorkflow({
   const [webSearchResults, setWebSearchResults] = useState<CompanyVerificationResult[]>([]);
   const [webSearchApproved, setWebSearchApproved] = useState<Set<string>>(new Set());
 
-  // Result Filtering Tab
-  const [activeTab, setActiveTab] = useState<'all' | 'qualified' | 'partial' | 'review' | 'unverified' | 'rejected' | 'error'>('all');
+  // Result Filtering Tab (4 Canonical User-Facing Statuses)
+  const [activeTab, setActiveTab] = useState<'all' | 'VERIFIED' | 'REVIEW' | 'UNVERIFIED' | 'REJECTED'>('all');
+
 
   // Stage & Live Export Modal State (Sections 44, 52, 53)
   const [exportModalConfig, setExportModalConfig] = useState<{
@@ -483,25 +484,135 @@ export default function StagedDiscoveryWorkflow({
     }
   };
 
-  // Filter results
+  // Canonical status normalizer (Exact 4 final statuses)
+  const getCanonicalStatus = (status: string): 'VERIFIED' | 'REVIEW' | 'UNVERIFIED' | 'REJECTED' => {
+    if (status === 'QUALIFIED' || status === 'VERIFIED') return 'VERIFIED';
+    if (status === 'REVIEW' || status === 'PARTIALLY_VERIFIED' || status === 'UNDER_REVIEW') return 'REVIEW';
+    if (status === 'REJECTED') return 'REJECTED';
+    return 'UNVERIFIED';
+  };
+
+  // Filter results by canonical 4 statuses
   const filterList = (items: CompanyVerificationResult[]) => {
-    switch (activeTab) {
-      case 'qualified':
-        return items.filter(i => i.verificationStatus === 'QUALIFIED');
-      case 'partial':
-        return items.filter(i => i.verificationStatus === 'PARTIALLY_VERIFIED');
-      case 'review':
-        return items.filter(i => i.verificationStatus === 'REVIEW');
-      case 'unverified':
-        return items.filter(i => i.verificationStatus === 'UNVERIFIED');
-      case 'rejected':
-        return items.filter(i => i.verificationStatus === 'REJECTED');
-      case 'error':
-        return items.filter(i => i.verificationStatus === 'ERROR');
-      default:
-        return items;
+    if (activeTab === 'all') return items;
+    return items.filter(i => getCanonicalStatus(i.verificationStatus) === activeTab);
+  };
+
+  // Manual promotion / pass handler (Audited)
+  const handlePromoteLead = async (
+    candidate: CompanyVerificationResult,
+    targetStatus: 'VERIFIED' | 'REVIEW' | 'UNVERIFIED',
+    reason = 'Approved after manual inspection'
+  ) => {
+    const origStatus = getCanonicalStatus(candidate.verificationStatus);
+    const updated: CompanyVerificationResult = {
+      ...candidate,
+      verificationStatus: targetStatus as any,
+    };
+
+    setInternalResults(prev =>
+      prev.map(c => c.company.name === candidate.company.name ? updated : c)
+    );
+
+    if (targetStatus === 'VERIFIED') {
+      setInternalApproved(prev => new Set([...prev, candidate.company.name]));
+    }
+
+    // Persist audited status override to unified lead store
+    try {
+      const canonicalDomain = candidate.company.website
+        ? candidate.company.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase()
+        : candidate.company.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+      await fetch('/api/leads', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leadId: candidate.unified_lead_id || canonicalDomain,
+          newStatus: targetStatus,
+          reason,
+          overrideBy: 'User Action',
+        }),
+      });
+      setStatusMessage(`Promoted ${candidate.company.name} from ${origStatus} to ${targetStatus}`);
+    } catch (e) {
+      console.warn('Failed to persist manual override audit', e);
     }
   };
+
+  // Bulk Pass All / Promote Selected
+  const handleBulkPromote = async (
+    targetStatus: 'VERIFIED' | 'REVIEW' | 'UNVERIFIED',
+    reason = 'Bulk approved after manual inspection'
+  ) => {
+    const visible = filterList(internalResults);
+    const eligible = visible.filter(c => {
+      const cur = getCanonicalStatus(c.verificationStatus);
+      if (targetStatus === 'VERIFIED') return cur === 'REVIEW' || cur === 'UNVERIFIED' || cur === 'REJECTED';
+      if (targetStatus === 'REVIEW') return cur === 'UNVERIFIED' || cur === 'REJECTED';
+      if (targetStatus === 'UNVERIFIED') return cur === 'REJECTED';
+      return false;
+    });
+
+    if (eligible.length === 0) {
+      alert(`No eligible candidates in current view to promote to ${targetStatus}`);
+      return;
+    }
+
+    const eligibleNames = new Set(eligible.map(e => e.company.name));
+    setInternalResults(prev =>
+      prev.map(c => eligibleNames.has(c.company.name) ? { ...c, verificationStatus: targetStatus as any } : c)
+    );
+
+    if (targetStatus === 'VERIFIED') {
+      setInternalApproved(prev => new Set([...prev, ...eligible.map(e => e.company.name)]));
+    }
+
+    try {
+      const leadIds = eligible.map(e =>
+        e.unified_lead_id || (e.company.website ? e.company.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase() : e.company.name.toLowerCase().replace(/[^a-z0-9]/g, ''))
+      );
+
+      await fetch('/api/leads', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leadIds,
+          newStatus: targetStatus,
+          reason,
+          overrideBy: 'User Action',
+        }),
+      });
+      setStatusMessage(`Bulk promoted ${eligible.length} leads to ${targetStatus}`);
+    } catch (e) {
+      console.warn('Failed to persist bulk override audit', e);
+    }
+  };
+
+  // Per-Status Download Handlers (CSV, XLSX, PDF)
+  const handleDownloadStatus = (
+    format: 'csv' | 'xlsx' | 'pdf',
+    selectedOnly = false
+  ) => {
+    let itemsToExport = filterList(internalResults);
+    if (selectedOnly) {
+      itemsToExport = itemsToExport.filter(i => internalApproved.has(i.company.name));
+    }
+    if (itemsToExport.length === 0) {
+      alert('No records available for export in this selection.');
+      return;
+    }
+
+    const filenameBase = `huntlyst-internal-${activeTab.toLowerCase()}${selectedOnly ? '-selected' : '-all'}`;
+    if (format === 'csv') {
+      downloadCsvFile(itemsToExport, `${filenameBase}.csv`);
+    } else if (format === 'xlsx') {
+      downloadXlsxFile(itemsToExport, `${filenameBase}.xlsx`);
+    } else if (format === 'pdf') {
+      downloadPdfFile(itemsToExport, `${filenameBase}.pdf`);
+    }
+  };
+
 
   const isCurrentProcessing =
     (currentStep === 'internal' && internalStatus === 'running') ||
@@ -569,11 +680,12 @@ export default function StagedDiscoveryWorkflow({
             </span>
           </div>
           <div className="p-2 bg-[#FAF6EE] rounded-lg border border-[#EBE4D5]">
-            <span className="text-[9px] text-[#766E65] uppercase block font-bold">US Presence</span>
+            <span className="text-[9px] text-[#766E65] uppercase block font-bold">Target Coverage</span>
             <span className="text-[#1E1B18] font-bold truncate block capitalize">
-              {targetProfile.usPresenceMode.replace(/_/g, ' ')}
+              {targetProfile.regions.includes('Global') ? 'Global' : (targetProfile.regions.join(', ') || 'Custom')}
             </span>
           </div>
+
           <div className="p-2 bg-[#FAF6EE] rounded-lg border border-[#EBE4D5]">
             <span className="text-[9px] text-[#766E65] uppercase block font-bold">Executive</span>
             <span className="text-[#1E1B18] font-bold truncate block">
@@ -841,12 +953,10 @@ export default function StagedDiscoveryWorkflow({
               {(() => {
                 const totalRec = internalStats?.totalReceived ?? internalResults.length;
                 const totalProc = internalStats?.totalProcessed ?? internalResults.length;
-                const qual = internalStats?.qualified ?? internalResults.filter(r => r.verificationStatus === 'QUALIFIED').length;
-                const part = internalStats?.partiallyVerified ?? internalResults.filter(r => r.verificationStatus === 'PARTIALLY_VERIFIED').length;
-                const rev = internalStats?.review ?? internalResults.filter(r => r.verificationStatus === 'REVIEW').length;
-                const unver = internalStats?.unverified ?? internalResults.filter(r => r.verificationStatus === 'UNVERIFIED').length;
-                const rej = internalStats?.rejected ?? internalResults.filter(r => r.verificationStatus === 'REJECTED').length;
-                const errs = internalStats?.errors ?? internalResults.filter(r => r.verificationStatus === 'ERROR').length;
+                const verCount = internalResults.filter(r => getCanonicalStatus(r.verificationStatus) === 'VERIFIED').length;
+                const revCount = internalResults.filter(r => getCanonicalStatus(r.verificationStatus) === 'REVIEW').length;
+                const unverCount = internalResults.filter(r => getCanonicalStatus(r.verificationStatus) === 'UNVERIFIED').length;
+                const rejCount = internalResults.filter(r => getCanonicalStatus(r.verificationStatus) === 'REJECTED').length;
 
                 return (
                   <div className="paper-card bg-[#FFFDF9] rounded-2xl p-4 sm:p-5 border-2 border-[#1E1B18] shadow-sketch-sm space-y-3">
@@ -858,7 +968,7 @@ export default function StagedDiscoveryWorkflow({
                             Candidate Verification Audit Trail
                           </h4>
                           <p className="text-[11px] font-mono text-[#766E65]">
-                            Full accounting: All supplied candidates processed without artificial limits
+                            Full accounting: All supplied candidates evaluated against active Target Profile
                           </p>
                         </div>
                       </div>
@@ -883,41 +993,33 @@ export default function StagedDiscoveryWorkflow({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-center font-mono">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center font-mono">
                       <div className="p-2.5 bg-[#FAF6EE] rounded-xl border border-[#DCD6C9]">
                         <div className="text-[10px] text-[#766E65] uppercase font-bold">Received</div>
                         <div className="text-base sm:text-lg font-bold text-[#1E1B18]">{totalRec}</div>
                       </div>
                       <div className="p-2.5 bg-[#E8F5E9] rounded-xl border border-[#2E7D32]/30">
-                        <div className="text-[10px] text-[#2E7D32] uppercase font-bold">Qualified</div>
-                        <div className="text-base sm:text-lg font-bold text-[#2E7D32]">{qual}</div>
-                      </div>
-                      <div className="p-2.5 bg-[#FFF3E0] rounded-xl border border-[#E65100]/30">
-                        <div className="text-[10px] text-[#E65100] uppercase font-bold">Partial</div>
-                        <div className="text-base sm:text-lg font-bold text-[#E65100]">{part}</div>
+                        <div className="text-[10px] text-[#2E7D32] uppercase font-bold">VERIFIED</div>
+                        <div className="text-base sm:text-lg font-bold text-[#2E7D32]">{verCount}</div>
                       </div>
                       <div className="p-2.5 bg-[#FFF8E1] rounded-xl border border-[#F57F17]/30">
-                        <div className="text-[10px] text-[#F57F17] uppercase font-bold">Review</div>
-                        <div className="text-base sm:text-lg font-bold text-[#F57F17]">{rev}</div>
+                        <div className="text-[10px] text-[#F57F17] uppercase font-bold">REVIEW</div>
+                        <div className="text-base sm:text-lg font-bold text-[#F57F17]">{revCount}</div>
                       </div>
                       <div className="p-2.5 bg-[#FAF6EE] rounded-xl border border-[#DCD6C9]">
-                        <div className="text-[10px] text-[#766E65] uppercase font-bold">Unverified</div>
-                        <div className="text-base sm:text-lg font-bold text-[#766E65]">{unver}</div>
+                        <div className="text-[10px] text-[#766E65] uppercase font-bold">UNVERIFIED</div>
+                        <div className="text-base sm:text-lg font-bold text-[#766E65]">{unverCount}</div>
                       </div>
                       <div className="p-2.5 bg-[#FFEBEE] rounded-xl border border-[#C62828]/30">
-                        <div className="text-[10px] text-[#C62828] uppercase font-bold">Rejected</div>
-                        <div className="text-base sm:text-lg font-bold text-[#C62828]">{rej}</div>
-                      </div>
-                      <div className={`p-2.5 rounded-xl border ${errs > 0 ? 'bg-[#FFEBEE] border-[#D32F2F]/30' : 'bg-[#FAF6EE] border-[#DCD6C9]'}`}>
-                        <div className={`text-[10px] uppercase font-bold ${errs > 0 ? 'text-[#D32F2F]' : 'text-[#766E65]'}`}>Errors</div>
-                        <div className={`text-base sm:text-lg font-bold ${errs > 0 ? 'text-[#D32F2F]' : 'text-[#766E65]'}`}>{errs}</div>
+                        <div className="text-[10px] text-[#C62828] uppercase font-bold">REJECTED</div>
+                        <div className="text-base sm:text-lg font-bold text-[#C62828]">{rejCount}</div>
                       </div>
                     </div>
                   </div>
                 );
               })()}
 
-              {/* Filter Tabs */}
+              {/* 4 Canonical User-Facing Status Tabs */}
               <div className="flex items-center gap-2 flex-wrap text-xs font-mono">
                 <button
                   type="button"
@@ -930,60 +1032,155 @@ export default function StagedDiscoveryWorkflow({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('qualified')}
+                  onClick={() => setActiveTab('VERIFIED')}
                   className={`px-3 py-1.5 rounded-lg border font-bold ${
-                    activeTab === 'qualified' ? 'bg-[#2E7D32] text-white border-[#2E7D32]' : 'bg-[#E8F5E9] text-[#2E7D32] border-[#2E7D32]/30'
+                    activeTab === 'VERIFIED' ? 'bg-[#2E7D32] text-white border-[#2E7D32]' : 'bg-[#E8F5E9] text-[#2E7D32] border-[#2E7D32]/30'
                   }`}
                 >
-                  Qualified ({internalResults.filter(r => r.verificationStatus === 'QUALIFIED').length})
+                  VERIFIED ({internalResults.filter(r => getCanonicalStatus(r.verificationStatus) === 'VERIFIED').length})
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('partial')}
+                  onClick={() => setActiveTab('REVIEW')}
                   className={`px-3 py-1.5 rounded-lg border font-bold ${
-                    activeTab === 'partial' ? 'bg-[#E65100] text-white border-[#E65100]' : 'bg-[#FFF3E0] text-[#E65100] border-[#E65100]/30'
+                    activeTab === 'REVIEW' ? 'bg-[#F57F17] text-white border-[#F57F17]' : 'bg-[#FFF8E1] text-[#F57F17] border-[#F57F17]/30'
                   }`}
                 >
-                  Partially Verified ({internalResults.filter(r => r.verificationStatus === 'PARTIALLY_VERIFIED').length})
+                  REVIEW ({internalResults.filter(r => getCanonicalStatus(r.verificationStatus) === 'REVIEW').length})
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('review')}
+                  onClick={() => setActiveTab('UNVERIFIED')}
                   className={`px-3 py-1.5 rounded-lg border font-bold ${
-                    activeTab === 'review' ? 'bg-[#F57F17] text-white border-[#F57F17]' : 'bg-[#FFF8E1] text-[#F57F17] border-[#F57F17]/30'
+                    activeTab === 'UNVERIFIED' ? 'bg-[#766E65] text-white border-[#766E65]' : 'bg-[#FAF6EE] text-[#766E65] border-[#DCD6C9]'
                   }`}
                 >
-                  Review ({internalResults.filter(r => r.verificationStatus === 'REVIEW').length})
+                  UNVERIFIED ({internalResults.filter(r => getCanonicalStatus(r.verificationStatus) === 'UNVERIFIED').length})
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('unverified')}
+                  onClick={() => setActiveTab('REJECTED')}
                   className={`px-3 py-1.5 rounded-lg border font-bold ${
-                    activeTab === 'unverified' ? 'bg-[#766E65] text-white border-[#766E65]' : 'bg-[#FAF6EE] text-[#766E65] border-[#DCD6C9]'
+                    activeTab === 'REJECTED' ? 'bg-[#C62828] text-white border-[#C62828]' : 'bg-[#FFEBEE] text-[#C62828] border-[#C62828]/30'
                   }`}
                 >
-                  Unverified ({internalResults.filter(r => r.verificationStatus === 'UNVERIFIED').length})
+                  REJECTED ({internalResults.filter(r => getCanonicalStatus(r.verificationStatus) === 'REJECTED').length})
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('rejected')}
-                  className={`px-3 py-1.5 rounded-lg border font-bold ${
-                    activeTab === 'rejected' ? 'bg-[#C62828] text-white border-[#C62828]' : 'bg-[#FFEBEE] text-[#C62828] border-[#C62828]/30'
-                  }`}
-                >
-                  Rejected ({internalResults.filter(r => r.verificationStatus === 'REJECTED').length})
-                </button>
-                {internalResults.some(r => r.verificationStatus === 'ERROR') && (
+              </div>
+
+              {/* Bulk Pass All & Download Toolbar */}
+              <div className="paper-card bg-[#FFFDF9] rounded-xl p-3 border border-[#EBE4D5] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-[#1E1B18]">Bulk Actions:</span>
+                  {(activeTab === 'REVIEW' || activeTab === 'all') && (
+                    <button
+                      type="button"
+                      onClick={() => handleBulkPromote('VERIFIED')}
+                      className="px-2.5 py-1 rounded bg-[#2E7D32] text-white font-bold hover:bg-[#1B5E20] shadow-xs"
+                      title="Promote all eligible review leads to VERIFIED"
+                    >
+                      PASS ALL → VERIFIED
+                    </button>
+                  )}
+                  {activeTab === 'UNVERIFIED' && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleBulkPromote('REVIEW')}
+                        className="px-2.5 py-1 rounded bg-[#FFF8E1] text-[#E65100] border border-[#FFA000] font-bold hover:bg-[#FFE082]"
+                      >
+                        PASS ALL → REVIEW
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleBulkPromote('VERIFIED')}
+                        className="px-2.5 py-1 rounded bg-[#2E7D32] text-white font-bold hover:bg-[#1B5E20] shadow-xs"
+                      >
+                        PASS ALL → VERIFIED
+                      </button>
+                    </>
+                  )}
+                  {activeTab === 'REJECTED' && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleBulkPromote('UNVERIFIED')}
+                        className="px-2.5 py-1 rounded bg-[#FAF6EE] text-[#766E65] border border-[#DCD6C9] font-bold hover:bg-[#EBE4D5]"
+                      >
+                        PASS ALL → UNVERIFIED
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleBulkPromote('REVIEW')}
+                        className="px-2.5 py-1 rounded bg-[#FFF8E1] text-[#E65100] border border-[#FFA000] font-bold hover:bg-[#FFE082]"
+                      >
+                        PASS ALL → REVIEW
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleBulkPromote('VERIFIED')}
+                        className="px-2.5 py-1 rounded bg-[#2E7D32] text-white font-bold hover:bg-[#1B5E20] shadow-xs"
+                      >
+                        PASS ALL → VERIFIED
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Per-Status Downloads */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-bold text-[#766E65]">Download ({filterList(internalResults).length}):</span>
                   <button
                     type="button"
-                    onClick={() => setActiveTab('error')}
-                    className={`px-3 py-1.5 rounded-lg border font-bold ${
-                      activeTab === 'error' ? 'bg-[#D32F2F] text-white border-[#D32F2F]' : 'bg-[#FFEBEE] text-[#D32F2F] border-[#D32F2F]/30'
-                    }`}
+                    onClick={() => handleDownloadStatus('csv')}
+                    className="px-2 py-0.5 rounded border border-[#1E1B18] bg-white hover:bg-[#FAF6EE] text-[11px] font-bold"
                   >
-                    Errors / Retry ({internalResults.filter(r => r.verificationStatus === 'ERROR').length})
+                    CSV
                   </button>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadStatus('xlsx')}
+                    className="px-2 py-0.5 rounded border border-[#1E1B18] bg-white hover:bg-[#FAF6EE] text-[11px] font-bold"
+                  >
+                    XLSX
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadStatus('pdf')}
+                    className="px-2 py-0.5 rounded border border-[#1E1B18] bg-white hover:bg-[#FAF6EE] text-[11px] font-bold"
+                  >
+                    PDF
+                  </button>
+                  {internalApproved.size > 0 && (
+                    <>
+                      <span className="text-[#A0988E] mx-1">|</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadStatus('csv', true)}
+                        className="px-2 py-0.5 rounded border border-[#2E7D32] bg-[#E8F5E9] text-[#2E7D32] text-[11px] font-bold"
+                        title="Download selected candidates as CSV"
+                      >
+                        Sel CSV ({filterList(internalResults).filter(i => internalApproved.has(i.company.name)).length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadStatus('xlsx', true)}
+                        className="px-2 py-0.5 rounded border border-[#2E7D32] bg-[#E8F5E9] text-[#2E7D32] text-[11px] font-bold"
+                        title="Download selected candidates as XLSX"
+                      >
+                        Sel XLSX
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadStatus('pdf', true)}
+                        className="px-2 py-0.5 rounded border border-[#2E7D32] bg-[#E8F5E9] text-[#2E7D32] text-[11px] font-bold"
+                        title="Download selected candidates as PDF"
+                      >
+                        Sel PDF
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* Candidates List with Stage Cards & Single-Stage Retry */}
@@ -997,6 +1194,7 @@ export default function StagedDiscoveryWorkflow({
                     onOpenDetails={() => onOpenLeadModal?.(res.company)}
                     onRetryStage={handleRetryCandidateStage}
                     isRetrying={isRetryingCandidate}
+                    onPromote={handlePromoteLead}
                   />
                 ))}
               </div>
@@ -1076,10 +1274,30 @@ export default function StagedDiscoveryWorkflow({
 
             {/* Candidates Carried from Internal Stage */}
             {internalApproved.size > 0 && (
-              <div className="p-3 bg-[#FAF6EE] rounded-xl border border-[#EBE4D5] text-xs font-mono">
-                <span className="font-bold text-[#1E1B18] block mb-1">
-                  Candidates Carried from Internal Stage ({internalApproved.size}):
-                </span>
+              <div className="p-3 bg-[#FAF6EE] rounded-xl border border-[#EBE4D5] text-xs font-mono space-y-2">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <span className="font-bold text-[#1E1B18]">
+                    Candidates Carried from Internal Stage ({internalApproved.size}):
+                  </span>
+                  <button
+                    type="button"
+                    disabled={isCurrentProcessing}
+                    onClick={() => {
+                      const carried = internalResults
+                        .filter(r => internalApproved.has(r.company.name))
+                        .map(r => ({
+                          name: r.company.name,
+                          website: r.company.website,
+                          leadPackage: r.lead_package,
+                        }));
+                      handleResearchExternal(carried);
+                    }}
+                    className="sketch-btn px-3 py-1 text-xs font-bold text-white bg-[#FF6B35] hover:bg-[#E55A2B] rounded-lg shadow-xs flex items-center gap-1.5"
+                  >
+                    <span>⚡</span>
+                    <span>Research All Carried Leads Online ({internalApproved.size})</span>
+                  </button>
+                </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {Array.from(internalApproved).slice(0, 8).map(name => (
                     <span key={name} className="px-2 py-0.5 rounded bg-white border border-[#DCD6C9] text-[#1E1B18] text-[11px]">
@@ -1092,6 +1310,7 @@ export default function StagedDiscoveryWorkflow({
                 </div>
               </div>
             )}
+
           </div>
 
           {/* External Results */}

@@ -34,6 +34,7 @@ import {
 } from 'docx';
 import { CompanyRecord, RejectedCompanyRecord } from './types';
 import { CompanyVerificationResult } from '@/providers/types';
+import { UnifiedLead } from './leadPackage';
 
 // ==========================================
 // 1. CANONICAL TYPES
@@ -48,6 +49,10 @@ export type PipelineStageLabel =
   | 'Stage 6: Final Results';
 
 export type LeadStatusLabel =
+  | 'VERIFIED'
+  | 'REVIEW'
+  | 'UNVERIFIED'
+  | 'REJECTED'
   | 'Approved'
   | 'Selected'
   | 'Rejected'
@@ -220,6 +225,18 @@ export interface UniversalExportRecord {
 
   // Full nested raw record for JSON export fidelity
   rawRecord?: any;
+
+  // Workflow Origin & Audit Metadata (Sections 8, 9, 14, 15)
+  workflowOrigin?: string;
+  sourceFile?: string;
+  sourceRow?: number;
+  sourceSheet?: string;
+  sourcePage?: number;
+  manualOverride?: boolean;
+  overrideReason?: string;
+  overrideTimestamp?: string;
+  originalStatus?: string;
+  auditHistoryJson?: string;
 }
 
 export interface ExportFilterOptions {
@@ -533,14 +550,18 @@ export function normalizeVerificationResult(
 
   // Map internal VerificationStatus to LeadStatusLabel
   let status: LeadStatusLabel = 'Under Review';
-  if (isApproved || res.verificationStatus === 'QUALIFIED') {
-    status = 'Approved';
+  if (res.verificationStatus === 'VERIFIED') {
+    status = 'VERIFIED';
+  } else if (res.verificationStatus === 'REVIEW') {
+    status = 'REVIEW';
+  } else if (res.verificationStatus === 'UNVERIFIED') {
+    status = 'UNVERIFIED';
   } else if (res.verificationStatus === 'REJECTED') {
-    status = 'Rejected';
+    status = 'REJECTED';
+  } else if (isApproved || res.verificationStatus === 'QUALIFIED') {
+    status = 'Approved';
   } else if (res.verificationStatus === 'PARTIALLY_VERIFIED') {
     status = 'Partially Verified';
-  } else if (res.verificationStatus === 'UNVERIFIED') {
-    status = 'Unverified';
   } else if (res.verificationStatus === 'ERROR') {
     status = 'Failed';
   }
@@ -576,7 +597,10 @@ export function normalizeVerificationResult(
   const founderEmail = primaryExec?.email || c?.founderOrCeoEmail || c?.email?.address || 'Unverified';
   const founderLinkedin = primaryExec?.linkedin || c?.linkedinUrl || c?.founder?.linkedinUrl || '';
 
-  const score = c?.huntScore || (status === 'Approved' ? 90 : status === 'Rejected' ? 25 : 55);
+  const isRejected = (status as string) === 'REJECTED' || (status as string) === 'Rejected';
+  const isApprovedLead = (status as string) === 'VERIFIED' || (status as string) === 'Approved';
+
+  const score = c?.huntScore || (isApprovedLead ? 90 : isRejected ? 25 : 55);
 
   return {
     id: `staged-${domain || (c?.name || 'candidate').toLowerCase().replace(/\s+/g, '-')}`,
@@ -643,8 +667,8 @@ export function normalizeVerificationResult(
     sourceUrls: res.sources || (c?.website ? [c.website] : []),
     sourceTypes: ['Staged File Upload / Web Discovery'],
     evidenceSummary: c?.auditDetails?.rawEvidence || rejectionReason || selectionReason || 'Staged evaluation results.',
-    qualificationStatus: status === 'Approved' ? 'Qualified' : status === 'Rejected' ? 'Rejected' : 'Under Review',
-    matchStatus: status === 'Approved' ? 'Match' : status === 'Rejected' ? 'No Match' : 'Partial Match',
+    qualificationStatus: isApprovedLead ? 'Qualified' : isRejected ? 'Rejected' : 'Under Review',
+    matchStatus: isApprovedLead ? 'Match' : isRejected ? 'No Match' : 'Partial Match',
     huntScore: score,
     qualificationScore: score,
     criteriaMatched: passed,
@@ -672,6 +696,161 @@ export function normalizeVerificationResult(
     agentName: 'huntlyst-verification',
     duplicateStatus: 'Canonical Record',
     rawRecord: res,
+    workflowOrigin: res.originDisplay || (res.origins && res.origins.length > 0 ? res.origins.join(' + ') : 'INTERNAL'),
+    sourceFile: res.lead_package?.source?.file_name || (res.source_data?.raw_fields ? 'Internal File' : undefined),
+    sourceRow: res.lead_package?.source?.row_number,
+    sourceSheet: res.lead_package?.source?.sheet_name,
+    sourcePage: res.lead_package?.source?.page_number,
+    originalStatus: res.statusHistory && res.statusHistory.length > 0 ? res.statusHistory[0].status : res.verificationStatus,
+    manualOverride: res.auditTrail && res.auditTrail.length > 0,
+    overrideReason: res.auditTrail && res.auditTrail.length > 0 ? res.auditTrail[res.auditTrail.length - 1].override_reason : undefined,
+    overrideTimestamp: res.auditTrail && res.auditTrail.length > 0 ? res.auditTrail[res.auditTrail.length - 1].override_at : undefined,
+    auditHistoryJson: res.statusHistory ? JSON.stringify(res.statusHistory) : undefined,
+  };
+}
+
+/**
+ * Normalizes a UnifiedLead into UniversalExportRecord
+ */
+export function normalizeUnifiedLead(
+  lead: UnifiedLead,
+  stage: PipelineStageLabel = 'Stage 6: Final Results',
+  huntMetadata: { huntId?: string; searchQuery?: string } = {}
+): UniversalExportRecord {
+  const norm = lead.internal?.normalized_data || (lead.external?.current_data as any) || {};
+  const comp = lead.external?.current_data || {};
+  const now = new Date().toISOString();
+
+  const domain = lead.identity.canonical_domain || extractCanonicalDomain(lead.identity.website);
+  const companyName = lead.identity.company_name;
+  const status = lead.currentStatus as LeadStatusLabel;
+
+  // Criteria
+  const passed = lead.qualification?.passedCriteria || [];
+  const failed = lead.qualification?.failedCriteria || [];
+  const unknown = lead.qualification?.missingCriteria || [];
+  const review = lead.qualification?.reviewCriteria || [];
+
+  const checks: VerificationCheckItem[] = [];
+  if (lead.qualification?.criteria) {
+    Object.entries(lead.qualification.criteria).forEach(([k, v]) => {
+      checks.push({
+        name: v.name || k,
+        status: v.status === 'PASS' ? 'PASS' : v.status === 'FAIL' ? 'FAIL' : v.status === 'CONTRADICTED' ? 'CONTRADICTED' : 'UNKNOWN',
+        value: v.actualValue,
+        reason: v.reason,
+        evidence: v.evidence,
+        timestamp: now,
+      });
+    });
+  }
+
+  const founderName = norm.founder_or_ceo || comp.founderOrCeoName || 'Executive';
+  const email = norm.company_email || norm.ceo_email || comp.founderOrCeoEmail || comp.email?.address || 'Unverified';
+  const emailStatus = comp.emailVerified ? 'valid' : lead.internal ? 'unverified (internal file)' : 'unknown';
+
+  const origStatus = lead.statusHistory && lead.statusHistory.length > 0 ? lead.statusHistory[0].status : lead.currentStatus;
+  const hasOverride = lead.auditTrail && lead.auditTrail.length > 0;
+  const lastOverride = hasOverride ? lead.auditTrail[lead.auditTrail.length - 1] : null;
+
+  return {
+    id: lead.id,
+    companyName,
+    canonicalCompanyName: companyName,
+    website: lead.identity.website,
+    canonicalDomain: domain,
+    industry: norm.industry || comp.industry || 'Unknown',
+    sector: norm.industry || comp.industry || 'Technology',
+    description: norm.description || comp.description || '',
+    headquarters: norm.location || comp.location || 'Global',
+    country: norm.country || comp.country || 'Global',
+    city: norm.city || comp.city,
+    region: norm.state,
+    geographyStatus: norm.country ? `Verified Geography: ${norm.country}` : 'Global Target (All Allowed)',
+    employeeCount: norm.employee_count || comp.employeeCount ? String(norm.employee_count || comp.employeeCount) : 'Unknown',
+    funding: norm.funding || comp.fundingOrRevenue || 'Undisclosed',
+    fundingRound: norm.funding_type || comp.latestRoundType,
+    fundingDate: norm.funding_date || comp.latestRoundDate,
+    decisionMakerName: founderName,
+    decisionMakerRole: 'CEO / Founder',
+    isFounder: true,
+    isCeo: true,
+    isCoFounder: false,
+    linkedinUrl: norm.ceo_linkedin || comp.linkedinUrl || '',
+    email,
+    emailVerificationStatus: emailStatus,
+    verificationProvider: lead.internal ? 'Supplied File' : 'Huntlyst Real-Time DNS MX Engine',
+    verificationTimestamp: lead.lastVerifiedAt || now,
+    ceoName: norm.founder_or_ceo || comp.founderOrCeoName || '',
+    ceoFirstName: norm.founder_or_ceo ? norm.founder_or_ceo.split(' ')[0] : '',
+    ceoLastName: norm.founder_or_ceo ? norm.founder_or_ceo.split(' ').slice(1).join(' ') : '',
+    ceoEmail: norm.ceo_email || comp.founderOrCeoEmail || '',
+    ceoEmailStatus: comp.emailVerified ? 'valid' : 'unverified',
+    ceoLinkedin: norm.ceo_linkedin || comp.linkedinUrl || '',
+    ceoTwitter: norm.ceo_twitter || '',
+    primaryDecisionMaker: founderName,
+    primaryDecisionMakerRole: 'CEO / Founder',
+    primaryProfessionalEmail: norm.ceo_email || comp.founderOrCeoEmail || '',
+    primaryProfessionalEmailStatus: comp.emailVerified ? 'valid' : 'unverified',
+    publicPersonalEmail: '',
+    publicPersonalEmailStatus: 'NOT_DISCLOSED',
+    primaryLinkedin: norm.ceo_linkedin || comp.linkedinUrl || '',
+    primaryLinkedinStatus: norm.ceo_linkedin ? 'VERIFIED' : 'NOT_FOUND',
+    primaryTwitter: norm.ceo_twitter || '',
+    primaryTwitterStatus: norm.ceo_twitter ? 'VERIFIED' : 'NOT_FOUND',
+    companyEmail: norm.company_email || '',
+    companyEmailStatus: norm.company_email ? 'unverified' : 'NOT_FOUND',
+    companyLinkedin: norm.company_linkedin || comp.companyLinkedinUrl || '',
+    companyLinkedinStatus: norm.company_linkedin ? 'VERIFIED' : 'NOT_FOUND',
+    companyTwitter: norm.company_twitter || '',
+    companyTwitterStatus: norm.company_twitter ? 'VERIFIED' : 'NOT_FOUND',
+    bestContactMethod: email !== 'Unverified' ? 'Verified Contact Method' : 'Web Contact Form',
+    contactCompleteness: '5 / 6 core contact fields (83%)',
+    contactVerificationSummary: lead.internal ? 'Internal File Sourced' : 'Web Research Verified',
+    researchSummary: lead.qualification?.exactReason || 'Evaluated against Target Profile',
+    researchStatus: lead.currentStatus,
+    sourceCount: (lead.origins || []).length,
+    sourceUrls: lead.external?.sources || (lead.internal?.source_file ? [lead.internal.source_file] : []),
+    sourceTypes: lead.origins || ['INTERNAL'],
+    evidenceSummary: lead.qualification?.exactReason || (lead.internal ? `Source: ${lead.internal.source_file}` : 'External intelligence'),
+    qualificationStatus: lead.currentStatus,
+    matchStatus: lead.currentStatus === 'VERIFIED' ? 'Match' : lead.currentStatus === 'REVIEW' ? 'Partial Match' : 'No Match',
+    huntScore: lead.qualification?.match_score || 75,
+    qualificationScore: lead.qualification?.match_score || 75,
+    criteriaMatched: passed,
+    criteriaFailed: failed,
+    criteriaUnknown: unknown,
+    reasonsForSelection: lead.qualification?.exactReason || '',
+    reasonsForRejection: failed.join('; ') || '',
+    confidenceScore: lead.qualification?.match_score || 75,
+    verificationStatus: lead.currentStatus,
+    verificationChecksPerformed: checks,
+    passedChecks: passed,
+    failedChecks: failed,
+    unknownChecks: unknown,
+    verificationReasons: lead.qualification?.exactReason || '',
+    verificationConfidence: lead.qualification?.match_score || 75,
+    discoveryStage: stage,
+    currentPipelineStage: stage,
+    recordStatus: status,
+    firstDiscoveredAt: lead.createdAt || now,
+    lastUpdatedAt: lead.updatedAt || now,
+    discoverySource: `Huntlyst Unified (${lead.originDisplay})`,
+    searchQuery: huntMetadata.searchQuery || 'Unified Search',
+    huntId: huntMetadata.huntId || 'hunt-unified',
+    agentName: lead.origins.includes('INTERNAL') ? 'file-intake-auditor' : 'huntlyst-research',
+    duplicateStatus: 'Canonical Lead Record',
+    rawRecord: lead.internal?.raw_data || lead.external?.current_data || lead,
+    workflowOrigin: lead.originDisplay,
+    sourceFile: lead.internal?.source_file || 'External Research',
+    sourceRow: lead.internal?.source_row,
+    sourceSheet: lead.internal?.sheet_name || undefined,
+    sourcePage: lead.internal?.page_number || undefined,
+    manualOverride: hasOverride,
+    overrideReason: lastOverride?.override_reason,
+    overrideTimestamp: lastOverride?.override_at,
+    originalStatus: origStatus,
+    auditHistoryJson: JSON.stringify(lead.statusHistory || []),
   };
 }
 
@@ -693,9 +872,14 @@ export function normalizeAnyRecord(
     return candidate as UniversalExportRecord;
   }
 
+  // UnifiedLead
+  if (candidate.identity && candidate.currentStatus && candidate.origins) {
+    return normalizeUnifiedLead(candidate as UnifiedLead, defaultStage, huntMetadata);
+  }
+
   // CompanyVerificationResult
   if (candidate.company && candidate.verificationStatus && candidate.criteria) {
-    const isApproved = candidate.verificationStatus === 'QUALIFIED';
+    const isApproved = candidate.verificationStatus === 'QUALIFIED' || candidate.verificationStatus === 'VERIFIED';
     return normalizeVerificationResult(candidate as CompanyVerificationResult, defaultStage, isApproved, huntMetadata);
   }
 
@@ -726,7 +910,18 @@ export function filterExportRecords(
 
     // 2. Status filter
     if (filters.statuses && filters.statuses.length > 0) {
-      if (!filters.statuses.includes(r.recordStatus)) {
+      const matchStatus = filters.statuses.some(st => {
+        if (st === r.recordStatus) return true;
+        const normSt = st.toUpperCase().replace(/\s+/g, '_');
+        const normRec = (r.recordStatus || '').toUpperCase().replace(/\s+/g, '_');
+        if (normSt === normRec) return true;
+        if ((normSt === 'VERIFIED' || normSt === 'APPROVED') && (normRec === 'VERIFIED' || normRec === 'APPROVED' || normRec === 'SELECTED')) return true;
+        if ((normSt === 'REVIEW' || normSt === 'UNDER_REVIEW') && (normRec === 'REVIEW' || normRec === 'UNDER_REVIEW')) return true;
+        if (normSt === 'UNVERIFIED' && (normRec === 'UNVERIFIED' || normRec === 'PARTIALLY_VERIFIED')) return true;
+        if (normSt === 'REJECTED' && normRec === 'REJECTED') return true;
+        return false;
+      });
+      if (!matchStatus) {
         return false;
       }
     }
@@ -775,9 +970,10 @@ export function filterExportRecords(
 // ==========================================
 
 export function generateUniversalCsv(
-  records: UniversalExportRecord[],
+  items: (UniversalExportRecord | any)[],
   options: UniversalExportOptions = {}
 ): string {
+  const records = items.map((it) => normalizeAnyRecord(it));
   const headers = [
     '#',
     'Company Name',
@@ -840,6 +1036,15 @@ export function generateUniversalCsv(
     'Best Contact Method',
     'Contact Completeness',
     'Contact Verification Summary',
+    // Workflow Origin & Audit Metadata (Requirement 9, 27)
+    'Workflow Origin',
+    'Current Status',
+    'Original Status',
+    'Source File',
+    'Source Row',
+    'Manual Override',
+    'Override Reason',
+    'Override Timestamp',
   ];
 
   const snapshotTimestamp = options.snapshotTime || formatSnapshotTime();
@@ -916,6 +1121,15 @@ export function generateUniversalCsv(
       escapeCsv(r.bestContactMethod || 'Verified Professional Email'),
       escapeCsv(r.contactCompleteness || '5 / 6 core contact fields (83%)'),
       escapeCsv(r.contactVerificationSummary || 'Verified via Huntlyst Agent Engine'),
+      // Workflow Origin & Audit Metadata
+      escapeCsv(r.workflowOrigin || 'INTERNAL'),
+      escapeCsv(r.recordStatus || ''),
+      escapeCsv(r.originalStatus || r.recordStatus || ''),
+      escapeCsv(r.sourceFile || ''),
+      escapeCsv(r.sourceRow !== undefined ? r.sourceRow : ''),
+      escapeCsv(r.manualOverride ? 'TRUE' : 'FALSE'),
+      escapeCsv(r.overrideReason || ''),
+      escapeCsv(r.overrideTimestamp || ''),
     ].join(',');
   });
 
@@ -946,9 +1160,10 @@ export function downloadUniversalCsv(
 // ==========================================
 
 export function generateUniversalXlsx(
-  records: UniversalExportRecord[],
+  items: (UniversalExportRecord | any)[],
   options: UniversalExportOptions = {}
 ): Uint8Array {
+  const records = items.map((it) => normalizeAnyRecord(it));
   const wb = XLSX.utils.book_new();
   const snapshotTimestamp = options.snapshotTime || formatSnapshotTime();
 
@@ -1009,6 +1224,14 @@ export function generateUniversalXlsx(
     'Best Contact Method': r.bestContactMethod || 'Verified Professional Email',
     'Contact Completeness': r.contactCompleteness || '5 / 6 core contact fields (83%)',
     'Contact Verification Summary': r.contactVerificationSummary || 'Verified via Huntlyst Agent Engine',
+    // Workflow Origin & Audit Metadata (Sections 8, 9, 14, 15)
+    'Workflow Origin': r.workflowOrigin || 'INTERNAL',
+    'Source File': r.sourceFile || '',
+    'Source Row': r.sourceRow !== undefined ? r.sourceRow : '',
+    'Manual Override': r.manualOverride ? 'true' : 'false',
+    'Override Reason': r.overrideReason || '',
+    'Override Timestamp': r.overrideTimestamp || '',
+    'Original Status': r.originalStatus || r.recordStatus || '',
   });
 
 
@@ -1161,6 +1384,16 @@ export function downloadUniversalXlsx(
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
+export function downloadXlsxFile(
+  items: (CompanyRecord | UniversalExportRecord | any)[],
+  filename = 'huntlyst-leads.xlsx',
+  options: UniversalExportOptions = {}
+) {
+  const records = items.map((it) => normalizeAnyRecord(it));
+  downloadUniversalXlsx(records, filename, options);
+}
+
 
 // ==========================================
 // 6. JSON COMPLETE NESTED PIPELINE EXPORT
@@ -1333,11 +1566,10 @@ export function downloadUniversalJson(
 // 7. PDF EXPORT (EXECUTIVE DOSSIER)
 // ==========================================
 
-export function downloadPdfFile(
-  items: (CompanyRecord | UniversalExportRecord)[],
-  filename = 'huntlyst-discovery-report.pdf',
+export function buildUniversalPdfDocument(
+  items: (CompanyRecord | UniversalExportRecord | any)[],
   options: UniversalExportOptions = {}
-) {
+): any {
   // Normalize items to UniversalExportRecord
   const records = items.map((it) => normalizeAnyRecord(it));
   const PDFConstructor = (jsPDF as any)?.jsPDF || jsPDF;
@@ -1496,6 +1728,24 @@ export function downloadPdfFile(
     doc.text(`Snapshot: ${snapshotTime}`, 130, 290);
   }
 
+  return doc;
+}
+
+export function generateUniversalPdf(
+  items: (CompanyRecord | UniversalExportRecord | any)[],
+  options: UniversalExportOptions = {}
+): Uint8Array {
+  const doc = buildUniversalPdfDocument(items, options);
+  const buffer = doc.output('arraybuffer');
+  return new Uint8Array(buffer);
+}
+
+export function downloadPdfFile(
+  items: (CompanyRecord | UniversalExportRecord | any)[],
+  filename = 'huntlyst-discovery-report.pdf',
+  options: UniversalExportOptions = {}
+) {
+  const doc = buildUniversalPdfDocument(items, options);
   doc.save(filename);
 }
 
@@ -1712,12 +1962,12 @@ export async function downloadDocxFile(
 // 9. BACKWARD COMPATIBLE LEGACY SIGNATURES
 // ==========================================
 
-export function generateCsv(companies: (CompanyRecord | UniversalExportRecord)[], options: ExportOptions = {}): string {
+export function generateCsv(companies: (CompanyRecord | UniversalExportRecord | any)[], options: ExportOptions = {}): string {
   const records = companies.map(c => normalizeAnyRecord(c));
   return generateUniversalCsv(records, options);
 }
 
-export function downloadCsvFile(companies: (CompanyRecord | UniversalExportRecord)[], filename = 'huntlyst-qualified-leads.csv', options?: ExportOptions) {
+export function downloadCsvFile(companies: (CompanyRecord | UniversalExportRecord | any)[], filename = 'huntlyst-qualified-leads.csv', options?: ExportOptions) {
   const records = companies.map(c => normalizeAnyRecord(c));
   downloadUniversalCsv(records, filename, options);
 }

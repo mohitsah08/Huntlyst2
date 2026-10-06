@@ -33,6 +33,7 @@ interface PersistedState {
   history: DbSearchHistoryItem[];
   seenDomains: Record<string, number>; // canonical domain -> count
   seenFingerprints: Record<string, string>; // fingerprint -> timestamp
+  unifiedLeads?: any[];
 }
 
 class HuntlystDatabaseStore {
@@ -90,6 +91,7 @@ class HuntlystDatabaseStore {
           history: parsed.history || [],
           seenDomains: parsed.seenDomains || {},
           seenFingerprints: parsed.seenFingerprints || {},
+          unifiedLeads: parsed.unifiedLeads || [],
         };
       }
     } catch (err) {
@@ -107,22 +109,30 @@ class HuntlystDatabaseStore {
       history: [],
       seenDomains: {},
       seenFingerprints: {},
+      unifiedLeads: [],
     };
+  }
+
+  public saveNow(): void {
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+      this.saveTimeout = null;
+    }
+    try {
+      const dir = path.dirname(this.stateFilePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(this.stateFilePath, JSON.stringify(this.state, null, 2), 'utf-8');
+    } catch (err) {
+      console.error('[Huntlyst DB] Failed to save state to disk:', err);
+    }
   }
 
   private scheduleSave(): void {
     if (this.saveTimeout) return;
     this.saveTimeout = setTimeout(() => {
-      this.saveTimeout = null;
-      try {
-        const dir = path.dirname(this.stateFilePath);
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true });
-        }
-        fs.writeFileSync(this.stateFilePath, JSON.stringify(this.state, null, 2), 'utf-8');
-      } catch (err) {
-        console.error('[Huntlyst DB] Failed to save state to disk:', err);
-      }
+      this.saveNow();
     }, 200);
   }
 
@@ -296,6 +306,16 @@ class HuntlystDatabaseStore {
 
   public getSearchHistory(): DbSearchHistoryItem[] {
     return this.state.history;
+  }
+
+  // --- UNIFIED LEADS ---
+  public getUnifiedLeadsRaw(): any[] {
+    return this.state.unifiedLeads || [];
+  }
+
+  public saveUnifiedLeadsRaw(leads: any[]): void {
+    this.state.unifiedLeads = leads;
+    this.saveNow();
   }
 }
 

@@ -37,7 +37,7 @@ import {
   targetProfileToHuntConfig,
   huntConfigToTargetProfile,
 } from '@/lib/targetProfileData';
-import { COUNTRIES, searchCountries } from '@/lib/geography';
+import { COUNTRIES, searchCountries, getCountriesByRegion } from '@/lib/geography';
 
 interface HuntConfigurationProps {
   initialConfig?: HuntConfig;
@@ -468,7 +468,7 @@ export default function HuntConfiguration({
     });
   };
 
-  // Country Toggles
+  // Country & Continent Toggles
   const toggleCountry = (countryName: string) => {
     setProfile(prev => {
       const exists = prev.countries.includes(countryName);
@@ -476,6 +476,44 @@ export default function HuntConfiguration({
       return { ...prev, countries: next };
     });
   };
+
+  const toggleContinent = (continent: string) => {
+    const continentCountries = getCountriesByRegion(continent);
+    setProfile(prev => {
+      const isSelected = prev.regions.includes(continent);
+      if (isSelected) {
+        // Deselect continent and remove its constituent countries
+        const nextRegions = prev.regions.filter(r => r !== continent);
+        const nextCountries = prev.countries.filter(c => !continentCountries.includes(c));
+        return {
+          ...prev,
+          regions: nextRegions.length === 0 ? ['Global'] : nextRegions,
+          countries: nextCountries,
+        };
+      } else {
+        // Select continent and automatically add all its constituent countries
+        const nextRegions = [...prev.regions.filter(r => r !== 'Global'), continent];
+        const nextCountries = Array.from(new Set([...prev.countries, ...continentCountries]));
+        return {
+          ...prev,
+          regions: nextRegions,
+          countries: nextCountries,
+        };
+      }
+    });
+  };
+
+  const toggleExcludedCountry = (countryName: string) => {
+    setProfile(prev => {
+      const current = prev.excludedCountries || [];
+      const exists = current.includes(countryName);
+      const next = exists ? current.filter(c => c !== countryName) : [...current, countryName];
+      // If excluded, also remove from selected countries
+      const nextCountries = prev.countries.filter(c => c !== countryName);
+      return { ...prev, excludedCountries: next, countries: nextCountries };
+    });
+  };
+
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6 pb-20">
@@ -1267,9 +1305,9 @@ export default function HuntConfiguration({
                   type="button"
                   onClick={() => {
                     if (profile.regions.includes('Global')) {
-                      setProfile(prev => ({ ...prev, regions: [] }));
+                      setProfile(prev => ({ ...prev, regions: [], countries: [] }));
                     } else {
-                      setProfile(prev => ({ ...prev, regions: ['Global'], countries: [] }));
+                      setProfile(prev => ({ ...prev, regions: ['Global'], countries: [], excludedCountries: [] }));
                     }
                   }}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-mono border transition-colors ${
@@ -1289,7 +1327,7 @@ export default function HuntConfiguration({
                       key={cont}
                       type="button"
                       disabled={isGlobalActive}
-                      onClick={() => toggleArrayItem('regions', cont)}
+                      onClick={() => toggleContinent(cont)}
                       className={`px-3 py-1.5 rounded-xl text-xs font-mono border transition-colors ${
                         isGlobalActive
                           ? 'opacity-40 cursor-not-allowed bg-[#FAF6EE] text-[#A0988E] border-[#EBE4D5]'
@@ -1310,11 +1348,12 @@ export default function HuntConfiguration({
                 </div>
               ) : (
                 <p className="text-[11px] font-mono text-[#766E65]">
-                  Union semantics: Companies headquartered in any selected continent OR country qualify.
+                  Selecting a continent automatically selects all its constituent countries. You can unselect individual countries below.
                 </p>
               )}
             </div>
           </div>
+
 
           {/* Target Countries Search & Multi-select */}
           <div className="space-y-3">
@@ -1357,26 +1396,68 @@ export default function HuntConfiguration({
             <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pr-1">
               {filteredCountries.map(c => {
                 const isSelected = profile.countries.includes(c.name);
+                const isExcluded = (profile.excludedCountries || []).includes(c.name);
                 return (
-                  <button
-                    key={c.code}
-                    type="button"
-                    onClick={() => toggleCountry(c.name)}
-                    className={`flex items-center justify-between text-left text-xs p-1.5 rounded border transition-colors ${
-                      isSelected
-                        ? 'bg-[#FFE7DC] border-[#FF6B35] font-bold text-[#1E1B18]'
-                        : 'bg-[#FAF6EE] border-[#EBE4D5] text-[#5A544E] hover:bg-white'
-                    }`}
-                  >
-                    <span className="truncate">{c.name}</span>
-                    <span className="text-[10px] text-[#8C847A] font-mono">{c.code}</span>
-                  </button>
+                  <div key={c.code} className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleCountry(c.name)}
+                      className={`flex-1 flex items-center justify-between text-left text-xs p-1.5 rounded border transition-colors ${
+                        isSelected
+                          ? 'bg-[#FFE7DC] border-[#FF6B35] font-bold text-[#1E1B18]'
+                          : 'bg-[#FAF6EE] border-[#EBE4D5] text-[#5A544E] hover:bg-white'
+                      }`}
+                    >
+                      <span className="truncate">{c.name}</span>
+                      <span className="text-[10px] text-[#8C847A] font-mono">{c.code}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleExcludedCountry(c.name)}
+                      title={isExcluded ? `Remove exclusion for ${c.name}` : `Exclude ${c.name}`}
+                      className={`px-1.5 py-1 text-[10px] font-mono font-bold rounded border ${
+                        isExcluded
+                          ? 'bg-[#FFCDD2] border-[#C62828] text-[#C62828]'
+                          : 'bg-[#FAF6EE] border-[#EBE4D5] text-[#A0988E] hover:text-[#C62828]'
+                      }`}
+                    >
+                      {isExcluded ? '✗ Excluded' : 'Exclude'}
+                    </button>
+                  </div>
                 );
               })}
             </div>
+
+            {/* Excluded Countries Summary */}
+            {profile.excludedCountries && profile.excludedCountries.length > 0 && (
+              <div className="pt-2 border-t border-[#EBE4D5]">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#C62828] block mb-1">
+                  Excluded Countries ({profile.excludedCountries.length})
+                </span>
+                <div className="flex items-center gap-1 flex-wrap">
+                  {profile.excludedCountries.map(c => (
+                    <span
+                      key={c}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono rounded bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828]"
+                    >
+                      <span>✗ {c}</span>
+                      <button
+                        type="button"
+                        onClick={() => toggleExcludedCountry(c)}
+                        aria-label={`Remove exclusion ${c}`}
+                        className="text-[#C62828] font-bold ml-1 hover:text-[#B71C1C]"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
 
       {/* ----------------------------------------------------------- */}
       {/* 6. DECISION MAKERS, EMAIL & VERIFICATION */}
