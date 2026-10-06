@@ -1059,7 +1059,7 @@ export default function HomePage() {
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="text-[#2E7D32] font-bold">✓</span>
-                        <span>Minimal / no US presence</span>
+                        <span>Target Geography (Global / Configurable)</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="text-[#2E7D32] font-bold">✓</span>
@@ -1231,7 +1231,7 @@ export default function HomePage() {
                     <span className="text-[#1E1B18] font-bold">
                       {activeHuntConfig?.targetProfile
                         ? formatTargetSummary(activeHuntConfig.targetProfile)
-                        : `${activeHuntConfig?.targetLeads || 15} companies | ${activeHuntConfig?.sectors.join(', ') || 'Technology'} | ${activeHuntConfig?.funding.preset || '$1M–$5M'} | ${activeHuntConfig?.geography.countries.join(', ') || 'Global'} | Minimal/No US | CEO + Co-founder | Email Required`}
+                        : `${activeHuntConfig?.targetLeads || 15} companies | ${activeHuntConfig?.sectors.join(', ') || 'Technology'} | ${activeHuntConfig?.funding.preset || '$1M–$5M'} | ${activeHuntConfig?.geography.countries.join(', ') || 'Global'} | CEO + Co-founder | Email Required`}
                     </span>
                   </div>
                 </div>

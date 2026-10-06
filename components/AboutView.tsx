@@ -24,7 +24,7 @@ export default function AboutView() {
           <div className="p-3.5 bg-[#FAF6EE] rounded-xl border border-[#D9D0C1] text-right font-mono text-xs space-y-1">
             <span className="text-[#766E65] block">Target Focus</span>
             <span className="font-bold text-[#FF6B35] block text-sm">$1M–$5M Growth Tech</span>
-            <span className="text-[#2E7D32] font-bold block">Minimal/No US Presence</span>
+            <span className="text-[#2E7D32] font-bold block">Global / Multi-Continent Geography</span>
           </div>
         </div>
       </div>

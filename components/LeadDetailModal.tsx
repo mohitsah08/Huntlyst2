@@ -272,9 +272,9 @@ export default function LeadDetailModal({
             {/* Geography */}
             <div className="flex items-start justify-between p-3 bg-[#FAF6EE] rounded-xl border border-[#EBE4D5] text-xs">
               <div className="space-y-0.5">
-                <span className="font-bold font-mono text-[#1E1B18]">Geography (Minimal/No US)</span>
+                <span className="font-bold font-mono text-[#1E1B18]">Target Geography</span>
                 <p className="text-[#5A544E]">
-                  Headquartered in {company.country || company.location || 'Non-US hub'} with confirmed non-US operations
+                  Headquartered in {company.country || company.location || 'Global Hub'} matching target geography criteria
                 </p>
               </div>
               <span className="text-[#2E7D32] font-mono font-bold shrink-0 ml-3">✓ Verified</span>
