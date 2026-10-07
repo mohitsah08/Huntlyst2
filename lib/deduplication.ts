@@ -9,8 +9,6 @@
  * 5. Person Identity Normalization (clean executive name + canonical company domain)
  */
 
-import * as crypto from 'crypto';
-
 // Common subdomains to strip down to root domain
 const SUBDOMAINS_TO_STRIP = [
   'www', 'm', 'mobile', 'app', 'portal', 'blog', 'news', 'docs',
@@ -126,7 +124,18 @@ export function createCompanyFingerprint(name: string, websiteOrDomain: string):
   const canonicalDomain = extractCanonicalDomain(websiteOrDomain);
   const cleanName = normalizeCompanyName(name);
   const composite = `${canonicalDomain}::${cleanName}`;
-  return crypto.createHash('sha256').update(composite).digest('hex').slice(0, 16);
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const nodeCrypto = require('crypto');
+    return nodeCrypto.createHash('sha256').update(composite).digest('hex').slice(0, 16);
+  } catch {
+    let hash = 0;
+    for (let i = 0; i < composite.length; i++) {
+      hash = ((hash << 5) - hash) + composite.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(16).padStart(16, '0').slice(0, 16);
+  }
 }
 
 export const calculateCompositeFingerprint = createCompanyFingerprint;

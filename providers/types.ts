@@ -238,6 +238,20 @@ export interface CompanyVerificationResult {
     coFounders?: DiscoveredPerson[];
     co_founders?: DiscoveredPerson[];
   };
+  entityRelationship?: {
+    brand: string;
+    legalEntity: string | null;
+    parentEntity: string | null;
+    operatingEntity: string | null;
+    relationshipEvidence: string | null;
+  } | null;
+  entity_relationship?: {
+    brand: string;
+    legalEntity: string | null;
+    parentEntity: string | null;
+    operatingEntity: string | null;
+    relationshipEvidence: string | null;
+  } | null;
   fundingDetails?: {
     totalFundingUsd: number | null;
     latestRoundUsd: number | null;

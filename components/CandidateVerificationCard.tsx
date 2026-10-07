@@ -175,6 +175,11 @@ export default function CandidateVerificationCard({
                   Imported Dossier
                 </span>
               )}
+              {(result.entityRelationship?.parentEntity || (company as any).entityRelationship?.parentEntity) && (
+                <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-[#EDE7F6] text-[#4527A0] border border-[#B39DDB] rounded-md" title={`Parent Entity: ${result.entityRelationship?.parentEntity || (company as any).entityRelationship?.parentEntity}`}>
+                  Parent: {result.entityRelationship?.parentEntity || (company as any).entityRelationship?.parentEntity}
+                </span>
+              )}
             </div>
             {company.website ? (
               <a
@@ -459,21 +464,30 @@ export default function CandidateVerificationCard({
         const contDet = result.contactDetails;
         const socDet = result.socialDetails;
 
-        const ceoObj = lead?.ceo;
-        const ceoName = ceoObj?.full_name || cAny.ceoName;
-        const ceoEmail = ceoObj?.professional_email || cAny.ceoEmail;
-        const ceoLinkedin = ceoObj?.linkedin_url || cAny.ceoLinkedin;
+        const ceoObj = lead?.ceo || lead?.currentCeo || lead?.current_ceo;
+        const ceoName = ceoObj?.full_name || ceoObj?.name || cAny.ceoName || cAny.founderOrCeoName;
+        const ceoEmail = ceoObj?.professional_email || ceoObj?.email || cAny.ceoEmail;
+        const ceoLinkedin = ceoObj?.linkedin_url || ceoObj?.linkedin || cAny.ceoLinkedin;
 
-        const foundersList = lead?.founders?.length
+        const foundersList = (lead?.founders?.length
           ? lead.founders
-          : cAny.founderNames?.map((fn: string) => ({ full_name: fn }));
-        const cofoundersList = lead?.co_founders?.length
+          : cAny.founderNames?.map((fn: string) => ({ full_name: fn }))) || [];
+        const cofoundersList = (lead?.coFounders?.length
+          ? lead.coFounders
+          : lead?.co_founders?.length
           ? lead.co_founders
-          : cAny.cofounderNames?.map((fn: string) => ({ full_name: fn }));
-        const formerCeosList = lead?.former_ceos || [];
+          : cAny.cofounderNames?.map((fn: string) => ({ full_name: fn }))) || [];
+        const formerCeosList = lead?.formerCeos || lead?.former_ceos || [];
 
-        const hasFundingDet = Boolean(fundingDet?.total_funding_usd || fundingDet?.latest_round_usd || fundingDet?.latest_round_type);
-        const hasLeadership = Boolean(ceoName || foundersList?.length || cofoundersList?.length || formerCeosList?.length);
+        const totalFund = fundingDet?.total_funding_usd ?? fundingDet?.totalFundingUsd ?? company.funding?.totalFundingUsd;
+        const latestFund = fundingDet?.latest_round_usd ?? fundingDet?.latestRoundUsd ?? company.funding?.latestRoundUsd;
+        const latestType = fundingDet?.latest_round_type ?? fundingDet?.latestRoundType ?? company.funding?.latestRoundType ?? company.funding?.stage;
+        const latestDate = fundingDet?.latest_round_date ?? fundingDet?.latestRoundDate ?? company.funding?.latestRoundDate;
+
+        const entityRel = result.entityRelationship || result.entity_relationship || cAny.entityRelationship || cAny.entity_relationship;
+
+        const hasFundingDet = Boolean(totalFund || latestFund || latestType || company.fundingOrRevenue);
+        const hasLeadership = Boolean(ceoName || foundersList?.length || cofoundersList?.length || formerCeosList?.length || entityRel?.parentEntity);
         const hasContacts = Boolean(contDet?.company_emails?.length || contDet?.executive_emails?.length || contDet?.phones?.length || cAny.companyEmail || cAny.ceoEmail);
 
         if (!hasFundingDet && !hasLeadership && !hasContacts && !company.companyLinkedinUrl) return null;
@@ -490,22 +504,22 @@ export default function CandidateVerificationCard({
                   <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
                     <span className="text-[#766E65] font-bold">Total Funding:</span>{' '}
                     <span className="font-semibold text-[#1E1B18]">
-                      {fundingDet?.total_funding_usd ? `$${(fundingDet.total_funding_usd / 1e6).toFixed(1)}M` : (company.fundingOrRevenue || 'Undisclosed')}
+                      {totalFund ? `$${(totalFund / 1e6).toFixed(1)}M` : (company.fundingOrRevenue || 'Undisclosed')}
                     </span>
                   </div>
                   <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
                     <span className="text-[#766E65] font-bold">Latest Round:</span>{' '}
                     <span className="font-semibold text-[#1E1B18]">
-                      {fundingDet?.latest_round_usd ? `$${(fundingDet.latest_round_usd / 1e6).toFixed(1)}M` : '—'}
+                      {latestFund ? `$${(latestFund / 1e6).toFixed(1)}M` : '—'}
                     </span>
                   </div>
                   <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
                     <span className="text-[#766E65] font-bold">Round Type:</span>{' '}
-                    <span className="font-semibold text-[#1E1B18]">{fundingDet?.latest_round_type || company.funding?.stage || '—'}</span>
+                    <span className="font-semibold text-[#1E1B18]">{latestType || '—'}</span>
                   </div>
                   <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8]">
                     <span className="text-[#766E65] font-bold">Round Date:</span>{' '}
-                    <span className="font-semibold text-[#1E1B18]">{fundingDet?.latest_round_date || '—'}</span>
+                    <span className="font-semibold text-[#1E1B18]">{latestDate || '—'}</span>
                   </div>
                 </div>
               </div>
@@ -518,6 +532,20 @@ export default function CandidateVerificationCard({
                   👥 Executive Leadership Roster:
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-[11px]">
+                  {entityRel?.parentEntity && (
+                    <div className="p-1.5 px-2 bg-[#EDE7F6] rounded border border-[#D1C4E9] flex flex-col justify-between">
+                      <div>
+                        <span className="text-[#4527A0] font-bold">Parent Entity:</span>{' '}
+                        <span className="font-semibold text-[#311B92]">{entityRel.parentEntity}</span>
+                      </div>
+                      {entityRel.relationshipEvidence && (
+                        <div className="text-[10px] text-[#5E35B1] mt-1 truncate" title={entityRel.relationshipEvidence}>
+                          {entityRel.relationshipEvidence}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {ceoName && (
                     <div className="p-1.5 px-2 bg-[#FAF6EE] rounded border border-[#E0D9C8] flex flex-col justify-between">
                       <div>

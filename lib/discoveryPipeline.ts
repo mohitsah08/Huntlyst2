@@ -59,6 +59,8 @@ import { detectCountryFromEvidence } from '@/lib/geography';
 import { calculateHuntScore } from '@/lib/rank';
 import * as cheerio from 'cheerio';
 import * as dns from 'dns';
+import { searchEngine } from '@/lib/searchProviders';
+import { sourceInspector, SourceInspectionManager } from '@/lib/sourceInspection';
 
 export interface PipelineExecutionOptions {
   onCandidateProgress?: (event: {
@@ -685,6 +687,7 @@ export interface DiscoveredWebIntelligence {
   latestRoundUsd: number | null;
   fundingAmount: number | null;
   fundingText: string | null;
+  fundingEvidence?: string | null;
   fundingDate: string | null;
   fundingType: string | null;
   fundingSourceUrl: string | null;
@@ -698,6 +701,9 @@ export interface DiscoveredWebIntelligence {
     evidence: string;
     confidence: number;
   }>;
+  parentEntity?: string | null;
+  legalEntity?: string | null;
+  inspectedSourcesCount?: number;
   sources: string[];
 }
 
@@ -727,81 +733,165 @@ export async function queryLiveWebIntelligence(
     fundingType: null,
     fundingSourceUrl: null,
     fundingRounds: [],
+    parentEntity: null,
+    legalEntity: null,
+    inspectedSourcesCount: 0,
     sources: [],
   };
 
-  const cleanName = companyName && companyName !== 'Unknown Entity' ? companyName : canonicalDomain;
-  if (!cleanName) return result;
+  const cleanName = companyName && companyName !== 'Unknown Entity' && !companyName.startsWith('http')
+    ? companyName
+    : (canonicalDomain ? normalizeBrandFromDomain(canonicalDomain) : '');
 
-  // Helper for safe DDG query fetching
-  async function searchDDG(queryStr: string): Promise<Array<{ title: string; snippet: string; url: string }>> {
-    try {
-      const q = encodeURIComponent(queryStr);
-      const res = await fetch(`https://html.duckduckgo.com/html/?q=${q}`, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        },
-        signal: AbortSignal.timeout(4500),
-      });
-      if (!res.ok) return [];
-      const html = await res.text();
-      const $ = cheerio.load(html);
-      const items: Array<{ title: string; snippet: string; url: string }> = [];
-      $('.result').each((_, el) => {
-        const title = $(el).find('.result__title').text().trim();
-        const snippet = $(el).find('.result__snippet').text().trim();
-        let rawUrl = $(el).find('.result__url').attr('href') || '';
-        if (rawUrl.includes('uddg=')) {
-          try {
-            const m = rawUrl.match(/uddg=([^&]+)/);
-            if (m && m[1]) rawUrl = decodeURIComponent(m[1]);
-          } catch {}
+  if (!cleanName && !canonicalDomain) return result;
+  const searchName = cleanName || canonicalDomain;
+
+  // 1. EXECUTE MULTI-QUERY SEARCHES ACROSS AVAILABLE PROVIDERS
+  const searchPromises = [
+    searchEngine.search(`"${searchName}" (CEO OR "Chief Executive Officer" OR "President & CEO" OR "founder" OR "co-founder")`, 6),
+    searchEngine.search(`"${searchName}" (CEO OR "current CEO" OR "named CEO" OR "appointed CEO" OR "steps down")`, 6),
+    searchEngine.search(`"${searchName}" (funding OR "raised" OR "seed" OR "series" OR "valuation" OR "investors")`, 6),
+    searchEngine.search(`"${searchName}" (latest funding OR "total funding" OR "debt financing")`, 6),
+    searchEngine.search(`"${searchName}" site:linkedin.com/company`, 4),
+  ];
+
+  const searchBatches = await Promise.allSettled(searchPromises);
+  const discoveredItems: Array<{ title: string; snippet: string; url: string }> = [];
+  const seenUrls = new Set<string>();
+
+  for (const batch of searchBatches) {
+    if (batch.status === 'fulfilled') {
+      for (const item of batch.value) {
+        if (!seenUrls.has(item.url)) {
+          seenUrls.add(item.url);
+          discoveredItems.push(item);
         }
-        if (rawUrl.startsWith('//')) rawUrl = 'https:' + rawUrl;
-        if (rawUrl) items.push({ title, snippet, url: rawUrl });
-      });
-      return items;
-    } catch {
-      return [];
+      }
     }
   }
 
-  // 1. LEADERSHIP & FOUNDER QUERIES
-  const leadItems = await searchDDG(`"${cleanName}" (CEO OR "Chief Executive Officer" OR "President & CEO" OR "founder" OR "co-founder")`);
-  leadItems.forEach(item => {
-    if (!result.sources.includes(item.url)) result.sources.push(item.url);
+  // 2. FETCH AND READ TOP AUTHORITATIVE SOURCE PAGES (REAL SOURCE INSPECTION)
+  // Prioritize authoritative domains: Wikipedia, company pages, news, business registries
+  const sortedUrlsForFetch = [...discoveredItems]
+    .sort((a, b) => {
+      const aTier = sourceInspector.classifySourceTier(a.url, canonicalDomain);
+      const bTier = sourceInspector.classifySourceTier(b.url, canonicalDomain);
+      if (aTier === 'TIER_1_OFFICIAL') return -1;
+      if (bTier === 'TIER_1_OFFICIAL') return 1;
+      if (aTier === 'TIER_2_AUTHORITATIVE') return -1;
+      if (bTier === 'TIER_2_AUTHORITATIVE') return 1;
+      return 0;
+    })
+    .map(i => i.url);
+
+  const inspectedPages = await sourceInspector.fetchSources(sortedUrlsForFetch, canonicalDomain, 8);
+
+  // 3. EXTRACT ENTITY AND PARENT RELATIONSHIPS
+  const entityRel = sourceInspector.extractEntityRelationships(searchName, canonicalDomain, inspectedPages);
+  if (entityRel.parentEntity) {
+    result.parentEntity = entityRel.parentEntity;
+    result.legalEntity = entityRel.legalEntity;
+
+    // Run targeted query for parent entity leadership if different from searchName
+    if (!entityRel.parentEntity.toLowerCase().includes(searchName.toLowerCase())) {
+      try {
+        const parentResults = await searchEngine.search(`"${entityRel.parentEntity}" (CEO OR leadership OR "Managing Director" OR "MD & CEO")`, 4);
+        const parentUrls = parentResults.map(p => p.url).filter(u => !seenUrls.has(u));
+        if (parentUrls.length > 0) {
+          const parentPages = await sourceInspector.fetchSources(parentUrls, canonicalDomain, 4);
+          inspectedPages.push(...parentPages);
+        }
+      } catch {}
+    }
+  }
+
+  // 4. EXTRACT LEADERSHIP FACTS FROM INSPECTED PAGES
+  const leadershipFacts = sourceInspector.extractLeadershipFromSources(searchName, result.parentEntity || null, inspectedPages);
+  if (leadershipFacts.currentCeo) {
+    result.ceoName = leadershipFacts.currentCeo.name;
+    result.ceoRole = leadershipFacts.currentCeo.role;
+    result.ceoEvidence = leadershipFacts.currentCeo.evidence;
+    result.ceoSourceUrl = leadershipFacts.currentCeo.sourceUrl;
+  }
+  if (leadershipFacts.formerCeos.length > 0) {
+    result.formerCeoName = leadershipFacts.formerCeos[0].name;
+    result.formerCeoEvidence = leadershipFacts.formerCeos[0].evidence;
+  }
+  leadershipFacts.founders.forEach(f => {
+    if (!result.founders.includes(f.name)) result.founders.push(f.name);
+  });
+  leadershipFacts.coFounders.forEach(cf => {
+    if (!result.coFounders.includes(cf.name)) result.coFounders.push(cf.name);
+  });
+  if (result.founders.length > 0 && !result.founderEvidence) {
+    result.founderEvidence = `Founders verified from authoritative sources: ${result.founders.join(', ')}`;
+    result.founderSourceUrl = leadershipFacts.founders[0]?.sourceUrl || null;
+  }
+
+  // 5. EXTRACT FUNDING FACTS FROM INSPECTED PAGES
+  const fundingFacts = sourceInspector.extractFundingFromSources(searchName, result.parentEntity || null, inspectedPages);
+  if (fundingFacts.totalFundingUsd) {
+    result.totalFundingUsd = fundingFacts.totalFundingUsd;
+    result.fundingAmount = fundingFacts.totalFundingUsd;
+  }
+  if (fundingFacts.latestRoundUsd) {
+    result.latestRoundUsd = fundingFacts.latestRoundUsd;
+    result.fundingType = fundingFacts.latestRoundType || 'Venture Round';
+    result.fundingDate = fundingFacts.latestRoundDate || null;
+  }
+  if (fundingFacts.rounds.length > 0) {
+    result.fundingRounds = fundingFacts.rounds.map(r => ({
+      amountUsd: r.amountUsd,
+      roundType: r.roundType,
+      date: r.date,
+      investorNames: r.investors,
+      sourceUrl: r.sourceUrl,
+      sourceTitle: r.sourceTitle,
+      evidence: r.evidence,
+      confidence: r.confidence,
+    }));
+    result.fundingEvidence = fundingFacts.evidence || `Disclosed rounds documented from authoritative venture profiles`;
+    result.fundingSourceUrl = fundingFacts.sourceUrl || null;
+  }
+
+  // 6. CORROBORATE & BACKFILL FROM SEARCH SNIPPETS (IF NOT DISCLOSED ON FETCHED PAGES)
+  for (const item of discoveredItems) {
     const text = `${item.title} ${item.snippet}`;
 
-    // Former CEO
-    const formerMatch = text.match(/(?:former|previous|ex-)\s*CEO[,\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})|([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s*[-–|,]\s*(?:former CEO|previous CEO|ex-CEO|served as CEO)/i);
-    if (formerMatch && !result.formerCeoName) {
-      const formerName = (formerMatch[1] || formerMatch[2])?.trim();
-      if (formerName && !formerName.toLowerCase().includes('united') && !formerName.toLowerCase().includes('company')) {
-        result.formerCeoName = formerName;
-        result.formerCeoEvidence = `Documented as former CEO: ${formerName} ("${item.snippet.slice(0, 140)}")`;
-      }
-    }
+    // CEO snippet check
+    if (!result.ceoName) {
+      const ceoMatch =
+        text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s*[-–|,]\s*(?:Co-Founder & CEO|CEO|Chief Executive Officer|President & CEO)/i) ||
+        text.match(/named\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s+as\s+CEO/i) ||
+        text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s+New\s+CEO/i) ||
+        text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s+(?:is|serves as)\s+(?:the\s+)?CEO/i);
 
-    // Current CEO
-    const ceoMatch = text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s*[-–|,]\s*(?:Co-Founder & CEO|CEO|Chief Executive Officer|President & CEO)/i) ||
-                     text.match(/named\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s+as\s+CEO/i) ||
-                     text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s+(?:is|serves as)\s+(?:the\s+)?CEO/i);
-    if (ceoMatch && !result.ceoName) {
-      const cand = (ceoMatch[1] || ceoMatch[2]).trim().replace(/\s+(was|is|has|named|appointed|joined)$/i, '').trim();
-      const lower = cand.toLowerCase();
-      if (!lower.includes('united') && !lower.includes('company') && !lower.includes('about') && !lower.includes('linkedin')) {
-        result.ceoName = cand;
-        result.ceoRole = 'CEO';
-        result.ceoSourceUrl = item.url;
-        result.ceoEvidence = `${item.title} — "${item.snippet.slice(0, 150)}"`;
-        if (item.url.includes('linkedin.com/in/') && !result.ceoLinkedIn) {
-          result.ceoLinkedIn = item.url.split('?')[0];
+      if (ceoMatch) {
+        const cand = (ceoMatch[1] || ceoMatch[2]).trim().replace(/\s+(was|is|has|named|appointed|joined|steps)$/i, '').trim();
+        const lower = cand.toLowerCase();
+        if (!lower.includes('company') && !lower.includes('india') && !lower.includes('about') && !lower.includes('linkedin')) {
+          result.ceoName = cand;
+          result.ceoRole = 'CEO';
+          result.ceoSourceUrl = item.url;
+          result.ceoEvidence = `${item.title} — "${item.snippet.slice(0, 150)}"`;
         }
       }
     }
 
-    // Founders
+    // Former CEO snippet check
+    if (!result.formerCeoName) {
+      const formerMatch = text.match(/(?:former|previous|ex-)\s*CEO[,\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})|([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s*[-–|,]\s*(?:former CEO|previous CEO|ex-CEO|served as CEO)/i) ||
+                          text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s+steps\s+down\s+as\s+CEO/i);
+      if (formerMatch) {
+        const formerName = (formerMatch[1] || formerMatch[2])?.trim();
+        if (formerName && !formerName.toLowerCase().includes('company')) {
+          result.formerCeoName = formerName;
+          result.formerCeoEvidence = `Documented as former CEO: ${formerName} ("${item.snippet.slice(0, 140)}")`;
+        }
+      }
+    }
+
+    // Founders snippet check
     const founderRegex = /(?:founded|co-founded)\s*(?:in \d{4}\s*)?by\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2}(?:,\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})*(?:,?\s*and\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})?)/i;
     const founderMatch = text.match(founderRegex);
     if (founderMatch && founderMatch[1]) {
@@ -814,89 +904,66 @@ export async function queryLiveWebIntelligence(
         result.founderSourceUrl = item.url;
       }
     }
-  });
 
-  // 2. FUNDING QUERIES (Multi-round & Total Disclosed Funding)
-  const fundItems = await searchDDG(`"${cleanName}" (funding OR "raised" OR "seed" OR "series" OR "valuation" OR "investors")`);
-  fundItems.forEach(item => {
-    if (!result.sources.includes(item.url)) result.sources.push(item.url);
-    const text = `${item.title} ${item.snippet}`;
+    // Funding snippet check
+    if (!result.totalFundingUsd && !result.latestRoundUsd) {
+      const amountMatch = text.match(/\$([0-9]+(?:\.[0-9]+)?)\s*(M|million|B|billion|K|thousand)/i);
+      const roundMatch = text.match(/\b(Pre-Seed|Seed|Series [A-F]|Venture Round|Growth Round|Debt Financing)\b/i);
+      const dateMatch = text.match(/\b(20[12]\d)\b/);
 
-    // Look for funding rounds
-    const amountMatch = text.match(/\$([0-9]+(?:\.[0-9]+)?)\s*(M|million|B|billion|K|thousand)/i);
-    const roundMatch = text.match(/\b(Pre-Seed|Seed|Series [A-F]|Venture Round|Growth Round|Debt Financing)\b/i);
-    const dateMatch = text.match(/\b(20[12]\d)\b/);
+      if (amountMatch) {
+        const num = parseFloat(amountMatch[1]);
+        const unit = amountMatch[2].toUpperCase();
+        const multi = unit.startsWith('B') ? 1e9 : 1e6;
+        const parsedVal = Math.round(num * multi);
+        const roundType = roundMatch ? roundMatch[1] : (parsedVal < 5000000 ? 'Seed' : 'Venture Round');
+        const roundDate = dateMatch ? dateMatch[1] : null;
 
-    if (amountMatch) {
-      const num = parseFloat(amountMatch[1]);
-      const unit = amountMatch[2].toUpperCase();
-      let multi = 1;
-      if (unit.startsWith('B')) multi = 1e9;
-      else if (unit.startsWith('M')) multi = 1e6;
-      else if (unit.startsWith('K')) multi = 1e3;
-      const parsedVal = Math.round(num * multi);
-
-      const roundType = roundMatch ? roundMatch[1] : (parsedVal < 5000000 ? 'Seed' : 'Venture Round');
-      const roundDate = dateMatch ? dateMatch[1] : null;
-
-      // Add to funding rounds timeline if not already tracked
-      const exists = result.fundingRounds.some(r => r.amountUsd === parsedVal || (roundDate && r.date === roundDate && r.roundType === roundType));
-      if (!exists) {
-        result.fundingRounds.push({
-          amountUsd: parsedVal,
-          roundType,
-          date: roundDate,
-          sourceUrl: item.url,
-          sourceTitle: item.title,
-          evidence: item.snippet.slice(0, 160),
-          confidence: 90,
-        });
-      }
-
-      if (!result.latestRoundUsd || (parsedVal && !result.fundingAmount)) {
         result.latestRoundUsd = parsedVal;
         result.fundingAmount = parsedVal;
-        result.fundingText = amountMatch[0];
         result.fundingType = roundType;
         result.fundingDate = roundDate;
         result.fundingSourceUrl = item.url;
-      }
+        result.fundingEvidence = `Disclosed in market reports: $${(parsedVal / 1e6).toFixed(1)}M (${roundType})`;
 
-      // Check total funding mentions (e.g. "raised a total of $1.5B" or "total funding of $13M")
-      const totalMatch = text.match(/(?:raised|total funding of|total raised|total funding is)\s*\$([0-9]+(?:\.[0-9]+)?)\s*(M|million|B|billion)/i);
-      if (totalMatch) {
-        const totalNum = parseFloat(totalMatch[1]);
-        const totalUnit = totalMatch[2].toUpperCase();
-        const totalMulti = totalUnit.startsWith('B') ? 1e9 : 1e6;
-        result.totalFundingUsd = Math.round(totalNum * totalMulti);
+        if (!result.fundingRounds.some(r => r.amountUsd === parsedVal)) {
+          result.fundingRounds.push({
+            amountUsd: parsedVal,
+            roundType,
+            date: roundDate,
+            sourceUrl: item.url,
+            sourceTitle: item.title,
+            evidence: item.snippet.slice(0, 160),
+            confidence: 90,
+          });
+        }
       }
     }
-  });
 
-  // Calculate total funding from rounds if total was not explicitly stated
+    // Company LinkedIn check
+    if (!result.companyLinkedIn && item.url.includes('linkedin.com/company/')) {
+      const slug = item.url.split('linkedin.com/company/')[1]?.split('/')[0]?.toLowerCase();
+      const domainBase = canonicalDomain.replace(/\.[a-z.]+$/, '').toLowerCase();
+      const nameSlug = searchName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (slug && (slug.includes(nameSlug) || nameSlug.includes(slug) || (domainBase && slug.includes(domainBase)))) {
+        result.companyLinkedIn = item.url.split('?')[0];
+      }
+    }
+  }
+
+  // Calculate total funding from rounds if not explicitly stated
   if (!result.totalFundingUsd && result.fundingRounds.length > 0) {
     if (result.fundingRounds.length === 1) {
       result.totalFundingUsd = result.fundingRounds[0].amountUsd;
     } else {
-      const sum = result.fundingRounds.reduce((acc, r) => acc + (r.amountUsd || 0), 0);
-      result.totalFundingUsd = sum;
+      result.totalFundingUsd = result.fundingRounds.reduce((acc, r) => acc + (r.amountUsd || 0), 0);
     }
   }
 
-  // 3. SOCIAL PROFILES QUERY (Dedicated LinkedIn Discovery Step)
-  const linkedinItems = await searchDDG(`"${cleanName}" site:linkedin.com/company`);
-  for (const item of linkedinItems) {
-    if (!result.sources.includes(item.url)) result.sources.push(item.url);
-    if (item.url.includes('linkedin.com/company/')) {
-      const slug = item.url.split('linkedin.com/company/')[1]?.split('/')[0]?.toLowerCase();
-      const domainBase = canonicalDomain.replace(/\.[a-z.]+$/, '').toLowerCase();
-      const nameSlug = cleanName.toLowerCase().replace(/[^a-z0-9]/g, '');
-      if (slug && (slug.includes(nameSlug) || nameSlug.includes(slug) || (domainBase && slug.includes(domainBase)))) {
-        result.companyLinkedIn = item.url.split('?')[0];
-        break;
-      }
-    }
-  }
+  // 7. RECORD AUTHENTIC SOURCES (FETCHED + DISCOVERED)
+  const allSourceUrls = Array.from(new Set([...inspectedPages.map(p => p.url), ...discoveredItems.map(d => d.url)]));
+  result.sources = allSourceUrls;
+  result.inspectedSourcesCount = inspectedPages.length;
 
   return result;
 }
@@ -1089,8 +1156,12 @@ export async function researchCompany(
     industry: standard_industry,
     rawIndustry: raw_industry,
     subIndustry,
-    businessModel: 'B2B SaaS',
-    companyType: 'Privately Held',
+    businessModel: (lowerText.includes('farm') || lowerText.includes('saas') || lowerText.includes('accounting software') || lowerText.includes('enterprise software')) ? 'B2B SaaS' :
+                   (lowerText.includes('pharmacy') || lowerText.includes('medicine') || lowerText.includes('healthcare') || lowerText.includes('telehealth') || lowerText.includes('e-pharmacy') || lowerText.includes('ecommerce') || lowerText.includes('e-commerce')) ? 'B2C E-Commerce / Digital Healthcare' :
+                   lowerText.includes('marketplace') ? 'Marketplace' :
+                   lowerText.includes('b2b') ? 'B2B Software' : 'UNKNOWN',
+    companyType: (fullHtml.toLowerCase().includes('publicly traded') || fullHtml.toLowerCase().includes('nasdaq') || fullHtml.toLowerCase().includes('nyse')) ? 'Public' :
+                 (fullHtml.toLowerCase().includes('privately held') || fullHtml.toLowerCase().includes('private company') || fullHtml.toLowerCase().includes('unlisted')) ? 'Privately Held' : 'UNKNOWN',
     headquarters,
     city,
     state,
@@ -1117,9 +1188,13 @@ export async function researchFunding(
   liveWebIntel?: DiscoveredWebIntelligence | null
 ): Promise<{
   totalFundingUsd: number | null;
+  total_funding_usd?: number | null;
   latestRoundUsd: number | null;
+  latest_round_usd?: number | null;
   latestRoundDate: string | null;
+  latest_round_date?: string | null;
   latestRoundType: string | null;
+  latest_round_type?: string | null;
   fundingCurrency: string;
   fundingSource: string | null;
   fundingSourceUrl: string | null;
@@ -1239,9 +1314,13 @@ export async function researchFunding(
 
   return {
     totalFundingUsd,
+    total_funding_usd: totalFundingUsd,
     latestRoundUsd,
+    latest_round_usd: latestRoundUsd,
     latestRoundDate,
+    latest_round_date: latestRoundDate,
     latestRoundType,
+    latest_round_type: latestRoundType,
     fundingCurrency: 'USD',
     fundingSource,
     fundingSourceUrl,
@@ -1371,6 +1450,7 @@ export async function researchLeadership(
     currentCeo = {
       id: `ceo_${ceoName.toLowerCase().replace(/\s+/g, '_')}`,
       name: ceoName,
+      full_name: ceoName,
       first_name: nameParts[0],
       last_name: nameParts.slice(1).join(' '),
       role: 'CEO',
@@ -1405,6 +1485,7 @@ export async function researchLeadership(
     formerCeosMap.set(formerCeoName.toLowerCase(), {
       id: `former_ceo_${formerCeoName.toLowerCase().replace(/\s+/g, '_')}`,
       name: formerCeoName,
+      full_name: formerCeoName,
       first_name: nameParts[0],
       last_name: nameParts.slice(1).join(' '),
       role: 'Executive',
@@ -1469,6 +1550,7 @@ export async function researchLeadership(
     foundersMap.set(clean.toLowerCase(), {
       id: `founder_${clean.toLowerCase().replace(/\s+/g, '_')}`,
       name: clean,
+      full_name: clean,
       first_name: nameParts[0],
       last_name: nameParts.slice(1).join(' '),
       role: isExplicitCofounder ? 'Co-Founder' : 'Founder',
@@ -1946,61 +2028,61 @@ export function buildFieldCoverageMatrix(params: {
   social: any;
   sources: string[];
 }): Record<string, { searched: boolean; found: boolean; verified: boolean; sourcesChecked: number }> {
-  const srcCount = Math.max(1, params.sources?.length || 1);
+  const srcCount = params.sources?.length || 0;
   return {
     companyName: {
       searched: true,
       found: Boolean(params.companyName && params.companyName !== 'Unknown Entity'),
       verified: Boolean(params.companyName && params.companyName !== 'Unknown Entity'),
-      sourcesChecked: Math.max(2, srcCount),
+      sourcesChecked: srcCount,
     },
     website: {
       searched: true,
       found: Boolean(params.website),
       verified: Boolean(params.website),
-      sourcesChecked: Math.max(2, srcCount),
+      sourcesChecked: srcCount,
     },
     industry: {
       searched: true,
       found: Boolean(params.industry && params.industry !== 'Unknown'),
       verified: Boolean(params.industry && params.industry !== 'Unknown'),
-      sourcesChecked: Math.max(3, srcCount),
+      sourcesChecked: srcCount,
     },
     funding: {
       searched: true,
       found: Boolean(params.funding?.totalFundingUsd || params.funding?.latestRoundUsd),
       verified: Boolean(params.funding?.totalFundingUsd || params.funding?.latestRoundUsd),
-      sourcesChecked: Math.max(5, srcCount),
+      sourcesChecked: srcCount,
     },
     ceo: {
       searched: true,
       found: Boolean(params.leadership?.ceo?.name),
       verified: Boolean(params.leadership?.ceo?.name),
-      sourcesChecked: Math.max(3, srcCount),
+      sourcesChecked: srcCount,
     },
     founders: {
       searched: true,
       found: Boolean(params.leadership?.founders && params.leadership.founders.length > 0),
       verified: Boolean(params.leadership?.founders && params.leadership.founders.length > 0),
-      sourcesChecked: Math.max(3, srcCount),
+      sourcesChecked: srcCount,
     },
     companyEmail: {
       searched: true,
       found: Boolean(params.contacts?.companyEmails && params.contacts.companyEmails.length > 0),
       verified: Boolean(params.contacts?.companyEmails?.some((e: any) => e.mxValid || e.status === 'VERIFIED')),
-      sourcesChecked: Math.max(2, srcCount),
+      sourcesChecked: srcCount,
     },
     ceoEmail: {
       searched: true,
       found: Boolean(params.contacts?.ceoEmail),
       verified: Boolean(params.contacts?.ceoEmail && params.contacts.ceoEmailStatus === 'VERIFIED'),
-      sourcesChecked: Math.max(4, srcCount),
+      sourcesChecked: srcCount,
     },
     companyLinkedIn: {
       searched: true,
       found: Boolean(params.social?.companyLinkedIn?.url || params.social?.company_linkedin?.url),
       verified: Boolean(params.social?.companyLinkedIn?.url || params.social?.company_linkedin?.url),
-      sourcesChecked: Math.max(2, srcCount),
+      sourcesChecked: srcCount,
     },
   };
 }
@@ -3428,6 +3510,13 @@ export async function processCandidateThroughPipeline(
       social: socialData,
       sources: [websiteVerification.verifiedUrl, fundingData.fundingSourceUrl, leadershipData.ceo?.source_url, placeMatch?.sourceUrl, ...liveIntel.sources].filter(Boolean) as string[],
     }),
+    entityRelationship: liveIntel?.parentEntity ? {
+      brand: sourceName,
+      legalEntity: liveIntel.legalEntity || sourceName,
+      parentEntity: liveIntel.parentEntity,
+      operatingEntity: sourceName,
+      relationshipEvidence: `${liveIntel.parentEntity} documented as parent entity of ${sourceName}`
+    } : null,
     fundingRounds: fundingData.fundingRounds || [],
     divergences,
   };
@@ -3487,6 +3576,20 @@ export async function processCandidateThroughPipeline(
     stages,
     executives: leadershipData.allExecutives,
     leadership: leadershipData,
+    entityRelationship: liveIntel?.parentEntity ? {
+      brand: sourceName,
+      legalEntity: liveIntel.legalEntity || sourceName,
+      parentEntity: liveIntel.parentEntity,
+      operatingEntity: sourceName,
+      relationshipEvidence: `${liveIntel.parentEntity} documented as parent entity of ${sourceName}`
+    } : null,
+    entity_relationship: liveIntel?.parentEntity ? {
+      brand: sourceName,
+      legalEntity: liveIntel.legalEntity || sourceName,
+      parentEntity: liveIntel.parentEntity,
+      operatingEntity: sourceName,
+      relationshipEvidence: `${liveIntel.parentEntity} documented as parent entity of ${sourceName}`
+    } : null,
     fundingDetails: fundingData,
     funding: {
       totalFundingUsd: fundingData.totalFundingUsd,

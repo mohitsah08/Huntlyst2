@@ -6888,11 +6888,11 @@
           {
             "status": "VERIFIED",
             "source": "INTERNAL_AUTO",
-            "timestamp": "2026-10-06T11:18:52.614Z",
+            "timestamp": "2026-10-07T12:57:24.341Z",
             "reason": "All active required Target Profile criteria satisfied by uploaded record."
           }
         ],
-        "evaluated_at": "2026-10-06T11:18:52.614Z"
+        "evaluated_at": "2026-10-07T12:57:24.341Z"
       },
       "currentStatus": "REVIEW",
       "qualification": {
@@ -6996,19 +6996,19 @@
         {
           "status": "VERIFIED",
           "source": "INTERNAL_AUTO",
-          "timestamp": "2026-10-06T11:18:52.614Z",
+          "timestamp": "2026-10-07T12:57:24.341Z",
           "reason": "All active required Target Profile criteria satisfied by uploaded record."
         },
         {
           "status": "REVIEW",
           "source": "EXTERNAL_AUTO",
-          "timestamp": "2026-10-06T11:18:52.641Z",
+          "timestamp": "2026-10-07T12:57:24.372Z",
           "reason": "External research & qualification completed"
         }
       ],
-      "createdAt": "2026-10-06T11:18:52.614Z",
-      "updatedAt": "2026-10-06T11:18:52.641Z",
-      "lastVerifiedAt": "2026-10-06T11:18:52.641Z",
+      "createdAt": "2026-10-07T12:57:24.341Z",
+      "updatedAt": "2026-10-07T12:57:24.372Z",
+      "lastVerifiedAt": "2026-10-07T12:57:24.372Z",
       "external": {
         "researched": true,
         "current_data": {
@@ -7034,11 +7034,11 @@
           {
             "status": "REVIEW",
             "source": "EXTERNAL_AUTO",
-            "timestamp": "2026-10-06T11:18:52.641Z",
+            "timestamp": "2026-10-07T12:57:24.372Z",
             "reason": "External research & qualification completed"
           }
         ],
-        "researched_at": "2026-10-06T11:18:52.641Z",
+        "researched_at": "2026-10-07T12:57:24.372Z",
         "sources": [
           "https://abctechnologies.com",
           "https://techcrunch.com/funding-round"

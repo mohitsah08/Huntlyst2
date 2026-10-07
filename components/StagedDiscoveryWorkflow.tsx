@@ -8,6 +8,24 @@ import CandidateVerificationCard from './CandidateVerificationCard';
 import HuntConfiguration from './HuntConfiguration';
 import ExportModal from './ExportModal';
 import { PipelineStageLabel, downloadCsvFile, downloadPdfFile, downloadXlsxFile } from '@/lib/export';
+import { extractCanonicalDomain, normalizeCompanyName } from '@/lib/deduplication';
+
+function isSameCompanyIdentity(
+  a: { name?: string; website?: string },
+  b: { name?: string; website?: string }
+): boolean {
+  const domA = extractCanonicalDomain(a.website || '');
+  const domB = extractCanonicalDomain(b.website || '');
+  if (domA && domB && domA === domB) return true;
+
+  const nameA = normalizeCompanyName(a.name || '');
+  const nameB = normalizeCompanyName(b.name || '');
+  const isGenericA = !nameA || nameA.includes('unknown') || nameA.includes('entity');
+  const isGenericB = !nameB || nameB.includes('unknown') || nameB.includes('entity');
+
+  if (!isGenericA && !isGenericB && nameA === nameB) return true;
+  return false;
+}
 
 interface StagedDiscoveryWorkflowProps {
   initialTargetProfile?: TargetProfile;
@@ -289,15 +307,36 @@ export default function StagedDiscoveryWorkflow({
         throw new Error(data.error || 'External research failed');
       }
 
-      const newResults = [...externalResults, ...(data.results || [])];
-      setExternalResults(newResults);
-
+      const incomingList = (data.results || []) as CompanyVerificationResult[];
       const nextApproved = new Set(externalApproved);
-      (data.results || []).forEach((r: CompanyVerificationResult) => {
-        if (r.verificationStatus === 'QUALIFIED' || r.verificationStatus === 'PARTIALLY_VERIFIED') {
-          nextApproved.add(r.company.name);
+
+      setExternalResults(prevResults => {
+        let merged = [...prevResults];
+        for (const incoming of incomingList) {
+          const matchIdx = merged.findIndex(curr =>
+            isSameCompanyIdentity(
+              { name: curr.company.name, website: curr.company.website },
+              { name: incoming.company.name, website: incoming.company.website }
+            )
+          );
+
+          if (matchIdx >= 0) {
+            const oldName = merged[matchIdx].company.name;
+            if (oldName !== incoming.company.name) {
+              nextApproved.delete(oldName);
+            }
+            merged[matchIdx] = incoming;
+          } else {
+            merged.push(incoming);
+          }
+
+          if (incoming.verificationStatus === 'QUALIFIED' || incoming.verificationStatus === 'VERIFIED') {
+            nextApproved.add(incoming.company.name);
+          }
         }
+        return merged;
       });
+
       setExternalApproved(nextApproved);
       setExternalStatus('completed');
       setStatusMessage(`External research complete: ${data.results.length} companies analyzed.`);
@@ -474,13 +513,22 @@ export default function StagedDiscoveryWorkflow({
 
       const updated = data.result as CompanyVerificationResult;
 
-      // Update candidate in current step's results list
+      const updater = (prev: CompanyVerificationResult[]) =>
+        prev.map(c =>
+          isSameCompanyIdentity(
+            { name: c.company.name, website: c.company.website },
+            { name: updated.company.name, website: updated.company.website }
+          )
+            ? updated
+            : c
+        );
+
       if (currentStep === 'internal') {
-        setInternalResults(prev => prev.map(c => c.company.name === updated.company.name ? updated : c));
+        setInternalResults(updater);
       } else if (currentStep === 'external') {
-        setExternalResults(prev => prev.map(c => c.company.name === updated.company.name ? updated : c));
+        setExternalResults(updater);
       } else {
-        setWebSearchResults(prev => prev.map(c => c.company.name === updated.company.name ? updated : c));
+        setWebSearchResults(updater);
       }
 
       setStatusMessage(`Stage "${stage}" retry complete for ${updated.company.name}`);

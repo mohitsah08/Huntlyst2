@@ -137,12 +137,32 @@ export type CompanyRecord = {
   employeeCount?: string | number;
   funding?: {
     totalRaised?: string;
+    totalFundingUsd?: number | null;
+    latestRoundUsd?: number | null;
+    latestRoundType?: string | null;
+    latestRoundDate?: string | null;
+    fundingRounds?: any[];
+    rounds?: any[];
     stage?: string;
     lastRoundDate?: string;
     investors?: string[];
     revenue?: string;
     source?: string;
   };
+  entityRelationship?: {
+    brand: string;
+    legalEntity?: string | null;
+    parentEntity?: string | null;
+    operatingEntity?: string | null;
+    relationshipEvidence?: string | null;
+  } | null;
+  entity_relationship?: {
+    brand: string;
+    legalEntity?: string | null;
+    parentEntity?: string | null;
+    operatingEntity?: string | null;
+    relationshipEvidence?: string | null;
+  } | null;
   validation?: {
     isTechPlatform?: boolean;
     hasMinFunding?: boolean;
