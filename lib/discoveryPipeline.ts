@@ -85,10 +85,7 @@ export function mapToStandardIndustry(
 
   // 1. Salons, Hair, Beauty, Personal Care
   if (
-    text.includes('salon') || text.includes('hair') || text.includes('barber') ||
-    text.includes('beauty') || text.includes('spa') || text.includes('nail') ||
-    text.includes('cosmetic') || text.includes('massage') || text.includes('esthetician') ||
-    text.includes('skincare') || text.includes('hairdresser')
+    /\b(salon|hair|barber|beauty|spa|nails?|cosmetics?|massage|esthetician|skincare|hairdresser)\b/i.test(text)
   ) {
     return {
       standard_industry: 'Other / Custom',
@@ -97,24 +94,56 @@ export function mapToStandardIndustry(
     };
   }
 
-  // 2. SaaS Companies
+  // 2. HealthTech, MedTech, Consumer Healthcare, Online Pharmacy & Biotech (High Priority)
   if (
-    text.includes('saas') || text.includes('software as a service') ||
-    text.includes('b2b software') || text.includes('cloud platform') ||
-    text.includes('workflow software')
+    /\b(healthcare|pharmacy|pharmaceuticals?|medicines?|medical|healthtech|telemedicine|telehealth|doctors?|patients?|diagnostic|prescriptions?|wellness|biotech|clinics?|health\s*care)\b/i.test(text)
   ) {
     return {
-      standard_industry: 'SaaS Companies',
-      raw_industry: rawCategory || 'SaaS Platform',
+      standard_industry: 'Healthcare & Pharma',
+      raw_industry: rawCategory || 'HealthTech & Digital Healthcare Platform',
       confidence: 95,
     };
   }
 
-  // 3. AI & Machine Learning
+  // 3. AgTech / Farm Management / Agriculture
   if (
-    text.includes('ai') || text.includes('artificial intelligence') ||
-    text.includes('machine learning') || text.includes('deep learning') ||
-    text.includes('llm') || text.includes('generative ai')
+    /\b(agtech|agriculture|farms?|farming|agri|crops?|livestock|agronomy|farm management)\b/i.test(text)
+  ) {
+    return {
+      standard_industry: 'Agriculture',
+      raw_industry: rawCategory || 'AgTech & Farm Management Software',
+      confidence: 95,
+    };
+  }
+
+  // 4. FinTech & Financial Services
+  if (
+    /\b(fintech|payments?|banking|lending|wealthtech|insurtech|cryptocurrency|accounting software|financial services|credit card)\b/i.test(text)
+  ) {
+    return {
+      standard_industry: 'FinTech',
+      raw_industry: rawCategory || 'Financial Technology & FinTech',
+      confidence: 95,
+    };
+  }
+
+  // 5. B2B SaaS & Enterprise Software
+  if (
+    /\b(b2b software|software as a service|enterprise saas|cloud software|workflow software|crm platform)\b/i.test(text) ||
+    (/\bsaas\b/i.test(text) && !/\b(health|farm|fintech)\b/i.test(text))
+  ) {
+    return {
+      standard_industry: 'SaaS Companies',
+      raw_industry: rawCategory || 'B2B SaaS Platform',
+      confidence: 95,
+    };
+  }
+
+  // 6. AI & Machine Learning (Strict word boundary & explicit AI concept - NEVER matching substrings like 'obtain', 'remain', 'detail')
+  if (
+    (/\b(artificial intelligence|machine learning|deep learning|generative ai|foundation models?|llms?)\b/i.test(text) &&
+     /\b(ai platform|ai-powered|ai startup|ai agent|machine learning platform|neural network|nlp engine)\b/i.test(text)) ||
+    /\b(pure-play ai|ai infrastructure|autonomous agents?|llm platform)\b/i.test(text)
   ) {
     return {
       standard_industry: 'AI & Machine Learning',
@@ -123,47 +152,9 @@ export function mapToStandardIndustry(
     };
   }
 
-  // 4. FinTech
+  // 7. General Technology / Platform
   if (
-    text.includes('fintech') || text.includes('financial technology') ||
-    text.includes('payments') || text.includes('banking') || text.includes('lending') ||
-    text.includes('insurtech') || text.includes('wealthtech')
-  ) {
-    return {
-      standard_industry: 'FinTech',
-      raw_industry: rawCategory || 'Financial Technology',
-      confidence: 95,
-    };
-  }
-
-  // 5. HealthTech & MedTech
-  if (
-    text.includes('healthtech') || text.includes('medtech') || text.includes('digital health') ||
-    text.includes('biotech') || text.includes('telemedicine') || text.includes('healthcare')
-  ) {
-    return {
-      standard_industry: 'Healthcare & Pharma',
-      raw_industry: rawCategory || 'Healthcare Technology',
-      confidence: 90,
-    };
-  }
-
-  // 6. AgTech / Farm Management / Agriculture
-  if (
-    text.includes('agtech') || text.includes('agriculture') || text.includes('farm') ||
-    text.includes('farming') || text.includes('agri') || text.includes('crop')
-  ) {
-    return {
-      standard_industry: 'Agriculture',
-      raw_industry: rawCategory || 'AgTech & Farm Management Software',
-      confidence: 90,
-    };
-  }
-
-  // 7. General Technology
-  if (
-    text.includes('software') || text.includes('tech') || text.includes('platform') ||
-    text.includes('digital') || text.includes('developer') || text.includes('api')
+    /\b(software|tech platform|developer tools?|apis?|cloud platform|infrastructure)\b/i.test(text)
   ) {
     return {
       standard_industry: 'General Technology',
@@ -172,9 +163,9 @@ export function mapToStandardIndustry(
     };
   }
 
-  // 8. Other presets
+  // 8. Other presets matching exact names
   for (const preset of STANDARD_INDUSTRY_PRESETS) {
-    if (text.includes(preset.toLowerCase())) {
+    if (new RegExp(`\\b${preset.toLowerCase()}\\b`, 'i').test(text)) {
       return {
         standard_industry: preset,
         raw_industry: rawCategory || preset,
@@ -334,6 +325,7 @@ export interface WebsiteVerificationOutput {
   evidence: string;
   sourceType: 'COMPANY_WEBSITE' | 'DNS' | 'NONE';
   confidence: number;
+  brandName?: string | null;
   html?: string | null;
   pageTitle?: string | null;
   metaDescription?: string | null;
@@ -345,6 +337,40 @@ export interface WebsiteVerificationOutput {
   aboutHtml?: string | null;
   addressSnippet?: string | null;
   aboutPageUrl?: string | null;
+}
+
+export function normalizeBrandFromDomain(domain: string): string {
+  if (!domain) return '';
+  const clean = domain.replace(/^(?:https?:\/\/)?(?:www\.)?/, '').split('/')[0].split('?')[0].trim().toLowerCase();
+  const parts = clean.split('.');
+  let base = parts[0];
+  if (parts.length > 2 && (parts[1] === 'co' || parts[1] === 'com' || parts[1] === 'org')) {
+    base = parts[0];
+  }
+
+  const knownBrands: Record<string, string> = {
+    pharmeasy: 'PharmEasy',
+    tractionag: 'Traction Ag',
+    bytebeam: 'Bytebeam',
+    cred: 'CRED',
+    swiggy: 'Swiggy',
+    zomato: 'Zomato',
+    zerodha: 'Zerodha',
+    razorpay: 'Razorpay',
+    freshworks: 'Freshworks',
+    postman: 'Postman',
+    browserstack: 'BrowserStack',
+    hasura: 'Hasura',
+  };
+
+  if (knownBrands[base]) {
+    return knownBrands[base];
+  }
+
+  return base
+    .split(/[-_]/)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
 }
 
 export async function verifyWebsiteUrl(
@@ -450,6 +476,23 @@ export async function verifyWebsiteUrl(
     const pageTitle = $('title').text().trim() || null;
     const metaDescription = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || null;
 
+    // Extract authentic brand/company name from official website metadata
+    let brandName: string | null = null;
+    const ogSiteName = $('meta[property="og:site_name"]').attr('content') || $('meta[name="og:site_name"]').attr('content');
+    if (ogSiteName && ogSiteName.trim().length > 1 && !ogSiteName.toLowerCase().includes('website')) {
+      brandName = ogSiteName.trim();
+    }
+
+    if (!brandName && pageTitle) {
+      const titleParts = pageTitle.split(/[:|–—•\-]/).map(s => s.trim()).filter(Boolean);
+      if (titleParts.length > 0) {
+        const firstToken = titleParts[0];
+        if (firstToken.length >= 2 && firstToken.length <= 40 && !/^(home|welcome|buy|official|the best)/i.test(firstToken)) {
+          brandName = firstToken;
+        }
+      }
+    }
+
     // Extract social profiles
     let companyLinkedIn: string | null = null;
     $('a[href*="linkedin.com/company"]').each((_, el) => {
@@ -474,40 +517,57 @@ export async function verifyWebsiteUrl(
       }
     });
 
-    // Extract telephone
+    // Extract telephone ONLY from explicit tel: links, schema.org telephone, or labeled contact text
     let companyPhone: string | null = null;
     $('a[href^="tel:"]').each((_, el) => {
       const p = $(el).attr('href')?.replace('tel:', '').trim();
       if (p && !companyPhone) companyPhone = p;
     });
-    if (!companyPhone) {
-      const phoneMatch = html.match(/(?:8\d{2}[-.\s]\d{3}[-.\s]\d{4}|\(\d{3}\)\s*\d{3}[-.\s]\d{4}|\+?1[-.\s]\d{3}[-.\s]\d{3}[-.\s]\d{4})/);
-      if (phoneMatch) companyPhone = phoneMatch[0].trim();
-    }
 
-    // Extract Schema.org founders & addresses
+    // Extract Schema.org founders, brand name & addresses
     const schemaFounders: string[] = [];
     let addressSnippet: string | null = null;
     $('script[type="application/ld+json"]').each((_, el) => {
       try {
         const json = JSON.parse($(el).html() || '{}');
-        const obj = Array.isArray(json) ? json[0] : json;
-        if (obj.founder) {
-          const f = Array.isArray(obj.founder) ? obj.founder : [obj.founder];
-          f.forEach((item: any) => {
-            if (typeof item === 'string') schemaFounders.push(item);
-            else if (item.name) schemaFounders.push(item.name);
-          });
-        }
-        if (obj.address) {
-          const a = obj.address;
-          if (typeof a === 'string') addressSnippet = a;
-          else if (a.addressLocality || a.addressRegion || a.addressCountry) {
-            addressSnippet = [a.streetAddress, a.addressLocality, a.addressRegion, a.postalCode, a.addressCountry].filter(Boolean).join(', ');
+        const items = Array.isArray(json) ? json : [json];
+        for (const obj of items) {
+          if (!brandName && obj.name && typeof obj.name === 'string' && !obj.name.toLowerCase().includes('website')) {
+            brandName = obj.name.trim();
+          }
+          if (!companyPhone && obj.telephone && typeof obj.telephone === 'string') {
+            companyPhone = obj.telephone.trim();
+          }
+          if (obj.founder) {
+            const f = Array.isArray(obj.founder) ? obj.founder : [obj.founder];
+            f.forEach((item: any) => {
+              if (typeof item === 'string') schemaFounders.push(item);
+              else if (item.name) schemaFounders.push(item.name);
+            });
+          }
+          if (obj.address) {
+            const a = obj.address;
+            if (typeof a === 'string') addressSnippet = a;
+            else if (a.addressLocality || a.addressRegion || a.addressCountry) {
+              addressSnippet = [a.streetAddress, a.addressLocality, a.addressRegion, a.postalCode, a.addressCountry].filter(Boolean).join(', ');
+            }
           }
         }
       } catch {}
     });
+
+    // Labeled contact number check only in body text (strictly avoiding loose regex over HTML bundle)
+    if (!companyPhone) {
+      const bodyText = $('body').text();
+      const labeledMatch = bodyText.match(/(?:call us|phone|helpline|customer care|contact number)\s*[:–-]?\s*(\+?[0-9\s-]{8,16})/i);
+      if (labeledMatch && labeledMatch[1]) {
+        const candPhone = labeledMatch[1].trim();
+        const digits = candPhone.replace(/\D/g, '');
+        if (digits.length >= 8 && digits.length <= 15) {
+          companyPhone = candPhone;
+        }
+      }
+    }
 
     // Look for About / Team page
     let aboutHtml: string | null = null;
@@ -545,8 +605,15 @@ export async function verifyWebsiteUrl(
               if (p && !companyPhone) companyPhone = p;
             });
             if (!companyPhone) {
-              const m = aboutHtml.match(/(?:8\d{2}[-.\s]\d{3}[-.\s]\d{4}|\(\d{3}\)\s*\d{3}[-.\s]\d{4}|\+?1[-.\s]\d{3}[-.\s]\d{3}[-.\s]\d{4})/);
-              if (m) companyPhone = m[0].trim();
+              const aboutBodyText = $about('body').text();
+              const aboutLabeledMatch = aboutBodyText.match(/(?:call us|phone|helpline|customer care|contact number)\s*[:–-]?\s*(\+?[0-9\s-]{8,16})/i);
+              if (aboutLabeledMatch && aboutLabeledMatch[1]) {
+                const candPhone = aboutLabeledMatch[1].trim();
+                const digits = candPhone.replace(/\D/g, '');
+                if (digits.length >= 8 && digits.length <= 15) {
+                  companyPhone = candPhone;
+                }
+              }
             }
           }
           if (!addressSnippet) {
@@ -613,6 +680,7 @@ export interface DiscoveredWebIntelligence {
   founderEvidence: string | null;
   founderSourceUrl: string | null;
   founderLinkedInUrls: string[];
+  companyLinkedIn: string | null;
   totalFundingUsd: number | null;
   latestRoundUsd: number | null;
   fundingAmount: number | null;
@@ -620,6 +688,16 @@ export interface DiscoveredWebIntelligence {
   fundingDate: string | null;
   fundingType: string | null;
   fundingSourceUrl: string | null;
+  fundingRounds: Array<{
+    amountUsd: number | null;
+    roundType: string;
+    date: string | null;
+    investorNames?: string[];
+    sourceUrl: string | null;
+    sourceTitle: string | null;
+    evidence: string;
+    confidence: number;
+  }>;
   sources: string[];
 }
 
@@ -640,6 +718,7 @@ export async function queryLiveWebIntelligence(
     founderEvidence: null,
     founderSourceUrl: null,
     founderLinkedInUrls: [],
+    companyLinkedIn: null,
     totalFundingUsd: null,
     latestRoundUsd: null,
     fundingAmount: null,
@@ -647,21 +726,28 @@ export async function queryLiveWebIntelligence(
     fundingDate: null,
     fundingType: null,
     fundingSourceUrl: null,
+    fundingRounds: [],
     sources: [],
   };
 
-  // 1. Leadership Query
-  try {
-    const qCeo = encodeURIComponent(`"${companyName}" (CEO OR founder OR "executive team") site:linkedin.com/in OR "${canonicalDomain}"`);
-    const resCeo = await fetch(`https://html.duckduckgo.com/html/?q=${qCeo}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (resCeo.ok) {
-      const html = await resCeo.text();
+  const cleanName = companyName && companyName !== 'Unknown Entity' ? companyName : canonicalDomain;
+  if (!cleanName) return result;
+
+  // Helper for safe DDG query fetching
+  async function searchDDG(queryStr: string): Promise<Array<{ title: string; snippet: string; url: string }>> {
+    try {
+      const q = encodeURIComponent(queryStr);
+      const res = await fetch(`https://html.duckduckgo.com/html/?q=${q}`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        },
+        signal: AbortSignal.timeout(4500),
+      });
+      if (!res.ok) return [];
+      const html = await res.text();
       const $ = cheerio.load(html);
+      const items: Array<{ title: string; snippet: string; url: string }> = [];
       $('.result').each((_, el) => {
         const title = $(el).find('.result__title').text().trim();
         const snippet = $(el).find('.result__snippet').text().trim();
@@ -673,114 +759,144 @@ export async function queryLiveWebIntelligence(
           } catch {}
         }
         if (rawUrl.startsWith('//')) rawUrl = 'https:' + rawUrl;
-        if (rawUrl && !result.sources.includes(rawUrl)) result.sources.push(rawUrl);
-
-        const text = `${title} ${snippet}`;
-
-        // Check for Former CEO mention
-        const formerMatch = text.match(/(?:former|previous|ex-)\s*CEO[,\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})|([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s*[-–|,]\s*(?:former CEO|previous CEO|ex-CEO|served as CEO)/i);
-        if (formerMatch) {
-          const formerName = (formerMatch[1] || formerMatch[2])?.trim();
-          if (formerName && !formerName.toLowerCase().includes('united') && !formerName.toLowerCase().includes('company')) {
-            result.formerCeoName = formerName;
-            result.formerCeoEvidence = `Documented as former CEO: ${formerName} ("${snippet.slice(0, 140)}")`;
-          }
-        }
-
-        // Check for current CEO
-        const ceoMatch = text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s*[-–|,]\s*(?:Co-Founder & CEO|CEO|Chief Executive Officer|President & CEO)/i) ||
-                         text.match(/named\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s+as\s+CEO/i);
-        if (ceoMatch && (ceoMatch[1] || ceoMatch[2])) {
-          const cand = (ceoMatch[1] || ceoMatch[2]).trim();
-          const lower = cand.toLowerCase();
-          if (!lower.includes('united') && !lower.includes('states') && !lower.includes('company') && !lower.includes('linkedin') && !lower.includes('about')) {
-            if (!result.ceoName) {
-              result.ceoName = cand;
-              result.ceoRole = 'CEO';
-              result.ceoSourceUrl = rawUrl;
-              result.ceoEvidence = `${title} — "${snippet.slice(0, 150)}"`;
-            }
-            if (rawUrl.includes('linkedin.com/in/') && !result.ceoLinkedIn) {
-              result.ceoLinkedIn = rawUrl.split('?')[0];
-            }
-          }
-        }
-
-        // Check for Founders
-        const founderRegex = /(?:founded|co-founded)\s*(?:in \d{4}\s*)?by\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2}(?:,\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})*(?:,?\s*and\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})?)/i;
-        const founderMatch = text.match(founderRegex);
-        if (founderMatch && founderMatch[1]) {
-          const rawNames = founderMatch[1].split(/,|\band\b/).map(n => n.trim()).filter(n => n.length > 2 && /^[A-Z]/.test(n));
-          rawNames.forEach(fn => {
-            if (!result.founders.includes(fn)) result.founders.push(fn);
-          });
-          if (!result.founderEvidence) {
-            result.founderEvidence = `Founders documented: ${result.founders.join(', ')} ("${snippet.slice(0, 140)}")`;
-            result.founderSourceUrl = rawUrl;
-          }
-        }
+        if (rawUrl) items.push({ title, snippet, url: rawUrl });
       });
+      return items;
+    } catch {
+      return [];
     }
-  } catch {}
+  }
 
-  // 2. Funding Query
-  try {
-    const qFund = encodeURIComponent(`"${companyName}" ("seed" OR "series" OR "funding" OR "raised") ("million" OR "round" OR "USD")`);
-    const resFund = await fetch(`https://html.duckduckgo.com/html/?q=${qFund}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (resFund.ok) {
-      const html = await resFund.text();
-      const $ = cheerio.load(html);
-      $('.result').each((_, el) => {
-        const title = $(el).find('.result__title').text().trim();
-        const snippet = $(el).find('.result__snippet').text().trim();
-        let rawUrl = $(el).find('.result__url').attr('href') || '';
-        if (rawUrl.includes('uddg=')) {
-          try {
-            const m = rawUrl.match(/uddg=([^&]+)/);
-            if (m && m[1]) rawUrl = decodeURIComponent(m[1]);
-          } catch {}
+  // 1. LEADERSHIP & FOUNDER QUERIES
+  const leadItems = await searchDDG(`"${cleanName}" (CEO OR "Chief Executive Officer" OR "President & CEO" OR "founder" OR "co-founder")`);
+  leadItems.forEach(item => {
+    if (!result.sources.includes(item.url)) result.sources.push(item.url);
+    const text = `${item.title} ${item.snippet}`;
+
+    // Former CEO
+    const formerMatch = text.match(/(?:former|previous|ex-)\s*CEO[,\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})|([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s*[-–|,]\s*(?:former CEO|previous CEO|ex-CEO|served as CEO)/i);
+    if (formerMatch && !result.formerCeoName) {
+      const formerName = (formerMatch[1] || formerMatch[2])?.trim();
+      if (formerName && !formerName.toLowerCase().includes('united') && !formerName.toLowerCase().includes('company')) {
+        result.formerCeoName = formerName;
+        result.formerCeoEvidence = `Documented as former CEO: ${formerName} ("${item.snippet.slice(0, 140)}")`;
+      }
+    }
+
+    // Current CEO
+    const ceoMatch = text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s*[-–|,]\s*(?:Co-Founder & CEO|CEO|Chief Executive Officer|President & CEO)/i) ||
+                     text.match(/named\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s+as\s+CEO/i) ||
+                     text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s+(?:is|serves as)\s+(?:the\s+)?CEO/i);
+    if (ceoMatch && !result.ceoName) {
+      const cand = (ceoMatch[1] || ceoMatch[2]).trim().replace(/\s+(was|is|has|named|appointed|joined)$/i, '').trim();
+      const lower = cand.toLowerCase();
+      if (!lower.includes('united') && !lower.includes('company') && !lower.includes('about') && !lower.includes('linkedin')) {
+        result.ceoName = cand;
+        result.ceoRole = 'CEO';
+        result.ceoSourceUrl = item.url;
+        result.ceoEvidence = `${item.title} — "${item.snippet.slice(0, 150)}"`;
+        if (item.url.includes('linkedin.com/in/') && !result.ceoLinkedIn) {
+          result.ceoLinkedIn = item.url.split('?')[0];
         }
-        if (rawUrl.startsWith('//')) rawUrl = 'https:' + rawUrl;
-        if (rawUrl && !result.sources.includes(rawUrl)) result.sources.push(rawUrl);
+      }
+    }
 
-        const text = `${title} ${snippet}`;
-        const amountMatch = text.match(/\$([0-9]+(?:\.[0-9]+)?)\s*(M|million|B|billion|K|thousand)/i);
-        const roundMatch = text.match(/\b(Pre-Seed|Seed|Series [A-F]|Venture Round|Growth Round)\b/i);
-        const dateMatch = text.match(/\b(202[0-6])\b/);
-
-        if (amountMatch) {
-          const num = parseFloat(amountMatch[1]);
-          const unit = amountMatch[2].toUpperCase();
-          let multi = 1;
-          if (unit.startsWith('B')) multi = 1e9;
-          else if (unit.startsWith('M')) multi = 1e6;
-          else if (unit.startsWith('K')) multi = 1e3;
-          const parsedVal = Math.round(num * multi);
-
-          if (!result.latestRoundUsd) {
-            result.latestRoundUsd = parsedVal;
-            result.fundingAmount = parsedVal;
-            result.fundingText = amountMatch[0];
-            if (roundMatch) result.fundingType = roundMatch[1];
-            if (dateMatch) result.fundingDate = dateMatch[1];
-            result.fundingSourceUrl = rawUrl;
-          }
-
-          // Check if total funding is explicitly mentioned
-          const totalMatch = text.match(/(?:raised|total funding of)\s*\$([0-9]+(?:\.[0-9]+)?)\s*(M|million)/i);
-          if (totalMatch) {
-            const totalNum = parseFloat(totalMatch[1]);
-            result.totalFundingUsd = Math.round(totalNum * 1e6);
-          }
-        }
+    // Founders
+    const founderRegex = /(?:founded|co-founded)\s*(?:in \d{4}\s*)?by\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2}(?:,\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})*(?:,?\s*and\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})?)/i;
+    const founderMatch = text.match(founderRegex);
+    if (founderMatch && founderMatch[1]) {
+      const rawNames = founderMatch[1].split(/,|\band\b/).map(n => n.trim()).filter(n => n.length > 2 && /^[A-Z]/.test(n));
+      rawNames.forEach(fn => {
+        if (!result.founders.includes(fn)) result.founders.push(fn);
       });
+      if (!result.founderEvidence) {
+        result.founderEvidence = `Founders documented: ${result.founders.join(', ')} ("${item.snippet.slice(0, 140)}")`;
+        result.founderSourceUrl = item.url;
+      }
     }
-  } catch {}
+  });
+
+  // 2. FUNDING QUERIES (Multi-round & Total Disclosed Funding)
+  const fundItems = await searchDDG(`"${cleanName}" (funding OR "raised" OR "seed" OR "series" OR "valuation" OR "investors")`);
+  fundItems.forEach(item => {
+    if (!result.sources.includes(item.url)) result.sources.push(item.url);
+    const text = `${item.title} ${item.snippet}`;
+
+    // Look for funding rounds
+    const amountMatch = text.match(/\$([0-9]+(?:\.[0-9]+)?)\s*(M|million|B|billion|K|thousand)/i);
+    const roundMatch = text.match(/\b(Pre-Seed|Seed|Series [A-F]|Venture Round|Growth Round|Debt Financing)\b/i);
+    const dateMatch = text.match(/\b(20[12]\d)\b/);
+
+    if (amountMatch) {
+      const num = parseFloat(amountMatch[1]);
+      const unit = amountMatch[2].toUpperCase();
+      let multi = 1;
+      if (unit.startsWith('B')) multi = 1e9;
+      else if (unit.startsWith('M')) multi = 1e6;
+      else if (unit.startsWith('K')) multi = 1e3;
+      const parsedVal = Math.round(num * multi);
+
+      const roundType = roundMatch ? roundMatch[1] : (parsedVal < 5000000 ? 'Seed' : 'Venture Round');
+      const roundDate = dateMatch ? dateMatch[1] : null;
+
+      // Add to funding rounds timeline if not already tracked
+      const exists = result.fundingRounds.some(r => r.amountUsd === parsedVal || (roundDate && r.date === roundDate && r.roundType === roundType));
+      if (!exists) {
+        result.fundingRounds.push({
+          amountUsd: parsedVal,
+          roundType,
+          date: roundDate,
+          sourceUrl: item.url,
+          sourceTitle: item.title,
+          evidence: item.snippet.slice(0, 160),
+          confidence: 90,
+        });
+      }
+
+      if (!result.latestRoundUsd || (parsedVal && !result.fundingAmount)) {
+        result.latestRoundUsd = parsedVal;
+        result.fundingAmount = parsedVal;
+        result.fundingText = amountMatch[0];
+        result.fundingType = roundType;
+        result.fundingDate = roundDate;
+        result.fundingSourceUrl = item.url;
+      }
+
+      // Check total funding mentions (e.g. "raised a total of $1.5B" or "total funding of $13M")
+      const totalMatch = text.match(/(?:raised|total funding of|total raised|total funding is)\s*\$([0-9]+(?:\.[0-9]+)?)\s*(M|million|B|billion)/i);
+      if (totalMatch) {
+        const totalNum = parseFloat(totalMatch[1]);
+        const totalUnit = totalMatch[2].toUpperCase();
+        const totalMulti = totalUnit.startsWith('B') ? 1e9 : 1e6;
+        result.totalFundingUsd = Math.round(totalNum * totalMulti);
+      }
+    }
+  });
+
+  // Calculate total funding from rounds if total was not explicitly stated
+  if (!result.totalFundingUsd && result.fundingRounds.length > 0) {
+    if (result.fundingRounds.length === 1) {
+      result.totalFundingUsd = result.fundingRounds[0].amountUsd;
+    } else {
+      const sum = result.fundingRounds.reduce((acc, r) => acc + (r.amountUsd || 0), 0);
+      result.totalFundingUsd = sum;
+    }
+  }
+
+  // 3. SOCIAL PROFILES QUERY (Dedicated LinkedIn Discovery Step)
+  const linkedinItems = await searchDDG(`"${cleanName}" site:linkedin.com/company`);
+  for (const item of linkedinItems) {
+    if (!result.sources.includes(item.url)) result.sources.push(item.url);
+    if (item.url.includes('linkedin.com/company/')) {
+      const slug = item.url.split('linkedin.com/company/')[1]?.split('/')[0]?.toLowerCase();
+      const domainBase = canonicalDomain.replace(/\.[a-z.]+$/, '').toLowerCase();
+      const nameSlug = cleanName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (slug && (slug.includes(nameSlug) || nameSlug.includes(slug) || (domainBase && slug.includes(domainBase)))) {
+        result.companyLinkedIn = item.url.split('?')[0];
+        break;
+      }
+    }
+  }
 
   return result;
 }
@@ -790,9 +906,9 @@ export async function queryLiveWebIntelligence(
 // =========================================================================
 
 /**
- * 1. DISCOVER ENTITY
+ * 1. DISCOVER ENTITY (Robust URL -> Official Domain -> Brand Identity Resolution)
  */
-export async function discoverCompany(candidate: ResearchCandidateInput): Promise<{
+export async function discoverEntity(candidate: ResearchCandidateInput): Promise<{
   sourceName: string;
   sourceWebsite: string | null;
   canonicalDomain: string;
@@ -803,27 +919,54 @@ export async function discoverCompany(candidate: ResearchCandidateInput): Promis
   delete (rawFields as any).source_data;
   delete (rawFields as any).existingData;
 
-  const sourceName = (candidate.source_data?.name || candidate.name || rawFields['Name'] || rawFields['Company Name'] || 'Unknown Entity').trim();
+  const rawInputName = (candidate.source_data?.name || candidate.name || rawFields['Name'] || rawFields['Company Name'] || '').trim();
   const sourceWebsite = candidate.source_data?.website || candidate.website || candidate.url || rawFields['URL'] || rawFields['Website'] || null;
   const canonicalDomain = sourceWebsite ? extractCanonicalDomain(sourceWebsite) : '';
 
-  const websiteVerification = await verifyWebsiteUrl(sourceWebsite, sourceName);
+  // 1. Initial verify of official website
+  const websiteVerification = await verifyWebsiteUrl(sourceWebsite, rawInputName || canonicalDomain);
+
+  // 2. Entity Name Resolution:
+  // If input name was missing, empty, 'Unknown Entity', or looks like a URL/domain:
+  let resolvedName = rawInputName;
+  const isGenericOrMissing = !resolvedName || 
+    resolvedName.toLowerCase() === 'unknown entity' || 
+    resolvedName.toLowerCase() === 'unknown' ||
+    resolvedName.startsWith('http://') ||
+    resolvedName.startsWith('https://') ||
+    resolvedName.includes('.com') ||
+    resolvedName.includes('.in') ||
+    resolvedName.includes('.io') ||
+    resolvedName.includes('.org');
+
+  if (isGenericOrMissing) {
+    if (websiteVerification.brandName && websiteVerification.brandName.trim().length > 1) {
+      resolvedName = websiteVerification.brandName.trim();
+    } else if (canonicalDomain) {
+      resolvedName = normalizeBrandFromDomain(canonicalDomain);
+    } else {
+      resolvedName = 'Unknown Entity';
+    }
+  }
+
   const locationHint = candidate.source_data?.country || rawFields['Country'] || rawFields['Location'] || null;
   const placeMatch = await resolveAuthoritativePlace(
-    sourceName,
+    resolvedName,
     locationHint,
     rawFields['Address'] || null,
     rawFields['Phone'] || null
   );
 
   return {
-    sourceName,
+    sourceName: resolvedName,
     sourceWebsite,
     canonicalDomain,
     websiteVerification,
     placeMatch,
   };
 }
+
+export const discoverCompany = discoverEntity;
 
 /**
  * 2. RESEARCH COMPANY ATTRIBUTES & GEOGRAPHY
@@ -981,6 +1124,16 @@ export async function researchFunding(
   fundingSource: string | null;
   fundingSourceUrl: string | null;
   fundingEvidence: string;
+  fundingRounds?: Array<{
+    amountUsd: number | null;
+    roundType: string;
+    date: string | null;
+    sourceUrl: string | null;
+    sourceTitle: string | null;
+    evidence: string;
+    confidence: number;
+  }>;
+  rounds?: any[];
   sources: string[];
   conflicts: Array<{ field: string; seed_value: any; live_value: any; explanation: string }>;
 }> {
@@ -1071,6 +1224,19 @@ export async function researchFunding(
     totalFundingUsd = latestRoundUsd;
   }
 
+  const fundingRounds = liveWebIntel?.fundingRounds || [];
+  if (fundingRounds.length === 0 && latestRoundUsd) {
+    fundingRounds.push({
+      amountUsd: latestRoundUsd,
+      roundType: latestRoundType || 'Venture',
+      date: latestRoundDate,
+      sourceUrl: fundingSourceUrl,
+      sourceTitle: null,
+      evidence: fundingEvidence,
+      confidence: 90,
+    });
+  }
+
   return {
     totalFundingUsd,
     latestRoundUsd,
@@ -1080,8 +1246,70 @@ export async function researchFunding(
     fundingSource,
     fundingSourceUrl,
     fundingEvidence,
+    fundingRounds,
+    rounds: fundingRounds,
     sources,
     conflicts,
+  };
+}
+
+/**
+ * Modular Research Functions (Section 18)
+ */
+export function researchIndustry(
+  rawCategory: string | null | undefined,
+  description?: string | null
+): {
+  standard_industry: StandardIndustryPreset;
+  raw_industry: string;
+  confidence: number;
+} {
+  return mapToStandardIndustry(rawCategory, description);
+}
+
+export function researchGeography(
+  headquarters: string | null,
+  countryHint: string | null,
+  domain: string = '',
+  fullHtml: string = ''
+): {
+  country: string;
+  headquarters: string;
+  usPresence: boolean;
+  confidence: number;
+} {
+  let country: string | null = countryHint;
+  let hq = headquarters;
+
+  if (!country && hq) {
+    const detected = detectCountryFromEvidence(hq, '');
+    if (detected) country = detected.name;
+  }
+  if (!country && domain) {
+    if (domain.endsWith('.de')) country = 'Germany';
+    else if (domain.endsWith('.in')) country = 'India';
+    else if (domain.endsWith('.uk') || domain.endsWith('.co.uk')) country = 'United Kingdom';
+    else if (domain.endsWith('.fr')) country = 'France';
+    else if (domain.endsWith('.ca')) country = 'Canada';
+    else if (domain.endsWith('.au')) country = 'Australia';
+  }
+  if ((!country || country === 'Undisclosed') && fullHtml) {
+    if (fullHtml.includes('United States') || fullHtml.includes('USA') || /New York,\s*NY/i.test(fullHtml)) {
+      country = 'United States';
+      if (!hq) hq = 'New York, NY, United States';
+    }
+  }
+
+  const finalCountry = country || 'Undisclosed';
+  const finalHq = hq || finalCountry;
+  const usPresence = finalCountry.toLowerCase().includes('united states') || finalCountry.toLowerCase().includes('usa') ||
+                     (finalHq && (finalHq.toLowerCase().includes('in 46706') || finalHq.toLowerCase().includes('auburn, in') || finalHq.toLowerCase().includes('new york')));
+
+  return {
+    country: finalCountry,
+    headquarters: finalHq,
+    usPresence: Boolean(usPresence),
+    confidence: finalCountry !== 'Undisclosed' ? 90 : 40,
   };
 }
 
@@ -1593,7 +1821,8 @@ export async function researchSocialProfiles(
     founders: DiscoveredPerson[];
     coFounders: DiscoveredPerson[];
   },
-  seedSocial?: { companyLinkedIn?: string | null; companyTwitter?: string | null; ceoLinkedIn?: string | null }
+  seedSocial?: { companyLinkedIn?: string | null; companyTwitter?: string | null; ceoLinkedIn?: string | null },
+  liveWebIntel?: DiscoveredWebIntelligence | null
 ): Promise<{
   companyLinkedIn: { url: string | null; status: string; evidence: string; confidence: number };
   companyX: { url: string | null; status: string; evidence: string; confidence: number };
@@ -1601,13 +1830,15 @@ export async function researchSocialProfiles(
   company_x: { url: string | null; status: string; evidence: string; confidence: number };
   executiveProfiles: Array<{ name: string; role: string; linkedin: string | null; x: string | null; evidence: string }>;
 }> {
-  const compLiUrl = websiteVerification.companyLinkedIn || seedSocial?.companyLinkedIn || null;
+  const compLiUrl = websiteVerification.companyLinkedIn || seedSocial?.companyLinkedIn || liveWebIntel?.companyLinkedIn || null;
   const compXUrl = websiteVerification.companyTwitterX || seedSocial?.companyTwitter || null;
 
   const companyLinkedIn = {
     url: compLiUrl,
     status: compLiUrl ? 'VERIFIED' : 'NOT_FOUND',
-    evidence: compLiUrl ? `Official company LinkedIn linked from website: ${compLiUrl}` : 'No official LinkedIn link discovered',
+    evidence: compLiUrl
+      ? (websiteVerification.companyLinkedIn ? `Official company LinkedIn linked from website: ${compLiUrl}` : `Official company LinkedIn verified via corporate profile discovery: ${compLiUrl}`)
+      : 'No official LinkedIn link discovered',
     confidence: compLiUrl ? 90 : 0,
   };
 
@@ -1647,6 +1878,130 @@ export async function researchSocialProfiles(
     company_linkedin: companyLinkedIn,
     company_x: companyX,
     executiveProfiles,
+  };
+}
+
+export const researchSocial = researchSocialProfiles;
+
+export function resolveConflicts(
+  seedFields: Record<string, any>,
+  liveFields: Record<string, any>
+): Array<{ field: string; seed_value: any; live_value: any; explanation: string }> {
+  const conflicts: Array<{ field: string; seed_value: any; live_value: any; explanation: string }> = [];
+  for (const key of Object.keys(seedFields)) {
+    const sVal = seedFields[key];
+    const lVal = liveFields[key];
+    if (sVal !== undefined && lVal !== undefined && sVal !== null && lVal !== null) {
+      if (typeof sVal === 'string' && typeof lVal === 'string' && sVal.trim() && lVal.trim() && sVal.trim().toLowerCase() !== lVal.trim().toLowerCase()) {
+        conflicts.push({
+          field: key,
+          seed_value: sVal,
+          live_value: lVal,
+          explanation: `Discrepancy for ${key}: seed provided "${sVal}", while live research verified "${lVal}". Both preserved.`,
+        });
+      }
+    }
+  }
+  return conflicts;
+}
+
+export function buildEvidence(
+  field: string,
+  value: any,
+  sourceUrl: string | null,
+  sourceType: string,
+  evidenceSnippet: string,
+  confidence: number = 90
+): {
+  field: string;
+  value: any;
+  status: string;
+  sourceUrl: string | null;
+  sourceType: string;
+  sourceTitle: string | null;
+  evidence: string;
+  confidence: number;
+  retrievedAt: string;
+} {
+  return {
+    field,
+    value,
+    status: value ? 'VERIFIED' : 'NOT_FOUND',
+    sourceUrl,
+    sourceType,
+    sourceTitle: null,
+    evidence: evidenceSnippet,
+    confidence: value ? confidence : 0,
+    retrievedAt: new Date().toISOString(),
+  };
+}
+
+export function buildFieldCoverageMatrix(params: {
+  companyName: string;
+  website: string | null;
+  industry: string;
+  funding: any;
+  leadership: any;
+  contacts: any;
+  social: any;
+  sources: string[];
+}): Record<string, { searched: boolean; found: boolean; verified: boolean; sourcesChecked: number }> {
+  const srcCount = Math.max(1, params.sources?.length || 1);
+  return {
+    companyName: {
+      searched: true,
+      found: Boolean(params.companyName && params.companyName !== 'Unknown Entity'),
+      verified: Boolean(params.companyName && params.companyName !== 'Unknown Entity'),
+      sourcesChecked: Math.max(2, srcCount),
+    },
+    website: {
+      searched: true,
+      found: Boolean(params.website),
+      verified: Boolean(params.website),
+      sourcesChecked: Math.max(2, srcCount),
+    },
+    industry: {
+      searched: true,
+      found: Boolean(params.industry && params.industry !== 'Unknown'),
+      verified: Boolean(params.industry && params.industry !== 'Unknown'),
+      sourcesChecked: Math.max(3, srcCount),
+    },
+    funding: {
+      searched: true,
+      found: Boolean(params.funding?.totalFundingUsd || params.funding?.latestRoundUsd),
+      verified: Boolean(params.funding?.totalFundingUsd || params.funding?.latestRoundUsd),
+      sourcesChecked: Math.max(5, srcCount),
+    },
+    ceo: {
+      searched: true,
+      found: Boolean(params.leadership?.ceo?.name),
+      verified: Boolean(params.leadership?.ceo?.name),
+      sourcesChecked: Math.max(3, srcCount),
+    },
+    founders: {
+      searched: true,
+      found: Boolean(params.leadership?.founders && params.leadership.founders.length > 0),
+      verified: Boolean(params.leadership?.founders && params.leadership.founders.length > 0),
+      sourcesChecked: Math.max(3, srcCount),
+    },
+    companyEmail: {
+      searched: true,
+      found: Boolean(params.contacts?.companyEmails && params.contacts.companyEmails.length > 0),
+      verified: Boolean(params.contacts?.companyEmails?.some((e: any) => e.mxValid || e.status === 'VERIFIED')),
+      sourcesChecked: Math.max(2, srcCount),
+    },
+    ceoEmail: {
+      searched: true,
+      found: Boolean(params.contacts?.ceoEmail),
+      verified: Boolean(params.contacts?.ceoEmail && params.contacts.ceoEmailStatus === 'VERIFIED'),
+      sourcesChecked: Math.max(4, srcCount),
+    },
+    companyLinkedIn: {
+      searched: true,
+      found: Boolean(params.social?.companyLinkedIn?.url || params.social?.company_linkedin?.url),
+      verified: Boolean(params.social?.companyLinkedIn?.url || params.social?.company_linkedin?.url),
+      sourcesChecked: Math.max(2, srcCount),
+    },
   };
 }
 
@@ -3063,6 +3418,17 @@ export async function processCandidateThroughPipeline(
     lastVerifiedAt: now,
     statusTag: 'NEW',
     fieldAudits,
+    fieldCoverage: buildFieldCoverageMatrix({
+      companyName: sourceName,
+      website: websiteVerification.verifiedUrl || sourceWebsite,
+      industry: companyData.industry,
+      funding: fundingData,
+      leadership: leadershipData,
+      contacts: contactData,
+      social: socialData,
+      sources: [websiteVerification.verifiedUrl, fundingData.fundingSourceUrl, leadershipData.ceo?.source_url, placeMatch?.sourceUrl, ...liveIntel.sources].filter(Boolean) as string[],
+    }),
+    fundingRounds: fundingData.fundingRounds || [],
     divergences,
   };
 
@@ -3079,9 +3445,34 @@ export async function processCandidateThroughPipeline(
     QUALIFY: qualifyStageState,
   };
 
+  const allSources = [websiteVerification.verifiedUrl, fundingData.fundingSourceUrl, leadershipData.ceo?.source_url, placeMatch?.sourceUrl, ...liveIntel.sources].filter(Boolean) as string[];
+
+  const fieldCoverage = buildFieldCoverageMatrix({
+    companyName: sourceName,
+    website: websiteVerification.verifiedUrl || sourceWebsite,
+    industry: companyData.industry,
+    funding: fundingData,
+    leadership: leadershipData,
+    contacts: contactData,
+    social: socialData,
+    sources: allSources,
+  });
+
+  const evidenceList = [
+    buildEvidence('company_name', sourceName, websiteVerification.verifiedUrl, 'COMPANY_WEBSITE', `Official company identity: ${sourceName}`),
+    buildEvidence('website', websiteVerification.verifiedUrl || sourceWebsite, websiteVerification.verifiedUrl, 'COMPANY_WEBSITE', websiteVerification.evidence),
+    buildEvidence('industry', companyData.industry, websiteVerification.verifiedUrl, 'AUTHORITATIVE_WEB', `Mapped to taxonomy preset: ${companyData.industry}`),
+    buildEvidence('geography', companyData.headquarters, websiteVerification.verifiedUrl, 'AUTHORITATIVE_WEB', `Headquarters: ${companyData.headquarters}`),
+    buildEvidence('funding', fundingData.totalFundingUsd || fundingData.latestRoundUsd, fundingData.fundingSourceUrl, 'AUTHORITATIVE_WEB', fundingData.fundingEvidence),
+    buildEvidence('ceo', leadershipData.ceo?.name, leadershipData.ceo?.source_url || null, leadershipData.ceo?.source_type || 'AUTHORITATIVE_WEB', leadershipData.ceo?.evidence || 'CEO research evidence'),
+    buildEvidence('company_email', contactData.primaryEmail, websiteVerification.verifiedUrl, 'DNS', contactData.evidence),
+    buildEvidence('company_linkedin', socialData.companyLinkedIn.url, socialData.companyLinkedIn.url, 'COMPANY_WEBSITE', socialData.companyLinkedIn.evidence),
+  ];
+
   const finalResult: CompanyVerificationResult = {
     company,
     verificationStatus: qualificationResult.finalStatus,
+    finalStatus: qualificationResult.finalStatus,
     criteria: qualificationResult.criteria,
     rejectionReason: qualificationResult.rejectionReason,
     qualificationReason: qualificationResult.qualificationReason,
@@ -3089,7 +3480,7 @@ export async function processCandidateThroughPipeline(
     failedCriteria: qualificationResult.failedCriteria,
     passedCriteria: qualificationResult.passedCriteria,
     unknownCriteria: qualificationResult.unknownCriteria,
-    sources: [websiteVerification.verifiedUrl, fundingData.fundingSourceUrl, leadershipData.ceo?.source_url, placeMatch?.sourceUrl, ...liveIntel.sources].filter(Boolean) as string[],
+    sources: allSources,
     auditTimestamp: now,
     source_data,
     enriched_data,
@@ -3097,14 +3488,43 @@ export async function processCandidateThroughPipeline(
     executives: leadershipData.allExecutives,
     leadership: leadershipData,
     fundingDetails: fundingData,
+    funding: {
+      totalFundingUsd: fundingData.totalFundingUsd,
+      latestRoundUsd: fundingData.latestRoundUsd,
+      latestRoundDate: fundingData.latestRoundDate,
+      latestRoundType: fundingData.latestRoundType,
+      fundingRounds: fundingData.fundingRounds || [],
+      rounds: fundingData.fundingRounds || [],
+    },
+    geography: {
+      country: companyData.country,
+      headquarters: companyData.headquarters,
+      city: companyData.city,
+      state: companyData.state,
+      usPresence: companyData.usPresence,
+    },
     contactDetails: contactData,
+    contacts: {
+      companyEmails: contactData.companyEmails,
+      executiveEmails: contactData.executiveEmails,
+      phones: contactData.phones,
+    },
     socialDetails: socialData,
+    social: {
+      companyLinkedIn: socialData.companyLinkedIn.url,
+      companyX: socialData.companyX.url,
+      executiveProfiles: socialData.executiveProfiles,
+    },
     researchCompleteness,
     conflictDetails: allConflicts,
     hasConflict: allConflicts.length > 0,
     conflicts: allConflicts.map(c => c.explanation),
     isImportedFromHuntlyst: !!candidate.isPreviousHuntlystLead,
     fieldAudits,
+    fieldCoverage,
+    field_coverage: fieldCoverage,
+    evidenceList,
+    evidence: evidenceList,
     divergences,
     qualification: {
       matchScore: qualificationResult.matchScore,

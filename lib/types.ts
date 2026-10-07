@@ -97,10 +97,14 @@ export type CompanyRecord = {
   companyEmail?: string | null;
   companyPhone?: string | null;
   companyTwitterUrl?: string | null;
+  city?: string | null;
+  state?: string | null;
   researchCompleteness?: number;
   leadership?: any;
   fundingDetails?: any;
+  fundingRounds?: any[];
   conflictDetails?: any[];
+  fieldCoverage?: Record<string, { searched: boolean; found: boolean; verified: boolean; sourcesChecked: number | string[] }>;
   emailVerified: boolean;
   contactVerificationStatus?: VerificationStatusType;
   contactVerificationReason?: string;

@@ -231,7 +231,9 @@ export interface CompanyVerificationResult {
   executives?: DiscoveredPerson[];
   leadership?: {
     ceo: DiscoveredPerson | null;
+    currentCeo?: DiscoveredPerson | null;
     former_ceos?: DiscoveredPerson[];
+    formerCeos?: DiscoveredPerson[];
     founders?: DiscoveredPerson[];
     coFounders?: DiscoveredPerson[];
     co_founders?: DiscoveredPerson[];
@@ -251,7 +253,13 @@ export interface CompanyVerificationResult {
     fundingEvidence: string;
     sources: string[];
     conflicts: Array<{ field: string; seed_value: any; live_value: any; explanation: string }>;
+    fundingRounds?: any[];
+    rounds?: any[];
   };
+  funding?: any;
+  geography?: any;
+  contacts?: any;
+  social?: any;
   contactDetails?: {
     company_emails?: Array<{ email: string; source: string; status: string; mxValid: boolean }>;
     companyEmails?: Array<{ email: string; source: string; status: string; mxValid: boolean }>;
@@ -270,7 +278,9 @@ export interface CompanyVerificationResult {
   researchCompleteness?: number;
   conflictDetails?: Array<{ field: string; seed_value: any; live_value: any; explanation: string }>;
   qualificationScore?: number;
+  qualificationMatchScore?: number;
   criteriaBreakdown?: Record<string, any>;
+  reasons?: string[];
   // Conflict tracking if previous Huntlyst import
   hasConflict?: boolean;
   conflicts?: string[];
@@ -279,6 +289,11 @@ export interface CompanyVerificationResult {
   contactProfile?: CompanyContactProfile;
   // Field-level independent verification audits (Seed vs Current vs Source)
   fieldAudits?: Record<string, FieldAudit>;
+  fieldCoverage?: Record<string, { searched: boolean; found: boolean; verified: boolean; sourcesChecked: number | string[] }>;
+  field_coverage?: Record<string, { searched: boolean; found: boolean; verified: boolean; sourcesChecked: number | string[] }>;
+  evidenceList?: any[];
+  evidence?: any;
+  finalStatus?: string;
   divergences?: string[];
   rejectionStage?: string;
   lead_package?: any;

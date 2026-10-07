@@ -26,7 +26,10 @@
 
 import {
   discoverCompany,
+  discoverEntity,
   researchCompany,
+  researchIndustry,
+  researchGeography,
   researchFunding,
   researchLeadership,
   researchContacts,
@@ -452,6 +455,129 @@ async function runExternalRegressionTests() {
     assert(tractionResult.stages?.QUALIFY.status === 'completed', 20, 'Stage 6 QUALIFY completed');
     assert(tractionResult.researchCompleteness > 0, 20, 'Research completeness calculated for Traction Ag', `${tractionResult.researchCompleteness}%`);
     assert(tractionResult.verificationStatus === 'REJECTED', 20, 'Traction Ag properly qualified as REJECTED against non-US target profile without stopping research');
+
+    // -------------------------------------------------------------
+    // Test 21: Unknown Entity Protection (PharmEasy Entity Resolution)
+    // -------------------------------------------------------------
+    console.log('\n--- Testing Scenario 21: Unknown Entity Protection (PharmEasy Entity Resolution) ---');
+    const pharmeasyCandUrlOnly: ResearchCandidateInput = {
+      website: 'https://pharmeasy.in/',
+      source: 'External Target Entry',
+    };
+    const entityResult = await discoverEntity(pharmeasyCandUrlOnly);
+    assert(entityResult.sourceName !== 'Unknown Entity', 21, 'Candidate URL resolved authentic name instead of Unknown Entity', `Name: ${entityResult.sourceName}`);
+    assert(entityResult.sourceName.toLowerCase().includes('pharmeasy'), 21, 'Resolved name matches PharmEasy brand', `Name: ${entityResult.sourceName}`);
+    assert(entityResult.canonicalDomain === 'pharmeasy.in', 21, 'Canonical domain correctly extracted as pharmeasy.in');
+
+    // -------------------------------------------------------------
+    // Test 22: Wrong Industry Protection (Healthcare vs AI)
+    // -------------------------------------------------------------
+    console.log('\n--- Testing Scenario 22: Wrong Industry Protection (Healthcare vs AI) ---');
+    const indTest = researchIndustry(
+      undefined,
+      'PharmEasy is India leading online pharmacy and digital healthcare platform delivering medicines, medical equipment, diagnostic lab tests, and telehealth services powered by digital technology and healthcare data platform.'
+    );
+    assert(indTest.standard_industry === 'Healthcare & Pharma', 22, 'PharmEasy categorized as Healthcare & Pharma', `Got: ${indTest.standard_industry}`);
+    assert(indTest.standard_industry !== 'AI & Machine Learning', 22, 'PharmEasy is strictly NOT classified as AI & Machine Learning despite digital/technology/data keywords');
+
+    // -------------------------------------------------------------
+    // Test 23: Dedicated Funding Research & Timeline Separation
+    // -------------------------------------------------------------
+    console.log('\n--- Testing Scenario 23: Dedicated Funding Research & Timeline Separation ---');
+    const mockFundWebIntel = {
+      ceoName: 'Dharmil Sheth',
+      ceoRole: 'CEO',
+      ceoEvidence: 'Co-founder and CEO of PharmEasy',
+      ceoSourceUrl: 'https://news.example.com/pharmeasy-ceo',
+      ceoLinkedIn: 'https://www.linkedin.com/in/dharmilsheth',
+      formerCeoName: null,
+      formerCeoEvidence: null,
+      founders: ['Dharmil Sheth', 'Dhaval Shah'],
+      coFounders: ['Dhaval Shah'],
+      founderEvidence: 'Founded by Dharmil Sheth and Dhaval Shah',
+      founderSourceUrl: 'https://news.example.com/founders',
+      founderLinkedInUrls: [],
+      companyLinkedIn: 'https://www.linkedin.com/company/pharmeasy/',
+      totalFundingUsd: 1_500_000_000,
+      latestRoundUsd: 350_000_000,
+      fundingAmount: 350_000_000,
+      fundingText: '$350M',
+      fundingDate: '2021',
+      fundingType: 'Series F',
+      fundingSourceUrl: 'https://techcrunch.com/pharmeasy-funding',
+      fundingRounds: [
+        { amountUsd: 220_000_000, roundType: 'Series D', date: '2019', sourceUrl: 'https://news.example.com/d', sourceTitle: 'Series D', evidence: 'Raised $220M in 2019', confidence: 90 },
+        { amountUsd: 350_000_000, roundType: 'Series E', date: '2021', sourceUrl: 'https://news.example.com/e', sourceTitle: 'Series E', evidence: 'Raised $350M in 2021', confidence: 90 },
+      ],
+      sources: ['https://techcrunch.com/pharmeasy-funding'],
+    };
+
+    const fundResult = await researchFunding(
+      'PharmEasy',
+      'pharmeasy.in',
+      null,
+      { verifiedUrl: 'https://pharmeasy.in/' },
+      mockFundWebIntel
+    );
+
+    assert(fundResult.totalFundingUsd === 1_500_000_000, 23, 'Total funding captured accurately ($1.5B)');
+    assert(fundResult.latestRoundUsd === 350_000_000, 23, 'Latest round separated from total funding ($350M)');
+    assert(fundResult.totalFundingUsd !== fundResult.latestRoundUsd, 23, 'Total funding is strictly not confused with latest round');
+    assert((fundResult as any).fundingRounds?.length >= 2, 23, 'Multi-round funding timeline populated');
+
+    // -------------------------------------------------------------
+    // Test 24: Field Coverage Matrix Generation
+    // -------------------------------------------------------------
+    console.log('\n--- Testing Scenario 24: Field Coverage Matrix Generation ---');
+    const mockWebPharmEasy = {
+      verifiedUrl: 'https://pharmeasy.in/',
+      status: 'VERIFIED' as const,
+      evidence: 'Official domain active',
+      sourceType: 'COMPANY_WEBSITE' as const,
+      confidence: 90,
+      companyEmails: ['care@pharmeasy.in'],
+      companyLinkedIn: 'https://www.linkedin.com/company/pharmeasy/',
+      pageTitle: 'PharmEasy: Online Pharmacy & Medical Store in India',
+      metaDescription: 'Order medicines online and book lab tests from PharmEasy.',
+    };
+    const leadPharmEasy = await researchLeadership('PharmEasy', 'pharmeasy.in', {}, mockWebPharmEasy, mockFundWebIntel);
+    const contactsPharmEasy = await researchContacts('PharmEasy', 'pharmeasy.in', mockWebPharmEasy, leadPharmEasy);
+    const socialPharmEasy = await researchSocialProfiles('PharmEasy', 'pharmeasy.in', mockWebPharmEasy, leadPharmEasy, {}, mockFundWebIntel);
+
+    const pipeCandidate: ResearchCandidateInput = {
+      website: 'https://pharmeasy.in/',
+      source: 'External Target Entry',
+      existingData: {
+        industry: 'Healthcare & Pharma',
+        fundingOrRevenue: '$1,500,000,000',
+        location: 'Mumbai, Maharashtra, India',
+        country: 'India',
+        founderOrCeoName: 'Dharmil Sheth',
+        founderOrCeoEmail: 'care@pharmeasy.in',
+      },
+    };
+
+    const pharmeasyRun = await processCandidateThroughPipeline(pipeCandidate, standardTarget);
+    assert(pharmeasyRun.fieldCoverage !== undefined, 24, 'Field coverage matrix present in pipeline result');
+    assert(pharmeasyRun.fieldCoverage?.companyName?.searched === true, 24, 'Field coverage tracks companyName searched');
+    assert(pharmeasyRun.fieldCoverage?.funding?.verified === true, 24, 'Field coverage tracks funding verified');
+    assert(pharmeasyRun.fieldCoverage?.ceo?.searched === true, 24, 'Field coverage tracks CEO searched');
+    assert(pharmeasyRun.fieldCoverage?.companyLinkedIn?.searched === true, 24, 'Field coverage tracks companyLinkedIn searched');
+
+    // -------------------------------------------------------------
+    // Test 25: Full Dossier after Rejection (PharmEasy Target Fail)
+    // -------------------------------------------------------------
+    console.log('\n--- Testing Scenario 25: Full Dossier after Rejection (PharmEasy Target Fail) ---');
+    // Standard target requires funding $1M-$5M. PharmEasy ($1.5B) will fail funding range and get REJECTED.
+    assert(pharmeasyRun.verificationStatus === 'REJECTED', 25, 'PharmEasy properly qualified as REJECTED against $1M-$5M target bounds');
+    assert(pharmeasyRun.company.name.toLowerCase().includes('pharmeasy'), 25, 'PharmEasy name preserved in rejected dossier');
+    assert(pharmeasyRun.company.industry === 'Healthcare & Pharma', 25, 'PharmEasy industry preserved as Healthcare & Pharma in rejected dossier');
+    assert(pharmeasyRun.stages?.FIND_FOUNDERS.status === 'completed', 25, 'Leadership stage completed despite rejection');
+    assert(pharmeasyRun.stages?.VERIFY_CONTACT.status === 'completed', 25, 'Contact stage completed despite rejection');
+    assert(pharmeasyRun.stages?.QUALIFY.status === 'completed', 25, 'Qualify stage completed despite rejection');
+    assert(pharmeasyRun.leadership !== undefined, 25, 'Leadership data populated in rejected dossier');
+    assert(pharmeasyRun.funding !== undefined || pharmeasyRun.fundingDetails !== undefined, 25, 'Funding history preserved in rejected dossier');
+    assert(pharmeasyRun.researchCompleteness > 0, 25, 'Research completeness calculated for rejected company', `${pharmeasyRun.researchCompleteness}%`);
 
     console.log('\n================================================================');
     console.log(`RESULTS: ${passed} PASSED, ${failed} FAILED`);

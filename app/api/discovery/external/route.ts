@@ -112,29 +112,56 @@ export async function POST(request: NextRequest) {
             rawResult.verificationStatus = 'UNVERIFIED';
           }
 
-          // Build Detailed External JSON Model (Section 33) while preserving CompanyVerificationResult compatibility
+          // Build Detailed External JSON Model (Section 19 & 33) while preserving CompanyVerificationResult compatibility
           const formattedResult: CompanyVerificationResult & Record<string, any> = {
             ...rawResult,
             funding: {
-              totalFundingUsd: rawResult.fundingDetails?.total_funding_usd || null,
-              latestRoundUsd: rawResult.fundingDetails?.latest_round_usd || null,
-              latestRoundDate: rawResult.fundingDetails?.latest_round_date || null,
-              latestRoundType: rawResult.fundingDetails?.latest_round_type || null,
+              totalFundingUsd: rawResult.fundingDetails?.totalFundingUsd ?? rawResult.fundingDetails?.total_funding_usd ?? rawResult.funding?.totalFundingUsd ?? null,
+              latestRoundUsd: rawResult.fundingDetails?.latestRoundUsd ?? rawResult.fundingDetails?.latest_round_usd ?? rawResult.funding?.latestRoundUsd ?? null,
+              latestRoundDate: rawResult.fundingDetails?.latestRoundDate ?? rawResult.fundingDetails?.latest_round_date ?? rawResult.funding?.latestRoundDate ?? null,
+              latestRoundType: rawResult.fundingDetails?.latestRoundType ?? rawResult.fundingDetails?.latest_round_type ?? rawResult.funding?.latestRoundType ?? null,
+              fundingRounds: rawResult.fundingDetails?.fundingRounds || rawResult.fundingDetails?.rounds || rawResult.funding?.fundingRounds || [],
+              rounds: rawResult.fundingDetails?.fundingRounds || rawResult.fundingDetails?.rounds || rawResult.funding?.fundingRounds || [],
               sources: rawResult.fundingDetails?.sources || [],
               conflicts: rawResult.conflictDetails?.filter(c => c.field === 'funding') || [],
             },
+            geography: {
+              country: rawResult.company?.country || null,
+              headquarters: rawResult.company?.headquarters || null,
+              city: rawResult.company?.city || null,
+              state: rawResult.company?.state || null,
+              usPresence: rawResult.company?.usPresence ?? false,
+            },
+            leadership: {
+              ceo: rawResult.leadership?.ceo || null,
+              currentCeo: rawResult.leadership?.ceo || null,
+              formerCeos: rawResult.leadership?.formerCeos || rawResult.leadership?.former_ceos || [],
+              former_ceos: rawResult.leadership?.formerCeos || rawResult.leadership?.former_ceos || [],
+              founders: rawResult.leadership?.founders || [],
+              coFounders: rawResult.leadership?.coFounders || [],
+              co_founders: rawResult.leadership?.coFounders || [],
+            },
             contacts: {
-              companyEmails: rawResult.contactDetails?.company_emails || [],
-              executiveEmails: rawResult.contactDetails?.executive_emails || [],
-              phones: rawResult.contactDetails?.phones || [],
+              companyEmails: rawResult.contactDetails?.companyEmails || rawResult.contactDetails?.company_emails || [],
+              executiveEmails: rawResult.contactDetails?.executiveEmails || rawResult.contactDetails?.executive_emails || [],
+              phones: rawResult.contactDetails?.phones || (rawResult.company?.companyPhone ? [rawResult.company.companyPhone] : []),
             },
             social: {
-              companyLinkedIn: rawResult.socialDetails?.company_linkedin?.url || null,
-              companyX: rawResult.socialDetails?.company_x?.url || null,
-              executiveProfiles: rawResult.socialDetails?.executive_profiles || [],
+              companyLinkedIn: rawResult.socialDetails?.companyLinkedIn?.url || rawResult.socialDetails?.company_linkedin?.url || rawResult.company?.companyLinkedinUrl || null,
+              companyX: rawResult.socialDetails?.companyX?.url || rawResult.socialDetails?.company_x?.url || rawResult.company?.companyTwitterUrl || null,
+              executiveProfiles: rawResult.socialDetails?.executiveProfiles || rawResult.socialDetails?.executive_profiles || [],
             },
+            fieldCoverage: rawResult.fieldCoverage || rawResult.field_coverage || {},
+            evidence: rawResult.evidence || rawResult.evidenceList || [],
             conflicts: rawResult.conflicts || rawResult.conflictDetails?.map(c => `${c.field}: ${c.explanation}`) || [],
             conflictDetails: rawResult.conflictDetails || [],
+            researchCompleteness: rawResult.researchCompleteness || rawResult.company?.researchCompleteness || 0,
+            qualification: {
+              matchScore: rawResult.qualification?.matchScore ?? rawResult.company?.huntScore ?? 0,
+              criteria: rawResult.qualification?.criteria || rawResult.criteria,
+              finalStatus: rawResult.verificationStatus,
+              reasons: rawResult.qualification?.reasons || rawResult.reasons || [],
+            },
           };
 
           // Upsert into unified lead store
