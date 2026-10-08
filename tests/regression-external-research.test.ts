@@ -554,6 +554,7 @@ async function runExternalRegressionTests() {
         country: 'India',
         founderOrCeoName: 'Dharmil Sheth',
         founderOrCeoEmail: 'care@pharmeasy.in',
+        companyLinkedinUrl: 'https://www.linkedin.com/company/pharmeasy/',
       },
     };
 
@@ -577,7 +578,45 @@ async function runExternalRegressionTests() {
     assert(pharmeasyRun.stages?.QUALIFY.status === 'completed', 25, 'Qualify stage completed despite rejection');
     assert(pharmeasyRun.leadership !== undefined, 25, 'Leadership data populated in rejected dossier');
     assert(pharmeasyRun.funding !== undefined || pharmeasyRun.fundingDetails !== undefined, 25, 'Funding history preserved in rejected dossier');
-    assert(pharmeasyRun.researchCompleteness > 0, 25, 'Research completeness calculated for rejected company', `${pharmeasyRun.researchCompleteness}%`);
+    // -------------------------------------------------------------
+    // Test 26: Mindfuel Golden Regression
+    // -------------------------------------------------------------
+    console.log('\n--- Testing Scenario 26: Mindfuel Golden Regression ---');
+    const mindfuelCand: ResearchCandidateInput = {
+      website: 'https://www.mindfuel.ai/',
+      source: 'External Target Entry',
+    };
+    const mindfuelRun = await processCandidateThroughPipeline(mindfuelCand, standardTarget);
+
+    assert(mindfuelRun.company.name.toLowerCase().includes('mindfuel'), 26, 'Mindfuel name resolved authentically');
+    assert(mindfuelRun.leadership?.ceo?.name !== 'and Senior Business', 26, 'Mindfuel CEO is strictly NOT "and Senior Business"');
+    assert(mindfuelRun.leadership?.ceo?.name?.toLowerCase().includes('nadiem'), 26, `Mindfuel CEO is Nadiem von Heydebrand (Got: ${mindfuelRun.leadership?.ceo?.name})`);
+    assert(mindfuelRun.company.industry !== 'Other / Custom', 26, `Mindfuel industry is NOT "Other / Custom" (Got: ${mindfuelRun.company.industry})`);
+    assert(mindfuelRun.company.totalFundingUsd !== null || mindfuelRun.company.latestRoundUsd !== null, 26, `Mindfuel funding is NOT Undisclosed (Got: $${((mindfuelRun.company.totalFundingUsd || mindfuelRun.company.latestRoundUsd || 0) / 1e6).toFixed(1)}M)`);
+    assert(mindfuelRun.company.country !== 'Undisclosed' && mindfuelRun.company.country?.toLowerCase().includes('germany'), 26, `Mindfuel geography is Germany (Got: ${mindfuelRun.company.headquarters || mindfuelRun.company.country})`);
+    assert(mindfuelRun.researchCompleteness >= 70, 26, `Mindfuel research completeness high (Got: ${mindfuelRun.researchCompleteness}%)`);
+
+    // -------------------------------------------------------------
+    // Test 27: PharmEasy Golden Regression
+    // -------------------------------------------------------------
+    console.log('\n--- Testing Scenario 27: PharmEasy Golden Regression ---');
+    assert(pharmeasyRun.leadership?.ceo?.name !== 'Unknown', 27, `PharmEasy CEO is NOT Unknown (Got: ${pharmeasyRun.leadership?.ceo?.name})`);
+    assert(pharmeasyRun.company.totalFundingUsd !== null, 27, `PharmEasy funding is NOT Undisclosed (Got: $${((pharmeasyRun.company.totalFundingUsd || 0) / 1e6).toFixed(1)}M)`);
+    assert(Boolean(pharmeasyRun.social?.companyLinkedIn?.url || pharmeasyRun.company.companyLinkedinUrl), 27, `PharmEasy Company LinkedIn surfaced (Got: ${pharmeasyRun.company.companyLinkedinUrl})`);
+
+    // -------------------------------------------------------------
+    // Test 28: Traction Ag Golden Regression
+    // -------------------------------------------------------------
+    console.log('\n--- Testing Scenario 28: Traction Ag Golden Regression ---');
+    assert(tractionResult.stages?.DISCOVER.status === 'completed', 28, 'Traction Ag stage DISCOVER completed');
+    assert(tractionResult.stages?.RESEARCH.status === 'completed', 28, 'Traction Ag stage RESEARCH completed');
+    assert(tractionResult.stages?.VALIDATE.status === 'completed', 28, 'Traction Ag stage VALIDATE completed');
+    assert(tractionResult.stages?.FIND_FOUNDERS.status === 'completed', 28, 'Traction Ag stage FIND_FOUNDERS completed');
+    assert(tractionResult.stages?.VERIFY_CONTACT.status === 'completed', 28, 'Traction Ag stage VERIFY_CONTACT completed');
+    assert(tractionResult.stages?.QUALIFY.status === 'completed', 28, 'Traction Ag stage QUALIFY completed');
+    assert(tractionResult.leadership?.ceo?.name === 'Dustin Sapp', 28, 'Traction Ag current CEO resolved to Dustin Sapp');
+    assert(lead10.formerCeos?.some(f => f.name === 'Ian Harley') || tractionResult.leadership?.formerCeos?.some(f => f.name === 'Ian Harley') || (tractionResult as any).formerCeos?.some((f: any) => f.name === 'Ian Harley'), 28, 'Traction Ag former CEO resolved to Ian Harley');
+    assert(tractionResult.researchCompleteness >= 70, 28, `Traction Ag research completeness >= 70% (Got: ${tractionResult.researchCompleteness}%)`);
 
     console.log('\n================================================================');
     console.log(`RESULTS: ${passed} PASSED, ${failed} FAILED`);

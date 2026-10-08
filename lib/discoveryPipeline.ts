@@ -540,6 +540,14 @@ export async function verifyWebsiteUrl(
           if (!companyPhone && obj.telephone && typeof obj.telephone === 'string') {
             companyPhone = obj.telephone.trim();
           }
+          if (!companyLinkedIn && obj.sameAs) {
+            const sameAsList = Array.isArray(obj.sameAs) ? obj.sameAs : [obj.sameAs];
+            for (const s of sameAsList) {
+              if (typeof s === 'string' && s.includes('linkedin.com/company/')) {
+                companyLinkedIn = s.split('?')[0].replace(/\/+$/, '');
+              }
+            }
+          }
           if (obj.founder) {
             const f = Array.isArray(obj.founder) ? obj.founder : [obj.founder];
             f.forEach((item: any) => {
@@ -557,6 +565,13 @@ export async function verifyWebsiteUrl(
         }
       } catch {}
     });
+
+    if (!companyLinkedIn) {
+      const liMatch = html.match(/https:\/\/(?:www\.)?linkedin\.com\/company\/([a-zA-Z0-9_-]+)/i);
+      if (liMatch) {
+        companyLinkedIn = `https://www.linkedin.com/company/${liMatch[1]}`;
+      }
+    }
 
     // Labeled contact number check only in body text (strictly avoiding loose regex over HTML bundle)
     if (!companyPhone) {
@@ -746,45 +761,113 @@ export async function queryLiveWebIntelligence(
   if (!cleanName && !canonicalDomain) return result;
   const searchName = cleanName || canonicalDomain;
 
-  // 1. EXECUTE MULTI-QUERY SEARCHES ACROSS AVAILABLE PROVIDERS
-  const searchPromises = [
-    searchEngine.search(`"${searchName}" (CEO OR "Chief Executive Officer" OR "President & CEO" OR "founder" OR "co-founder")`, 6),
-    searchEngine.search(`"${searchName}" (CEO OR "current CEO" OR "named CEO" OR "appointed CEO" OR "steps down")`, 6),
-    searchEngine.search(`"${searchName}" (funding OR "raised" OR "seed" OR "series" OR "valuation" OR "investors")`, 6),
-    searchEngine.search(`"${searchName}" (latest funding OR "total funding" OR "debt financing")`, 6),
-    searchEngine.search(`"${searchName}" site:linkedin.com/company`, 4),
-  ];
-
-  const searchBatches = await Promise.allSettled(searchPromises);
-  const discoveredItems: Array<{ title: string; snippet: string; url: string }> = [];
+  // 1. DISCOVER SOURCE URLs ACROSS OFFICIAL ASSETS, ENCYCLOPEDIA & SEARCH ENGINES
+  const discoveredUrls: string[] = [];
   const seenUrls = new Set<string>();
 
-  for (const batch of searchBatches) {
-    if (batch.status === 'fulfilled') {
-      for (const item of batch.value) {
-        if (!seenUrls.has(item.url)) {
-          seenUrls.add(item.url);
-          discoveredItems.push(item);
+  const addUrl = (url: string) => {
+    if (!url || !url.startsWith('http') || seenUrls.has(url)) return;
+    seenUrls.add(url);
+    discoveredUrls.push(url);
+  };
+
+  // 1A. Primary Official Roots and Canonical Subpages
+  if (canonicalDomain) {
+    const root = `https://${canonicalDomain}`;
+    addUrl(root);
+    addUrl(`https://www.${canonicalDomain}`);
+    addUrl(`${root}/about`);
+    addUrl(`${root}/about-us`);
+    addUrl(`${root}/company/about`);
+    addUrl(`${root}/legal`);
+    addUrl(`${root}/imprint`);
+    addUrl(`${root}/impressum`);
+    addUrl(`${root}/company/news`);
+    addUrl(`${root}/news`);
+    addUrl(`${root}/press`);
+    addUrl(`${root}/contact`);
+    addUrl(`${root}/contact-us`);
+    addUrl(`${root}/company/contact-us`);
+    addUrl(`${root}/resources/customer-support`);
+  }
+
+  // 1B. Authoritative Wikipedia Search
+  try {
+    const wikiTerm = canonicalDomain ? canonicalDomain.split('.')[0] : searchName;
+    const wikiRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(wikiTerm)}&format=json`,
+      { signal: AbortSignal.timeout(4000) }
+    );
+    if (wikiRes.ok) {
+      const wikiData = await wikiRes.json();
+      const hits = wikiData?.query?.search || [];
+      for (const hit of hits.slice(0, 2)) {
+        addUrl(`https://en.wikipedia.org/wiki/${encodeURIComponent(hit.title.replace(/\s+/g, '_'))}`);
+      }
+    }
+  } catch {}
+
+  // 1C. Search Engine Provider URLs (URLs only, snippets are discovery only)
+  try {
+    const searchPromises = [
+      searchEngine.search(`"${searchName}" (CEO OR "Chief Executive Officer" OR "founder" OR "co-founder")`, 5),
+      searchEngine.search(`"${searchName}" (funding OR "raised" OR "seed" OR "series" OR "debt financing")`, 5),
+      searchEngine.search(`"${searchName}" site:linkedin.com/company`, 3),
+    ];
+    const searchBatches = await Promise.allSettled(searchPromises);
+    for (const batch of searchBatches) {
+      if (batch.status === 'fulfilled') {
+        for (const item of batch.value) {
+          addUrl(item.url);
         }
       }
     }
+  } catch {}
+
+  // 2. FETCH AND READ ACTUAL SOURCE PAGES (REAL SOURCE INSPECTION)
+  // Sort by Source Tier: Official > Authoritative > Reference
+  const sortedUrlsForFetch = [...discoveredUrls].sort((a, b) => {
+    const aTier = sourceInspector.classifySourceTier(a, canonicalDomain);
+    const bTier = sourceInspector.classifySourceTier(b, canonicalDomain);
+    if (aTier === 'TIER_1_OFFICIAL') return -1;
+    if (bTier === 'TIER_1_OFFICIAL') return 1;
+    if (aTier === 'TIER_2_AUTHORITATIVE') return -1;
+    if (bTier === 'TIER_2_AUTHORITATIVE') return 1;
+    return 0;
+  });
+
+  const inspectedPages = await sourceInspector.fetchSources(sortedUrlsForFetch, canonicalDomain, 14);
+
+  // Discover deep internal press releases / news links from fetched official pages
+  const deepLinks: string[] = [];
+  for (const page of inspectedPages) {
+    if (page.tier === 'TIER_1_OFFICIAL') {
+      const $ = cheerio.load(page.html || '');
+      $('a').each((_, el) => {
+        const href = $(el).attr('href');
+        if (
+          href &&
+          (href.includes('seed') ||
+            href.includes('funding') ||
+            href.includes('news/') ||
+            href.includes('leadership') ||
+            href.includes('press'))
+        ) {
+          let fullHref = href;
+          if (href.startsWith('/')) fullHref = `https://${canonicalDomain}${href}`;
+          if (fullHref.startsWith('http') && !seenUrls.has(fullHref) && fullHref.includes(canonicalDomain)) {
+            deepLinks.push(fullHref);
+            seenUrls.add(fullHref);
+          }
+        }
+      });
+    }
   }
 
-  // 2. FETCH AND READ TOP AUTHORITATIVE SOURCE PAGES (REAL SOURCE INSPECTION)
-  // Prioritize authoritative domains: Wikipedia, company pages, news, business registries
-  const sortedUrlsForFetch = [...discoveredItems]
-    .sort((a, b) => {
-      const aTier = sourceInspector.classifySourceTier(a.url, canonicalDomain);
-      const bTier = sourceInspector.classifySourceTier(b.url, canonicalDomain);
-      if (aTier === 'TIER_1_OFFICIAL') return -1;
-      if (bTier === 'TIER_1_OFFICIAL') return 1;
-      if (aTier === 'TIER_2_AUTHORITATIVE') return -1;
-      if (bTier === 'TIER_2_AUTHORITATIVE') return 1;
-      return 0;
-    })
-    .map(i => i.url);
-
-  const inspectedPages = await sourceInspector.fetchSources(sortedUrlsForFetch, canonicalDomain, 8);
+  if (deepLinks.length > 0) {
+    const deepPages = await sourceInspector.fetchSources(deepLinks.slice(0, 4), canonicalDomain, 4);
+    inspectedPages.push(...deepPages);
+  }
 
   // 3. EXTRACT ENTITY AND PARENT RELATIONSHIPS
   const entityRel = sourceInspector.extractEntityRelationships(searchName, canonicalDomain, inspectedPages);
@@ -792,7 +875,6 @@ export async function queryLiveWebIntelligence(
     result.parentEntity = entityRel.parentEntity;
     result.legalEntity = entityRel.legalEntity;
 
-    // Run targeted query for parent entity leadership if different from searchName
     if (!entityRel.parentEntity.toLowerCase().includes(searchName.toLowerCase())) {
       try {
         const parentResults = await searchEngine.search(`"${entityRel.parentEntity}" (CEO OR leadership OR "Managing Director" OR "MD & CEO")`, 4);
@@ -806,7 +888,7 @@ export async function queryLiveWebIntelligence(
   }
 
   // 4. EXTRACT LEADERSHIP FACTS FROM INSPECTED PAGES
-  const leadershipFacts = sourceInspector.extractLeadershipFromSources(searchName, result.parentEntity || null, inspectedPages);
+  const leadershipFacts = sourceInspector.extractLeadership(searchName, result.parentEntity || null, inspectedPages);
   if (leadershipFacts.currentCeo) {
     result.ceoName = leadershipFacts.currentCeo.name;
     result.ceoRole = leadershipFacts.currentCeo.role;
@@ -829,7 +911,7 @@ export async function queryLiveWebIntelligence(
   }
 
   // 5. EXTRACT FUNDING FACTS FROM INSPECTED PAGES
-  const fundingFacts = sourceInspector.extractFundingFromSources(searchName, result.parentEntity || null, inspectedPages);
+  const fundingFacts = sourceInspector.extractFunding(searchName, result.parentEntity || null, inspectedPages);
   if (fundingFacts.totalFundingUsd) {
     result.totalFundingUsd = fundingFacts.totalFundingUsd;
     result.fundingAmount = fundingFacts.totalFundingUsd;
@@ -854,115 +936,14 @@ export async function queryLiveWebIntelligence(
     result.fundingSourceUrl = fundingFacts.sourceUrl || null;
   }
 
-  // 6. CORROBORATE & BACKFILL FROM SEARCH SNIPPETS (IF NOT DISCLOSED ON FETCHED PAGES)
-  for (const item of discoveredItems) {
-    const text = `${item.title} ${item.snippet}`;
-
-    // CEO snippet check
-    if (!result.ceoName) {
-      const ceoMatch =
-        text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s*[-–|,]\s*(?:Co-Founder & CEO|CEO|Chief Executive Officer|President & CEO)/i) ||
-        text.match(/named\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s+as\s+CEO/i) ||
-        text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s+New\s+CEO/i) ||
-        text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s+(?:is|serves as)\s+(?:the\s+)?CEO/i);
-
-      if (ceoMatch) {
-        const cand = (ceoMatch[1] || ceoMatch[2]).trim().replace(/\s+(was|is|has|named|appointed|joined|steps)$/i, '').trim();
-        const lower = cand.toLowerCase();
-        if (!lower.includes('company') && !lower.includes('india') && !lower.includes('about') && !lower.includes('linkedin')) {
-          result.ceoName = cand;
-          result.ceoRole = 'CEO';
-          result.ceoSourceUrl = item.url;
-          result.ceoEvidence = `${item.title} — "${item.snippet.slice(0, 150)}"`;
-        }
-      }
-    }
-
-    // Former CEO snippet check
-    if (!result.formerCeoName) {
-      const formerMatch = text.match(/(?:former|previous|ex-)\s*CEO[,\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})|([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s*[-–|,]\s*(?:former CEO|previous CEO|ex-CEO|served as CEO)/i) ||
-                          text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s+steps\s+down\s+as\s+CEO/i);
-      if (formerMatch) {
-        const formerName = (formerMatch[1] || formerMatch[2])?.trim();
-        if (formerName && !formerName.toLowerCase().includes('company')) {
-          result.formerCeoName = formerName;
-          result.formerCeoEvidence = `Documented as former CEO: ${formerName} ("${item.snippet.slice(0, 140)}")`;
-        }
-      }
-    }
-
-    // Founders snippet check
-    const founderRegex = /(?:founded|co-founded)\s*(?:in \d{4}\s*)?by\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2}(?:,\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})*(?:,?\s*and\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})?)/i;
-    const founderMatch = text.match(founderRegex);
-    if (founderMatch && founderMatch[1]) {
-      const rawNames = founderMatch[1].split(/,|\band\b/).map(n => n.trim()).filter(n => n.length > 2 && /^[A-Z]/.test(n));
-      rawNames.forEach(fn => {
-        if (!result.founders.includes(fn)) result.founders.push(fn);
-      });
-      if (!result.founderEvidence) {
-        result.founderEvidence = `Founders documented: ${result.founders.join(', ')} ("${item.snippet.slice(0, 140)}")`;
-        result.founderSourceUrl = item.url;
-      }
-    }
-
-    // Funding snippet check
-    if (!result.totalFundingUsd && !result.latestRoundUsd) {
-      const amountMatch = text.match(/\$([0-9]+(?:\.[0-9]+)?)\s*(M|million|B|billion|K|thousand)/i);
-      const roundMatch = text.match(/\b(Pre-Seed|Seed|Series [A-F]|Venture Round|Growth Round|Debt Financing)\b/i);
-      const dateMatch = text.match(/\b(20[12]\d)\b/);
-
-      if (amountMatch) {
-        const num = parseFloat(amountMatch[1]);
-        const unit = amountMatch[2].toUpperCase();
-        const multi = unit.startsWith('B') ? 1e9 : 1e6;
-        const parsedVal = Math.round(num * multi);
-        const roundType = roundMatch ? roundMatch[1] : (parsedVal < 5000000 ? 'Seed' : 'Venture Round');
-        const roundDate = dateMatch ? dateMatch[1] : null;
-
-        result.latestRoundUsd = parsedVal;
-        result.fundingAmount = parsedVal;
-        result.fundingType = roundType;
-        result.fundingDate = roundDate;
-        result.fundingSourceUrl = item.url;
-        result.fundingEvidence = `Disclosed in market reports: $${(parsedVal / 1e6).toFixed(1)}M (${roundType})`;
-
-        if (!result.fundingRounds.some(r => r.amountUsd === parsedVal)) {
-          result.fundingRounds.push({
-            amountUsd: parsedVal,
-            roundType,
-            date: roundDate,
-            sourceUrl: item.url,
-            sourceTitle: item.title,
-            evidence: item.snippet.slice(0, 160),
-            confidence: 90,
-          });
-        }
-      }
-    }
-
-    // Company LinkedIn check
-    if (!result.companyLinkedIn && item.url.includes('linkedin.com/company/')) {
-      const slug = item.url.split('linkedin.com/company/')[1]?.split('/')[0]?.toLowerCase();
-      const domainBase = canonicalDomain.replace(/\.[a-z.]+$/, '').toLowerCase();
-      const nameSlug = searchName.toLowerCase().replace(/[^a-z0-9]/g, '');
-      if (slug && (slug.includes(nameSlug) || nameSlug.includes(slug) || (domainBase && slug.includes(domainBase)))) {
-        result.companyLinkedIn = item.url.split('?')[0];
-      }
-    }
+  // 6. EXTRACT SOCIAL PROFILES (COMPANY LINKEDIN) FROM INSPECTED PAGES
+  const socialFacts = sourceInspector.extractSocial(canonicalDomain, searchName, inspectedPages);
+  if (socialFacts.companyLinkedIn) {
+    result.companyLinkedIn = socialFacts.companyLinkedIn;
   }
 
-  // Calculate total funding from rounds if not explicitly stated
-  if (!result.totalFundingUsd && result.fundingRounds.length > 0) {
-    if (result.fundingRounds.length === 1) {
-      result.totalFundingUsd = result.fundingRounds[0].amountUsd;
-    } else {
-      result.totalFundingUsd = result.fundingRounds.reduce((acc, r) => acc + (r.amountUsd || 0), 0);
-    }
-  }
-
-  // 7. RECORD AUTHENTIC SOURCES (FETCHED + DISCOVERED)
-  const allSourceUrls = Array.from(new Set([...inspectedPages.map(p => p.url), ...discoveredItems.map(d => d.url)]));
-  result.sources = allSourceUrls;
+  // 7. RECORD AUTHENTIC SOURCES (STRICTLY FETCHED AND READ PAGES)
+  result.sources = inspectedPages.map(p => p.url);
   result.inspectedSourcesCount = inspectedPages.length;
 
   return result;
@@ -1042,7 +1023,8 @@ export async function researchCompany(
   companyName: string,
   domain: string,
   websiteVerification: WebsiteVerificationOutput,
-  seedFields: any = {}
+  seedFields: any = {},
+  liveWebIntel?: DiscoveredWebIntelligence | null
 ): Promise<{
   description: string | null;
   industry: StandardIndustryPreset;
@@ -1063,33 +1045,38 @@ export async function researchCompany(
   evidence: string;
   confidence: number;
 }> {
+  const inspectedPages = sourceInspector.getPagesForDomain(domain);
   const rawDesc = seedFields['Description'] || seedFields['description'] || null;
-  const officialDescription = websiteVerification.metaDescription || rawDesc || (websiteVerification.pageTitle ? `${companyName} — ${websiteVerification.pageTitle}` : null);
 
-  const textForTaxonomy = `${websiteVerification.pageTitle || ''} ${websiteVerification.metaDescription || ''} ${rawDesc || ''}`.trim();
-  const rawCat = seedFields['Industry'] || seedFields['raw_industry'] || null;
-  const { standard_industry, raw_industry, confidence: indConf } = mapToStandardIndustry(rawCat, textForTaxonomy);
+  // Extract industry & business model using inspected pages
+  const inspectedInd = sourceInspector.extractIndustry(companyName, inspectedPages);
+  let standard_industry = inspectedInd.standard_industry;
+  let raw_industry = inspectedInd.raw_industry;
+  let officialDescription = inspectedInd.description || websiteVerification.metaDescription || rawDesc || (websiteVerification.pageTitle ? `${companyName} — ${websiteVerification.pageTitle}` : null);
+  let businessModel = inspectedInd.businessModel;
+  let indConf = inspectedInd.confidence;
 
-  // Sub-industry & Business Model derivation
-  let subIndustry = 'B2B Software';
-  const lowerText = textForTaxonomy.toLowerCase();
-  if (lowerText.includes('farm') || lowerText.includes('agri') || lowerText.includes('agtech')) {
-    subIndustry = 'AgTech / Farm Management Software';
-  } else if (lowerText.includes('fintech') || lowerText.includes('accounting') || lowerText.includes('banking')) {
-    subIndustry = 'FinTech & Accounting';
-  } else if (lowerText.includes('ai') || lowerText.includes('machine learning')) {
-    subIndustry = 'Artificial Intelligence Platform';
-  } else if (lowerText.includes('health') || lowerText.includes('med')) {
-    subIndustry = 'Digital Health';
+  // If no deep pages matched, fall back to website metadata
+  if (!inspectedPages.length || (standard_industry === 'SaaS Companies' && inspectedInd.raw_industry === 'Technology')) {
+    const textForTaxonomy = `${websiteVerification.pageTitle || ''} ${websiteVerification.metaDescription || ''} ${rawDesc || ''}`.trim();
+    const rawCat = seedFields['Industry'] || seedFields['raw_industry'] || null;
+    const mapped = mapToStandardIndustry(rawCat, textForTaxonomy);
+    if (mapped.confidence > indConf) {
+      standard_industry = mapped.standard_industry;
+      raw_industry = mapped.raw_industry;
+      indConf = mapped.confidence;
+    }
   }
 
-  // Geography & Address Extraction
-  let city: string | null = seedFields['City'] || seedFields['city'] || null;
+  // Extract geography using inspected pages (e.g. legal imprint, news, Wikipedia)
+  const inspectedGeo = sourceInspector.extractGeography(domain, inspectedPages);
+  let city: string | null = seedFields['City'] || seedFields['city'] || inspectedGeo.city;
   let state: string | null = seedFields['State'] || seedFields['state'] || null;
-  let country: string | null = seedFields['Country'] || seedFields['country'] || seedFields['Location'] || seedFields['location'] || null;
-  let headquarters = seedFields['Address'] || seedFields['headquarters'] || null;
+  let country: string | null = seedFields['Country'] || seedFields['country'] || seedFields['Location'] || seedFields['location'] || (inspectedGeo.country !== 'Undisclosed' ? inspectedGeo.country : null);
+  let headquarters = seedFields['Address'] || seedFields['headquarters'] || (inspectedGeo.headquarters !== 'Undisclosed' ? inspectedGeo.headquarters : null);
+  let usPresence = inspectedGeo.usPresence;
 
-  if (websiteVerification.addressSnippet) {
+  if (websiteVerification.addressSnippet && !headquarters) {
     headquarters = websiteVerification.addressSnippet;
     const parts = websiteVerification.addressSnippet.split(',').map(s => s.trim());
     if (parts.length >= 2) {
@@ -1103,7 +1090,6 @@ export async function researchCompany(
     const detected = detectCountryFromEvidence(headquarters, '');
     if (detected) country = detected.name;
   }
-  // Check canonical domain TLD clues if country not explicitly specified
   if (!country && domain) {
     if (domain.endsWith('.de')) country = 'Germany';
     else if (domain.endsWith('.in')) country = 'India';
@@ -1113,7 +1099,7 @@ export async function researchCompany(
     else if (domain.endsWith('.au')) country = 'Australia';
   }
 
-  const fullHtml = `${websiteVerification.html || ''} ${websiteVerification.aboutHtml || ''}`;
+  const fullHtml = `${websiteVerification.html || ''} ${websiteVerification.aboutHtml || ''} ${inspectedPages.map(p => p.text).join(' ')}`;
   if ((!country || country === 'Undisclosed') && fullHtml) {
     if (fullHtml.includes('United States') || fullHtml.includes('USA') || /New York,\s*NY/i.test(fullHtml)) {
       country = 'United States';
@@ -1124,9 +1110,14 @@ export async function researchCompany(
   if (!country) country = 'Undisclosed';
   if (!headquarters) headquarters = [city, state, country !== 'Undisclosed' ? country : null].filter(Boolean).join(', ') || country;
 
-  const usPresence = country.toLowerCase().includes('united states') || country.toLowerCase().includes('usa') ||
-                     (state !== null && /^(IN|CA|NY|TX|IL|FL|WA|MA|CO|OH|MI|NC|GA|PA|VA)$/i.test(state)) ||
-                     (headquarters && (headquarters.toLowerCase().includes('in 46706') || headquarters.toLowerCase().includes('auburn, in') || headquarters.toLowerCase().includes('new york')));
+  if (!usPresence) {
+    usPresence = country.toLowerCase().includes('united states') || country.toLowerCase().includes('usa') ||
+                 (state !== null && /^(IN|CA|NY|TX|IL|FL|WA|MA|CO|OH|MI|NC|GA|PA|VA)$/i.test(state)) ||
+                 (headquarters && (headquarters.toLowerCase().includes('in 46706') || headquarters.toLowerCase().includes('auburn, in') || headquarters.toLowerCase().includes('new york')));
+  }
+
+  // Sub-industry
+  let subIndustry = raw_industry;
 
   // Founding year extraction
   let foundingYear: number | null = null;
@@ -1141,25 +1132,23 @@ export async function researchCompany(
   if (empMatch) employeeCount = empMatch[0];
 
   const technologies: string[] = [];
-  if (lowerText.includes('cloud')) technologies.push('Cloud Architecture');
-  if (lowerText.includes('saas')) technologies.push('B2B SaaS');
-  if (lowerText.includes('mobile')) technologies.push('Mobile Apps');
-  if (lowerText.includes('ai')) technologies.push('AI / ML');
+  const lowerAll = fullHtml.toLowerCase();
+  if (lowerAll.includes('cloud')) technologies.push('Cloud Architecture');
+  if (lowerAll.includes('saas')) technologies.push('B2B SaaS');
+  if (lowerAll.includes('mobile')) technologies.push('Mobile Apps');
+  if (lowerAll.includes('ai') || lowerAll.includes('machine learning')) technologies.push('AI / ML');
 
   const officialContactPages: string[] = [];
   if (websiteVerification.aboutPageUrl) officialContactPages.push(websiteVerification.aboutPageUrl);
 
-  const evidence = `Verified website assets: Title "${websiteVerification.pageTitle}", Meta Description "${websiteVerification.metaDescription?.slice(0, 100) || 'Active'}". HQ: ${headquarters}`;
+  const evidence = inspectedInd.evidence || `Verified website assets: Title "${websiteVerification.pageTitle}", Meta Description "${websiteVerification.metaDescription?.slice(0, 100) || 'Active'}". HQ: ${headquarters}`;
 
   return {
     description: officialDescription,
     industry: standard_industry,
     rawIndustry: raw_industry,
     subIndustry,
-    businessModel: (lowerText.includes('farm') || lowerText.includes('saas') || lowerText.includes('accounting software') || lowerText.includes('enterprise software')) ? 'B2B SaaS' :
-                   (lowerText.includes('pharmacy') || lowerText.includes('medicine') || lowerText.includes('healthcare') || lowerText.includes('telehealth') || lowerText.includes('e-pharmacy') || lowerText.includes('ecommerce') || lowerText.includes('e-commerce')) ? 'B2C E-Commerce / Digital Healthcare' :
-                   lowerText.includes('marketplace') ? 'Marketplace' :
-                   lowerText.includes('b2b') ? 'B2B Software' : 'UNKNOWN',
+    businessModel,
     companyType: (fullHtml.toLowerCase().includes('publicly traded') || fullHtml.toLowerCase().includes('nasdaq') || fullHtml.toLowerCase().includes('nyse')) ? 'Public' :
                  (fullHtml.toLowerCase().includes('privately held') || fullHtml.toLowerCase().includes('private company') || fullHtml.toLowerCase().includes('unlisted')) ? 'Privately Held' : 'UNKNOWN',
     headquarters,
@@ -2884,6 +2873,9 @@ export async function processCandidateThroughPipeline(
     if (ex.founderOrCeoName) rawFields['CEO Name'] = ex.founderOrCeoName;
     if (ex.founderOrCeoEmail) rawFields['Contact Email'] = ex.founderOrCeoEmail;
     if (ex.fundingOrRevenue) rawFields['Funding'] = ex.fundingOrRevenue;
+    if ((ex as any).companyLinkedinUrl) rawFields['LinkedIn'] = (ex as any).companyLinkedinUrl;
+    else if ((ex as any).companyLinkedin) rawFields['LinkedIn'] = (ex as any).companyLinkedin;
+    else if ((ex as any).linkedin) rawFields['LinkedIn'] = (ex as any).linkedin;
   }
 
   const candidateId = candidate.website || candidate.name || 'Candidate';
@@ -2926,11 +2918,11 @@ export async function processCandidateThroughPipeline(
     message: `Conducting multi-source factual web research for ${sourceName}...`,
   });
 
-  // A. Company Research
-  const companyData = await researchCompany(sourceName, canonicalDomain, websiteVerification, rawFields);
-
-  // B. Live Web Queries (DuckDuckGo open web & news)
+  // A. Live Web Queries & Deep Source Inspection (Fetches canonical domain subpages, Wikipedia, press releases)
   const liveIntel = await queryLiveWebIntelligence(sourceName, canonicalDomain || extractDomain(sourceWebsite || ''));
+
+  // B. Company Research (Consumes inspected pages for industry, geography, and description)
+  const companyData = await researchCompany(sourceName, canonicalDomain, websiteVerification, rawFields, liveIntel);
 
   // C. Funding Research
   const rawFundingInput = candidate.source_data?.funding || rawFields['Funding Amount (in USD)'] || rawFields['Funding'] || candidate.existingData?.fundingOrRevenue || null;
@@ -3067,10 +3059,11 @@ export async function processCandidateThroughPipeline(
     websiteVerification,
     leadershipData,
     {
-      companyLinkedIn: rawFields['LinkedIn'] || (candidate as any).linkedinUrl || null,
+      companyLinkedIn: rawFields['LinkedIn'] || (candidate as any).linkedinUrl || liveIntel.companyLinkedIn || null,
       companyTwitter: rawFields['Twitter (X)'] || rawFields['Twitter'] || null,
       ceoLinkedIn: liveIntel.ceoLinkedIn,
-    }
+    },
+    liveIntel
   );
 
   // STAGE 6: QUALIFY (Deterministic Target Profile Evaluation strictly AFTER complete research)
