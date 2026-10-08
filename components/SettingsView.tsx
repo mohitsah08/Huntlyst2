@@ -551,8 +551,8 @@ export default function SettingsView({
             {[
               {
                 id: 'anthropic',
-                name: 'Anthropic',
-                desc: 'Claude Sonnet intelligence for extraction & structured entity synthesis',
+                name: 'Huntlyst Research Engine',
+                desc: 'Deep venture intelligence for extraction & structured entity synthesis',
                 status: health?.services?.anthropicApi?.status || 'connected',
                 details: health?.services?.anthropicApi?.details || 'Configured via environment variables',
               },

@@ -1,0 +1,124 @@
+{
+  "id": "profile_prod_1790940014306",
+  "name": "Production SaaS, AI & Software Target",
+  "geography": {
+    "mode": "global",
+    "continents": [],
+    "regions": [],
+    "countries": [],
+    "excludedCountries": [],
+    "usPresence": "any"
+  },
+  "sectors": [
+    "Technology",
+    "Software",
+    "SaaS",
+    "AI",
+    "Artificial Intelligence",
+    "IT Services"
+  ],
+  "businessModels": [
+    "SaaS",
+    "AI & Machine Learning",
+    "Software & IT Services",
+    "Platform"
+  ],
+  "stage": [
+    "Seed",
+    "Series A",
+    "Venture - Series Unknown"
+  ],
+  "funding": {
+    "min": 100000,
+    "max": 10000000,
+    "mode": "funding",
+    "preset": "$100K–$10M"
+  },
+  "companySize": [],
+  "techProfile": "platform_required",
+  "contactRequirement": "ceo_only",
+  "emailVerification": "required",
+  "depth": "balanced",
+  "targetLeads": 25,
+  "targetProfile": {
+    "id": "profile_prod_1790940014306",
+    "name": "Production SaaS, AI & Software Target",
+    "targetCount": 25,
+    "financialMetric": "funding",
+    "fundingMin": 100000,
+    "fundingMax": 10000000,
+    "fundingCurrency": "USD",
+    "industries": [
+      "Technology",
+      "Software",
+      "SaaS",
+      "AI",
+      "Artificial Intelligence",
+      "IT Services"
+    ],
+    "subIndustries": [
+      "SaaS",
+      "AI & Machine Learning",
+      "Software & IT Services",
+      "Platform"
+    ],
+    "companyAge": "Any",
+    "foundedFrom": 2021,
+    "foundedTo": 2026,
+    "companyStages": [
+      "Seed",
+      "Series A",
+      "Venture - Series Unknown"
+    ],
+    "companyTypes": [
+      "Startup",
+      "Scale-up"
+    ],
+    "regions": [
+      "Global"
+    ],
+    "countries": [],
+    "excludedCountries": [],
+    "usPresenceMode": "any",
+    "contactPersonTypes": [
+      "CEO",
+      "Founder",
+      "Co-founder"
+    ],
+    "contactRequirement": "Required",
+    "emailRequirement": "Required",
+    "emailVerificationLevel": "mx_verified",
+    "companySocialRequirements": [
+      "LinkedIn"
+    ],
+    "personSocialRequirements": [
+      "LinkedIn"
+    ],
+    "socialProfileMode": "Optional",
+    "employeeCountPreset": "Any",
+    "freshnessWindow": "Last 30 days",
+    "activityTypes": [
+      "Recently Funded",
+      "Recently Launched"
+    ],
+    "selectedSources": [
+      "All Available Sources"
+    ],
+    "customTargetCount": 25,
+    "continents": []
+  },
+  "huntId": "hunt_prod_1790940014307",
+  "ceoRequired": true,
+  "companyWebsiteRequired": true,
+  "companyContactRequired": true,
+  "ceoEmailRequired": false,
+  "ceoEmailMode": "optional",
+  "companyLinkedInRequired": false,
+  "companyLinkedInMode": "optional",
+  "ceoLinkedInRequired": false,
+  "ceoLinkedInMode": "optional",
+  "companyTwitterRequired": false,
+  "companyTwitterMode": "optional",
+  "ceoTwitterRequired": false,
+  "ceoTwitterMode": "optional"
+}

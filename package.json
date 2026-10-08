@@ -7,7 +7,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:profile": "npx -y tsx tests/target-profile.test.ts",
+    "test:export": "npx -y tsx tests/export-system.test.ts",
+    "test:contact": "npx -y tsx tests/contact-enrichment.test.ts",
+    "test:canonical": "npx -y tsx tests/canonical-qualification.test.ts",
+    "test:internal": "npx -y tsx tests/internal-workflow.test.ts",
+    "test:transitions": "npx -y tsx tests/status-transitions.test.ts",
+    "test:unified": "npx -y tsx tests/unified-lead-store.test.ts",
+    "test:exports-4status": "npx -y tsx tests/export-four-statuses.test.ts",
+    "test:regression-internal": "npx -y tsx tests/regression-internal-qualification.test.ts",
+    "test:regression-external": "npx -y tsx tests/regression-external-research.test.ts",
+    "test": "npx -y tsx tests/target-profile.test.ts && npx -y tsx tests/canonical-qualification.test.ts && npx -y tsx tests/internal-workflow.test.ts && npx -y tsx tests/status-transitions.test.ts && npx -y tsx tests/unified-lead-store.test.ts && npx -y tsx tests/export-four-statuses.test.ts && npx -y tsx tests/export-system.test.ts && npx -y tsx tests/contact-enrichment.test.ts && npx -y tsx tests/regression-internal-qualification.test.ts && npx -y tsx tests/regression-external-research.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",
@@ -16,11 +27,14 @@
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "next": "14.2.13",
+    "pdf-parse": "^2.4.5",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^22.5.4",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^18.3.10",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.20",

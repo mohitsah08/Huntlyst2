@@ -2,6 +2,8 @@
  * Core types for the TVB Company Discovery Agent
  */
 
+import type { CompanyContactProfile } from './contactTypes';
+
 export interface CandidateUrl {
   url: string;
   snippet: string;
@@ -37,11 +39,24 @@ export interface ValidatedCompany {
   headquarters?: string | null;
 }
 
+export type VerificationStatusType = 'VERIFIED' | 'PARTIALLY VERIFIED' | 'UNVERIFIED' | 'REJECTED' | 'UNKNOWN';
+export type StandardDeliverabilityStatus = 'valid' | 'invalid' | 'risky' | 'catch-all' | 'unavailable' | 'unknown' | 'pending';
+
 export interface EmailVerificationResult {
   email: string | null;
   verified: boolean;
+  status: VerificationStatusType;
+  deliverabilityStatus?: StandardDeliverabilityStatus;
+  emailType?: 'professional' | 'personal' | 'generic' | 'unknown';
+  domain?: string | null;
+  companyDomain?: string | null;
+  domainMatchesCompany?: boolean;
+  hasMx?: boolean;
   mxHost?: string | null;
   method?: string;
+  evidence?: string | null;
+  timestamp?: string;
+  reason?: string;
 }
 
 export type CompanyRecord = {
@@ -50,10 +65,49 @@ export type CompanyRecord = {
   description: string | null;
   industry: string | null;
   fundingOrRevenue: string | null;
-  usPresence: boolean | null; // true means non-US (passes), false means US (rejected)
+  // Three distinct funding dimensions (Sections 7-9)
+  fundingAmount?: string | number | null;
+  fundingDate?: string | null;
+  fundingType?: string | null;
+  totalFundingUsd?: number | null;
+  latestRoundUsd?: number | null;
+  latestRoundDate?: string | null;
+  latestRoundType?: string | null;
+  fundingVerificationStatus?: 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'CONFLICT' | 'UNVERIFIED' | 'UNKNOWN';
+  fundingConflictReason?: string;
+  sourceFundingAmount?: string | null;
+  sourceFundingDate?: string | null;
+  sourceFundingType?: string | null;
+  verifiedFundingAmount?: string | null;
+  verifiedFundingDate?: string | null;
+  verifiedFundingType?: string | null;
+
+  usPresence?: boolean | null; // legacy backwards compatibility
   founderOrCeoName: string | null;
   founderOrCeoEmail: string | null;
+  ceoName?: string | null;
+  ceoEmail?: string | null;
+  ceoLinkedin?: string | null;
+  founderNames?: string[];
+  cofounderNames?: string[];
+  founderEmails?: string[];
+  cofounderEmails?: string[];
+  founderLinkedin?: string[];
+  cofounderLinkedin?: string[];
+  companyEmail?: string | null;
+  companyPhone?: string | null;
+  companyTwitterUrl?: string | null;
+  city?: string | null;
+  state?: string | null;
+  researchCompleteness?: number;
+  leadership?: any;
+  fundingDetails?: any;
+  fundingRounds?: any[];
+  conflictDetails?: any[];
+  fieldCoverage?: Record<string, { searched: boolean; found: boolean; verified: boolean; sourcesChecked: number | string[] }>;
   emailVerified: boolean;
+  contactVerificationStatus?: VerificationStatusType;
+  contactVerificationReason?: string;
   confidenceScore: number;
   huntScore?: number; // 0–100 derived qualification score
   scoreBreakdown?: {
@@ -66,11 +120,15 @@ export type CompanyRecord = {
   sourceType: string;
   country?: string | null;
   headquarters?: string | null;
+  linkedinUrl?: string | null;
+  companyLinkedinUrl?: string | null;
+  sourceUrls?: string[];
   auditDetails?: {
     fundingStatus: string;
     locationStatus: string;
     techStatus: string;
     emailStatus: string;
+    contactStatus?: string;
     rawEvidence?: string;
   };
   // Normalized & enriched fields for complete view interoperability
@@ -79,12 +137,32 @@ export type CompanyRecord = {
   employeeCount?: string | number;
   funding?: {
     totalRaised?: string;
+    totalFundingUsd?: number | null;
+    latestRoundUsd?: number | null;
+    latestRoundType?: string | null;
+    latestRoundDate?: string | null;
+    fundingRounds?: any[];
+    rounds?: any[];
     stage?: string;
     lastRoundDate?: string;
     investors?: string[];
     revenue?: string;
     source?: string;
   };
+  entityRelationship?: {
+    brand: string;
+    legalEntity?: string | null;
+    parentEntity?: string | null;
+    operatingEntity?: string | null;
+    relationshipEvidence?: string | null;
+  } | null;
+  entity_relationship?: {
+    brand: string;
+    legalEntity?: string | null;
+    parentEntity?: string | null;
+    operatingEntity?: string | null;
+    relationshipEvidence?: string | null;
+  } | null;
   validation?: {
     isTechPlatform?: boolean;
     hasMinFunding?: boolean;
@@ -127,8 +205,40 @@ export type CompanyRecord = {
   lastSeenAt?: string;
   lastVerifiedAt?: string;
   lastUpdatedAt?: string;
-  statusTag?: 'NEW' | 'UPDATED' | 'UNCHANGED';
+  statusTag?: 'NEW' | 'UPDATED' | 'UNCHANGED' | 'PREVIOUSLY_DISCOVERED';
+  // Contact & Decision-Maker Profile (Sections 1–22)
+  contactProfile?: CompanyContactProfile;
+  // Gold Reference & Verification Benchmark Interoperability (Sections 16, 24)
+  referenceStatus?: 'QUALIFIED' | 'UNQUALIFIED';
+  targetProfileStatus?: 'PASS' | 'FAIL' | 'REVIEW';
+  huntlystVerificationStatus?: 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'UNDER_REVIEW' | 'UNVERIFIED';
+  benchmarkChecks?: {
+    company?: boolean;
+    website?: boolean;
+    funding?: boolean;
+    industry?: boolean;
+    companyLinkedin?: boolean;
+    companyTwitter?: boolean;
+    ceo?: boolean;
+    ceoLinkedin?: boolean;
+    professionalEmail?: boolean;
+  };
+  mismatchReason?: string;
+  rootCause?: string;
+  fieldAudits?: Record<string, any>;
+  divergences?: string[];
+  rejectionStage?: string;
 };
+
+export type {
+  CompanyContactProfile,
+  DecisionMakerContact,
+  BestContactPath,
+  ContactCompleteness,
+  ContactVerificationStatus,
+  VerifiedField,
+} from './contactTypes';
+
 
 export interface RejectedCompanyRecord {
   name: string;
@@ -158,9 +268,15 @@ export interface RunAgentResult {
     nonUsPassed: number;
     fundingQualified: number;
     founderFound: number;
+    contactsChecked?: number;
     emailVerified: number;
+    emailsPartiallyVerified?: number;
+    emailsUnverified?: number;
     finalRanked: number;
     durationMs: number;
+    totalNew?: number;
+    totalPreviouslySeen?: number;
+    duplicatesRemoved?: number;
   };
 }
 
@@ -178,6 +294,7 @@ export interface PipelineStreamEvent {
   message: string;
   stage?: number;
   stageName?: string;
+  huntId?: string;
   stats?: RunAgentResult['stats'];
   company?: CompanyRecord;
   result?: RunAgentResult;
@@ -197,6 +314,7 @@ export interface RunHistoryItem {
   status: 'Completed' | 'Degraded' | 'Failed';
   sector: string;
   companies: CompanyRecord[];
+  rejectedCompanies?: RejectedCompanyRecord[];
 }
 
 export interface SettingsConfig {
@@ -247,7 +365,6 @@ export const REQUIRED_FIELDS = [
   'description',
   'industry',
   'fundingOrRevenue',
-  'usPresence',
   'founderOrCeoName',
   'founderOrCeoEmail',
 ] as const;
@@ -255,17 +372,19 @@ export const REQUIRED_FIELDS = [
 export type RequiredField = (typeof REQUIRED_FIELDS)[number];
 
 export interface HuntGeographyConfig {
-  mode: 'regions' | 'countries' | 'global' | 'custom';
+  mode: 'regions' | 'countries' | 'global' | 'continents' | 'union' | 'custom';
   regions: string[];
+  continents?: string[];
   countries: string[];
   excludedCountries: string[];
-  usPresence: 'strictly_none' | 'minimal_or_none' | 'limited' | 'any';
+  usPresence?: 'strictly_none' | 'minimal_or_none' | 'limited' | 'any';
 }
 
 export interface HuntFundingConfig {
   min: number;
   max: number;
-  mode: 'funding' | 'revenue' | 'funding_or_revenue';
+  mode: 'funding' | 'revenue' | 'funding_or_revenue' | 'funding_only' | 'revenue_only' | 'funding_and_revenue';
+  targetMetric?: 'total_funding' | 'latest_round';
   preset?: string;
 }
 
@@ -305,10 +424,11 @@ export const TVB_EVALUATION_CONFIG: HuntConfig = {
   name: 'TVB Evaluation Profile',
   geography: {
     mode: 'global',
-    regions: [],
+    regions: ['Global'],
+    continents: [],
     countries: [],
-    excludedCountries: ['United States'],
-    usPresence: 'minimal_or_none',
+    excludedCountries: [],
+    usPresence: 'any',
   },
   sectors: ['all'],
   businessModels: ['Platform', 'SaaS', 'Marketplace', 'B2B', 'API'],

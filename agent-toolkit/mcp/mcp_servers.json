@@ -1,0 +1,79 @@
+{
+  "supabase": {
+    "name": "supabase",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "mcp-remote@latest",
+      "https://mcp.supabase.com/mcp"
+    ],
+    "env": {},
+    "requires_auth": true,
+    "auth_instructions": "OAuth login via browser or SUPABASE_ACCESS_TOKEN. Run: claude mcp login supabase (or authenticate via mcp-remote browser prompt)."
+  },
+  "playwright": {
+    "name": "playwright",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@playwright/mcp@latest",
+      "--headless"
+    ],
+    "env": {},
+    "requires_auth": false,
+    "auth_instructions": "Zero authentication required. Headless browser automation runs locally."
+  },
+  "chrome-devtools": {
+    "name": "chrome-devtools",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "chrome-devtools-mcp@latest"
+    ],
+    "env": {},
+    "requires_auth": false,
+    "auth_instructions": "Zero authentication required. Attaches to local Chrome debugging port."
+  },
+  "github": {
+    "name": "github",
+    "transport": "stdio",
+    "command": "/usr/local/bin/github-mcp-runner",
+    "args": [],
+    "env": {
+      "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+    },
+    "requires_auth": true,
+    "auth_instructions": "Requires GitHub Personal Access Token (repo, read:org scopes). Set GITHUB_PERSONAL_ACCESS_TOKEN in environment or .env."
+  },
+  "vercel": {
+    "name": "vercel",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "mcp-remote@latest",
+      "https://mcp.vercel.com",
+      "--static-oauth-client-metadata",
+      "{\"scope\":\"openid offline_access\"}"
+    ],
+    "env": {},
+    "requires_auth": true,
+    "auth_instructions": "OAuth login via browser or Vercel API token. Run: claude mcp login vercel (or authenticate via mcp-remote browser prompt)."
+  },
+  "higgsfield": {
+    "name": "higgsfield",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "mcp-remote@latest",
+      "https://mcp.higgsfield.ai/mcp"
+    ],
+    "env": {},
+    "requires_auth": true,
+    "auth_instructions": "Requires Higgsfield account credentials / OAuth. Run: claude mcp login higgsfield."
+  }
+}

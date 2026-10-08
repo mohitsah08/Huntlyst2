@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { HuntConfig, SettingsConfig, TVB_EVALUATION_CONFIG } from '@/lib/types';
+import { HuntConfig, SettingsConfig, TVB_EVALUATION_CONFIG, CompanyRecord, RejectedCompanyRecord } from '@/lib/types';
 import HuntConfiguration from './HuntConfiguration';
 import HuntLoadingScreen from './HuntLoadingScreen';
+import StagedDiscoveryWorkflow from './StagedDiscoveryWorkflow';
 
 interface DiscoverViewProps {
   config: SettingsConfig;
@@ -15,16 +16,9 @@ interface DiscoverViewProps {
   qualifiedCount: number;
   onStartHunt: (huntConfig: HuntConfig) => void;
   onViewResults: () => void;
+  onFinalizeStagedResults?: (qualified: CompanyRecord[], rejected: RejectedCompanyRecord[]) => void;
+  onOpenLeadModal?: (company: CompanyRecord) => void;
 }
-
-const HUNT_STAGES = [
-  { id: 1, name: 'Discovering', desc: 'Scan targeted venture sources' },
-  { id: 2, name: 'Researching', desc: 'Fetch pages & parse intelligence' },
-  { id: 3, name: 'Validating', desc: 'Deterministic filter & rule checks' },
-  { id: 4, name: 'Finding founders', desc: 'Identify CEO / Co-founder identity' },
-  { id: 5, name: 'Verifying contacts', desc: 'Resolve DNS MX mail servers' },
-  { id: 6, name: 'Qualifying', desc: 'Score & finalize qualified shortlist' },
-];
 
 export default function DiscoverView({
   config,
@@ -36,17 +30,69 @@ export default function DiscoverView({
   qualifiedCount,
   onStartHunt,
   onViewResults,
+  onFinalizeStagedResults,
+  onOpenLeadModal,
 }: DiscoverViewProps) {
   const [activeConfig, setActiveConfig] = useState<HuntConfig>(TVB_EVALUATION_CONFIG);
+  const [discoveryMode, setDiscoveryMode] = useState<'staged' | 'autonomous'>('staged');
 
   const handleLaunch = (selectedConfig: HuntConfig) => {
     setActiveConfig(selectedConfig);
     onStartHunt(selectedConfig);
   };
 
+  const handleStagedFinalize = (qualified: CompanyRecord[], rejected: RejectedCompanyRecord[]) => {
+    if (onFinalizeStagedResults) {
+      onFinalizeStagedResults(qualified, rejected);
+    } else {
+      onViewResults();
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12 animate-in fade-in duration-200">
-      {isRunning ? (
+      {/* Workflow Mode Selector */}
+      {!isRunning && (
+        <div className="paper-card bg-white rounded-2xl p-2 sm:p-2.5 border-2 border-[#1E1B18] shadow-sketch-sm flex items-center justify-between gap-2 max-w-2xl mx-auto">
+          <button
+            type="button"
+            onClick={() => setDiscoveryMode('staged')}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              discoveryMode === 'staged'
+                ? 'bg-[#1E1B18] text-[#FAF6EE] shadow-sketch-sm'
+                : 'text-[#766E65] hover:text-[#1E1B18] hover:bg-[#FAF6EE]'
+            }`}
+          >
+            <span>🔄</span>
+            <span>Staged Approval Workflow</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#FF6B35] text-white">
+              Internal → External → Web
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setDiscoveryMode('autonomous')}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              discoveryMode === 'autonomous'
+                ? 'bg-[#1E1B18] text-[#FAF6EE] shadow-sketch-sm'
+                : 'text-[#766E65] hover:text-[#1E1B18] hover:bg-[#FAF6EE]'
+            }`}
+          >
+            <span>⚡</span>
+            <span>Autonomous One-Click Hunt</span>
+          </button>
+        </div>
+      )}
+
+      {/* Render Active View */}
+      {discoveryMode === 'staged' && !isRunning ? (
+        <StagedDiscoveryWorkflow
+          initialTargetProfile={activeConfig.targetProfile}
+          onFinalizeResults={handleStagedFinalize}
+          onOpenLeadModal={onOpenLeadModal}
+        />
+      ) : isRunning ? (
         <div className="space-y-6">
           <HuntLoadingScreen
             config={activeConfig}

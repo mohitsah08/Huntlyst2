@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Huntlyst Autonomous Discovery Architecture",
+    "subtitle": "Autonomous pipeline: search ingestion, LLM extraction, deterministic rules, live DNS MX verification",
+    "output": "public/architecture.html",
+    "animation": "trace",
+    "visual_preset": "editorial",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/mohitsah08/huntlyst.git",
+      "revision": "f2ac25ed139e5a92bc339a23894e8be28a42e5d2",
+      "link_mode": "local-only"
+    }
+  },
+  "components": [
+    {
+      "id": "investor",
+      "type": "external",
+      "label": "Venture Investor",
+      "sublabel": "Mandate & Criteria",
+      "pos": [30, 70],
+      "size": [120, 64]
+    },
+    {
+      "id": "research_desk",
+      "type": "frontend",
+      "label": "Research Desk UI",
+      "sublabel": "NL Parser & Presets",
+      "pos": [255, 70],
+      "size": [150, 64],
+      "sources": [
+        { "path": "components/HuntConfiguration.tsx", "line": 1, "end_line": 40 }
+      ]
+    },
+    {
+      "id": "orchestrator",
+      "type": "backend",
+      "label": "Pipeline Orchestrator",
+      "sublabel": "/api/run-agent (SSE)",
+      "tag": "Stream Controller",
+      "pos": [510, 70],
+      "size": [150, 64],
+      "sources": [
+        { "path": "app/api/run-agent/route.ts", "line": 1, "end_line": 50 }
+      ]
+    },
+    {
+      "id": "radar_telemetry",
+      "type": "frontend",
+      "label": "Radar & Telemetry",
+      "sublabel": "Live Streamed Progress",
+      "pos": [765, 70],
+      "size": [150, 64],
+      "sources": [
+        { "path": "components/HuntLoadingScreen.tsx", "line": 1, "end_line": 35 }
+      ]
+    },
+    {
+      "id": "discovery",
+      "type": "backend",
+      "label": "Discovery Engine",
+      "sublabel": "Geosearch & Deduplication",
+      "pos": [510, 230],
+      "size": [150, 64],
+      "sources": [
+        { "path": "lib/discovery.ts", "line": 1, "end_line": 40 }
+      ]
+    },
+    {
+      "id": "serpapi",
+      "type": "external",
+      "label": "SerpAPI / Google",
+      "sublabel": "Geotargeted Web Search",
+      "pos": [765, 230],
+      "size": [150, 64]
+    },
+    {
+      "id": "extraction",
+      "type": "backend",
+      "label": "Extraction Engine",
+      "sublabel": "HTML & JSON-LD Parser",
+      "pos": [510, 390],
+      "size": [150, 64],
+      "sources": [
+        { "path": "lib/extraction.ts", "line": 1, "end_line": 40 }
+      ]
+    },
+    {
+      "id": "claude_ai",
+      "type": "cloud",
+      "label": "Anthropic Claude",
+      "sublabel": "Structured Entity Model",
+      "tag": "Claude 3.5 Haiku",
+      "pos": [765, 390],
+      "size": [150, 64]
+    },
+    {
+      "id": "validation",
+      "type": "security",
+      "label": "Deterministic Rules",
+      "sublabel": "Funding, Geo & US Scope",
+      "tag": "Zero Hallucination",
+      "pos": [510, 550],
+      "size": [150, 64],
+      "sources": [
+        { "path": "lib/validation.ts", "line": 1, "end_line": 35 }
+      ]
+    },
+    {
+      "id": "mx_verifier",
+      "type": "backend",
+      "label": "Email & MX Verifier",
+      "sublabel": "Permutations & Mail Check",
+      "pos": [510, 710],
+      "size": [150, 64],
+      "sources": [
+        { "path": "lib/email.ts", "line": 1, "end_line": 35 }
+      ]
+    },
+    {
+      "id": "dns_network",
+      "type": "external",
+      "label": "Mail Exchange DNS",
+      "sublabel": "Live resolveMx Queries",
+      "pos": [765, 710],
+      "size": [150, 64]
+    },
+    {
+      "id": "scoring_engine",
+      "type": "backend",
+      "label": "5-Pillar Score Engine",
+      "sublabel": "Rank & Export Logic",
+      "pos": [255, 710],
+      "size": [150, 64],
+      "sources": [
+        { "path": "lib/rank.ts", "line": 1, "end_line": 35 },
+        { "path": "lib/export.ts", "line": 1, "end_line": 35 }
+      ]
+    },
+    {
+      "id": "dossier_view",
+      "type": "frontend",
+      "label": "Dossier & Review UI",
+      "sublabel": "PDF, DOCX & CSV Export",
+      "pos": [255, 550],
+      "size": [150, 64],
+      "sources": [
+        { "path": "app/page.tsx", "line": 1, "end_line": 45 }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Client Interface & Stream Intake",
+      "wraps": ["research_desk", "orchestrator", "radar_telemetry"]
+    },
+    {
+      "kind": "region",
+      "label": "Autonomous Intelligence & Qualification Pipeline",
+      "wraps": ["discovery", "extraction", "validation", "mx_verifier"]
+    },
+    {
+      "kind": "region",
+      "label": "Intelligence Scoring & Dossier Output",
+      "wraps": ["scoring_engine", "dossier_view"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-intake",
+      "from": "investor",
+      "to": "research_desk",
+      "label": "mandate & criteria",
+      "variant": "emphasis"
+    },
+    {
+      "id": "desk-to-api",
+      "from": "research_desk",
+      "to": "orchestrator",
+      "label": "POST /api/run-agent",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-sse-telemetry",
+      "from": "orchestrator",
+      "to": "radar_telemetry",
+      "label": "SSE stream",
+      "variant": "dashed"
+    },
+    {
+      "id": "api-to-discovery",
+      "from": "orchestrator",
+      "to": "discovery",
+      "label": "dispatch hunt"
+    },
+    {
+      "id": "discovery-serpapi",
+      "from": "discovery",
+      "to": "serpapi",
+      "label": "search queries"
+    },
+    {
+      "id": "discovery-extraction",
+      "from": "discovery",
+      "to": "extraction",
+      "label": "candidate URLs"
+    },
+    {
+      "id": "extraction-claude",
+      "from": "extraction",
+      "to": "claude_ai",
+      "label": "extract entities"
+    },
+    {
+      "id": "extraction-validation",
+      "from": "extraction",
+      "to": "validation",
+      "label": "parsed profiles"
+    },
+    {
+      "id": "validation-mx",
+      "from": "validation",
+      "to": "mx_verifier",
+      "label": "qualified leads",
+      "variant": "security"
+    },
+    {
+      "id": "mx-to-dns",
+      "from": "mx_verifier",
+      "to": "dns_network",
+      "label": "resolveMx"
+    },
+    {
+      "id": "mx-to-scoring",
+      "from": "mx_verifier",
+      "to": "scoring_engine",
+      "label": "verified contacts"
+    },
+    {
+      "id": "scoring-to-dossier",
+      "from": "scoring_engine",
+      "to": "dossier_view",
+      "label": "ranked dossiers",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Deterministic Policy",
+      "items": [
+        "Zero hallucination: Missing data is strictly better than invented data",
+        "Programmatic boundaries enforce funding brackets ($1M-$5M) and US tolerance"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Live Verification",
+      "items": [
+        "Domain mail exchange (MX) verified over active DNS resolveMx",
+        "Deduplication occurs at root domain level to eliminate redundant candidates"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Intelligence Dossiers",
+      "items": [
+        "5-Pillar Score ranks Funding, Tech, Geography, Founder, and Email deliverability",
+        "Executive PDF report with vector seal, Word DOCX document, and RFC-4180 CSV"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "android-cli-plugin",
+  "version": "1.0.0",
+  "description": "Core tools and knowledge required to develop for Android",
+  "skills_count": 1,
+  "skills": [
+    "android-cli-plugin"
+  ]
+}

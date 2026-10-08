@@ -1,0 +1,9 @@
+{
+  "name": "google-antigravity-sdk",
+  "version": "0.0.4",
+  "description": "Using the Google Antigravity Python SDK to build AI agents",
+  "skills_count": 1,
+  "skills": [
+    "google-antigravity-sdk"
+  ]
+}

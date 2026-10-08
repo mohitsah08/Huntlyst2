@@ -617,15 +617,15 @@ export const VERIFIED_NON_US_TECH_COMPANIES = VERIFIED_GLOBAL_TECH_COMPANIES;
 export function generateSearchQueries(config: HuntConfig): { queries: string[]; geoTarget?: string } {
   const queries: string[] = [];
   const profile = config.targetProfile;
-  const countries = profile?.countries?.length ? profile.countries : config.geography.countries || [];
-  const regions = profile?.regions?.length ? profile.regions : config.geography.regions || [];
-  const exclusions = profile?.excludedCountries?.length ? profile.excludedCountries : config.geography.excludedCountries || [];
-  const sectors = (profile?.industries?.length ? profile.industries : config.sectors).filter(s => s !== 'all' && s !== 'All sectors' && s !== 'Any');
+  const countries = profile?.countries?.length ? profile.countries : config.geography?.countries || [];
+  const regions = profile?.regions?.length ? profile.regions : config.geography?.regions || [];
+  const exclusions = profile?.excludedCountries?.length ? profile.excludedCountries : config.geography?.excludedCountries || [];
+  const sectors = (profile?.industries?.length ? profile.industries : config.sectors || []).filter(s => s !== 'all' && s !== 'All sectors' && s !== 'Any');
   const subIndustries = profile?.subIndustries || config.businessModels || [];
 
   // Build exclusion clause
   let excludeClause = '';
-  const usPresence = profile?.usPresenceMode || config.geography.usPresence;
+  const usPresence = profile?.usPresenceMode || config.geography?.usPresence;
   if (exclusions.includes('United States') || usPresence === 'strictly_none' || usPresence === 'minimal_or_none' || usPresence === 'exclude_us') {
     excludeClause += ' -US -USA -America';
   }
@@ -641,8 +641,8 @@ export function generateSearchQueries(config: HuntConfig): { queries: string[]; 
   if (currency === 'INR') {
     fundingClause = '("crore" OR "lakh" OR "₹" OR "seed" OR "series A") funding';
   } else {
-    const minM = ((profile?.fundingMin || config.funding.min) / 1_000_000).toFixed(0);
-    const maxM = ((profile?.fundingMax || config.funding.max) / 1_000_000).toFixed(0);
+    const minM = ((profile?.fundingMin || config.funding?.min || 1_000_000) / 1_000_000).toFixed(0);
+    const maxM = ((profile?.fundingMax || config.funding?.max || 5_000_000) / 1_000_000).toFixed(0);
     fundingClause = `"$${minM}M" OR "$${maxM}M" OR "million" seed funding`;
   }
 
@@ -654,7 +654,7 @@ export function generateSearchQueries(config: HuntConfig): { queries: string[]; 
   const sectorClause = sectorTerms.slice(0, 4).map(s => `"${s}"`).join(' OR ');
 
   // Format stage
-  const stages = profile?.companyStages?.length ? profile.companyStages : config.stage;
+  const stages = profile?.companyStages?.length ? profile.companyStages : config.stage || [];
   const stageClause = stages.length > 0 && !stages.includes('Any')
     ? stages.slice(0, 2).map(s => `"${s}"`).join(' OR ')
     : 'seed OR "Series A"';
@@ -990,7 +990,8 @@ export class SerpApiSource implements DiscoverySource {
 
 /**
  * Main discovery orchestrator
- * Aggregates all sources according to active HuntConfig parameters.
+ * Aggregates all sources according to active HuntConfig parameters using
+ * QueryPlanner multi-strategy generation and searchManager multi-source fanout.
  */
 export async function discoverCompanies(config: HuntConfig = TVB_EVALUATION_CONFIG): Promise<CandidateUrl[]> {
   const { queries, geoTarget } = generateSearchQueries(config);
@@ -1025,6 +1026,28 @@ export async function discoverCompanies(config: HuntConfig = TVB_EVALUATION_CONF
       }
     }
   });
+
+  // Also query searchManager for open web intelligence if configured
+  try {
+    const { searchManager } = await import('@/lib/search/searchManager');
+    const { QueryPlanner } = await import('@/lib/queryPlanner');
+    const plans = QueryPlanner.generateStrategyPlans(config, 0, 1);
+    if (plans.length > 0) {
+      const extraRes = await searchManager.multiSourceSearch(plans[0].query, {
+        pageSize: 10,
+        strategyName: plans[0].strategyName,
+      });
+      for (const item of extraRes.candidates) {
+        merged.push({
+          url: item.url,
+          snippet: item.snippet,
+          source: item.source,
+        });
+      }
+    }
+  } catch (err) {
+    // Continue gracefully
+  }
 
   const deduplicated = deduplicateByDomain(merged);
   console.log(`[Discovery] Config: ${config.name || 'Custom'} | Candidates: ${merged.length} raw, ${deduplicated.length} unique.`);

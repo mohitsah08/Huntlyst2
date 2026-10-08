@@ -1,0 +1,11 @@
+{
+  "runId": "hunt-auto-1790939370449",
+  "scheduler": "Hourly Autonomous Hunt Cron (0 * * * *)",
+  "timestamp": "2026-10-02T11:09:15.442Z",
+  "savedTargetProfile": "DEFAULT_TVB_TARGET_PROFILE (Global $100K-$10M)",
+  "discoverySource": "Multi-Source Autonomous Aggregator",
+  "candidatesDiscovered": 12,
+  "deduplicatedCount": 10,
+  "verifiedCount": 10,
+  "outputArtifact": "output/acceptance_automation_run_results.json"
+}

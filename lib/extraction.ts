@@ -152,8 +152,12 @@ export function extractStructuredDataFallback(
     const fundingText = fundingMatch ? fundingMatch[0] : null;
 
     // Search text + snippet for founder
-    const founderMatch = jsonLdFounder ||
+    let rawFounder = jsonLdFounder ||
       combinedContent.match(/(?:founded by|co-founded by|founder|ceo)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})/i)?.[1] || null;
+    let founderMatch = rawFounder ? rawFounder.replace(/\s+(?:and|or|with|&)\s*$/i, '').trim() : null;
+    if (founderMatch && (founderMatch.toUpperCase().includes('UPGRADE TO UNLOCK') || founderMatch.length < 2)) {
+      founderMatch = null;
+    }
 
     // Search text for location
     const locationMatch = jsonLdCountry ||
@@ -180,6 +184,10 @@ export function extractStructuredDataFallback(
   const snippet = candidate.snippet;
   const fundingInSnippet = snippet.match(/(?:raised|closed|seed|funding|series a)\s+[€$£]?\s*[\d,.]+\s*(?:million|m)/i);
   const founderInSnippet = snippet.match(/(?:founded by|co-founded by|founder|ceo:?)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})/i);
+  let founderSnippetName = founderInSnippet ? founderInSnippet[1].replace(/\s+(?:and|or|with|&)\s*$/i, '').trim() : null;
+  if (founderSnippetName && (founderSnippetName.toUpperCase().includes('UPGRADE TO UNLOCK') || founderSnippetName.length < 2)) {
+    founderSnippetName = null;
+  }
   const locationInSnippet = snippet.match(/(?:based in|headquartered in)\s+([A-Za-z\s,]+)/i);
 
   const domainName = domain.split('.')[0];
@@ -191,7 +199,7 @@ export function extractStructuredDataFallback(
     industry: 'Tech Platform',
     fundingOrRevenueText: fundingInSnippet ? fundingInSnippet[0] : null,
     usPresenceEvidence: locationInSnippet ? locationInSnippet[0] : null,
-    founderOrCeoName: founderInSnippet ? founderInSnippet[1] : null,
+    founderOrCeoName: founderSnippetName,
   };
 }
 

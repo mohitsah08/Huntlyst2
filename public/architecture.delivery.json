@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "614ee68e-1dad-4af3-ac05-3b31747855e8",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/Users/onlymec/tvb-company-discovery-agent/docs/architecture/huntlyst.architecture.json",
+  "output": "/Users/onlymec/tvb-company-discovery-agent/public/architecture.html",
+  "specification": {
+    "sha256": "0aafc16541160be7ecb225e8f27c083c9c0e58b3b6ee63ff56c335a87f6e57aa",
+    "bytes": 7233
+  },
+  "artifact": {
+    "sha256": "e8205cccaf1cbb2b504d8b8f29c79cd02944ddfa0fbea729c990b876313915ee",
+    "bytes": 775889
+  }
+}

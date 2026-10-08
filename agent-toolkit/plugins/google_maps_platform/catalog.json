@@ -1,0 +1,9 @@
+{
+  "name": "google_maps_platform",
+  "version": "1.0.0",
+  "description": "Integration skill and tools for Google Maps Platform APIs",
+  "skills_count": 1,
+  "skills": [
+    "google_maps_platform"
+  ]
+}

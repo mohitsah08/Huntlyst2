@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   CompanyRecord,
   RunAgentResult,
@@ -113,11 +113,28 @@ export default function HomePage() {
   const [logs, setLogs] = useState<{ time: string; text: string; stage?: string }[]>([]);
   const [results, setResults] = useState<RunAgentResult | null>(null);
   const [lastRunTime, setLastRunTime] = useState<string | null>(null);
+  const isHuntingRef = useRef(false);
+  const activeHuntIdRef = useRef<string | null>(null);
+  const [pipelineStats, setPipelineStats] = useState<RunAgentResult['stats']>({
+    discovered: 0,
+    extracted: 0,
+    nonUsPassed: 0,
+    fundingQualified: 0,
+    founderFound: 0,
+    contactsChecked: 0,
+    emailVerified: 0,
+    emailsPartiallyVerified: 0,
+    emailsUnverified: 0,
+    finalRanked: 0,
+    durationMs: 0,
+  });
 
   // Persistence States
   const [savedLeads, setSavedLeads] = useState<CompanyRecord[]>([]);
   const [runHistory, setRunHistory] = useState<RunHistoryItem[]>([]);
   const [settings, setSettings] = useState<SettingsConfig>(loadSettings());
+  const [currentStrategy, setCurrentStrategy] = useState<string>('');
+  const [duplicatesFiltered, setDuplicatesFiltered] = useState<number>(0);
 
   // Filtering & Sorting on Results
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -132,6 +149,7 @@ export default function HomePage() {
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
 
   // Splash Screen State (Session-guarded, defaults to true to prevent initial dashboard flash)
   const [showSplash, setShowSplash] = useState<boolean>(true);
@@ -260,7 +278,21 @@ export default function HomePage() {
 
   // Start Real Discovery Pipeline (Section 8)
   const handleStartHunt = async (huntConfig?: HuntConfig) => {
+    if (isHuntingRef.current) {
+      console.warn('[HUNT REJECTED] Hunt already in progress. Ignoring duplicate trigger.');
+      return;
+    }
+    isHuntingRef.current = true;
+
     const activeCfg = huntConfig || TVB_EVALUATION_CONFIG;
+    const huntId = activeCfg.id && activeCfg.id.startsWith('hunt_') && !activeCfg.id.includes('default')
+      ? activeCfg.id
+      : `hunt_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+    activeHuntIdRef.current = huntId;
+
+    console.log(`[HUNT START]\nhuntId: ${huntId}\ntimestamp: ${new Date().toISOString()}`);
+    console.log(`[API START]\nendpoint: /api/run-agent?stream=true\nhuntId: ${huntId}`);
+
     setActiveHuntConfig(activeCfg);
     setErrorMessage(null);
     setStatus('running');
@@ -272,7 +304,22 @@ export default function HomePage() {
 
     setStatusMessage(`Initializing hunt: ${targetDisplay} (${activeCfg.targetLeads} leads)...`);
     setLogs([]);
+    setCurrentStrategy('');
+    setDuplicatesFiltered(0);
     setCurrentProgressIndex(1);
+    setPipelineStats({
+      discovered: 0,
+      extracted: 0,
+      nonUsPassed: 0,
+      fundingQualified: 0,
+      founderFound: 0,
+      contactsChecked: 0,
+      emailVerified: 0,
+      emailsPartiallyVerified: 0,
+      emailsUnverified: 0,
+      finalRanked: 0,
+      durationMs: 0,
+    });
 
     const timestamp = () => new Date().toLocaleTimeString('en-US', { hour12: false });
 
@@ -283,7 +330,7 @@ export default function HomePage() {
           'Content-Type': 'application/json',
           Accept: 'text/event-stream',
         },
-        body: JSON.stringify(activeCfg),
+        body: JSON.stringify({ ...activeCfg, huntId }),
       });
 
       if (!response.ok) {
@@ -312,19 +359,46 @@ export default function HomePage() {
           try {
             const event: PipelineStreamEvent = JSON.parse(trimmed.slice(6));
 
-            if (event.type === 'log') {
-              setLogs((prev) => [
-                ...prev,
-                { time: timestamp(), text: event.message, stage: event.stageName },
-              ]);
+            if (event.stats) {
+              setPipelineStats(event.stats);
+            }
+
+            if (event.type === 'log' || event.type === 'candidate_found' || event.type === 'company_qualified') {
+              if (event.type === 'log') {
+                setLogs((prev) => [
+                  ...prev,
+                  { time: timestamp(), text: event.message, stage: event.stageName },
+                ]);
+              }
               setStatusMessage(event.message);
 
-              if (event.stageName?.includes('Discovery') || event.stage === 1) setCurrentProgressIndex(1);
-              else if (event.stageName?.includes('Extraction') || event.stage === 2) setCurrentProgressIndex(2);
-              else if (event.stageName?.includes('Validation') || event.stage === 3) setCurrentProgressIndex(3);
-              else if (event.stageName?.includes('Founder') || event.stage === 4) setCurrentProgressIndex(4);
-              else if (event.stageName?.includes('Email') || event.stage === 5) setCurrentProgressIndex(5);
+              if (event.message?.includes('Strategy ') || event.message?.includes('Executing Strategy')) {
+                const stratMatch = event.message.match(/(Strategy \d+:[^.(]+)/i) || event.message.match(/Executing (Strategy [^.(]+)/i);
+                if (stratMatch) setCurrentStrategy(stratMatch[1].trim());
+              }
+              if (event.message?.includes('duplicates filtered') || event.message?.includes('duplicates prevented')) {
+                const dupeMatch = event.message.match(/(\d+)\s+duplicates/i);
+                if (dupeMatch) setDuplicatesFiltered((prev) => Math.max(prev, parseInt(dupeMatch[1], 10)));
+              }
+
+              if (event.stage) {
+                // Strictly monotonic progression: never rewind backwards
+                setCurrentProgressIndex((prev) => Math.max(prev, event.stage!));
+              } else if (event.stageName?.includes('Discovery') || event.stageName?.includes('Discovering')) {
+                setCurrentProgressIndex((prev) => Math.max(prev, 1));
+              } else if (event.stageName?.includes('Research') || event.stageName?.includes('Extraction')) {
+                setCurrentProgressIndex((prev) => Math.max(prev, 2));
+              } else if (event.stageName?.includes('Validation') || event.stageName?.includes('Validating')) {
+                setCurrentProgressIndex((prev) => Math.max(prev, 3));
+              } else if (event.stageName?.includes('Founder')) {
+                setCurrentProgressIndex((prev) => Math.max(prev, 4));
+              } else if (event.stageName?.includes('Contact') || event.stageName?.includes('Email')) {
+                setCurrentProgressIndex((prev) => Math.max(prev, 5));
+              } else if (event.stageName?.includes('Qualifying')) {
+                setCurrentProgressIndex((prev) => Math.max(prev, 6));
+              }
             } else if (event.type === 'complete' && event.result) {
+              console.log(`[API COMPLETE]\nendpoint: /api/run-agent?stream=true\nhuntId: ${huntId}`);
               setResults(event.result);
               setCurrentProgressIndex(6);
               setStatus('success');
@@ -341,7 +415,7 @@ export default function HomePage() {
 
               // Add to Run History
               const newRun: RunHistoryItem = {
-                id: `hunt-${Date.now().toString(36)}`,
+                id: huntId,
                 timestamp: nowIso,
                 requestedCount: activeCfg.targetLeads || settings.agent.targetLeadsCount || 15,
                 discoveredCount: event.result.stats?.discovered || event.result.totalDiscovered || 60,
@@ -356,6 +430,7 @@ export default function HomePage() {
                 status: 'Completed',
                 sector: activeCfg.sectors.join(', ') || selectedSector,
                 companies: event.result.companies,
+                rejectedCompanies: event.result.rejectedCompanies || [],
               };
 
               setRunHistory((prev) => {
@@ -370,18 +445,86 @@ export default function HomePage() {
                 `Hunt discovered ${event.result.companies.length} qualified technology companies! ✨`
               );
             } else if (event.type === 'error') {
-              throw new Error(event.message);
+              console.log(`[API ERROR]\nendpoint: /api/run-agent?stream=true\nhuntId: ${huntId}\nerror: ${event.message || event.error}`);
+              throw new Error(event.message || event.error);
             }
-          } catch {}
+          } catch (parseErr) {
+            // Ignore JSON parse errors on partial frames
+          }
         }
       }
     } catch (err: any) {
+      console.log(`[API ERROR]\nendpoint: /api/run-agent?stream=true\nhuntId: ${activeHuntIdRef.current || 'unknown'}\nerror: ${err.message || 'Pipeline execution failed.'}`);
       setStatus('error');
       setErrorMessage(err.message || 'Pipeline execution failed.');
       setStatusMessage('Hunt paused due to an error.');
       showToast(`Error: ${err.message || 'Pipeline execution failed.'}`);
+    } finally {
+      isHuntingRef.current = false;
     }
   };
+
+  // Finalize Staged Discovery Results (Section: Multi-Stage Workflow)
+  const handleFinalizeStagedResults = (
+    qualifiedCompanies: CompanyRecord[],
+    rejectedCompanies: RejectedCompanyRecord[]
+  ) => {
+    const resultObj: RunAgentResult = {
+      companies: qualifiedCompanies,
+      rejectedCompanies: rejectedCompanies,
+      totalDiscovered: qualifiedCompanies.length + rejectedCompanies.length,
+      totalQualified: qualifiedCompanies.length,
+      stats: {
+        discovered: qualifiedCompanies.length + rejectedCompanies.length,
+        extracted: qualifiedCompanies.length + rejectedCompanies.length,
+        nonUsPassed: qualifiedCompanies.length,
+        fundingQualified: qualifiedCompanies.length,
+        founderFound: qualifiedCompanies.filter((c) => !!c.founderOrCeoName).length,
+        emailVerified: qualifiedCompanies.filter((c) => c.emailVerified).length,
+        finalRanked: qualifiedCompanies.length,
+        durationMs: 0,
+      },
+    };
+
+    setResults(resultObj);
+    setActiveNav('results');
+    showToast(`Staged discovery complete! ${qualifiedCompanies.length} leads approved.`);
+
+    const nowIso = new Date().toISOString();
+    setLastRunTime(nowIso);
+    try {
+      localStorage.setItem('huntlyst_last_run_timestamp', nowIso);
+      localStorage.setItem('huntlyst_current_run', JSON.stringify(resultObj));
+    } catch {}
+
+    // Add to Run History
+    const newRun: RunHistoryItem = {
+      id: `hunt-staged-${Date.now().toString(36)}`,
+      timestamp: nowIso,
+      requestedCount: qualifiedCompanies.length,
+      discoveredCount: qualifiedCompanies.length + rejectedCompanies.length,
+      extractedCount: qualifiedCompanies.length + rejectedCompanies.length,
+      qualifiedCount: qualifiedCompanies.length,
+      rejectedCount: rejectedCompanies.length,
+      verifiedEmailsCount: qualifiedCompanies.filter(
+        (c) => c.emailVerified || c.founderOrCeoEmail
+      ).length,
+      durationSeconds: 0,
+      status: 'Completed',
+      sector: activeHuntConfig.sectors.join(', ') || selectedSector,
+      companies: qualifiedCompanies,
+      rejectedCompanies: rejectedCompanies,
+    };
+
+    setRunHistory((prev) => {
+      const next = [newRun, ...prev];
+      try {
+        localStorage.setItem('huntlyst_run_history', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
 
   // Delete run from history
   const handleDeleteRun = (id: string) => {
@@ -488,11 +631,11 @@ export default function HomePage() {
   }, [results, searchQuery, selectedSector, selectedCountry, selectedScoreFilter, sortField, sortAsc]);
 
   // Telemetry counts
-  const totalDiscovered = results?.totalDiscovered || (results?.companies ? results.companies.length * 3 : 0);
-  const totalQualified = results?.companies ? results.companies.length : 0;
+  const totalDiscovered = results?.totalDiscovered || pipelineStats?.discovered || 0;
+  const totalQualified = results?.companies ? results.companies.length : (pipelineStats?.finalRanked || 0);
   const verifiedEmails = results?.companies
     ? results.companies.filter((c) => c.emailVerified || c.founderOrCeoEmail).length
-    : 0;
+    : (pipelineStats?.emailVerified || 0);
   const rejectedCandidates: RejectedCompanyRecord[] = results?.rejectedCompanies || [];
   const rejectedCount = rejectedCandidates.length > 0 ? rejectedCandidates.length : Math.max(0, totalDiscovered - totalQualified);
 
@@ -555,14 +698,14 @@ export default function HomePage() {
               <span>Scale</span>
             </div>
 
-            {results && results.companies.length > 0 && (
+            {((results && results.companies.length > 0) || rejectedCandidates.length > 0) && (
               <button
                 type="button"
                 onClick={() => setIsExportModalOpen(true)}
                 className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border-[1.8px] border-[#2C2724] bg-white hover:bg-[#FAF6EE] text-xs font-bold text-[#1E1B18] shadow-sketch-sm"
               >
                 <span>📦</span>
-                <span>Export ({results.companies.length})</span>
+                <span>Export ({totalDiscovered || (results?.companies.length || 0) + rejectedCandidates.length})</span>
               </button>
             )}
 
@@ -916,7 +1059,7 @@ export default function HomePage() {
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="text-[#2E7D32] font-bold">✓</span>
-                        <span>Minimal / no US presence</span>
+                        <span>Target Geography (Global / Configurable)</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="text-[#2E7D32] font-bold">✓</span>
@@ -1008,6 +1151,8 @@ export default function HomePage() {
               qualifiedCount={totalQualified}
               onStartHunt={handleStartHunt}
               onViewResults={() => setActiveNav('results')}
+              onFinalizeStagedResults={handleFinalizeStagedResults}
+              onOpenLeadModal={(comp) => setSelectedCompany(comp)}
             />
           )}
 
@@ -1032,13 +1177,13 @@ export default function HomePage() {
                   </div>
 
                   <div className="flex items-center gap-2 flex-wrap">
-                    {results && results.companies.length > 0 && (
+                    {((results && results.companies.length > 0) || rejectedCandidates.length > 0) && (
                       <button
                         type="button"
                         onClick={() => setIsExportModalOpen(true)}
                         className="sketch-btn px-4 py-2 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] rounded-xl border-2 border-[#1E1B18] shadow-sketch-sm flex items-center gap-1.5"
                       >
-                        <span>📦</span> Export Research
+                        <span>📦</span> Export Research ({totalDiscovered || (results?.companies.length || 0) + rejectedCandidates.length})
                       </button>
                     )}
 
@@ -1086,7 +1231,7 @@ export default function HomePage() {
                     <span className="text-[#1E1B18] font-bold">
                       {activeHuntConfig?.targetProfile
                         ? formatTargetSummary(activeHuntConfig.targetProfile)
-                        : `${activeHuntConfig?.targetLeads || 15} companies | ${activeHuntConfig?.sectors.join(', ') || 'Technology'} | ${activeHuntConfig?.funding.preset || '$1M–$5M'} | ${activeHuntConfig?.geography.countries.join(', ') || 'Global'} | Minimal/No US | CEO + Co-founder | Email Required`}
+                        : `${activeHuntConfig?.targetLeads || 15} companies | ${activeHuntConfig?.sectors.join(', ') || 'Technology'} | ${activeHuntConfig?.funding.preset || '$1M–$5M'} | ${activeHuntConfig?.geography.countries.join(', ') || 'Global'} | CEO + Co-founder | Email Required`}
                     </span>
                   </div>
                 </div>
@@ -1097,8 +1242,15 @@ export default function HomePage() {
                   config={activeHuntConfig}
                   currentStep={currentProgressIndex}
                   currentMessage={statusMessage}
-                  candidatesFound={totalDiscovered}
+                  currentStrategy={currentStrategy}
+                  duplicatesFiltered={duplicatesFiltered}
+                  candidatesFound={pipelineStats?.discovered || totalDiscovered}
                   qualifiedCount={totalQualified}
+                  researchedCount={pipelineStats?.extracted}
+                  validatedCount={pipelineStats?.nonUsPassed}
+                  foundersFoundCount={pipelineStats?.founderFound}
+                  contactsCheckedCount={pipelineStats?.contactsChecked}
+                  verifiedContactsCount={pipelineStats?.emailVerified}
                   onViewResults={() => {}}
                 />
               ) : status === 'error' ? (
@@ -1106,8 +1258,15 @@ export default function HomePage() {
                   config={activeHuntConfig}
                   currentStep={currentProgressIndex}
                   currentMessage={statusMessage}
-                  candidatesFound={totalDiscovered}
+                  currentStrategy={currentStrategy}
+                  duplicatesFiltered={duplicatesFiltered}
+                  candidatesFound={pipelineStats?.discovered || totalDiscovered}
                   qualifiedCount={totalQualified}
+                  researchedCount={pipelineStats?.extracted}
+                  validatedCount={pipelineStats?.nonUsPassed}
+                  foundersFoundCount={pipelineStats?.founderFound}
+                  contactsCheckedCount={pipelineStats?.contactsChecked}
+                  verifiedContactsCount={pipelineStats?.emailVerified}
                   errorMessage={errorMessage}
                   onRetry={() => handleStartHunt(activeHuntConfig)}
                 />
@@ -1295,12 +1454,67 @@ export default function HomePage() {
                         </div>
                       </div>
 
+                      {/* Selective Export Action Bar (Section 65) */}
+                      {selectedRowIds.size > 0 && (
+                        <div className="p-3 bg-[#FFF8F5] border-2 border-[#FF6B35] rounded-xl flex items-center justify-between text-xs animate-in fade-in shadow-sketch-xs">
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-[#1E1B18] font-mono">
+                              ✓ {selectedRowIds.size} company record{selectedRowIds.size === 1 ? '' : 's'} selected
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedRowIds(new Set())}
+                              className="text-[#766E65] hover:text-[#1E1B18] underline text-[11px] font-mono"
+                            >
+                              Clear Selection
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsExportModalOpen(true)}
+                            className="sketch-btn px-3.5 py-1.5 text-xs font-bold text-white bg-[#FF6B35] hover:bg-[#F05820] rounded-lg shadow-sketch-xs flex items-center gap-1.5 transition-colors"
+                          >
+                            <span>📦</span>
+                            <span>Export Selected ({selectedRowIds.size})</span>
+                          </button>
+                        </div>
+                      )}
+
                       {/* Main Table (Section 11) */}
                       <div className="paper-card bg-[#FFFDF9] rounded-2xl border-2 border-[#1E1B18] shadow-sketch-sm overflow-hidden">
                         <div className="overflow-x-auto">
                           <table className="w-full text-left text-xs border-collapse">
                             <thead>
                               <tr className="bg-[#1E1B18] text-[#FAF6EE] font-mono font-bold text-[11px] uppercase tracking-wider">
+                                <th className="py-3 px-3 w-10 text-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={
+                                      filteredCompanies.length > 0 &&
+                                      filteredCompanies.every((c) => {
+                                        const id = `lead-${c.website ? c.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase() : c.name.toLowerCase().replace(/\s+/g, '-')}`;
+                                        return selectedRowIds.has(id);
+                                      })
+                                    }
+                                    onChange={(e) => {
+                                      const next = new Set(selectedRowIds);
+                                      if (e.target.checked) {
+                                        filteredCompanies.forEach((c) => {
+                                          const id = `lead-${c.website ? c.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase() : c.name.toLowerCase().replace(/\s+/g, '-')}`;
+                                          next.add(id);
+                                        });
+                                      } else {
+                                        filteredCompanies.forEach((c) => {
+                                          const id = `lead-${c.website ? c.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase() : c.name.toLowerCase().replace(/\s+/g, '-')}`;
+                                          next.delete(id);
+                                        });
+                                      }
+                                      setSelectedRowIds(next);
+                                    }}
+                                    className="w-4 h-4 text-[#FF6B35] rounded border-[#2C2724] cursor-pointer"
+                                    title="Select all visible filtered companies"
+                                  />
+                                </th>
                                 <th className="py-3 px-4">#</th>
                                 <th className="py-3 px-4">Company</th>
                                 <th className="py-3 px-4">Sector</th>
@@ -1319,12 +1533,28 @@ export default function HomePage() {
                                 const founder = company.founderOrCeoName || company.founder?.name || 'Executive';
                                 const email = company.founderOrCeoEmail || company.email?.address;
                                 const isEmailVerified = company.emailVerified || company.email?.status === 'verified';
+                                const rowId = `lead-${company.website ? company.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase() : company.name.toLowerCase().replace(/\s+/g, '-')}`;
+                                const isSelected = selectedRowIds.has(rowId);
 
                                 return (
                                   <tr
                                     key={company.name}
-                                    className="hover:bg-[#FFF9F2] transition-colors"
+                                    className={`transition-colors ${isSelected ? 'bg-[#FFF3E0]' : 'hover:bg-[#FFF9F2]'}`}
                                   >
+                                    <td className="py-3.5 px-3 text-center">
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => {
+                                          const next = new Set(selectedRowIds);
+                                          if (next.has(rowId)) next.delete(rowId);
+                                          else next.add(rowId);
+                                          setSelectedRowIds(next);
+                                        }}
+                                        className="w-4 h-4 text-[#FF6B35] rounded border-[#1E1B18] cursor-pointer"
+                                        aria-label={`Select ${company.name}`}
+                                      />
+                                    </td>
                                     <td className="py-3.5 px-4 font-mono text-[#766E65]">{idx + 1}</td>
                                     <td className="py-3.5 px-4">
                                       <div className="font-bold text-[#1E1B18] text-sm flex items-center gap-1.5 flex-wrap">
@@ -1537,12 +1767,16 @@ export default function HomePage() {
         />
       )}
 
-      {isExportModalOpen && results?.companies && (
+      {isExportModalOpen && (
         <ExportModal
           isOpen={isExportModalOpen}
           onClose={() => setIsExportModalOpen(false)}
-          companies={results.companies}
+          companies={results?.companies || []}
+          rejectedCompanies={rejectedCandidates}
+          selectedIds={Array.from(selectedRowIds)}
           onToast={showToast}
+          huntId={results ? 'hunt-results-active' : undefined}
+          searchQuery={searchQuery}
         />
       )}
 

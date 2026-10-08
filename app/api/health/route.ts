@@ -54,13 +54,13 @@ export async function GET() {
     results.anthropicApi = {
       status: 'connected',
       latencyMs: 5,
-      details: 'Anthropic API key configured (Claude extraction & structured fallback active)',
+      details: 'Huntlyst research engine configured (structured synthesis & fallback active)',
     };
   } else {
     results.anthropicApi = {
       status: 'warning',
       latencyMs: 2,
-      details: 'Anthropic key not configured or placeholder — Intelligent structured fallback extractor active',
+      details: 'Primary key not configured or placeholder — Intelligent structured fallback extractor active',
     };
   }
 
