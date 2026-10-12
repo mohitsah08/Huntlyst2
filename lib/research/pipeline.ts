@@ -94,7 +94,7 @@ export function validateAndNormalizeInput(rawInput: {
         throw new InvalidInputError(`Invalid domain name in URL: "${rawUrl}".`);
       }
 
-      officialUrl = `https://${parsed.hostname}${parsed.pathname === '/' ? '' : parsed.pathname}`;
+      officialUrl = `https://${parsed.hostname}`;
       
       if (!companyName) {
         // Derive clean initial name from domain without synthetic TLD guessing
@@ -388,17 +388,44 @@ export class ExternalResearchPipeline {
           }
 
           // Clean title brand (e.g. "Intelligence at the edge of everywhere. | Blaize" -> "Blaize")
+          const GENERIC_TITLE_FRAGMENTS = [
+            /contact(?:\s+us)?/i,
+            /get\s+in\s+touch/i,
+            /reach\s+us/i,
+            /about(?:\s+us)?/i,
+            /who\s+we\s+are/i,
+            /home(?:\s+page)?/i,
+            /welcome/i,
+            /press\s+releases?/i,
+            /news(?:\s+&\s+events)?/i,
+            /careers/i,
+            /leadership/i,
+            /team/i,
+            /privacy\s+policy/i,
+            /terms\s+of\s+service/i,
+          ];
+
+          const isGenericBrand = (brand: string) => {
+            const b = brand.trim();
+            if (b.length < 2 || b.length > 35) return true;
+            return GENERIC_TITLE_FRAGMENTS.some((pat) => pat.test(b));
+          };
+
           if (metaTitle.includes('|')) {
             const parts = metaTitle.split('|').map(p => p.trim());
             const candidateBrand = parts[parts.length - 1];
-            if (candidateBrand.length > 1 && candidateBrand.length < 30) {
+            if (!isGenericBrand(candidateBrand)) {
               resolvedName = candidateBrand;
+            } else if (!isGenericBrand(parts[0])) {
+              resolvedName = parts[0];
             }
           } else if (metaTitle.includes(' - ')) {
             const parts = metaTitle.split(' - ').map(p => p.trim());
             const candidateBrand = parts[parts.length - 1];
-            if (candidateBrand.length > 1 && candidateBrand.length < 30) {
+            if (!isGenericBrand(candidateBrand)) {
               resolvedName = candidateBrand;
+            } else if (!isGenericBrand(parts[0])) {
+              resolvedName = parts[0];
             }
           }
 
@@ -419,7 +446,17 @@ export class ExternalResearchPipeline {
             }
           });
 
-          // Extract Mailto Emails (Real public emails only)
+          // Extract Executive LinkedIn Profiles if present
+          $('a[href*="linkedin.com/in/"]').each((_, el) => {
+            const href = $(el).attr('href');
+            if (href) {
+              const cleanLi = href.split('?')[0].replace(/\/$/, '');
+              // Anchor executive LinkedIn profile evidence
+              recordEvidence('leadership.executiveLinkedIn', cleanLi, homePage, `Executive profile link on ${homePage.url}: ${cleanLi}`, 'meta_tags', 90);
+            }
+          });
+
+          // Extract Mailto Emails (Real public company emails only)
           $('a[href^="mailto:"]').each((_, el) => {
             const href = $(el).attr('href');
             if (href) {
@@ -628,6 +665,13 @@ export class ExternalResearchPipeline {
           for (const item of items) {
             const itemText = `${item.title || ''} ${item.description || ''} ${item.markdown || ''}`;
             
+            // Data Accuracy Guard: Prevent unrelated search results from polluting company data
+            const mentionsEntity = itemText.toLowerCase().includes(resolvedName.toLowerCase()) ||
+              (canonicalDomain && itemText.toLowerCase().includes(canonicalDomain.toLowerCase()));
+            if (!mentionsEntity) {
+              continue; // Skip search hits for unrelated entities
+            }
+
             const itemUrl = item.url || '';
             const itemTitle = item.title || '';
             const itemPage: InspectedPage = {
@@ -647,11 +691,21 @@ export class ExternalResearchPipeline {
                 || itemText.match(/(El Dorado Hills|San Francisco|New York|Austin|Boston|Seattle|San Jose|Los Angeles),\s*(CA|California|NY|TX|WA|MA)/i);
               if (hqSnippetMatch) {
                 hqCity = hqSnippetMatch[1].trim();
-                const matchedCountry = hqSnippetMatch[2]?.trim() || 'United States';
-                hqCountry = matchedCountry.startsWith('US') || ['CA', 'California', 'NY', 'New York', 'TX', 'Texas', 'WA', 'MA'].includes(matchedCountry)
-                  ? 'United States'
-                  : matchedCountry;
-                hqState = ['CA', 'California', 'NY', 'New York', 'TX', 'Texas', 'WA', 'MA'].includes(matchedCountry) ? matchedCountry : null;
+                const rawCountryOrState = hqSnippetMatch[2]?.trim() || 'United States';
+                const usStateCodes = ['CA', 'California', 'NY', 'New York', 'TX', 'Texas', 'WA', 'Washington', 'MA', 'Massachusetts', 'IL', 'Illinois', 'CO', 'Colorado'];
+                
+                // Never treat a US state abbreviation as a country
+                if (rawCountryOrState.startsWith('US') || usStateCodes.includes(rawCountryOrState)) {
+                  hqCountry = 'United States';
+                  hqState = usStateCodes.includes(rawCountryOrState) ? rawCountryOrState : null;
+                } else if (rawCountryOrState.length === 2 && /^[A-Z]{2}$/.test(rawCountryOrState)) {
+                  hqCountry = 'United States';
+                  hqState = rawCountryOrState;
+                } else {
+                  hqCountry = rawCountryOrState;
+                  hqState = null;
+                }
+
                 usPresence = hqCountry === 'United States';
                 operatingCountries.add(hqCountry);
                 recordEvidence('headquarters.country', hqCountry, itemPage, hqSnippetMatch[0], 'firecrawl_search', 90);

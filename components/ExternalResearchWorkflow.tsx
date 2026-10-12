@@ -9,6 +9,8 @@ import {
   DEFAULT_TARGET_CRITERIA,
 } from '@/lib/research/types';
 import { CompanyVerificationResult } from '@/providers/types';
+import CompanyCard from './CompanyCard';
+import CompanyResearchDossierModal from './CompanyResearchDossierModal';
 
 interface ExternalResearchWorkflowProps {
   carriedCandidates?: Array<{ name?: string; website?: string }>;
@@ -34,6 +36,8 @@ export default function ExternalResearchWorkflow({
   const [profiles, setProfiles] = useState<CompanyResearchProfile[]>([]);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [selectedForBatch, setSelectedForBatch] = useState<Set<string>>(new Set());
+  const [dossierProfile, setDossierProfile] = useState<CompanyResearchProfile | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Criteria State
   const [criteria, setCriteria] = useState<TargetCriteria>(DEFAULT_TARGET_CRITERIA);
@@ -609,13 +613,18 @@ export default function ExternalResearchWorkflow({
             )}
           </div>
 
-          {/* SAVED PROFILES LIST */}
+          {/* SAVED PROFILES LIST (COMPACT COMPANY CARD VIEW) */}
           {profiles.length > 0 && (
-            <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch space-y-4">
+            <div className="space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <h4 className="font-display text-base font-bold text-[#1E1B18]">
-                  Saved Company Profiles ({profiles.length})
-                </h4>
+                <div>
+                  <h4 className="font-display text-base font-bold text-[#1E1B18]">
+                    Saved Researched Leads ({profiles.length})
+                  </h4>
+                  <p className="text-xs font-mono text-[#766E65]">
+                    Compact list showing 14 key data fields & 9 verification indicators. Click 'View Dossier' or the search icon to open the full report.
+                  </p>
+                </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -634,110 +643,34 @@ export default function ExternalResearchWorkflow({
                     type="button"
                     disabled={selectedForBatch.size === 0 || isVerifying}
                     onClick={() => handleVerifyCompanies(Array.from(selectedForBatch))}
-                    className="sketch-btn px-3 py-1.5 text-xs font-bold text-white bg-[#2E7D32] hover:bg-[#1B5E20] border border-[#1E1B18] rounded-lg disabled:opacity-50 flex items-center gap-1.5"
+                    className="sketch-btn px-3.5 py-1.5 text-xs font-bold text-white bg-[#2E7D32] hover:bg-[#1B5E20] border border-[#1E1B18] rounded-xl disabled:opacity-50 flex items-center gap-1.5 shadow-sketch-xs"
                   >
                     <span>⚡ Verify Selected ({selectedForBatch.size})</span>
                   </button>
                 </div>
               </div>
 
-              <div className="divide-y divide-[#F0EAD8]">
-                {profiles.map((p) => {
-                  const run = verificationRuns[p.id];
-                  const isChecked = selectedForBatch.has(p.id);
-
-                  return (
-                    <div
-                      key={p.id}
-                      className={`py-3 px-3 rounded-xl transition-colors flex items-center justify-between gap-4 ${
-                        selectedProfileId === p.id ? 'bg-[#FAF6EE] border border-[#1E1B18]/20' : 'hover:bg-[#FAF6EE]/50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={(e) => {
-                            const next = new Set(selectedForBatch);
-                            if (e.target.checked) next.add(p.id);
-                            else next.delete(p.id);
-                            setSelectedForBatch(next);
-                          }}
-                          className="rounded border-[#1E1B18] text-[#FF6B35] focus:ring-[#FF6B35]"
-                        />
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-display font-bold text-sm text-[#1E1B18]">
-                              {p.officialName}
-                            </span>
-                            <span className="text-xs font-mono text-[#766E65]">
-                              ({p.canonicalDomain})
-                            </span>
-                            <span
-                              className={`px-2 py-0.5 text-[10px] font-mono rounded font-bold ${
-                                p.researchStatus === 'completed'
-                                  ? 'bg-[#E8F5E9] text-[#2E7D32]'
-                                  : p.researchStatus === 'partially_completed'
-                                  ? 'bg-[#FFF8E1] text-[#F57C00]'
-                                  : 'bg-[#FFEBEE] text-[#C62828]'
-                              }`}
-                            >
-                              {p.researchStatus.toUpperCase()} ({p.researchCompletenessScore}%)
-                            </span>
-                          </div>
-                          <div className="text-[11px] font-mono text-[#766E65] mt-0.5">
-                            HQ: {p.headquarters.country || 'Unknown'} • CEO: {p.leadership.ceo?.name || 'Unknown'} • Funding: {p.funding.totalFundingUsd ? `$${Math.round(p.funding.totalFundingUsd / 1e6)}M` : 'Unknown'}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {run ? (
-                          <span
-                            className={`px-2.5 py-1 text-xs font-mono font-bold rounded-full border ${
-                              run.overallStatus === 'VERIFIED'
-                                ? 'bg-[#E8F5E9] text-[#2E7D32] border-[#2E7D32]/30'
-                                : run.overallStatus === 'REVIEW'
-                                ? 'bg-[#FFF8E1] text-[#F57C00] border-[#F57C00]/30'
-                                : run.overallStatus === 'REJECTED'
-                                ? 'bg-[#FFEBEE] text-[#C62828] border-[#C62828]/30'
-                                : 'bg-[#FAF6EE] text-[#766E65] border-[#766E65]/30'
-                            }`}
-                          >
-                            {run.overallStatus} ({run.qualificationScore}%)
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 text-[11px] font-mono text-[#766E65] bg-gray-100 rounded">
-                            Unverified
-                          </span>
-                        )}
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedProfileId(p.id);
-                            setActiveTab('profile');
-                          }}
-                          className="px-2.5 py-1 text-xs font-mono font-bold text-[#1E1B18] bg-white border border-[#1E1B18]/30 rounded hover:bg-[#FAF6EE]"
-                        >
-                          View Profile & Evidence
-                        </button>
-
-                        <button
-                          type="button"
-                          disabled={isVerifying}
-                          onClick={() => {
-                            setSelectedProfileId(p.id);
-                            handleVerifyCompanies([p.id]);
-                          }}
-                          className="px-2.5 py-1 text-xs font-mono font-bold text-white bg-[#1E1B18] hover:bg-[#3E3832] rounded"
-                        >
-                          Verify Now
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="space-y-3">
+                {profiles.map((p) => (
+                  <CompanyCard
+                    key={p.id}
+                    profile={p}
+                    verificationRun={verificationRuns[p.id]}
+                    isSelected={selectedForBatch.has(p.id)}
+                    onToggleSelect={(id) => {
+                      const next = new Set(selectedForBatch);
+                      if (next.has(id)) next.delete(id);
+                      else next.add(id);
+                      setSelectedForBatch(next);
+                    }}
+                    onOpenDossier={(prof) => setDossierProfile(prof)}
+                    onVerify={(id) => {
+                      setSelectedProfileId(id);
+                      handleVerifyCompanies([id]);
+                    }}
+                    isVerifying={isVerifying}
+                  />
+                ))}
               </div>
             </div>
           )}
@@ -747,167 +680,107 @@ export default function ExternalResearchWorkflow({
       {/* ========================================================================= */}
       {/* SUBSECTION B: COMPANY PROFILE & EVIDENCE                                   */}
       {/* ========================================================================= */}
-      {activeTab === 'profile' && selectedProfile && (
-        <div className="space-y-6">
-          <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch space-y-6">
-            {/* Header info */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#F0EAD8] pb-4">
+      {activeTab === 'profile' && (
+        <div className="space-y-6 animate-in fade-in">
+          {/* Top Bar: Search Filter & Batch Actions */}
+          <div className="paper-card bg-[#FFFDF9] rounded-2xl p-5 border-2 border-[#1E1B18] shadow-sketch space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#F0EAD8] pb-3">
               <div>
-                <div className="flex items-center gap-3">
-                  <h3 className="font-display text-2xl font-bold text-[#1E1B18]">
-                    {selectedProfile.officialName}
-                  </h3>
-                  {selectedProfile.website && (
-                    <a
-                      href={selectedProfile.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-mono text-[#FF6B35] hover:underline flex items-center gap-1"
-                    >
-                      <span>{selectedProfile.canonicalDomain}</span>
-                      <span>↗</span>
-                    </a>
-                  )}
-                </div>
-                <p className="text-xs text-[#766E65] mt-1 font-mono max-w-3xl">
-                  {selectedProfile.description || 'No meta description found in official site tags.'}
+                <h4 className="font-display text-base sm:text-lg font-bold text-[#1E1B18] flex items-center gap-2">
+                  <span>📑</span> Company Research Profiles & Evidence Dossiers ({profiles.length})
+                </h4>
+                <p className="text-xs font-mono text-[#766E65] mt-0.5">
+                  Full evidence-backed dossiers with zero fabricated claims. Click 'View Dossier' on any card to inspect all 7 sections and grouped source citations.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              {selectedProfile && (
                 <button
                   type="button"
-                  onClick={() => {
-                    handleVerifyCompanies([selectedProfile.id]);
-                  }}
-                  className="sketch-btn px-4 py-2 text-xs font-bold text-white bg-[#FF6B35] hover:bg-[#E55A2B] border-2 border-[#1E1B18] rounded-xl flex items-center gap-1.5 shadow-sketch-xs"
+                  onClick={() => setDossierProfile(selectedProfile)}
+                  className="sketch-btn px-4 py-2 text-xs font-bold text-[#1E1B18] bg-[#FFE0B2] hover:bg-[#FFD54F] border-2 border-[#1E1B18] rounded-xl flex items-center gap-1.5 shadow-sketch-xs"
                 >
-                  <span>✅ Run Target Verification</span>
+                  <span>🔍 Open Full Dossier ({selectedProfile.officialName})</span>
                 </button>
-              </div>
+              )}
             </div>
 
-            {/* Structured Facts Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Box 1: Geography */}
-              <div className="p-4 bg-[#FAF6EE] rounded-xl border border-[#EBE4D5] space-y-2">
-                <span className="text-[11px] font-mono uppercase font-bold text-[#766E65]">Geography & HQ</span>
-                <div className="text-sm font-display font-bold text-[#1E1B18]">
-                  {selectedProfile.headquarters.country || (
-                    <span className="text-[#C62828] font-mono text-xs">Undisclosed / Unknown</span>
-                  )}
-                </div>
-                <div className="text-xs font-mono text-[#766E65]">
-                  City: {selectedProfile.headquarters.city || 'Unknown'}<br />
-                  US Presence: {selectedProfile.usPresence ? 'Yes (US HQ/Office)' : selectedProfile.usPresence === false ? 'No' : 'Unknown'}<br />
-                  Offices: {selectedProfile.operatingCountries.slice(0, 3).join(', ') || 'Unknown'}
-                </div>
+            {/* Search Input */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="relative flex-1 min-w-[240px]">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Filter profiles by name, domain, industry, or country..."
+                  className="w-full pl-9 pr-3 py-2 border border-[#1E1B18] rounded-xl text-xs font-mono bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
+                />
+                <span className="absolute left-3 top-2.5 text-xs text-[#766E65]">🔍</span>
               </div>
 
-              {/* Box 2: Leadership */}
-              <div className="p-4 bg-[#FAF6EE] rounded-xl border border-[#EBE4D5] space-y-2">
-                <span className="text-[11px] font-mono uppercase font-bold text-[#766E65]">Leadership</span>
-                <div className="text-sm font-display font-bold text-[#1E1B18]">
-                  {selectedProfile.leadership.ceo ? (
-                    `${selectedProfile.leadership.ceo.name} (CEO)`
-                  ) : (
-                    <span className="text-[#C62828] font-mono text-xs">CEO Undisclosed</span>
-                  )}
-                </div>
-                <div className="text-xs font-mono text-[#766E65]">
-                  CTO: {selectedProfile.leadership.cto?.name || 'Unknown'}<br />
-                  Founders: {selectedProfile.leadership.founders.map(f => f.name).join(', ') || 'Unknown'}
-                </div>
-              </div>
-
-              {/* Box 3: Funding */}
-              <div className="p-4 bg-[#FAF6EE] rounded-xl border border-[#EBE4D5] space-y-2">
-                <span className="text-[11px] font-mono uppercase font-bold text-[#766E65]">Funding & Stage</span>
-                <div className="text-sm font-display font-bold text-[#1E1B18]">
-                  {selectedProfile.funding.totalFundingUsd ? (
-                    `$${Math.round(selectedProfile.funding.totalFundingUsd).toLocaleString()} USD`
-                  ) : selectedProfile.funding.latestRoundUsd ? (
-                    `$${Math.round(selectedProfile.funding.latestRoundUsd).toLocaleString()} USD (Round)`
-                  ) : (
-                    <span className="text-[#C62828] font-mono text-xs">Undisclosed / Unknown</span>
-                  )}
-                </div>
-                <div className="text-xs font-mono text-[#766E65]">
-                  Stage: {selectedProfile.funding.latestRoundType || 'Unknown'}<br />
-                  Rounds: {selectedProfile.funding.rounds.length} documented
-                </div>
-              </div>
-
-              {/* Box 4: Contacts & Identity */}
-              <div className="p-4 bg-[#FAF6EE] rounded-xl border border-[#EBE4D5] space-y-2">
-                <span className="text-[11px] font-mono uppercase font-bold text-[#766E65]">Verified Contacts</span>
-                <div className="text-xs font-mono font-bold text-[#1E1B18]">
-                  Email: {selectedProfile.contacts.generalEmail || (
-                    <span className="text-[#766E65] font-normal">None public</span>
-                  )}
-                </div>
-                <div className="text-xs font-mono text-[#766E65]">
-                  Phone: {selectedProfile.contacts.phone || 'None'}<br />
-                  Age: {selectedProfile.companyAgeYears !== null ? `${selectedProfile.companyAgeYears} yrs (Est. ${selectedProfile.foundedYear})` : 'Unknown'}
-                </div>
-              </div>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="text-xs font-mono text-[#766E65] hover:text-[#1E1B18] underline"
+                >
+                  Clear Filter
+                </button>
+              )}
             </div>
+          </div>
 
-            {/* FIELD-LEVEL EVIDENCE EXPLORER */}
-            <div className="space-y-4 pt-4 border-t border-[#F0EAD8]">
-              <div className="flex items-center justify-between">
-                <h4 className="font-display font-bold text-base text-[#1E1B18] flex items-center gap-2">
-                  <span>🔬</span> Field-Level Evidence & Source Provenance ({Object.keys(selectedProfile.fieldEvidence).length} fields)
-                </h4>
-                <span className="text-xs font-mono text-[#766E65]">
-                  Authoritative Sources: {selectedProfile.sources.length} inspected
-                </span>
-              </div>
+          {/* List of Company Cards */}
+          <div className="space-y-4">
+            {(() => {
+              const q = searchQuery.toLowerCase().trim();
+              const filtered = profiles.filter((p) => {
+                if (!q) return true;
+                return (
+                  p.officialName.toLowerCase().includes(q) ||
+                  p.canonicalDomain.toLowerCase().includes(q) ||
+                  (p.primaryIndustry && p.primaryIndustry.toLowerCase().includes(q)) ||
+                  (p.headquarters.country && p.headquarters.country.toLowerCase().includes(q))
+                );
+              });
 
-              <div className="border border-[#EBE4D5] rounded-xl overflow-hidden divide-y divide-[#EBE4D5]">
-                {Object.values(selectedProfile.fieldEvidence).map((ev, i) => (
-                  <div key={i} className="p-3 bg-white text-xs font-mono space-y-1.5 hover:bg-[#FAF6EE]/50">
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-[#1E1B18]">{ev.field}</span>
-                        <span className="text-[#766E65]">→</span>
-                        <span className="text-[#FF6B35] font-bold">
-                          {typeof ev.value === 'object' ? JSON.stringify(ev.value) : String(ev.value)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px]">
-                        <span className="px-1.5 py-0.5 rounded bg-gray-100 text-[#766E65]">
-                          {ev.extractionMethod}
-                        </span>
-                        <span className="px-1.5 py-0.5 rounded bg-[#E8F5E9] text-[#2E7D32]">
-                          Confidence: {ev.confidence}%
-                        </span>
-                      </div>
-                    </div>
-
-                    {ev.excerpt && (
-                      <blockquote className="p-2 bg-[#FAF6EE] rounded border-l-2 border-[#FF6B35] text-[#1E1B18] text-[11px] italic">
-                        "{ev.excerpt}"
-                      </blockquote>
-                    )}
-
-                    {ev.sourceUrl && (
-                      <div className="text-[11px] text-[#766E65] flex items-center gap-1.5">
-                        <span>Source:</span>
-                        <a
-                          href={ev.sourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[#FF6B35] hover:underline truncate max-w-xl"
-                        >
-                          {ev.sourceUrl}
-                        </a>
-                      </div>
-                    )}
+              if (filtered.length === 0) {
+                return (
+                  <div className="p-8 text-center bg-white rounded-2xl border border-[#EBE4D5] text-xs font-mono text-[#766E65] space-y-2">
+                    <p>No company profiles matched "{searchQuery}".</p>
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="text-[#FF6B35] font-bold underline"
+                    >
+                      Reset search filter
+                    </button>
                   </div>
-                ))}
-              </div>
-            </div>
+                );
+              }
+
+              return (
+                <div className="space-y-3">
+                  {filtered.map((p) => (
+                    <CompanyCard
+                      key={p.id}
+                      profile={p}
+                      verificationRun={verificationRuns[p.id]}
+                      isSelected={selectedProfileId === p.id}
+                      onToggleSelect={(id) => {
+                        setSelectedProfileId(id);
+                      }}
+                      onOpenDossier={(prof) => setDossierProfile(prof)}
+                      onVerify={(id) => {
+                        setSelectedProfileId(id);
+                        handleVerifyCompanies([id]);
+                      }}
+                      isVerifying={isVerifying}
+                    />
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -1131,6 +1004,19 @@ export default function ExternalResearchWorkflow({
             )}
           </div>
 
+          {selectedProfile && (
+            <div className="mb-4">
+              <CompanyCard
+                profile={selectedProfile}
+                verificationRun={currentVerificationRun}
+                isSelected={true}
+                onOpenDossier={(prof) => setDossierProfile(prof)}
+                onVerify={(id) => handleVerifyCompanies([id])}
+                isVerifying={isVerifying}
+              />
+            </div>
+          )}
+
           {currentVerificationRun ? (
             <div className="space-y-6">
               {/* Overall status banner */}
@@ -1231,6 +1117,19 @@ export default function ExternalResearchWorkflow({
             </div>
           )}
         </div>
+      )}
+
+      {/* Complete Company Research Dossier Modal */}
+      {dossierProfile && (
+        <CompanyResearchDossierModal
+          profile={dossierProfile}
+          verificationRun={verificationRuns[dossierProfile.id]}
+          onClose={() => setDossierProfile(null)}
+          onVerify={(id) => {
+            handleVerifyCompanies([id]);
+          }}
+          isVerifying={isVerifying}
+        />
       )}
     </div>
   );
