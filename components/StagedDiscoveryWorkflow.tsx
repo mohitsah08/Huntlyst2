@@ -7,6 +7,7 @@ import { CompanyRecord, RejectedCompanyRecord, HuntConfig } from '@/lib/types';
 import CandidateVerificationCard from './CandidateVerificationCard';
 import HuntConfiguration from './HuntConfiguration';
 import ExportModal from './ExportModal';
+import ExternalResearchWorkflow from './ExternalResearchWorkflow';
 import { PipelineStageLabel, downloadCsvFile, downloadPdfFile, downloadXlsxFile } from '@/lib/export';
 import { extractCanonicalDomain, normalizeCompanyName } from '@/lib/deduplication';
 
@@ -1287,132 +1288,24 @@ export default function StagedDiscoveryWorkflow({
       {/* ========================================================================= */}
       {currentStep === 'external' && (
         <div className="space-y-5 animate-in fade-in">
-          <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch-sm space-y-4">
-            <div className="border-b border-[#F0EAD8] pb-3">
-              <h3 className="font-display text-lg font-bold text-[#1E1B18] flex items-center gap-2">
-                <span>🔎</span> Stage 2: External Discovery & Verification
-              </h3>
-              <p className="text-xs text-[#766E65] mt-1 font-mono">
-                Enter company names, websites, or URLs for external deep research. Huntlyst runs the 6-stage candidate pipeline, verifies CEO/founders, validates live DNS MX mail servers, and presents verified evidence.
-              </p>
-            </div>
+          <ExternalResearchWorkflow
+            carriedCandidates={internalResults
+              .filter((r) => internalApproved.has(r.company.name))
+              .map((r) => ({ name: r.company.name, website: r.company.website }))}
+            onUpdateResults={(newResults) => {
+              setExternalResults(newResults);
+              const nextApproved = new Set(externalApproved);
+              for (const r of newResults) {
+                if (r.verificationStatus === 'VERIFIED') {
+                  nextApproved.add(r.company.name);
+                }
+              }
+              setExternalApproved(nextApproved);
+            }}
+            onOpenLeadModal={onOpenLeadModal}
+          />
 
-            {/* External Target Input */}
-            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-              <div className="sm:col-span-2">
-                <input
-                  type="text"
-                  value={externalInputName}
-                  onChange={(e) => setExternalInputName(e.target.value)}
-                  placeholder="Company Name (e.g. Synthesized)"
-                  className="w-full p-2.5 text-xs font-mono border-2 border-[#1E1B18] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <input
-                  type="text"
-                  value={externalInputWebsite}
-                  onChange={(e) => setExternalInputWebsite(e.target.value)}
-                  placeholder="Website / URL (e.g. synthesized.io)"
-                  className="w-full p-2.5 text-xs font-mono border-2 border-[#1E1B18] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
-                />
-              </div>
-              <button
-                type="button"
-                disabled={isCurrentProcessing || (!externalInputName.trim() && !externalInputWebsite.trim())}
-                onClick={handleAddExternalCompany}
-                className="sketch-btn px-4 py-2.5 text-xs font-bold text-white bg-[#1E1B18] border-2 border-[#1E1B18] rounded-xl hover:bg-[#3E3832] disabled:opacity-50 flex items-center justify-center gap-1.5"
-              >
-                <span>+ Research Target</span>
-              </button>
-            </div>
-
-            {/* Candidates Carried from Internal Stage */}
-            {internalApproved.size > 0 && (
-              <div className="p-3 bg-[#FAF6EE] rounded-xl border border-[#EBE4D5] text-xs font-mono space-y-2">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <span className="font-bold text-[#1E1B18]">
-                    Candidates Carried from Internal Stage ({internalApproved.size}):
-                  </span>
-                  <button
-                    type="button"
-                    disabled={isCurrentProcessing}
-                    onClick={() => {
-                      const carried = internalResults
-                        .filter(r => internalApproved.has(r.company.name))
-                        .map(r => ({
-                          name: r.company.name,
-                          website: r.company.website,
-                          leadPackage: r.lead_package,
-                        }));
-                      handleResearchExternal(carried);
-                    }}
-                    className="sketch-btn px-3 py-1 text-xs font-bold text-white bg-[#FF6B35] hover:bg-[#E55A2B] rounded-lg shadow-xs flex items-center gap-1.5"
-                  >
-                    <span>⚡</span>
-                    <span>Research All Carried Leads Online ({internalApproved.size})</span>
-                  </button>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {Array.from(internalApproved).slice(0, 8).map(name => (
-                    <span key={name} className="px-2 py-0.5 rounded bg-white border border-[#DCD6C9] text-[#1E1B18] text-[11px]">
-                      {name}
-                    </span>
-                  ))}
-                  {internalApproved.size > 8 && (
-                    <span className="text-[#766E65] text-[10px]">+{internalApproved.size - 8} more</span>
-                  )}
-                </div>
-              </div>
-            )}
-
-          </div>
-
-          {/* External Results */}
-          {externalResults.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <h4 className="font-display font-bold text-base text-[#1E1B18]">
-                  External Research Intelligence ({externalResults.length})
-                </h4>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setExportModalConfig({
-                      isOpen: true,
-                      stage: 'Stage 2: External Discovery',
-                      stagedResults: externalResults,
-                      title: 'Export Stage 2: External Discovery',
-                      subtitle: `${externalResults.length} external candidates researched and verified.`,
-                    })}
-                    className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] rounded-lg border border-[#1E1B18] shadow-sketch-xs flex items-center gap-1.5 transition-colors"
-                  >
-                    <span>📦</span>
-                    <span>Export Stage 2 ({externalResults.length})</span>
-                  </button>
-                  <span className="text-xs font-mono text-[#2E7D32] font-bold">
-                    Approved: {externalApproved.size}
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {externalResults.map((res) => (
-                  <CandidateVerificationCard
-                    key={res.company.name + res.company.website}
-                    result={res}
-                    isSelected={externalApproved.has(res.company.name)}
-                    onToggleSelect={toggleExternalApproval}
-                    onOpenDetails={() => onOpenLeadModal?.(res.company)}
-                    onRetryStage={handleRetryCandidateStage}
-                    isRetrying={isRetryingCandidate}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 🛑 APPROVAL GATE 2 BANNER (Section 8 & 9) */}
+          {/* 🛑 APPROVAL GATE 2 BANNER */}
           <div className="paper-card bg-[#FFFDF9] rounded-2xl p-5 border-2 border-[#1E1B18] shadow-sketch flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
             <div>
               <div className="flex items-center gap-2">

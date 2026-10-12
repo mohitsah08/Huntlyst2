@@ -6735,7 +6735,11 @@
     "pharmeasy.in": 16,
     "ecozensolutions.com": 16,
     "inprime.in": 16,
-    "agrevolution.in": 14
+    "agrevolution.in": 14,
+    "testco.io": 4,
+    "co1.com": 4,
+    "co2.com": 4,
+    "blaize.com": 3
   },
   "seenFingerprints": {
     "fp_test_123": "2026-09-29T11:10:08.431Z",
@@ -6888,11 +6892,11 @@
           {
             "status": "VERIFIED",
             "source": "INTERNAL_AUTO",
-            "timestamp": "2026-10-12T10:14:17.627Z",
+            "timestamp": "2026-10-12T11:27:32.573Z",
             "reason": "All active required Target Profile criteria satisfied by uploaded record."
           }
         ],
-        "evaluated_at": "2026-10-12T10:14:17.627Z"
+        "evaluated_at": "2026-10-12T11:27:32.573Z"
       },
       "currentStatus": "REVIEW",
       "qualification": {
@@ -6996,19 +7000,19 @@
         {
           "status": "VERIFIED",
           "source": "INTERNAL_AUTO",
-          "timestamp": "2026-10-12T10:14:17.627Z",
+          "timestamp": "2026-10-12T11:27:32.573Z",
           "reason": "All active required Target Profile criteria satisfied by uploaded record."
         },
         {
           "status": "REVIEW",
           "source": "EXTERNAL_AUTO",
-          "timestamp": "2026-10-12T10:14:17.651Z",
+          "timestamp": "2026-10-12T11:27:32.600Z",
           "reason": "External research & qualification completed"
         }
       ],
-      "createdAt": "2026-10-12T10:14:17.627Z",
-      "updatedAt": "2026-10-12T10:14:17.651Z",
-      "lastVerifiedAt": "2026-10-12T10:14:17.651Z",
+      "createdAt": "2026-10-12T11:27:32.573Z",
+      "updatedAt": "2026-10-12T11:27:32.600Z",
+      "lastVerifiedAt": "2026-10-12T11:27:32.600Z",
       "external": {
         "researched": true,
         "current_data": {
@@ -7034,16 +7038,1137 @@
           {
             "status": "REVIEW",
             "source": "EXTERNAL_AUTO",
-            "timestamp": "2026-10-12T10:14:17.651Z",
+            "timestamp": "2026-10-12T11:27:32.600Z",
             "reason": "External research & qualification completed"
           }
         ],
-        "researched_at": "2026-10-12T10:14:17.651Z",
+        "researched_at": "2026-10-12T11:27:32.600Z",
         "sources": [
           "https://abctechnologies.com",
           "https://techcrunch.com/funding-round"
         ]
       }
     }
-  ]
+  ],
+  "researchProfiles": {
+    "comp_test_co_1": {
+      "id": "comp_test_co_1",
+      "canonicalDomain": "testco.io",
+      "website": "https://testco.io",
+      "officialName": "TestCo Systems",
+      "description": "Enterprise AI analytics platform",
+      "foundedYear": 2021,
+      "foundingDate": "2021-04-01",
+      "companyAgeYears": 5,
+      "primaryIndustry": "AI & Machine Learning",
+      "subIndustry": "Enterprise Analytics",
+      "productsAndServices": [
+        "Analytics Engine"
+      ],
+      "businessModel": "B2B SaaS",
+      "headquarters": {
+        "city": "London",
+        "stateOrRegion": "Greater London",
+        "country": "United Kingdom",
+        "address": "10 Tech City, London"
+      },
+      "operatingCountries": [
+        "United Kingdom"
+      ],
+      "usPresence": false,
+      "leadership": {
+        "ceo": {
+          "name": "Sarah Connor",
+          "title": "CEO",
+          "role": "CEO",
+          "isCurrent": true,
+          "evidence": "Sarah Connor serves as CEO of TestCo.",
+          "sourceUrl": "https://testco.io/about",
+          "confidence": 95
+        },
+        "founders": [
+          {
+            "name": "Sarah Connor",
+            "title": "Founder & CEO",
+            "role": "Founder",
+            "isCurrent": true,
+            "evidence": "Sarah Connor founded TestCo.",
+            "sourceUrl": "https://testco.io/about",
+            "confidence": 90
+          }
+        ],
+        "coFounders": [],
+        "cto": null,
+        "cfo": null,
+        "seniorExecutives": [],
+        "formerExecutives": []
+      },
+      "funding": {
+        "totalFundingUsd": null,
+        "latestRoundUsd": null,
+        "latestRoundType": null,
+        "latestRoundDate": null,
+        "investors": [],
+        "rounds": []
+      },
+      "contacts": {
+        "generalEmail": "hello@testco.io",
+        "phone": null,
+        "contactPageUrl": "https://testco.io/contact",
+        "executiveEmails": [],
+        "companyLinkedInUrl": "https://linkedin.com/company/testco",
+        "companyXUrl": null
+      },
+      "fieldEvidence": {
+        "headquarters.country": {
+          "field": "headquarters.country",
+          "value": "United Kingdom",
+          "sourceUrl": "https://testco.io/contact",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "Headquartered in London, United Kingdom",
+          "dateRetrieved": "2026-10-12T11:20:11.512Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 95
+        }
+      },
+      "sources": [
+        {
+          "url": "https://testco.io",
+          "title": "TestCo Systems",
+          "tier": "TIER_1_OFFICIAL",
+          "retrievedAt": "2026-10-12T11:20:11.513Z"
+        }
+      ],
+      "researchStatus": "completed",
+      "researchCompletenessScore": 80,
+      "createdAt": "2026-10-12T11:20:11.513Z",
+      "updatedAt": "2026-10-12T11:20:11.513Z"
+    },
+    "batch_co_1": {
+      "id": "batch_co_1",
+      "canonicalDomain": "co1.com",
+      "website": "https://testco.io",
+      "officialName": "TestCo Systems",
+      "description": "Enterprise AI analytics platform",
+      "foundedYear": 2021,
+      "foundingDate": "2021-04-01",
+      "companyAgeYears": 5,
+      "primaryIndustry": "AI & Machine Learning",
+      "subIndustry": "Enterprise Analytics",
+      "productsAndServices": [
+        "Analytics Engine"
+      ],
+      "businessModel": "B2B SaaS",
+      "headquarters": {
+        "city": "London",
+        "stateOrRegion": "Greater London",
+        "country": "United Kingdom",
+        "address": "10 Tech City, London"
+      },
+      "operatingCountries": [
+        "United Kingdom"
+      ],
+      "usPresence": false,
+      "leadership": {
+        "ceo": {
+          "name": "Sarah Connor",
+          "title": "CEO",
+          "role": "CEO",
+          "isCurrent": true,
+          "evidence": "Sarah Connor serves as CEO of TestCo.",
+          "sourceUrl": "https://testco.io/about",
+          "confidence": 95
+        },
+        "founders": [
+          {
+            "name": "Sarah Connor",
+            "title": "Founder & CEO",
+            "role": "Founder",
+            "isCurrent": true,
+            "evidence": "Sarah Connor founded TestCo.",
+            "sourceUrl": "https://testco.io/about",
+            "confidence": 90
+          }
+        ],
+        "coFounders": [],
+        "cto": null,
+        "cfo": null,
+        "seniorExecutives": [],
+        "formerExecutives": []
+      },
+      "funding": {
+        "totalFundingUsd": 5500000,
+        "latestRoundUsd": 5500000,
+        "latestRoundType": "Series A",
+        "latestRoundDate": null,
+        "investors": [],
+        "rounds": []
+      },
+      "contacts": {
+        "generalEmail": "hello@testco.io",
+        "phone": null,
+        "contactPageUrl": "https://testco.io/contact",
+        "executiveEmails": [],
+        "companyLinkedInUrl": "https://linkedin.com/company/testco",
+        "companyXUrl": null
+      },
+      "fieldEvidence": {
+        "headquarters.country": {
+          "field": "headquarters.country",
+          "value": "United Kingdom",
+          "sourceUrl": "https://testco.io/contact",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "Headquartered in London, United Kingdom",
+          "dateRetrieved": "2026-10-12T11:28:35.441Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 95
+        },
+        "funding.totalFundingUsd": {
+          "field": "funding.totalFundingUsd",
+          "value": 5500000,
+          "sourceUrl": "https://testco.io/press/series-a",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "TestCo closes $5.5M Series A round",
+          "dateRetrieved": "2026-10-12T11:28:35.460Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 95
+        }
+      },
+      "sources": [
+        {
+          "url": "https://testco.io",
+          "title": "TestCo Systems",
+          "tier": "TIER_1_OFFICIAL",
+          "retrievedAt": "2026-10-12T11:28:35.441Z"
+        }
+      ],
+      "researchStatus": "completed",
+      "researchCompletenessScore": 80,
+      "createdAt": "2026-10-12T11:28:35.441Z",
+      "updatedAt": "2026-10-12T11:28:35.441Z"
+    },
+    "batch_co_2": {
+      "id": "batch_co_2",
+      "canonicalDomain": "co2.com",
+      "website": "https://testco.io",
+      "officialName": "TestCo Systems",
+      "description": "Enterprise AI analytics platform",
+      "foundedYear": 2021,
+      "foundingDate": "2021-04-01",
+      "companyAgeYears": 5,
+      "primaryIndustry": "AI & Machine Learning",
+      "subIndustry": "Enterprise Analytics",
+      "productsAndServices": [
+        "Analytics Engine"
+      ],
+      "businessModel": "B2B SaaS",
+      "headquarters": {
+        "city": "London",
+        "stateOrRegion": "Greater London",
+        "country": "United Kingdom",
+        "address": "10 Tech City, London"
+      },
+      "operatingCountries": [
+        "United Kingdom"
+      ],
+      "usPresence": false,
+      "leadership": {
+        "ceo": {
+          "name": "Sarah Connor",
+          "title": "CEO",
+          "role": "CEO",
+          "isCurrent": true,
+          "evidence": "Sarah Connor serves as CEO of TestCo.",
+          "sourceUrl": "https://testco.io/about",
+          "confidence": 95
+        },
+        "founders": [
+          {
+            "name": "Sarah Connor",
+            "title": "Founder & CEO",
+            "role": "Founder",
+            "isCurrent": true,
+            "evidence": "Sarah Connor founded TestCo.",
+            "sourceUrl": "https://testco.io/about",
+            "confidence": 90
+          }
+        ],
+        "coFounders": [],
+        "cto": null,
+        "cfo": null,
+        "seniorExecutives": [],
+        "formerExecutives": []
+      },
+      "funding": {
+        "totalFundingUsd": 5500000,
+        "latestRoundUsd": 5500000,
+        "latestRoundType": "Series A",
+        "latestRoundDate": null,
+        "investors": [],
+        "rounds": []
+      },
+      "contacts": {
+        "generalEmail": "hello@testco.io",
+        "phone": null,
+        "contactPageUrl": "https://testco.io/contact",
+        "executiveEmails": [],
+        "companyLinkedInUrl": "https://linkedin.com/company/testco",
+        "companyXUrl": null
+      },
+      "fieldEvidence": {
+        "headquarters.country": {
+          "field": "headquarters.country",
+          "value": "United Kingdom",
+          "sourceUrl": "https://testco.io/contact",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "Headquartered in London, United Kingdom",
+          "dateRetrieved": "2026-10-12T11:28:35.441Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 95
+        },
+        "funding.totalFundingUsd": {
+          "field": "funding.totalFundingUsd",
+          "value": 5500000,
+          "sourceUrl": "https://testco.io/press/series-a",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "TestCo closes $5.5M Series A round",
+          "dateRetrieved": "2026-10-12T11:28:35.460Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 95
+        }
+      },
+      "sources": [
+        {
+          "url": "https://testco.io",
+          "title": "TestCo Systems",
+          "tier": "TIER_1_OFFICIAL",
+          "retrievedAt": "2026-10-12T11:28:35.441Z"
+        }
+      ],
+      "researchStatus": "completed",
+      "researchCompletenessScore": 80,
+      "createdAt": "2026-10-12T11:28:35.441Z",
+      "updatedAt": "2026-10-12T11:28:35.441Z"
+    },
+    "comp_test_co_1791804155263": {
+      "id": "comp_test_co_1791804155263",
+      "canonicalDomain": "testco.io",
+      "website": "https://testco.io",
+      "officialName": "TestCo Systems",
+      "description": "Enterprise AI analytics platform",
+      "foundedYear": 2021,
+      "foundingDate": "2021-04-01",
+      "companyAgeYears": 5,
+      "primaryIndustry": "AI & Machine Learning",
+      "subIndustry": "Enterprise Analytics",
+      "productsAndServices": [
+        "Analytics Engine"
+      ],
+      "businessModel": "B2B SaaS",
+      "headquarters": {
+        "city": "London",
+        "stateOrRegion": "Greater London",
+        "country": "United Kingdom",
+        "address": "10 Tech City, London"
+      },
+      "operatingCountries": [
+        "United Kingdom"
+      ],
+      "usPresence": false,
+      "leadership": {
+        "ceo": {
+          "name": "Sarah Connor",
+          "title": "CEO",
+          "role": "CEO",
+          "isCurrent": true,
+          "evidence": "Sarah Connor serves as CEO of TestCo.",
+          "sourceUrl": "https://testco.io/about",
+          "confidence": 95
+        },
+        "founders": [
+          {
+            "name": "Sarah Connor",
+            "title": "Founder & CEO",
+            "role": "Founder",
+            "isCurrent": true,
+            "evidence": "Sarah Connor founded TestCo.",
+            "sourceUrl": "https://testco.io/about",
+            "confidence": 90
+          }
+        ],
+        "coFounders": [],
+        "cto": null,
+        "cfo": null,
+        "seniorExecutives": [],
+        "formerExecutives": []
+      },
+      "funding": {
+        "totalFundingUsd": null,
+        "latestRoundUsd": null,
+        "latestRoundType": null,
+        "latestRoundDate": null,
+        "investors": [],
+        "rounds": []
+      },
+      "contacts": {
+        "generalEmail": "hello@testco.io",
+        "phone": null,
+        "contactPageUrl": "https://testco.io/contact",
+        "executiveEmails": [],
+        "companyLinkedInUrl": "https://linkedin.com/company/testco",
+        "companyXUrl": null
+      },
+      "fieldEvidence": {
+        "headquarters.country": {
+          "field": "headquarters.country",
+          "value": "United Kingdom",
+          "sourceUrl": "https://testco.io/contact",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "Headquartered in London, United Kingdom",
+          "dateRetrieved": "2026-10-12T11:22:35.263Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 95
+        }
+      },
+      "sources": [
+        {
+          "url": "https://testco.io",
+          "title": "TestCo Systems",
+          "tier": "TIER_1_OFFICIAL",
+          "retrievedAt": "2026-10-12T11:22:35.264Z"
+        }
+      ],
+      "researchStatus": "completed",
+      "researchCompletenessScore": 80,
+      "createdAt": "2026-10-12T11:22:35.264Z",
+      "updatedAt": "2026-10-12T11:22:35.264Z"
+    },
+    "comp_blaize_com": {
+      "id": "comp_blaize_com",
+      "canonicalDomain": "blaize.com",
+      "website": "https://www.blaize.com",
+      "officialName": "Blaize",
+      "description": null,
+      "foundedYear": null,
+      "foundingDate": null,
+      "companyAgeYears": null,
+      "primaryIndustry": "AI & Machine Learning",
+      "subIndustry": "Edge AI Processors & Computing",
+      "productsAndServices": [],
+      "businessModel": "Hardware & Embedded Software",
+      "headquarters": {
+        "city": "El Dorado Hills",
+        "stateOrRegion": "CA",
+        "country": "United States",
+        "address": null
+      },
+      "operatingCountries": [
+        "United Kingdom",
+        "India",
+        "Japan",
+        "United States"
+      ],
+      "usPresence": true,
+      "leadership": {
+        "ceo": {
+          "name": "Dinakar Munagala",
+          "title": "Chief Executive Officer",
+          "role": "CEO",
+          "isCurrent": true,
+          "evidence": "Dinakar Munagala co-founded Blaize® and serves as CEO",
+          "sourceUrl": "https://www.blaize.com/company",
+          "confidence": 95
+        },
+        "founders": [
+          {
+            "name": "Dinakar Munagala",
+            "title": "Co-Founder",
+            "role": "Co-Founder",
+            "isCurrent": true,
+            "evidence": "Dinakar Munagala co-founded",
+            "sourceUrl": "https://www.blaize.com/company",
+            "confidence": 90
+          },
+          {
+            "name": "Satyaki Koneru",
+            "title": "Co-Founder",
+            "role": "Co-Founder",
+            "isCurrent": true,
+            "evidence": "Satyaki Koneru co-founded",
+            "sourceUrl": "https://www.blaize.com/company",
+            "confidence": 90
+          },
+          {
+            "name": "Ke Yin",
+            "title": "Co-Founder",
+            "role": "Co-Founder",
+            "isCurrent": true,
+            "evidence": "Ke Yin co-founded",
+            "sourceUrl": "https://www.blaize.com/company",
+            "confidence": 90
+          }
+        ],
+        "coFounders": [
+          {
+            "name": "Dinakar Munagala",
+            "title": "Co-Founder",
+            "role": "Co-Founder",
+            "isCurrent": true,
+            "evidence": "Dinakar Munagala co-founded",
+            "sourceUrl": "https://www.blaize.com/company",
+            "confidence": 90
+          },
+          {
+            "name": "Satyaki Koneru",
+            "title": "Co-Founder",
+            "role": "Co-Founder",
+            "isCurrent": true,
+            "evidence": "Satyaki Koneru co-founded",
+            "sourceUrl": "https://www.blaize.com/company",
+            "confidence": 90
+          },
+          {
+            "name": "Ke Yin",
+            "title": "Co-Founder",
+            "role": "Co-Founder",
+            "isCurrent": true,
+            "evidence": "Ke Yin co-founded",
+            "sourceUrl": "https://www.blaize.com/company",
+            "confidence": 90
+          }
+        ],
+        "cto": {
+          "name": "Satyaki Koneru",
+          "title": "Chief Technology Officer",
+          "role": "CTO",
+          "isCurrent": true,
+          "evidence": "Satyaki Koneru co-founded Blaize® and serves as Chief Technology Officer",
+          "sourceUrl": "https://www.blaize.com/company",
+          "confidence": 95
+        },
+        "cfo": null,
+        "seniorExecutives": [],
+        "formerExecutives": []
+      },
+      "funding": {
+        "totalFundingUsd": null,
+        "latestRoundUsd": null,
+        "latestRoundType": null,
+        "latestRoundDate": null,
+        "investors": [],
+        "rounds": []
+      },
+      "contacts": {
+        "generalEmail": "info@blaize.com",
+        "phone": "+9163470050",
+        "contactPageUrl": "https://www.blaize.com/contact",
+        "executiveEmails": [],
+        "companyLinkedInUrl": "https://www.linkedin.com/company/blaize-ai",
+        "companyXUrl": "https://twitter.com/blaizeinc"
+      },
+      "fieldEvidence": {
+        "contacts.companyLinkedInUrl": {
+          "field": "contacts.companyLinkedInUrl",
+          "value": "https://www.linkedin.com/company/blaize-ai",
+          "sourceUrl": "https://www.blaize.com",
+          "sourceTitle": "Intelligence at the edge of everywhere. | Blaize",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "LinkedIn link on https://www.blaize.com",
+          "dateRetrieved": "2026-10-12T11:25:54.332Z",
+          "extractionMethod": "meta_tags",
+          "confidence": 95
+        },
+        "contacts.companyXUrl": {
+          "field": "contacts.companyXUrl",
+          "value": "https://twitter.com/blaizeinc",
+          "sourceUrl": "https://www.blaize.com",
+          "sourceTitle": "Intelligence at the edge of everywhere. | Blaize",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "X link on https://www.blaize.com",
+          "dateRetrieved": "2026-10-12T11:25:54.332Z",
+          "extractionMethod": "meta_tags",
+          "confidence": 95
+        },
+        "officialName": {
+          "field": "officialName",
+          "value": "Blaize",
+          "sourceUrl": "https://www.blaize.com",
+          "sourceTitle": "Intelligence at the edge of everywhere. | Blaize",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "Brand title from Intelligence at the edge of everywhere. | Blaize",
+          "dateRetrieved": "2026-10-12T11:25:54.332Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 95
+        },
+        "website": {
+          "field": "website",
+          "value": "https://www.blaize.com",
+          "sourceUrl": "https://www.blaize.com",
+          "sourceTitle": "Intelligence at the edge of everywhere. | Blaize",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "https://www.blaize.com",
+          "dateRetrieved": "2026-10-12T11:25:54.332Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 100
+        },
+        "leadership.ceo": {
+          "field": "leadership.ceo",
+          "value": "Dinakar Munagala (CEO)",
+          "sourceUrl": "https://www.blaize.com/company",
+          "sourceTitle": "AI Edge Company - Artificial Intelligence Software Company - Blaize",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "Dinakar Munagala co-founded Blaize® and serves as CEO",
+          "dateRetrieved": "2026-10-12T11:25:54.332Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 95
+        },
+        "leadership.cto": {
+          "field": "leadership.cto",
+          "value": "Satyaki Koneru (CTO)",
+          "sourceUrl": "https://www.blaize.com/company",
+          "sourceTitle": "AI Edge Company - Artificial Intelligence Software Company - Blaize",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "Satyaki Koneru co-founded Blaize® and serves as Chief Technology Officer",
+          "dateRetrieved": "2026-10-12T11:25:54.332Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 95
+        },
+        "contacts.contactPageUrl": {
+          "field": "contacts.contactPageUrl",
+          "value": "https://www.blaize.com/contact",
+          "sourceUrl": "https://www.blaize.com/contact",
+          "sourceTitle": "Get In Touch with Blaize - Contact Us",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "Official contact page: https://www.blaize.com/contact",
+          "dateRetrieved": "2026-10-12T11:25:54.332Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 100
+        },
+        "contacts.generalEmail": {
+          "field": "contacts.generalEmail",
+          "value": "info@blaize.com",
+          "sourceUrl": "https://www.blaize.com/contact",
+          "sourceTitle": "Get In Touch with Blaize - Contact Us",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "Publicly listed email on https://www.blaize.com/contact",
+          "dateRetrieved": "2026-10-12T11:25:54.332Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 90
+        },
+        "contacts.phone": {
+          "field": "contacts.phone",
+          "value": "+9163470050",
+          "sourceUrl": "https://www.blaize.com/contact",
+          "sourceTitle": "Get In Touch with Blaize - Contact Us",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "tel link on https://www.blaize.com/contact",
+          "dateRetrieved": "2026-10-12T11:25:54.332Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 95
+        },
+        "headquarters.country": {
+          "field": "headquarters.country",
+          "value": "United States",
+          "sourceUrl": "https://startuptalky.com/global-startups-funding-investors-data-2019/",
+          "sourceTitle": "Global Startup Funding & Investors Data | 2019 Updated",
+          "sourceTier": "TIER_2_AUTHORITATIVE",
+          "excerpt": "El Dorado Hills, CA",
+          "dateRetrieved": "2026-10-12T11:25:54.332Z",
+          "extractionMethod": "firecrawl_search",
+          "confidence": 90
+        },
+        "usPresence": {
+          "field": "usPresence",
+          "value": true,
+          "sourceUrl": "https://startuptalky.com/global-startups-funding-investors-data-2019/",
+          "sourceTitle": "Global Startup Funding & Investors Data | 2019 Updated",
+          "sourceTier": "TIER_2_AUTHORITATIVE",
+          "excerpt": "Headquarters verified from sources: El Dorado Hills, CA",
+          "dateRetrieved": "2026-10-12T11:25:54.332Z",
+          "extractionMethod": "firecrawl_search",
+          "confidence": 90
+        },
+        "primaryIndustry": {
+          "field": "primaryIndustry",
+          "value": "AI & Machine Learning",
+          "sourceUrl": "https://www.blaize.com",
+          "sourceTitle": "Intelligence at the edge of everywhere. | Blaize",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "Extracted industry taxonomy: AI & Machine Learning (Edge AI Processors & Computing)",
+          "dateRetrieved": "2026-10-12T11:25:54.332Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 90
+        },
+        "leadership.founders": {
+          "field": "leadership.founders",
+          "value": "Dinakar Munagala, Satyaki Koneru, Ke Yin",
+          "sourceUrl": "https://www.blaize.com",
+          "sourceTitle": "Intelligence at the edge of everywhere. | Blaize",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "Co-founders documented: Dinakar Munagala, Satyaki Koneru, Ke Yin",
+          "dateRetrieved": "2026-10-12T11:25:54.332Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 90
+        }
+      },
+      "sources": [
+        {
+          "url": "https://www.blaize.com",
+          "title": "Intelligence at the edge of everywhere. | Blaize",
+          "tier": "TIER_1_OFFICIAL",
+          "retrievedAt": "2026-10-12T11:25:54.332Z"
+        },
+        {
+          "url": "https://www.blaize.com/company",
+          "title": "AI Edge Company - Artificial Intelligence Software Company - Blaize",
+          "tier": "TIER_1_OFFICIAL",
+          "retrievedAt": "2026-10-12T11:25:54.332Z"
+        },
+        {
+          "url": "https://www.blaize.com/contact",
+          "title": "Get In Touch with Blaize - Contact Us",
+          "tier": "TIER_1_OFFICIAL",
+          "retrievedAt": "2026-10-12T11:25:54.332Z"
+        },
+        {
+          "url": "https://www.blaize.com/news",
+          "title": "Blaize - AI Computing Startup News & Events",
+          "tier": "TIER_1_OFFICIAL",
+          "retrievedAt": "2026-10-12T11:25:54.332Z"
+        },
+        {
+          "url": "https://www.blaize.com/press/blaize-announces-planned-launch-of-blaize-ai-services-to-turn-ai-infrastructure-into-production-ready-apis",
+          "title": "Blaize Announces Planned Launch of Blaize AI Services to Turn AI Infrastructure into Production-Ready APIs - Blaize",
+          "tier": "TIER_1_OFFICIAL",
+          "retrievedAt": "2026-10-12T11:25:54.332Z"
+        }
+      ],
+      "researchStatus": "completed",
+      "statusReason": "Factual web extraction completed with authoritative evidence",
+      "researchCompletenessScore": 70,
+      "createdAt": "2026-10-12T11:25:54.332Z",
+      "updatedAt": "2026-10-12T11:25:54.332Z"
+    },
+    "comp_test_co_1791804435599": {
+      "id": "comp_test_co_1791804435599",
+      "canonicalDomain": "testco.io",
+      "website": "https://testco.io",
+      "officialName": "TestCo Systems",
+      "description": "Enterprise AI analytics platform",
+      "foundedYear": 2021,
+      "foundingDate": "2021-04-01",
+      "companyAgeYears": 5,
+      "primaryIndustry": "AI & Machine Learning",
+      "subIndustry": "Enterprise Analytics",
+      "productsAndServices": [
+        "Analytics Engine"
+      ],
+      "businessModel": "B2B SaaS",
+      "headquarters": {
+        "city": "London",
+        "stateOrRegion": "Greater London",
+        "country": "United Kingdom",
+        "address": "10 Tech City, London"
+      },
+      "operatingCountries": [
+        "United Kingdom"
+      ],
+      "usPresence": false,
+      "leadership": {
+        "ceo": {
+          "name": "Sarah Connor",
+          "title": "CEO",
+          "role": "CEO",
+          "isCurrent": true,
+          "evidence": "Sarah Connor serves as CEO of TestCo.",
+          "sourceUrl": "https://testco.io/about",
+          "confidence": 95
+        },
+        "founders": [
+          {
+            "name": "Sarah Connor",
+            "title": "Founder & CEO",
+            "role": "Founder",
+            "isCurrent": true,
+            "evidence": "Sarah Connor founded TestCo.",
+            "sourceUrl": "https://testco.io/about",
+            "confidence": 90
+          }
+        ],
+        "coFounders": [],
+        "cto": null,
+        "cfo": null,
+        "seniorExecutives": [],
+        "formerExecutives": []
+      },
+      "funding": {
+        "totalFundingUsd": null,
+        "latestRoundUsd": null,
+        "latestRoundType": null,
+        "latestRoundDate": null,
+        "investors": [],
+        "rounds": []
+      },
+      "contacts": {
+        "generalEmail": "hello@testco.io",
+        "phone": null,
+        "contactPageUrl": "https://testco.io/contact",
+        "executiveEmails": [],
+        "companyLinkedInUrl": "https://linkedin.com/company/testco",
+        "companyXUrl": null
+      },
+      "fieldEvidence": {
+        "headquarters.country": {
+          "field": "headquarters.country",
+          "value": "United Kingdom",
+          "sourceUrl": "https://testco.io/contact",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "Headquartered in London, United Kingdom",
+          "dateRetrieved": "2026-10-12T11:27:15.599Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 95
+        }
+      },
+      "sources": [
+        {
+          "url": "https://testco.io",
+          "title": "TestCo Systems",
+          "tier": "TIER_1_OFFICIAL",
+          "retrievedAt": "2026-10-12T11:27:15.600Z"
+        }
+      ],
+      "researchStatus": "completed",
+      "researchCompletenessScore": 80,
+      "createdAt": "2026-10-12T11:27:15.600Z",
+      "updatedAt": "2026-10-12T11:27:15.600Z"
+    },
+    "comp_test_co_1791804515441": {
+      "id": "comp_test_co_1791804515441",
+      "canonicalDomain": "testco.io",
+      "website": "https://testco.io",
+      "officialName": "TestCo Systems",
+      "description": "Enterprise AI analytics platform",
+      "foundedYear": 2021,
+      "foundingDate": "2021-04-01",
+      "companyAgeYears": 5,
+      "primaryIndustry": "AI & Machine Learning",
+      "subIndustry": "Enterprise Analytics",
+      "productsAndServices": [
+        "Analytics Engine"
+      ],
+      "businessModel": "B2B SaaS",
+      "headquarters": {
+        "city": "London",
+        "stateOrRegion": "Greater London",
+        "country": "United Kingdom",
+        "address": "10 Tech City, London"
+      },
+      "operatingCountries": [
+        "United Kingdom"
+      ],
+      "usPresence": false,
+      "leadership": {
+        "ceo": {
+          "name": "Sarah Connor",
+          "title": "CEO",
+          "role": "CEO",
+          "isCurrent": true,
+          "evidence": "Sarah Connor serves as CEO of TestCo.",
+          "sourceUrl": "https://testco.io/about",
+          "confidence": 95
+        },
+        "founders": [
+          {
+            "name": "Sarah Connor",
+            "title": "Founder & CEO",
+            "role": "Founder",
+            "isCurrent": true,
+            "evidence": "Sarah Connor founded TestCo.",
+            "sourceUrl": "https://testco.io/about",
+            "confidence": 90
+          }
+        ],
+        "coFounders": [],
+        "cto": null,
+        "cfo": null,
+        "seniorExecutives": [],
+        "formerExecutives": []
+      },
+      "funding": {
+        "totalFundingUsd": null,
+        "latestRoundUsd": null,
+        "latestRoundType": null,
+        "latestRoundDate": null,
+        "investors": [],
+        "rounds": []
+      },
+      "contacts": {
+        "generalEmail": "hello@testco.io",
+        "phone": null,
+        "contactPageUrl": "https://testco.io/contact",
+        "executiveEmails": [],
+        "companyLinkedInUrl": "https://linkedin.com/company/testco",
+        "companyXUrl": null
+      },
+      "fieldEvidence": {
+        "headquarters.country": {
+          "field": "headquarters.country",
+          "value": "United Kingdom",
+          "sourceUrl": "https://testco.io/contact",
+          "sourceTier": "TIER_1_OFFICIAL",
+          "excerpt": "Headquartered in London, United Kingdom",
+          "dateRetrieved": "2026-10-12T11:28:35.441Z",
+          "extractionMethod": "firecrawl_scrape",
+          "confidence": 95
+        }
+      },
+      "sources": [
+        {
+          "url": "https://testco.io",
+          "title": "TestCo Systems",
+          "tier": "TIER_1_OFFICIAL",
+          "retrievedAt": "2026-10-12T11:28:35.441Z"
+        }
+      ],
+      "researchStatus": "completed",
+      "researchCompletenessScore": 80,
+      "createdAt": "2026-10-12T11:28:35.441Z",
+      "updatedAt": "2026-10-12T11:28:35.441Z"
+    }
+  },
+  "targetCriteria": {},
+  "verificationRuns": {
+    "verif_comp_test_co_1_1791804011533": {
+      "id": "verif_comp_test_co_1_1791804011533",
+      "companyId": "comp_test_co_1",
+      "canonicalDomain": "testco.io",
+      "targetCriteriaId": "test_criteria_5m_6m",
+      "targetCriteriaVersion": 1,
+      "targetCriteriaName": "Standard TVB Target Criteria",
+      "overallStatus": "UNVERIFIED",
+      "qualificationScore": 75,
+      "summaryReason": "Missing required evidence for: Funding Range",
+      "criteria": {
+        "funding": {
+          "criterionKey": "funding",
+          "name": "Funding Range",
+          "status": "UNKNOWN",
+          "required": "$5,000,000 – $6,000,000 USD",
+          "actual": "Undisclosed / Unknown",
+          "reason": "No verifiable venture funding or financial round documented in public sources",
+          "evidence": null,
+          "sourceUrl": null
+        },
+        "geography": {
+          "criterionKey": "geography",
+          "name": "Headquarters Geography",
+          "status": "PASS",
+          "required": "Countries: United Kingdom",
+          "actual": "United Kingdom",
+          "reason": "Headquarters matches required country: United Kingdom",
+          "evidence": "Headquartered in London, United Kingdom",
+          "sourceUrl": "https://testco.io/contact"
+        },
+        "industry": {
+          "criterionKey": "industry",
+          "name": "Industry Taxonomy",
+          "status": "PASS",
+          "required": "Allowed: AI & Machine Learning, B2B SaaS, FinTech, HealthTech, Enterprise Software, Hardware & Semiconductors",
+          "actual": "AI & Machine Learning / Enterprise Analytics",
+          "reason": "Industry classification matches target profile: AI & Machine Learning",
+          "evidence": null,
+          "sourceUrl": null
+        },
+        "ceo": {
+          "criterionKey": "ceo",
+          "name": "CEO Identification",
+          "status": "PASS",
+          "required": "Verified current CEO",
+          "actual": "Sarah Connor (CEO)",
+          "reason": "Current CEO verified from official or authoritative sources: Sarah Connor",
+          "evidence": "Sarah Connor serves as CEO of TestCo.",
+          "sourceUrl": "https://testco.io/about"
+        }
+      },
+      "passedCount": 3,
+      "failedCount": 0,
+      "unknownCount": 1,
+      "verifiedAt": "2026-10-12T11:20:11.514Z",
+      "isOutdated": false
+    },
+    "verif_comp_test_co_1791804155263_1791804155283": {
+      "id": "verif_comp_test_co_1791804155263_1791804155283",
+      "companyId": "comp_test_co_1791804155263",
+      "canonicalDomain": "testco.io",
+      "targetCriteriaId": "test_criteria_5m_6m",
+      "targetCriteriaVersion": 1,
+      "targetCriteriaName": "Standard TVB Target Criteria",
+      "overallStatus": "UNVERIFIED",
+      "qualificationScore": 75,
+      "summaryReason": "Missing required evidence for: Funding Range",
+      "criteria": {
+        "funding": {
+          "criterionKey": "funding",
+          "name": "Funding Range",
+          "status": "UNKNOWN",
+          "required": "$5,000,000 – $6,000,000 USD",
+          "actual": "Undisclosed / Unknown",
+          "reason": "No verifiable venture funding or financial round documented in public sources",
+          "evidence": null,
+          "sourceUrl": null
+        },
+        "geography": {
+          "criterionKey": "geography",
+          "name": "Headquarters Geography",
+          "status": "PASS",
+          "required": "Countries: United Kingdom",
+          "actual": "United Kingdom",
+          "reason": "Headquarters matches required country: United Kingdom",
+          "evidence": "Headquartered in London, United Kingdom",
+          "sourceUrl": "https://testco.io/contact"
+        },
+        "industry": {
+          "criterionKey": "industry",
+          "name": "Industry Taxonomy",
+          "status": "PASS",
+          "required": "Allowed: AI & Machine Learning, B2B SaaS, FinTech, HealthTech, Enterprise Software, Hardware & Semiconductors",
+          "actual": "AI & Machine Learning / Enterprise Analytics",
+          "reason": "Industry classification matches target profile: AI & Machine Learning",
+          "evidence": null,
+          "sourceUrl": null
+        },
+        "ceo": {
+          "criterionKey": "ceo",
+          "name": "CEO Identification",
+          "status": "PASS",
+          "required": "Verified current CEO",
+          "actual": "Sarah Connor (CEO)",
+          "reason": "Current CEO verified from official or authoritative sources: Sarah Connor",
+          "evidence": "Sarah Connor serves as CEO of TestCo.",
+          "sourceUrl": "https://testco.io/about"
+        }
+      },
+      "passedCount": 3,
+      "failedCount": 0,
+      "unknownCount": 1,
+      "verifiedAt": "2026-10-12T11:22:35.265Z",
+      "isOutdated": false
+    },
+    "verif_comp_test_co_1791804435599_1791804435631": {
+      "id": "verif_comp_test_co_1791804435599_1791804435631",
+      "companyId": "comp_test_co_1791804435599",
+      "canonicalDomain": "testco.io",
+      "targetCriteriaId": "test_criteria_5m_6m",
+      "targetCriteriaVersion": 1,
+      "targetCriteriaName": "Standard TVB Target Criteria",
+      "overallStatus": "UNVERIFIED",
+      "qualificationScore": 75,
+      "summaryReason": "Missing required evidence for: Funding Range",
+      "criteria": {
+        "funding": {
+          "criterionKey": "funding",
+          "name": "Funding Range",
+          "status": "UNKNOWN",
+          "required": "$5,000,000 – $6,000,000 USD",
+          "actual": "Undisclosed / Unknown",
+          "reason": "No verifiable venture funding or financial round documented in public sources",
+          "evidence": null,
+          "sourceUrl": null
+        },
+        "geography": {
+          "criterionKey": "geography",
+          "name": "Headquarters Geography",
+          "status": "PASS",
+          "required": "Countries: United Kingdom",
+          "actual": "United Kingdom",
+          "reason": "Headquarters matches required country: United Kingdom",
+          "evidence": "Headquartered in London, United Kingdom",
+          "sourceUrl": "https://testco.io/contact"
+        },
+        "industry": {
+          "criterionKey": "industry",
+          "name": "Industry Taxonomy",
+          "status": "PASS",
+          "required": "Allowed: AI & Machine Learning, B2B SaaS, FinTech, HealthTech, Enterprise Software, Hardware & Semiconductors",
+          "actual": "AI & Machine Learning / Enterprise Analytics",
+          "reason": "Industry classification matches target profile: AI & Machine Learning",
+          "evidence": null,
+          "sourceUrl": null
+        },
+        "ceo": {
+          "criterionKey": "ceo",
+          "name": "CEO Identification",
+          "status": "PASS",
+          "required": "Verified current CEO",
+          "actual": "Sarah Connor (CEO)",
+          "reason": "Current CEO verified from official or authoritative sources: Sarah Connor",
+          "evidence": "Sarah Connor serves as CEO of TestCo.",
+          "sourceUrl": "https://testco.io/about"
+        }
+      },
+      "passedCount": 3,
+      "failedCount": 0,
+      "unknownCount": 1,
+      "verifiedAt": "2026-10-12T11:27:15.601Z",
+      "isOutdated": false
+    },
+    "verif_comp_test_co_1791804515441_1791804515459": {
+      "id": "verif_comp_test_co_1791804515441_1791804515459",
+      "companyId": "comp_test_co_1791804515441",
+      "canonicalDomain": "testco.io",
+      "targetCriteriaId": "test_criteria_5m_6m",
+      "targetCriteriaVersion": 1,
+      "targetCriteriaName": "Standard TVB Target Criteria",
+      "overallStatus": "UNVERIFIED",
+      "qualificationScore": 75,
+      "summaryReason": "Missing required evidence for: Funding Range",
+      "criteria": {
+        "funding": {
+          "criterionKey": "funding",
+          "name": "Funding Range",
+          "status": "UNKNOWN",
+          "required": "$5,000,000 – $6,000,000 USD",
+          "actual": "Undisclosed / Unknown",
+          "reason": "No verifiable venture funding or financial round documented in public sources",
+          "evidence": null,
+          "sourceUrl": null
+        },
+        "geography": {
+          "criterionKey": "geography",
+          "name": "Headquarters Geography",
+          "status": "PASS",
+          "required": "Countries: United Kingdom",
+          "actual": "United Kingdom",
+          "reason": "Headquarters matches required country: United Kingdom",
+          "evidence": "Headquartered in London, United Kingdom",
+          "sourceUrl": "https://testco.io/contact"
+        },
+        "industry": {
+          "criterionKey": "industry",
+          "name": "Industry Taxonomy",
+          "status": "PASS",
+          "required": "Allowed: AI & Machine Learning, B2B SaaS, FinTech, HealthTech, Enterprise Software, Hardware & Semiconductors",
+          "actual": "AI & Machine Learning / Enterprise Analytics",
+          "reason": "Industry classification matches target profile: AI & Machine Learning",
+          "evidence": null,
+          "sourceUrl": null
+        },
+        "ceo": {
+          "criterionKey": "ceo",
+          "name": "CEO Identification",
+          "status": "PASS",
+          "required": "Verified current CEO",
+          "actual": "Sarah Connor (CEO)",
+          "reason": "Current CEO verified from official or authoritative sources: Sarah Connor",
+          "evidence": "Sarah Connor serves as CEO of TestCo.",
+          "sourceUrl": "https://testco.io/about"
+        }
+      },
+      "passedCount": 3,
+      "failedCount": 0,
+      "unknownCount": 1,
+      "verifiedAt": "2026-10-12T11:28:35.442Z",
+      "isOutdated": false
+    }
+  }
 }

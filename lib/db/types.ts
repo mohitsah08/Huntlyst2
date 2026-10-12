@@ -140,3 +140,6 @@ export interface DbSearchHistoryItem {
   status: 'Completed' | 'Degraded' | 'Failed';
   companies: CompanyRecord[];
 }
+
+export type { CompanyResearchProfile, TargetCriteria, VerificationRun } from '@/lib/research/types';
+
