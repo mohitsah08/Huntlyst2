@@ -8,6 +8,7 @@
  */
 
 import { ISearchProvider, SearchQueryOptions, SearchCandidateItem, SearchProviderResult } from './types';
+import { firecrawlSearchProvider } from './providers/FirecrawlSearchProvider';
 import { duckDuckGoProvider } from './providers/DuckDuckGoProvider';
 import { claudeIntelligenceProvider } from './providers/ClaudeIntelligenceProvider';
 import { serpApiProvider } from './providers/SerpApiProvider';
@@ -23,11 +24,12 @@ export class SearchManager {
 
   private constructor() {
     this.providers = [
-      claudeIntelligenceProvider,
+      firecrawlSearchProvider,
       duckDuckGoProvider,
       serpApiProvider,
       curatedVentureProvider,
       fundingWiresProvider,
+      claudeIntelligenceProvider,
     ];
   }
 

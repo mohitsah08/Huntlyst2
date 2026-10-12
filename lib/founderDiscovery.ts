@@ -14,6 +14,7 @@
 
 import { extractCanonicalDomain, normalizeCompanyName, normalizePersonName } from './deduplication';
 import { claudeClient } from '@/providers/claude/client';
+import { firecrawlClient } from '@/providers/firecrawl/client';
 import { DiscoveredPerson } from '@/providers/types';
 
 export interface FounderDiscoveryInput {
@@ -73,7 +74,48 @@ export class FounderDiscoveryService {
       }
     }
 
-    // 2. If Claude is configured, query venture intelligence for verified executive leadership
+    // 2. If Firecrawl is configured, query live web intelligence for verified executive leadership
+    if (firecrawlClient.isConfigured()) {
+      try {
+        const query = `"${input.companyName}" (CEO OR "Chief Executive Officer" OR Founder OR "Co-founder")`;
+        const fcRes = await firecrawlClient.search(query, { limit: 3 });
+        if (fcRes.success && fcRes.data) {
+          const items = Array.isArray(fcRes.data) ? fcRes.data : (fcRes.data.web || []);
+          for (const item of items) {
+            const text = `${item.title || ''} ${item.description || ''} ${item.markdown || ''}`;
+            const match = text.match(/(?:CEO|Chief Executive Officer|Founder|Co-Founder)[:\s]+([A-Z][a-z]+ [A-Z][a-z]+)/i)
+              || text.match(/([A-Z][a-z]+ [A-Z][a-z]+)(?:,\s*(?:CEO|Co-Founder|Founder|Chief Executive Officer))/i);
+            if (match && match[1]) {
+              const nameCandidate = normalizePersonName(match[1]);
+              if (!['United States', 'New York', 'San Francisco', 'Press Release', 'About Us', 'Contact Us'].includes(nameCandidate)) {
+                const isCeo = /CEO|Chief Executive Officer/i.test(match[0]);
+                const isCoFounder = /Co-Founder/i.test(match[0]);
+                const role = isCeo ? 'CEO' : isCoFounder ? 'Co-founder' : 'Founder';
+                return {
+                  person: {
+                    name: nameCandidate,
+                    title: isCeo ? 'Chief Executive Officer' : 'Founder',
+                    role: role as any,
+                    evidence: match[0].trim(),
+                    source: item.url || input.website,
+                    status: 'PASS',
+                  },
+                  relationshipConfidence: 85,
+                  isCurrentExecutive: true,
+                  validationReason: `Verified current ${role} discovered via Firecrawl web intelligence.`,
+                  sourceUrl: item.url || input.website,
+                  evidenceSnippet: match[0].trim(),
+                };
+              }
+            }
+          }
+        }
+      } catch (fcErr) {
+        console.warn(`[FounderDiscovery] Firecrawl search error for ${input.companyName}:`, fcErr);
+      }
+    }
+
+    // 3. Fallback: If Claude is configured, query venture intelligence for verified executive leadership
     if (claudeClient.isConfigured()) {
       const prompt = `Identify the CURRENT primary founder or CEO for this specific verified company:
 Company Name: "${input.companyName}"

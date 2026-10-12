@@ -40,6 +40,7 @@ import { extractDomain } from './discovery';
 import { extractCanonicalDomain, normalizeCompanyName, normalizePersonName } from './deduplication';
 
 import { claudeClient } from '@/providers/claude/client';
+import { firecrawlClient } from '@/providers/firecrawl/client';
 
 export class ContactEnrichmentService {
   /**
@@ -567,7 +568,66 @@ export class ContactEnrichmentService {
     }
 
 
-    // 3. Query Claude Intelligence for Verified Executives if Available and contacts list is empty
+    // 3. Query Firecrawl Web Intelligence for Verified Executives if Available and contacts list is empty
+    if (contacts.length === 0 && firecrawlClient.isConfigured()) {
+      try {
+        const query = `"${input.companyName}" (CEO OR Founder OR "Chief Executive Officer" OR "Co-founder")`;
+        const fcRes = await firecrawlClient.search(query, { limit: 3 });
+        if (fcRes.success && fcRes.data) {
+          const items = Array.isArray(fcRes.data) ? fcRes.data : (fcRes.data.web || []);
+          for (const item of items) {
+            const text = `${item.title || ''} ${item.description || ''} ${item.markdown || ''}`;
+            const match = text.match(/(?:CEO|Chief Executive Officer|Founder|Co-Founder)[:\s]+([A-Z][a-z]+ [A-Z][a-z]+)/i)
+              || text.match(/([A-Z][a-z]+ [A-Z][a-z]+)(?:,\s*(?:CEO|Co-Founder|Founder|Chief Executive Officer))/i);
+            if (match && match[1]) {
+              const normName = normalizePersonName(match[1]);
+              if (!['United States', 'New York', 'San Francisco', 'Press Release', 'About Us', 'Contact Us'].includes(normName)) {
+                const parts = normName.split(/\s+/).filter(Boolean);
+                const firstName = parts[0] || '';
+                const lastName = parts.length > 1 ? parts.slice(1).join(' ') : '';
+                const isCeo = /CEO|Chief Executive Officer/i.test(match[0]);
+                const isCoFounder = /Co-Founder/i.test(match[0]);
+                const role: DecisionMakerRole = isCeo ? 'CEO' : isCoFounder ? 'Co-Founder' : 'Founder';
+
+                const { email, emailStatus } = await this.synthesizeAndVerifyProfessionalEmail(
+                  firstName,
+                  lastName,
+                  canonicalDomain
+                );
+
+                contacts.push({
+                  full_name: normName,
+                  first_name: firstName,
+                  last_name: lastName,
+                  current_role: role,
+                  company_relationship: match[0].trim() || `Active ${role} at ${input.companyName}`,
+                  linkedin_url: null,
+                  linkedin_status: 'NOT_FOUND',
+                  twitter_x_url: null,
+                  twitter_x_status: 'NOT_FOUND',
+                  professional_email: email,
+                  professional_email_status: emailStatus,
+                  professional_email_provider: emailStatus === 'VALID' ? 'Direct DNS MX' : null,
+                  public_personal_email: null,
+                  public_personal_email_status: 'NOT_DISCLOSED',
+                  source_url: item.url || input.website,
+                  source: 'Firecrawl Web Search',
+                  verified_at: checkedAt,
+                  confidence: 85,
+                  verification_status: 'VERIFIED',
+                  is_primary: contacts.length === 0,
+                });
+                break;
+              }
+            }
+          }
+        }
+      } catch (fcErr) {
+        console.warn(`[ContactEnrichment] Firecrawl search error for ${input.companyName}:`, fcErr);
+      }
+    }
+
+    // 4. Fallback: Query Claude Intelligence for Verified Executives if Available and contacts list is empty
     if (contacts.length === 0 && claudeClient.isConfigured()) {
       try {
         const prompt = `Identify up to 2 verified current leadership executives (prioritizing CEO, Founder, Co-Founder) for:

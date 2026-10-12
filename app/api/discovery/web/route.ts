@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     const excludeDomains: string[] = Array.isArray(body.excludeDomains) ? body.excludeDomains : [];
 
-    const provider = getResearchProvider('claude');
+    const provider = getResearchProvider(body.provider || 'firecrawl');
 
     // 1. Search candidates via search provider
     const searchResults = await provider.searchCandidates(targetProfile, requestedCount, excludeDomains);
