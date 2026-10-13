@@ -62,6 +62,7 @@ export interface EmailVerificationResult {
 export type CompanyRecord = {
   name: string;
   website: string;
+  canonicalDomain?: string;
   description: string | null;
   industry: string | null;
   fundingOrRevenue: string | null;
@@ -69,6 +70,18 @@ export type CompanyRecord = {
   fundingAmount?: string | number | null;
   fundingDate?: string | null;
   fundingType?: string | null;
+  id?: string;
+  totalFundingDisclosed?: number | null;
+  latestRound?: string | null;
+  latestRoundAmount?: number | null;
+  investors?: string[];
+  founders?: string[];
+  yearFounded?: number | null;
+  employeeRange?: string | null;
+  techPlatformSignals?: string[];
+  sourceSnippets?: Array<{ url: string; snippet: string; field: string; retrievedAt?: string }>;
+  discoveredAt?: string;
+  sourceProvenance?: string;
   totalFundingUsd?: number | null;
   latestRoundUsd?: number | null;
   latestRoundDate?: string | null;
@@ -298,6 +311,10 @@ export interface PipelineStreamEvent {
   stats?: RunAgentResult['stats'];
   company?: CompanyRecord;
   result?: RunAgentResult;
+  results?: any[];
+  rejectedResults?: any[];
+  verificationResult?: any;
+  totalDiscovered?: number;
   error?: string;
 }
 

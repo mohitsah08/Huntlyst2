@@ -3,10 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { TargetProfile, DEFAULT_TVB_TARGET_PROFILE, formatTargetSummary } from '@/lib/targetProfileData';
 import { CompanyVerificationResult, PipelineStageName } from '@/providers/types';
-import { CompanyRecord, RejectedCompanyRecord, HuntConfig } from '@/lib/types';
+import { CompanyRecord, RejectedCompanyRecord, HuntConfig, PipelineStreamEvent } from '@/lib/types';
 import CandidateVerificationCard from './CandidateVerificationCard';
 import HuntConfiguration from './HuntConfiguration';
 import ExportModal from './ExportModal';
+import ExternalResearchWorkflow from './ExternalResearchWorkflow';
 import { PipelineStageLabel, downloadCsvFile, downloadPdfFile, downloadXlsxFile } from '@/lib/export';
 import { extractCanonicalDomain, normalizeCompanyName } from '@/lib/deduplication';
 
@@ -91,6 +92,9 @@ export default function StagedDiscoveryWorkflow({
   // Web Search Stage State
   const [webSearchResults, setWebSearchResults] = useState<CompanyVerificationResult[]>([]);
   const [webSearchApproved, setWebSearchApproved] = useState<Set<string>>(new Set());
+  const [webLogs, setWebLogs] = useState<{ time: string; text: string; stage?: string }[]>([]);
+  const [webProgress, setWebProgress] = useState<{ current: number; total: number; strategy?: string; discovered?: number } | null>(null);
+  const [isWebLogsExpanded, setIsWebLogsExpanded] = useState(false);
 
   // Result Filtering Tab (4 Canonical User-Facing Statuses)
   const [activeTab, setActiveTab] = useState<'all' | 'VERIFIED' | 'REVIEW' | 'UNVERIFIED' | 'REJECTED'>('all');
@@ -119,6 +123,9 @@ export default function StagedDiscoveryWorkflow({
       setExternalApproved(new Set());
       setWebSearchResults([]);
       setWebSearchApproved(new Set());
+      setWebLogs([]);
+      setWebProgress(null);
+      setIsWebLogsExpanded(false);
       setSelectedFile(null);
       setManualText('');
       setStatusMessage('');
@@ -364,42 +371,138 @@ export default function StagedDiscoveryWorkflow({
   const handleRunWebSearch = async () => {
     setWebStatus('running');
     setErrorMessage(null);
-    setStatusMessage('Searching public web using Huntlyst Web Discovery...');
+    setWebLogs([]);
+    const targetCount = typeof targetProfile.targetCount === 'number'
+      ? targetProfile.targetCount
+      : (targetProfile.customTargetCount || 15);
+    setWebProgress({ current: 0, total: targetCount, discovered: 0 });
+    setStatusMessage('Initializing Huntlyst Web Discovery on Houston runtime...');
 
     const existingDomains = [
       ...internalResults.map(r => r.company.website),
       ...externalResults.map(r => r.company.website),
-    ];
+    ].filter(Boolean) as string[];
+
+    const huntId = `hunt_stage3_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+    const timestamp = () => new Date().toLocaleTimeString('en-US', { hour12: false });
 
     try {
-      const response = await fetch('/api/discovery/web', {
+      const response = await fetch('/api/discovery/web?stream=true', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'text/event-stream',
+        },
         body: JSON.stringify({
           targetProfile,
+          targetCount,
           excludeDomains: existingDomains,
+          huntId,
         }),
       });
 
-      const data = await response.json();
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Web discovery failed');
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.error || `Web discovery failed with HTTP ${response.status}`);
       }
 
-      setWebSearchResults(data.results || []);
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('text/event-stream') && response.body) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let partialBuffer = '';
 
-      const nextApproved = new Set<string>();
-      (data.results || []).forEach((r: CompanyVerificationResult) => {
-        if (r.verificationStatus === 'QUALIFIED' || r.verificationStatus === 'PARTIALLY_VERIFIED') {
-          nextApproved.add(r.company.name);
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          partialBuffer += decoder.decode(value, { stream: true });
+          const lines = partialBuffer.split('\n\n');
+          partialBuffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith('data: ')) continue;
+
+            try {
+              const event: PipelineStreamEvent = JSON.parse(trimmed.slice(6));
+
+              if (event.type === 'log') {
+                setWebLogs((prev) => [
+                  ...prev,
+                  { time: timestamp(), text: event.message, stage: event.stageName },
+                ]);
+                setStatusMessage(event.message);
+
+                if (event.message?.includes('Strategy ') || event.message?.includes('Executing Strategy')) {
+                  const stratMatch = event.message.match(/(Strategy \d+:[^.(]+)/i) || event.message.match(/Executing (Strategy [^.(]+)/i);
+                  if (stratMatch) {
+                    setWebProgress((prev) => prev ? { ...prev, strategy: stratMatch[1].trim() } : null);
+                  }
+                }
+              } else if (event.type === 'candidate_found') {
+                setStatusMessage(event.message);
+                if (event.stats?.discovered) {
+                  setWebProgress((prev) => prev ? { ...prev, discovered: event.stats?.discovered } : null);
+                }
+              } else if (event.type === 'company_qualified') {
+                setStatusMessage(event.message);
+                if (event.verificationResult) {
+                  const qualifiedItem = event.verificationResult as CompanyVerificationResult;
+                  setWebSearchResults((prev) => {
+                    const exists = prev.some(p => p.company.name.toLowerCase() === qualifiedItem.company.name.toLowerCase());
+                    return exists ? prev : [...prev, qualifiedItem];
+                  });
+                  setWebSearchApproved((prev) => new Set([...prev, qualifiedItem.company.name]));
+                  setWebProgress((prev) => prev ? { ...prev, current: prev.current + 1 } : null);
+                }
+              } else if (event.type === 'complete') {
+                const finalResults = (event.results || []) as CompanyVerificationResult[];
+                if (finalResults.length > 0) {
+                  setWebSearchResults(finalResults);
+                  const nextApproved = new Set<string>();
+                  finalResults.forEach((r: CompanyVerificationResult) => {
+                    if (r.verificationStatus === 'QUALIFIED' || r.verificationStatus === 'VERIFIED' || r.verificationStatus === 'PARTIALLY_VERIFIED') {
+                      nextApproved.add(r.company.name);
+                    }
+                  });
+                  setWebSearchApproved(nextApproved);
+                }
+                setWebStatus('completed');
+                setStatusMessage(event.message || `Web discovery complete: ${finalResults.length} leads found.`);
+              } else if (event.type === 'error') {
+                throw new Error(event.message || 'Web discovery failed');
+              }
+            } catch (pErr) {
+              // Ignore partial frame parse error
+            }
+          }
         }
-      });
-      setWebSearchApproved(nextApproved);
-      setWebStatus('completed');
-      setStatusMessage(`Discovered and verified ${data.results?.length || 0} candidate companies.`);
+      } else {
+        // Fallback for standard JSON response
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error || 'Web discovery failed');
+        }
+        const incomingResults = (data.results || []) as CompanyVerificationResult[];
+        setWebSearchResults(incomingResults);
+        const nextApproved = new Set<string>();
+        incomingResults.forEach((r) => {
+          if (r.verificationStatus === 'QUALIFIED' || r.verificationStatus === 'VERIFIED' || r.verificationStatus === 'PARTIALLY_VERIFIED') {
+            nextApproved.add(r.company.name);
+          }
+        });
+        setWebSearchApproved(nextApproved);
+        setWebStatus('completed');
+        setStatusMessage(`Discovered and verified ${incomingResults.length} candidate companies.`);
+      }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Web search error');
+      setErrorMessage(err.message || 'Web discovery error');
       setWebStatus('completed');
+      setStatusMessage('Web discovery halted with an error.');
+    } finally {
+      // Guaranteed terminal state: never stay stuck in running
+      setWebStatus((prev) => (prev === 'running' ? 'completed' : prev));
     }
   };
 
@@ -1287,132 +1390,24 @@ export default function StagedDiscoveryWorkflow({
       {/* ========================================================================= */}
       {currentStep === 'external' && (
         <div className="space-y-5 animate-in fade-in">
-          <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch-sm space-y-4">
-            <div className="border-b border-[#F0EAD8] pb-3">
-              <h3 className="font-display text-lg font-bold text-[#1E1B18] flex items-center gap-2">
-                <span>🔎</span> Stage 2: External Discovery & Verification
-              </h3>
-              <p className="text-xs text-[#766E65] mt-1 font-mono">
-                Enter company names, websites, or URLs for external deep research. Huntlyst runs the 6-stage candidate pipeline, verifies CEO/founders, validates live DNS MX mail servers, and presents verified evidence.
-              </p>
-            </div>
+          <ExternalResearchWorkflow
+            carriedCandidates={internalResults
+              .filter((r) => internalApproved.has(r.company.name))
+              .map((r) => ({ name: r.company.name, website: r.company.website }))}
+            onUpdateResults={(newResults) => {
+              setExternalResults(newResults);
+              const nextApproved = new Set(externalApproved);
+              for (const r of newResults) {
+                if (r.verificationStatus === 'VERIFIED') {
+                  nextApproved.add(r.company.name);
+                }
+              }
+              setExternalApproved(nextApproved);
+            }}
+            onOpenLeadModal={onOpenLeadModal}
+          />
 
-            {/* External Target Input */}
-            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-              <div className="sm:col-span-2">
-                <input
-                  type="text"
-                  value={externalInputName}
-                  onChange={(e) => setExternalInputName(e.target.value)}
-                  placeholder="Company Name (e.g. Synthesized)"
-                  className="w-full p-2.5 text-xs font-mono border-2 border-[#1E1B18] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <input
-                  type="text"
-                  value={externalInputWebsite}
-                  onChange={(e) => setExternalInputWebsite(e.target.value)}
-                  placeholder="Website / URL (e.g. synthesized.io)"
-                  className="w-full p-2.5 text-xs font-mono border-2 border-[#1E1B18] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
-                />
-              </div>
-              <button
-                type="button"
-                disabled={isCurrentProcessing || (!externalInputName.trim() && !externalInputWebsite.trim())}
-                onClick={handleAddExternalCompany}
-                className="sketch-btn px-4 py-2.5 text-xs font-bold text-white bg-[#1E1B18] border-2 border-[#1E1B18] rounded-xl hover:bg-[#3E3832] disabled:opacity-50 flex items-center justify-center gap-1.5"
-              >
-                <span>+ Research Target</span>
-              </button>
-            </div>
-
-            {/* Candidates Carried from Internal Stage */}
-            {internalApproved.size > 0 && (
-              <div className="p-3 bg-[#FAF6EE] rounded-xl border border-[#EBE4D5] text-xs font-mono space-y-2">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <span className="font-bold text-[#1E1B18]">
-                    Candidates Carried from Internal Stage ({internalApproved.size}):
-                  </span>
-                  <button
-                    type="button"
-                    disabled={isCurrentProcessing}
-                    onClick={() => {
-                      const carried = internalResults
-                        .filter(r => internalApproved.has(r.company.name))
-                        .map(r => ({
-                          name: r.company.name,
-                          website: r.company.website,
-                          leadPackage: r.lead_package,
-                        }));
-                      handleResearchExternal(carried);
-                    }}
-                    className="sketch-btn px-3 py-1 text-xs font-bold text-white bg-[#FF6B35] hover:bg-[#E55A2B] rounded-lg shadow-xs flex items-center gap-1.5"
-                  >
-                    <span>⚡</span>
-                    <span>Research All Carried Leads Online ({internalApproved.size})</span>
-                  </button>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {Array.from(internalApproved).slice(0, 8).map(name => (
-                    <span key={name} className="px-2 py-0.5 rounded bg-white border border-[#DCD6C9] text-[#1E1B18] text-[11px]">
-                      {name}
-                    </span>
-                  ))}
-                  {internalApproved.size > 8 && (
-                    <span className="text-[#766E65] text-[10px]">+{internalApproved.size - 8} more</span>
-                  )}
-                </div>
-              </div>
-            )}
-
-          </div>
-
-          {/* External Results */}
-          {externalResults.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <h4 className="font-display font-bold text-base text-[#1E1B18]">
-                  External Research Intelligence ({externalResults.length})
-                </h4>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setExportModalConfig({
-                      isOpen: true,
-                      stage: 'Stage 2: External Discovery',
-                      stagedResults: externalResults,
-                      title: 'Export Stage 2: External Discovery',
-                      subtitle: `${externalResults.length} external candidates researched and verified.`,
-                    })}
-                    className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] rounded-lg border border-[#1E1B18] shadow-sketch-xs flex items-center gap-1.5 transition-colors"
-                  >
-                    <span>📦</span>
-                    <span>Export Stage 2 ({externalResults.length})</span>
-                  </button>
-                  <span className="text-xs font-mono text-[#2E7D32] font-bold">
-                    Approved: {externalApproved.size}
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {externalResults.map((res) => (
-                  <CandidateVerificationCard
-                    key={res.company.name + res.company.website}
-                    result={res}
-                    isSelected={externalApproved.has(res.company.name)}
-                    onToggleSelect={toggleExternalApproval}
-                    onOpenDetails={() => onOpenLeadModal?.(res.company)}
-                    onRetryStage={handleRetryCandidateStage}
-                    isRetrying={isRetryingCandidate}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 🛑 APPROVAL GATE 2 BANNER (Section 8 & 9) */}
+          {/* 🛑 APPROVAL GATE 2 BANNER */}
           <div className="paper-card bg-[#FFFDF9] rounded-2xl p-5 border-2 border-[#1E1B18] shadow-sketch flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
             <div>
               <div className="flex items-center gap-2">
@@ -1478,6 +1473,98 @@ export default function StagedDiscoveryWorkflow({
               </div>
             </div>
           </div>
+
+          {/* Real Processing Progress Bar & Telemetry for Web Search */}
+          {(webStatus === 'running' || webProgress) && (
+            <div className="p-4 bg-[#FAF6EE] rounded-xl border-2 border-[#1E1B18] space-y-3 shadow-sketch-sm animate-in fade-in">
+              <div className="flex justify-between items-center text-xs font-mono font-bold flex-wrap gap-2">
+                <span className="flex items-center gap-2 text-[#1E1B18]">
+                  {webStatus === 'running' ? (
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#FF6B35] animate-ping shrink-0" />
+                  ) : (
+                    <span className="text-[#2E7D32]">✓</span>
+                  )}
+                  <span>
+                    Stage 3: Autonomous Web Discovery Pipeline
+                    {webProgress?.strategy ? ` (${webProgress.strategy})` : ''}
+                  </span>
+                </span>
+                <span className="text-[#FF6B35] font-bold text-sm">
+                  {webSearchResults.length} / {webProgress?.total || (typeof targetProfile.targetCount === 'number' ? targetProfile.targetCount : 15)} Qualified
+                  {webProgress?.discovered ? ` (${webProgress.discovered} discovered)` : ''}
+                </span>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="w-full h-3 bg-white rounded-full border border-[#1E1B18] overflow-hidden">
+                <div
+                  className="h-full bg-[#FF6B35] transition-all duration-300"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      Math.round(
+                        (webSearchResults.length /
+                          Math.max(
+                            webProgress?.total ||
+                              (typeof targetProfile.targetCount === 'number'
+                                ? targetProfile.targetCount
+                                : 15),
+                            1
+                          )) *
+                          100
+                      )
+                    )}%`,
+                  }}
+                />
+              </div>
+
+              {/* Telemetry Stream Toggle & Mini Terminal */}
+              {webLogs.length > 0 && (
+                <div className="pt-1">
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => setIsWebLogsExpanded(!isWebLogsExpanded)}
+                      className="text-[11px] font-mono text-[#766E65] hover:text-[#1E1B18] font-bold flex items-center gap-1.5"
+                    >
+                      <span>📡</span>
+                      <span>
+                        Houston Telemetry Stream ({webLogs.length} events)
+                      </span>
+                      <span>{isWebLogsExpanded ? '▲ Hide' : '▼ View Live Logs'}</span>
+                    </button>
+                    <span className="text-[10px] font-mono text-[#8C847A]">
+                      8 Query Strategies • Real-Time SSE
+                    </span>
+                  </div>
+
+                  {isWebLogsExpanded && (
+                    <div className="mt-2 bg-[#1E1B18] text-[#FAF6EE] p-3.5 rounded-xl font-mono text-[11px] space-y-1.5 max-h-48 overflow-y-auto border border-[#3E3832]">
+                      {webLogs.slice(-20).map((l, i) => (
+                        <div key={i} className="flex items-start gap-2 leading-relaxed">
+                          <span className="text-[#8C847A] shrink-0 text-[10px]">{l.time}</span>
+                          <span className="text-[#FF6B35]">›</span>
+                          <span className="text-[#E0DACB]">{l.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Zero Match Guidance Notice */}
+          {webStatus === 'completed' && webSearchResults.length === 0 && !errorMessage && (
+            <div className="p-4 bg-[#FAF6EE] rounded-xl border-2 border-[#1E1B18] space-y-2 shadow-sketch-sm">
+              <div className="font-bold text-xs text-[#1E1B18] flex items-center gap-1.5">
+                <span>ℹ️</span> No candidate companies matching strict parameters could be discovered.
+              </div>
+              <p className="text-xs text-[#766E65] font-mono">
+                Huntlyst enforces strict zero-hallucination verification. To find more candidates, consider adjusting your target criteria in Target Settings (e.g. broadening geography or funding ranges) and re-launching Stage 3.
+              </p>
+            </div>
+          )}
 
           {/* Web Search Results */}
           {webSearchResults.length > 0 && (

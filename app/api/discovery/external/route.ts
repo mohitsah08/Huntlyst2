@@ -16,6 +16,7 @@ import { processCandidateThroughPipeline } from '@/lib/discoveryPipeline';
 import { unifiedLeadStore } from '@/lib/unifiedLeadStore';
 import { CompanyVerificationResult, ResearchCandidateInput } from '@/providers/types';
 import { TargetProfile, DEFAULT_TVB_TARGET_PROFILE } from '@/lib/targetProfileData';
+import { validateAndNormalizeInput, InvalidInputError } from '@/lib/research/pipeline';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -90,6 +91,22 @@ export async function POST(request: NextRequest) {
         results: [],
         stats: { total: 0, verified: 0, review: 0, unverified: 0, rejected: 0 },
       }, { status: 400 });
+    }
+
+    // Validate candidates to reject arbitrary instructions, prompts, or malformed inputs
+    for (const cand of candidatesInput) {
+      try {
+        validateAndNormalizeInput({ url: cand.url || cand.website, name: cand.name });
+      } catch (err: any) {
+        if (err instanceof InvalidInputError) {
+          return NextResponse.json({
+            success: false,
+            error: err.message,
+            results: [],
+            stats: { total: 0, verified: 0, review: 0, unverified: 0, rejected: 0 },
+          }, { status: 400 });
+        }
+      }
     }
 
     const verificationResults: (CompanyVerificationResult & Record<string, any>)[] = [];

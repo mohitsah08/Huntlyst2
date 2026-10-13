@@ -24,6 +24,7 @@ import * as cheerio from 'cheerio';
 import { extractCanonicalDomain } from '@/lib/deduplication';
 import { StandardIndustryPreset } from '@/providers/types';
 import { detectCountryFromEvidence } from '@/lib/geography';
+import { firecrawlClient } from '@/providers/firecrawl/client';
 
 export type SourceTier = 'TIER_1_OFFICIAL' | 'TIER_2_AUTHORITATIVE' | 'TIER_3_REFERENCE';
 
@@ -218,6 +219,48 @@ export class SourceInspectionManager {
 
     try {
       this.fetchedUrls.add(cleanUrl);
+
+      // Attempt high-fidelity Firecrawl Scrape if configured
+      if (firecrawlClient.isConfigured()) {
+        try {
+          const fcRes = await firecrawlClient.scrape(cleanUrl, {
+            formats: ['markdown', 'html'],
+            onlyMainContent: false,
+            timeout: 15000,
+          });
+
+          if (fcRes.success && fcRes.data) {
+            const html = fcRes.data.html || '';
+            const markdownText = fcRes.data.markdown || '';
+            const metaTitle = fcRes.data.metadata?.title || '';
+            const tier = this.classifySourceTier(cleanUrl, canonicalCompanyDomain);
+
+            let cleanText = markdownText;
+            if (html && !cleanText) {
+              const $ = cheerio.load(html);
+              $('script, style, noscript, svg, iframe').remove();
+              cleanText = $('body').text().replace(/\s+/g, ' ').trim();
+            }
+
+            const page: InspectedSourcePage = {
+              url: cleanUrl,
+              title: metaTitle || '',
+              domain: extractCanonicalDomain(cleanUrl),
+              text: cleanText.slice(0, 60000),
+              html: html.slice(0, 120000),
+              status: fcRes.data.metadata?.statusCode || 200,
+              tier,
+              retrievedAt: new Date().toISOString(),
+            };
+
+            this.cache.set(cleanUrl, page);
+            return page;
+          }
+        } catch {
+          // Gracefully fallback to direct Cheerio fetch
+        }
+      }
+
       const res = await fetch(cleanUrl, {
         headers: {
           'User-Agent':

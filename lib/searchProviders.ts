@@ -15,18 +15,57 @@
  */
 
 import * as cheerio from 'cheerio';
+import { firecrawlClient } from '@/providers/firecrawl/client';
 
 export interface SearchProviderResult {
   title: string;
   snippet: string;
   url: string;
-  provider: 'brave' | 'perplexity' | 'serpapi' | 'duckduckgo' | 'direct';
+  provider: 'firecrawl' | 'brave' | 'perplexity' | 'serpapi' | 'duckduckgo' | 'direct';
 }
 
 export interface SearchProvider {
   readonly name: string;
   isAvailable(): boolean;
   search(query: string, maxResults?: number): Promise<SearchProviderResult[]>;
+}
+
+/**
+ * 0. Firecrawl Search Provider (Primary)
+ */
+export class FirecrawlSearchProvider implements SearchProvider {
+  readonly name = 'Firecrawl Search';
+
+  isAvailable(): boolean {
+    return firecrawlClient.isConfigured();
+  }
+
+  async search(query: string, maxResults = 10): Promise<SearchProviderResult[]> {
+    if (!this.isAvailable()) return [];
+
+    try {
+      const res = await firecrawlClient.search(query, { limit: maxResults });
+      if (!res.success || !res.data) return [];
+
+      const items = Array.isArray(res.data) ? res.data : (res.data.web || []);
+      const results: SearchProviderResult[] = [];
+
+      for (const item of items) {
+        if (item.url) {
+          results.push({
+            title: item.title || '',
+            snippet: item.description || item.markdown?.slice(0, 200) || '',
+            url: item.url,
+            provider: 'firecrawl',
+          });
+        }
+      }
+
+      return results;
+    } catch {
+      return [];
+    }
+  }
 }
 
 /**
@@ -251,6 +290,7 @@ export class MultiSearchEngine {
 
   constructor(customProviders?: SearchProvider[]) {
     this.providers = customProviders || [
+      new FirecrawlSearchProvider(),
       new BraveSearchProvider(),
       new PerplexitySearchProvider(),
       new SerpApiProvider(),

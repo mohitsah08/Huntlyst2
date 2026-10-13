@@ -18,9 +18,13 @@ import {
   DbEvidence,
   DbSavedLead,
   DbSearchHistoryItem,
+  CompanyResearchProfile,
+  TargetCriteria,
+  VerificationRun,
 } from './types';
 import { CompanyRecord, RejectedCompanyRecord } from '@/lib/types';
 import { TargetProfile } from '@/lib/targetProfileData';
+import { DEFAULT_TARGET_CRITERIA } from '@/lib/research/types';
 
 interface PersistedState {
   version: number;
@@ -34,6 +38,9 @@ interface PersistedState {
   seenDomains: Record<string, number>; // canonical domain -> count
   seenFingerprints: Record<string, string>; // fingerprint -> timestamp
   unifiedLeads?: any[];
+  researchProfiles: Record<string, CompanyResearchProfile>;
+  targetCriteria: Record<string, TargetCriteria>;
+  verificationRuns: Record<string, VerificationRun>;
 }
 
 class HuntlystDatabaseStore {
@@ -92,6 +99,9 @@ class HuntlystDatabaseStore {
           seenDomains: parsed.seenDomains || {},
           seenFingerprints: parsed.seenFingerprints || {},
           unifiedLeads: parsed.unifiedLeads || [],
+          researchProfiles: parsed.researchProfiles || {},
+          targetCriteria: parsed.targetCriteria || {},
+          verificationRuns: parsed.verificationRuns || {},
         };
       }
     } catch (err) {
@@ -110,6 +120,9 @@ class HuntlystDatabaseStore {
       seenDomains: {},
       seenFingerprints: {},
       unifiedLeads: [],
+      researchProfiles: {},
+      targetCriteria: {},
+      verificationRuns: {},
     };
   }
 
@@ -317,6 +330,92 @@ class HuntlystDatabaseStore {
     this.state.unifiedLeads = leads;
     this.saveNow();
   }
+
+  // --- WORKFLOW A: RESEARCH PROFILES ---
+  public saveResearchProfile(profile: CompanyResearchProfile): CompanyResearchProfile {
+    const key = profile.id;
+    this.state.researchProfiles[key] = profile;
+    if (profile.canonicalDomain) {
+      this.markDomainSeen(profile.canonicalDomain);
+    }
+    this.scheduleSave();
+    return profile;
+  }
+
+  public getResearchProfile(id: string): CompanyResearchProfile | undefined {
+    return this.state.researchProfiles[id];
+  }
+
+  public getResearchProfileByDomain(domain: string): CompanyResearchProfile | undefined {
+    const clean = domain.toLowerCase().trim();
+    return Object.values(this.state.researchProfiles).find(
+      (p) => p.canonicalDomain?.toLowerCase() === clean
+    );
+  }
+
+  public listResearchProfiles(): CompanyResearchProfile[] {
+    return Object.values(this.state.researchProfiles).sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }
+
+  public removeResearchProfile(id: string): void {
+    delete this.state.researchProfiles[id];
+    this.scheduleSave();
+  }
+
+  // --- WORKFLOW B: TARGET CRITERIA ---
+  public saveTargetCriteria(criteria: TargetCriteria): TargetCriteria {
+    this.state.targetCriteria[criteria.id] = criteria;
+    this.scheduleSave();
+    return criteria;
+  }
+
+  public getTargetCriteria(id?: string): TargetCriteria {
+    if (id && this.state.targetCriteria[id]) {
+      return this.state.targetCriteria[id];
+    }
+    const first = Object.values(this.state.targetCriteria)[0];
+    if (first) return first;
+    return DEFAULT_TARGET_CRITERIA;
+  }
+
+  public listTargetCriteria(): TargetCriteria[] {
+    const list = Object.values(this.state.targetCriteria);
+    if (list.length === 0) {
+      return [DEFAULT_TARGET_CRITERIA];
+    }
+    return list;
+  }
+
+  // --- WORKFLOW C: VERIFICATION RUNS ---
+  public saveVerificationRun(run: VerificationRun): VerificationRun {
+    this.state.verificationRuns[run.id] = run;
+    this.scheduleSave();
+    return run;
+  }
+
+  public getVerificationRun(id: string): VerificationRun | undefined {
+    return this.state.verificationRuns[id];
+  }
+
+  public getVerificationRunsForCompany(companyId: string): VerificationRun[] {
+    return Object.values(this.state.verificationRuns)
+      .filter((r) => r.companyId === companyId)
+      .sort((a, b) => new Date(b.verifiedAt).getTime() - new Date(a.verifiedAt).getTime());
+  }
+
+  public getLatestVerificationRunForCompany(companyId: string): VerificationRun | undefined {
+    const runs = this.getVerificationRunsForCompany(companyId);
+    return runs[0];
+  }
+
+  public listVerificationRuns(): VerificationRun[] {
+    return Object.values(this.state.verificationRuns).sort(
+      (a, b) => new Date(b.verifiedAt).getTime() - new Date(a.verifiedAt).getTime()
+    );
+  }
 }
 
 export const dbStore = HuntlystDatabaseStore.getInstance();
+

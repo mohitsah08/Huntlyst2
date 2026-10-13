@@ -11,6 +11,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import * as cheerio from 'cheerio';
 import { ExtractedCompanyData, CandidateUrl } from './types';
 import { VERIFIED_NON_US_TECH_COMPANIES, extractDomain } from './discovery';
+import { firecrawlClient } from '@/providers/firecrawl/client';
 
 const MODEL = 'claude-3-5-haiku-20241022';
 
@@ -208,9 +209,29 @@ export function extractStructuredDataFallback(
  * First tries Anthropic if key is valid; on any failure, falls back to deterministic metadata extraction.
  */
 export async function extractCompanyData(candidate: CandidateUrl): Promise<ExtractedCompanyData | null> {
-  const pageData = await fetchPageText(candidate.url);
-  const pageText = pageData?.text || '';
+  let pageData = await fetchPageText(candidate.url);
 
+  // 1. If Firecrawl is configured, scrape for clean markdown and metadata
+  if (firecrawlClient.isConfigured()) {
+    try {
+      const fcRes = await firecrawlClient.scrape(candidate.url, {
+        formats: ['markdown', 'html'],
+        onlyMainContent: true,
+        timeout: 15000,
+      });
+      if (fcRes.success && fcRes.data) {
+        pageData = {
+          text: fcRes.data.markdown || pageData?.text || '',
+          html: fcRes.data.html || pageData?.html || '',
+        };
+      }
+    } catch (fcErr: any) {
+      console.warn(`[Extraction] Firecrawl scrape skipped for ${candidate.url}:`, fcErr?.message || fcErr);
+    }
+    return extractStructuredDataFallback(candidate, pageData);
+  }
+
+  const pageText = pageData?.text || '';
   const apiKey = process.env.ANTHROPIC_API_KEY;
   const hasValidAnthropicKey = apiKey && !apiKey.includes('your_') && apiKey.startsWith('sk-ant-');
 

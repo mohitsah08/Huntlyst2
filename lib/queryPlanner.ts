@@ -126,7 +126,7 @@ export class QueryPlanner {
         strategyIndex: 1,
         strategyName: 'Strategy 1: Industry + Geography Direct Search',
         query: `(${sectorTerms}) (${geoLabel}) startup company website ${excludePart}`,
-        targetSources: ['Claude Venture Intelligence', 'DuckDuckGo Open Web', 'Curated Venture Directory'],
+        targetSources: ['Firecrawl Web Search', 'Claude Venture Intelligence', 'DuckDuckGo Open Web', 'Curated Venture Directory'],
         page,
       },
       // 2. Funding Signals + Geography
@@ -134,7 +134,7 @@ export class QueryPlanner {
         strategyIndex: 2,
         strategyName: 'Strategy 2: Venture Capital & Funding Signals',
         query: `(${sectorTerms}) (${geoLabel}) ${fundingClause} ${excludePart}`,
-        targetSources: ['Venture Funding Wires', 'Claude Venture Intelligence', 'Google Search (SerpAPI)'],
+        targetSources: ['Firecrawl Web Search', 'Venture Funding Wires', 'Claude Venture Intelligence', 'Google Search (SerpAPI)'],
         page,
       },
       // 3. Hiring & Team Expansion Signals
@@ -142,7 +142,7 @@ export class QueryPlanner {
         strategyIndex: 3,
         strategyName: 'Strategy 3: Hiring & Scale Signals',
         query: `(${sectorTerms}) (${geoLabel}) "careers" OR "we are hiring" "our team" ${excludePart}`,
-        targetSources: ['DuckDuckGo Open Web', 'Google Search (SerpAPI)'],
+        targetSources: ['Firecrawl Web Search', 'DuckDuckGo Open Web', 'Google Search (SerpAPI)'],
         page,
       },
       // 4. Technology & Platform Signals
@@ -150,7 +150,7 @@ export class QueryPlanner {
         strategyIndex: 4,
         strategyName: 'Strategy 4: Platform Architecture & Technology Signals',
         query: `(${sectorTerms}) (${geoLabel}) "API documentation" OR "cloud platform" OR "enterprise pricing" ${excludePart}`,
-        targetSources: ['Claude Venture Intelligence', 'DuckDuckGo Open Web'],
+        targetSources: ['Firecrawl Web Search', 'Claude Venture Intelligence', 'DuckDuckGo Open Web'],
         page,
       },
       // 5. Alternative Industry Terminology & Synonyms
@@ -158,7 +158,7 @@ export class QueryPlanner {
         strategyIndex: 5,
         strategyName: 'Strategy 5: Taxonomy Expansion & Synonyms',
         query: `(${synonymQuery}) (${geoLabel}) tech startup ${excludePart}`,
-        targetSources: ['Claude Venture Intelligence', 'Curated Venture Directory'],
+        targetSources: ['Firecrawl Web Search', 'Claude Venture Intelligence', 'Curated Venture Directory'],
         page,
       },
       // 6. Company Directories & Registries
@@ -166,7 +166,7 @@ export class QueryPlanner {
         strategyIndex: 6,
         strategyName: 'Strategy 6: Ecosystem Directories & Registries',
         query: `(site:dealroom.co OR site:pitchbook.com OR site:crunchbase.com) (${sectorTerms}) (${geoLabel}) ${excludePart}`,
-        targetSources: ['Google Search (SerpAPI)', 'DuckDuckGo Open Web'],
+        targetSources: ['Firecrawl Web Search', 'Google Search (SerpAPI)', 'DuckDuckGo Open Web'],
         page,
       },
       // 7. Venture Media & Startup Dispatches
@@ -174,7 +174,7 @@ export class QueryPlanner {
         strategyIndex: 7,
         strategyName: 'Strategy 7: Venture News & Editorial Dispatches',
         query: `(site:eu-startups.com OR site:tech.eu OR site:inc42.com OR site:techinasia.com) (${sectorTerms}) "seed" OR "raised" ${excludePart}`,
-        targetSources: ['Venture Funding Wires', 'DuckDuckGo Open Web'],
+        targetSources: ['Firecrawl Web Search', 'Venture Funding Wires', 'DuckDuckGo Open Web'],
         page,
       },
       // 8. Regional & Country Ecosystem Wires
@@ -182,7 +182,7 @@ export class QueryPlanner {
         strategyIndex: 8,
         strategyName: 'Strategy 8: Country-Specific Ecosystem Focus',
         query: `("${geoLabel.replace(/"/g, '')}") top (${sectorTerms}) startup founders "headquartered in" ${excludePart}`,
-        targetSources: ['Claude Venture Intelligence', 'Curated Venture Directory', 'DuckDuckGo Open Web'],
+        targetSources: ['Firecrawl Web Search', 'Claude Venture Intelligence', 'Curated Venture Directory', 'DuckDuckGo Open Web'],
         page,
       },
     ];

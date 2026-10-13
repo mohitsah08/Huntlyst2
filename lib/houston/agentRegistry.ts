@@ -21,6 +21,7 @@ export const HUNTLYST_AGENTS: Record<string, HoustonAgentManifest> = {
     industry: 'Venture Intelligence & Lead Discovery',
     skills: ['multi-strategy-discovery'],
     tools: [
+      'search_firecrawl',
       'search_web_duckduckgo',
       'search_claude_intelligence',
       'search_serpapi_google',
@@ -42,6 +43,8 @@ Execute multi-strategy querying across geography, funding signals, technology pr
     industry: 'Venture Intelligence & Lead Discovery',
     skills: ['company-profiling'],
     tools: [
+      'scrape_firecrawl',
+      'agent_firecrawl',
       'scrape_company_website',
       'extract_venture_signals',
       'map_standard_industry',

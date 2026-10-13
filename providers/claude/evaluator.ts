@@ -161,7 +161,8 @@ export function evaluateCriteria(
   let industryReason = '';
   const industryValue = profile.industry || profile.sector || null;
 
-  if (!industryValue && !profile.description) {
+  const isDescriptionUninformative = !profile.description || profile.description.trim().length < 20 || /coming soon|under construction/i.test(profile.description);
+  if (!industryValue && isDescriptionUninformative) {
     industryStatus = 'UNKNOWN';
     industryReason = 'Industry and core business activity unverified';
     unknownCriteria.push('Industry');
@@ -346,15 +347,9 @@ export function evaluateCriteria(
     founderStatus = 'PASS';
     passedCriteria.push('CEO/Founder');
   } else {
-    if (isFounderRequired) {
-      founderStatus = 'FAIL';
-      founderReason = 'CEO or Co-founder identity not verified';
-      failedCriteria.push('CEO/Founder');
-    } else {
-      founderStatus = 'UNKNOWN';
-      founderReason = 'Decision maker not identified';
-      unknownCriteria.push('CEO/Founder');
-    }
+    founderStatus = 'UNKNOWN';
+    founderReason = isFounderRequired ? 'CEO or Co-founder identity not verified' : 'Decision maker not identified';
+    unknownCriteria.push('CEO/Founder');
   }
 
   const founderResult: CriterionResult = {
@@ -370,13 +365,14 @@ export function evaluateCriteria(
   let emailReason = '';
   const finalEmail = mxResult?.email || profile.emailFound;
   const isEmailRequired = emailRequirement === 'Required' || emailRequirement === 'required';
+  const acceptsMxLevel = (target as any).emailVerificationLevel === 'mx_verified' || (target as any).emailVerificationTiers?.includes('Domain MX Acceptable');
 
   if (mxResult && mxResult.verified && mxResult.email) {
     emailStatus = 'PASS';
     passedCriteria.push('Professional Email');
   } else if (mxResult && (mxResult as any).status === 'PARTIALLY VERIFIED') {
     emailReason = (mxResult as any).reason || 'Domain MX active; Mailbox-level verification unavailable';
-    if (!isEmailRequired) {
+    if (!isEmailRequired || acceptsMxLevel) {
       emailStatus = 'PASS';
       passedCriteria.push('Professional Email');
     } else {
@@ -394,15 +390,9 @@ export function evaluateCriteria(
       passedCriteria.push('Professional Email');
     }
   } else {
-    if (isEmailRequired) {
-      emailStatus = 'FAIL';
-      emailReason = (mxResult as any)?.reason || 'No verifiable executive email identified';
-      failedCriteria.push('Professional Email');
-    } else {
-      emailStatus = 'UNKNOWN';
-      emailReason = 'No email address documented';
-      unknownCriteria.push('Professional Email');
-    }
+    emailStatus = 'UNKNOWN';
+    emailReason = isEmailRequired ? 'No verifiable executive email identified' : 'No email address documented';
+    unknownCriteria.push('Professional Email');
   }
 
   const emailResult: CriterionResult = {
@@ -455,6 +445,8 @@ export function evaluateCriteria(
     (emailStatus === 'PASS' || !isEmailRequired)
   ) {
     overallStatus = 'QUALIFIED';
+  } else if (unknownCriteria.length > 0) {
+    overallStatus = 'UNVERIFIED';
   } else if (passedCriteria.length >= 2) {
     overallStatus = 'PARTIALLY_VERIFIED';
   } else {
@@ -493,6 +485,8 @@ export function buildCompanyRecordFromProfile(
     description: profile.description || null,
     industry: profile.industry || profile.sector || 'Technology Platform',
     fundingOrRevenue: profile.fundingText || profile.revenueText || null,
+    fundingAmount: profile.fundingAmountUsd || null,
+    totalFundingUsd: profile.fundingAmountUsd || null,
     usPresence: evaluation.criteria.usPresence.status === 'PASS',
     founderOrCeoName: profile.founderOrCeoName || null,
     founderOrCeoEmail: evaluation.criteria.professionalEmail.value?.includes('@')
