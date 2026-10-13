@@ -7,7 +7,6 @@ import {
   computeCardFieldStatuses,
   FieldResearchStatus,
 } from '@/lib/research/types';
-import { downloadSingleMarkdown } from '@/lib/export';
 
 interface CompanyResearchDossierModalProps {
   profile: CompanyResearchProfile | null;
@@ -178,17 +177,6 @@ export default function CompanyResearchDossierModal({
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Export Markdown Action */}
-            <button
-              type="button"
-              onClick={() => downloadSingleMarkdown(profile)}
-              className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] border border-[#1E1B18] rounded-xl flex items-center gap-1.5 shadow-sketch-xs"
-              title="Export complete company research dossier as Obsidian Markdown note (.md)"
-            >
-              <span>📝</span>
-              <span>Export Markdown</span>
-            </button>
-
             {onVerify && (
               <button
                 type="button"
@@ -747,30 +735,6 @@ export default function CompanyResearchDossierModal({
             </div>
           </div>
         )}
-
-        {/* MODAL FOOTER ACTIONS */}
-        <div className="flex items-center justify-between pt-3 border-t border-[#F0EAD8] flex-wrap gap-2">
-          <span className="text-xs font-mono text-[#766E65]">
-            Obsidian-compatible YAML frontmatter, verified sources, and field-level evidence.
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => downloadSingleMarkdown(profile)}
-              className="sketch-btn px-4 py-2 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] border border-[#1E1B18] rounded-xl flex items-center gap-1.5 shadow-sketch-xs"
-            >
-              <span>📝</span>
-              <span>Export Dossier as Markdown (.md)</span>
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="sketch-btn px-4 py-2 text-xs font-bold text-white bg-[#1E1B18] rounded-xl hover:bg-[#2C2724]"
-            >
-              Close
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

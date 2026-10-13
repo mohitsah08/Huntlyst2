@@ -11,8 +11,6 @@ import {
 import { CompanyVerificationResult } from '@/providers/types';
 import CompanyCard from './CompanyCard';
 import CompanyResearchDossierModal from './CompanyResearchDossierModal';
-import ExportModal from './ExportModal';
-import { downloadCombinedMarkdown, downloadObsidianVault } from '@/lib/export';
 
 interface ExternalResearchWorkflowProps {
   carriedCandidates?: Array<{ name?: string; website?: string }>;
@@ -53,7 +51,6 @@ export default function ExternalResearchWorkflow({
   const [isVerifying, setIsVerifying] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   // Load existing profiles & criteria on mount
   useEffect(() => {
@@ -697,83 +694,15 @@ export default function ExternalResearchWorkflow({
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
-                {selectedProfile && (
-                  <button
-                    type="button"
-                    onClick={() => setDossierProfile(selectedProfile)}
-                    className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-[#FFE0B2] hover:bg-[#FFD54F] border-2 border-[#1E1B18] rounded-xl flex items-center gap-1.5 shadow-sketch-xs"
-                  >
-                    <span>🔍 Open Dossier ({selectedProfile.officialName})</span>
-                  </button>
-                )}
-
-                {profiles.length > 0 && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const targetProfiles = profiles.filter((p) => {
-                          if (!searchQuery.trim()) return true;
-                          const q = searchQuery.toLowerCase();
-                          return (
-                            p.officialName.toLowerCase().includes(q) ||
-                            p.canonicalDomain.toLowerCase().includes(q)
-                          );
-                        });
-                        downloadObsidianVault(
-                          {
-                            vaultName: 'Huntlyst-External-Vault',
-                            externalRecords: targetProfiles,
-                          },
-                          `huntlyst-external-vault-${new Date().toISOString().split('T')[0]}.zip`
-                        );
-                        setStatusMessage(`Exported ${targetProfiles.length} dossiers to Obsidian Vault! 🗂️`);
-                      }}
-                      className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-[#EDE7F6] hover:bg-[#D1C4E9] border-2 border-[#1E1B18] rounded-xl flex items-center gap-1 shadow-sketch-xs"
-                      title="Export all external dossiers as Obsidian Vault (.zip)"
-                    >
-                      <span>🗂️</span>
-                      <span>Vault (.zip)</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const targetProfiles = profiles.filter((p) => {
-                          if (!searchQuery.trim()) return true;
-                          const q = searchQuery.toLowerCase();
-                          return (
-                            p.officialName.toLowerCase().includes(q) ||
-                            p.canonicalDomain.toLowerCase().includes(q)
-                          );
-                        });
-                        downloadCombinedMarkdown(
-                          targetProfiles,
-                          `huntlyst-external-research-${new Date().toISOString().split('T')[0]}.md`,
-                          { notes: 'External Research Intelligence Report' }
-                        );
-                        setStatusMessage(`Exported ${targetProfiles.length} dossiers to combined Markdown! 📝`);
-                      }}
-                      className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] border-2 border-[#1E1B18] rounded-xl flex items-center gap-1 shadow-sketch-xs"
-                      title="Export as combined Markdown report (.md)"
-                    >
-                      <span>📝</span>
-                      <span>Markdown (.md)</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setIsExportModalOpen(true)}
-                      className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] border-2 border-[#1E1B18] rounded-xl flex items-center gap-1 shadow-sketch-xs"
-                      title="Open full Export Menu"
-                    >
-                      <span>📦</span>
-                      <span>Export Menu</span>
-                    </button>
-                  </>
-                )}
-              </div>
+              {selectedProfile && (
+                <button
+                  type="button"
+                  onClick={() => setDossierProfile(selectedProfile)}
+                  className="sketch-btn px-4 py-2 text-xs font-bold text-[#1E1B18] bg-[#FFE0B2] hover:bg-[#FFD54F] border-2 border-[#1E1B18] rounded-xl flex items-center gap-1.5 shadow-sketch-xs"
+                >
+                  <span>🔍 Open Full Dossier ({selectedProfile.officialName})</span>
+                </button>
+              )}
             </div>
 
             {/* Search Input */}
@@ -1200,20 +1129,6 @@ export default function ExternalResearchWorkflow({
             handleVerifyCompanies([id]);
           }}
           isVerifying={isVerifying}
-        />
-      )}
-
-      {/* Universal Export Modal */}
-      {isExportModalOpen && (
-        <ExportModal
-          isOpen={isExportModalOpen}
-          onClose={() => setIsExportModalOpen(false)}
-          onToast={(msg) => setStatusMessage(msg)}
-          externalProfiles={profiles}
-          initialWorkflow="external"
-          selectedIds={selectedProfileId ? [selectedProfileId] : []}
-          searchQuery={searchQuery}
-          title="Export External Research Dossiers"
         />
       )}
     </div>

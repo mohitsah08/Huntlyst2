@@ -2,13 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { CompanyRecord } from '@/lib/types';
-import {
-  downloadCsvFile,
-  downloadPdfFile,
-  downloadDocxFile,
-  downloadCombinedMarkdown,
-  downloadObsidianVault,
-} from '@/lib/export';
+import { downloadCsvFile, downloadPdfFile, downloadDocxFile } from '@/lib/export';
 import { calculateHuntScore } from '@/lib/rank';
 import HuntlystLogo from './HuntlystLogo';
 
@@ -142,10 +136,7 @@ export default function SavedLeadsView({
   };
 
   // Bulk Export Handlers
-  const handleExport = async (
-    format: 'CSV' | 'PDF' | 'DOCX' | 'MD' | 'OBSIDIAN',
-    targetLeads: CompanyRecord[]
-  ) => {
+  const handleExport = async (format: 'CSV' | 'PDF' | 'DOCX', targetLeads: CompanyRecord[]) => {
     if (targetLeads.length === 0) {
       onToast('No leads selected to export.');
       return;
@@ -155,21 +146,7 @@ export default function SavedLeadsView({
       const today = new Date().toISOString().split('T')[0];
       const count = targetLeads.length;
 
-      if (format === 'MD') {
-        downloadCombinedMarkdown(targetLeads, `huntlyst-shortlist-${today}.md`, {
-          notes: 'Huntlyst Shortlist Leads Report',
-        });
-        onToast(`Exported ${count} shortlist leads as Markdown report! 📝`);
-      } else if (format === 'OBSIDIAN') {
-        await downloadObsidianVault(
-          {
-            vaultName: 'Huntlyst-Shortlist-Vault',
-            internalRecords: targetLeads,
-          },
-          `huntlyst-shortlist-vault-${today}.zip`
-        );
-        onToast(`Exported ${count} shortlist leads as Obsidian Vault (.zip)! 🗂️`);
-      } else if (format === 'CSV') {
+      if (format === 'CSV') {
         downloadCsvFile(targetLeads, `huntlyst-shortlist-${today}.csv`);
         onToast(`Exported ${count} shortlist leads as CSV! 📥`);
       } else if (format === 'PDF') {
@@ -210,32 +187,6 @@ export default function SavedLeadsView({
 
           {savedLeads.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Obsidian Vault */}
-              <button
-                type="button"
-                disabled={isExporting}
-                onClick={() =>
-                  handleExport('OBSIDIAN', selectedCompanies.length > 0 ? selectedCompanies : filteredLeads)
-                }
-                className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-[#EDE7F6] border-2 border-[#1E1B18] rounded-xl hover:bg-[#D1C4E9] shadow-sketch-sm flex items-center gap-1"
-                title="Export as complete Obsidian Vault (.zip)"
-              >
-                <span>🗂️</span> Obsidian Vault
-              </button>
-
-              {/* Markdown Report */}
-              <button
-                type="button"
-                disabled={isExporting}
-                onClick={() =>
-                  handleExport('MD', selectedCompanies.length > 0 ? selectedCompanies : filteredLeads)
-                }
-                className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white border-2 border-[#1E1B18] rounded-xl hover:bg-[#FAF6EE] shadow-sketch-sm flex items-center gap-1"
-                title="Export as combined Markdown (.md)"
-              >
-                <span>📝</span> Markdown
-              </button>
-
               <button
                 type="button"
                 disabled={isExporting}
@@ -244,7 +195,7 @@ export default function SavedLeadsView({
                 }
                 className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white border-2 border-[#1E1B18] rounded-xl hover:bg-[#FAF6EE] shadow-sketch-sm"
               >
-                📥 CSV
+                📥 Export {selectedCompanies.length > 0 ? `(${selectedCompanies.length})` : 'All'} CSV
               </button>
               <button
                 type="button"
@@ -254,7 +205,7 @@ export default function SavedLeadsView({
                 }
                 className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white border-2 border-[#1E1B18] rounded-xl hover:bg-[#FAF6EE] shadow-sketch-sm"
               >
-                📄 PDF
+                📄 Export PDF
               </button>
               <button
                 type="button"
@@ -264,7 +215,7 @@ export default function SavedLeadsView({
                 }
                 className="sketch-btn px-3 py-1.5 text-xs font-bold text-white bg-[#FF6B35] border-2 border-[#1E1B18] rounded-xl hover:bg-[#E85D26] shadow-sketch-sm"
               >
-                📝 Word
+                📝 Export Word
               </button>
             </div>
           )}

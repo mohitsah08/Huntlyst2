@@ -35,7 +35,6 @@ import {
 import { CompanyRecord, RejectedCompanyRecord } from './types';
 import { CompanyVerificationResult } from '@/providers/types';
 import { UnifiedLead } from './leadPackage';
-import { CompanyResearchProfile } from './research/types';
 
 // ==========================================
 // 1. CANONICAL TYPES
@@ -363,12 +362,10 @@ export function normalizeCompanyRecord(
   if (c.founderOrCeoName) passedCriteria.push('Verified Leadership Profile');
   if (c.founderOrCeoEmail) passedCriteria.push('Verified Professional Email');
 
-  const rawName = c.name || (c as any).officialName || (c as any).companyName || 'Unknown Company';
-
   return {
-    id: (c as any).id || `lead-${domain || rawName.toLowerCase().replace(/\s+/g, '-')}`,
-    companyName: rawName,
-    canonicalCompanyName: rawName.trim(),
+    id: `lead-${domain || c.name.toLowerCase().replace(/\s+/g, '-')}`,
+    companyName: c.name,
+    canonicalCompanyName: c.name.trim(),
     website: c.website || '',
     canonicalDomain: domain,
     industry: c.industry || c.sector || 'Technology',
@@ -911,180 +908,6 @@ export function normalizeUnifiedLead(
 }
 
 /**
- * Normalizes a CompanyResearchProfile (External Research output) into UniversalExportRecord
- */
-export function normalizeCompanyResearchProfile(
-  p: CompanyResearchProfile | any,
-  stage: PipelineStageLabel = 'Stage 6: Final Results',
-  huntMetadata: { huntId?: string; searchQuery?: string } = {}
-): UniversalExportRecord {
-  const rawName = p.officialName || p.name || p.companyName || 'Unknown Company';
-  const domain = p.canonicalDomain || extractCanonicalDomain(p.website || '');
-  const now = new Date().toISOString();
-  const completeness = p.researchCompletenessScore ?? 85;
-
-  const totalFundingStr = p.funding?.totalFundingUsd
-    ? `$${(p.funding.totalFundingUsd / 1_000_000).toFixed(2)}M`
-    : '';
-  const latestRoundStr = p.funding?.latestRoundUsd
-    ? `$${(p.funding.latestRoundUsd / 1_000_000).toFixed(2)}M`
-    : '';
-
-  const ceo = p.leadership?.ceo;
-  const founders = Array.isArray(p.leadership?.founders) ? p.leadership.founders : [];
-  const coFounders = Array.isArray(p.leadership?.coFounders) ? p.leadership.coFounders : [];
-
-  const founderNames = founders.map((f: any) => f.name || f.full_name).filter(Boolean).join(', ');
-  const cofounderNames = coFounders.map((cf: any) => cf.name || cf.full_name).filter(Boolean).join(', ');
-
-  const hqCountry = p.headquarters?.country || 'Global';
-  const hqDisplay = [p.headquarters?.city, p.headquarters?.stateOrRegion, p.headquarters?.country]
-    .filter(Boolean)
-    .join(', ') || hqCountry;
-
-  const sourceUrls = Array.isArray(p.sources)
-    ? p.sources.map((s: any) => s.url).filter(Boolean)
-    : p.website
-    ? [p.website]
-    : [];
-
-  const status: LeadStatusLabel =
-    p.researchStatus === 'completed'
-      ? 'Approved'
-      : p.researchStatus === 'failed'
-      ? 'Rejected'
-      : 'Under Review';
-
-  return {
-    id: p.id || `lead-${domain || rawName.toLowerCase().replace(/\s+/g, '-')}`,
-    companyName: rawName,
-    canonicalCompanyName: rawName.trim(),
-    website: p.website || '',
-    canonicalDomain: domain,
-    industry: p.primaryIndustry || 'Technology',
-    sector: p.primaryIndustry || 'Technology',
-    subSector: p.subIndustry || '',
-    subIndustry: p.subIndustry || '',
-    description: p.description || 'Comprehensive company research profile extracted via Huntlyst.',
-    headquarters: hqDisplay,
-    country: hqCountry,
-    city: p.headquarters?.city || '',
-    region: p.headquarters?.stateOrRegion || '',
-    geographyStatus:
-      p.usPresence === true
-        ? 'US Presence Flagged'
-        : p.usPresence === false
-        ? `Verified Non-US: ${hqCountry}`
-        : 'Geography Verified',
-    usPresence: p.usPresence === true ? 'US Presence' : 'Non-US Target',
-    employeeCount: (p as any).employeeCount ? String((p as any).employeeCount) : 'Undisclosed',
-    companyType: p.businessModel || 'Tech Platform',
-    companyStage: p.funding?.latestRoundType || '',
-    foundedYear: p.foundedYear ? String(p.foundedYear) : '',
-    companyAge: p.companyAgeYears ? String(p.companyAgeYears) : '',
-
-    funding: totalFundingStr,
-    totalFunding: totalFundingStr,
-    latestRound: latestRoundStr,
-    latestRoundDate: p.funding?.latestRoundDate || '',
-    latestRoundType: p.funding?.latestRoundType || '',
-    fundingRound: p.funding?.latestRoundType || '',
-    recentFundingSignal: latestRoundStr ? `${p.funding?.latestRoundType || 'Round'}: ${latestRoundStr}` : '',
-
-    decisionMakerName: ceo?.name || (founders[0]?.name) || '',
-    decisionMakerRole: ceo?.title || ceo?.role || (founders.length > 0 ? 'Founder' : ''),
-    isFounder: Boolean(founders.length > 0),
-    isCeo: Boolean(ceo),
-    isCoFounder: Boolean(coFounders.length > 0),
-    linkedinUrl: ceo?.linkedInUrl || ceo?.publicProfileUrl || '',
-
-    email: ceo?.publicEmail || p.contacts?.generalEmail || 'Unverified',
-    emailVerificationStatus: ceo?.publicEmail ? 'valid' : 'unverified',
-    verificationProvider: 'Huntlyst Research Engine',
-    verificationTimestamp: p.updatedAt || now,
-
-    ceoName: ceo?.name || '',
-    ceoFirstName: ceo?.name ? ceo.name.split(' ')[0] : '',
-    ceoLastName: ceo?.name ? ceo.name.split(' ').slice(1).join(' ') : '',
-    ceoEmail: ceo?.publicEmail || '',
-    ceoEmailStatus: ceo?.publicEmail ? 'VALID' : 'UNVERIFIED',
-    ceoLinkedin: ceo?.linkedInUrl || ceo?.publicProfileUrl || '',
-    ceoTwitter: '',
-
-    primaryDecisionMaker: ceo?.name || (founders[0]?.name) || '',
-    primaryDecisionMakerRole: ceo?.title || (founders.length > 0 ? 'Founder' : ''),
-    primaryProfessionalEmail: ceo?.publicEmail || '',
-    primaryProfessionalEmailStatus: ceo?.publicEmail ? 'VALID' : 'UNVERIFIED',
-    publicPersonalEmail: '',
-    publicPersonalEmailStatus: 'NOT_DISCLOSED',
-    primaryLinkedin: ceo?.linkedInUrl || ceo?.publicProfileUrl || '',
-    primaryLinkedinStatus: ceo?.linkedInUrl ? 'VERIFIED' : 'NOT_FOUND',
-    primaryTwitter: '',
-    primaryTwitterStatus: 'NOT_FOUND',
-
-    companyEmail: p.contacts?.generalEmail || '',
-    companyEmailStatus: p.contacts?.generalEmail ? 'VALID' : 'NOT_FOUND',
-    companyLinkedin: p.contacts?.companyLinkedInUrl || '',
-    companyLinkedinStatus: p.contacts?.companyLinkedInUrl ? 'VERIFIED' : 'NOT_FOUND',
-    companyTwitter: p.contacts?.companyXUrl || '',
-    companyTwitterStatus: p.contacts?.companyXUrl ? 'VERIFIED' : 'NOT_FOUND',
-
-    bestContactMethod: p.contacts?.generalEmail ? 'Official Email' : 'Website Form',
-    contactCompleteness: `${completeness}% Profile Fidelity`,
-    contactVerificationSummary: 'Extracted from primary authoritative sources',
-
-    founderNames,
-    cofounderNames,
-    founderEmails: '',
-    cofounderEmails: '',
-    founderLinkedin: founders.map((f: any) => f.linkedInUrl || f.publicProfileUrl).filter(Boolean).join(', '),
-    cofounderLinkedin: coFounders.map((cf: any) => cf.linkedInUrl || cf.publicProfileUrl).filter(Boolean).join(', '),
-    researchCompleteness: completeness,
-
-    researchSummary: p.description || 'Deep web research and venture dossier.',
-    researchStatus: p.researchStatus || 'completed',
-    researchTimestamp: p.updatedAt || now,
-    sourceCount: sourceUrls.length || 1,
-    sourceUrls,
-    sourceTypes: ['Firecrawl Deep Scrape', 'Authoritative Sources'],
-    evidenceSummary: Object.values(p.fieldEvidence || {}).map((e: any) => `${e.field}: ${e.excerpt || e.sourceTitle || ''}`).join('; ') || 'Primary web evidence recorded.',
-
-    qualificationStatus: status === 'Approved' ? 'Qualified' : status === 'Rejected' ? 'Rejected' : 'Under Review',
-    matchStatus: status === 'Approved' ? 'Match' : 'Partial Match',
-    huntScore: completeness,
-    qualificationScore: completeness,
-    criteriaMatched: ['Target Industry', 'Active Web Presence'],
-    criteriaFailed: [],
-    criteriaUnknown: [],
-    reasonsForSelection: `High research completeness (${completeness}%) and verified executive profiles.`,
-    reasonsForRejection: p.statusReason || '',
-    confidenceScore: completeness / 100,
-
-    verificationStatus: status === 'Approved' ? 'VERIFIED' : status === 'Rejected' ? 'REJECTED' : 'REVIEW',
-    verificationChecksPerformed: [],
-    passedChecks: ['web_presence', 'executive_identification'],
-    failedChecks: [],
-    unknownChecks: [],
-    verificationReasons: 'Complete autonomous research profile verified.',
-    verificationConfidence: completeness / 100,
-
-    discoveryStage: stage,
-    currentPipelineStage: stage,
-    recordStatus: status,
-    firstDiscoveredAt: p.createdAt || now,
-    lastUpdatedAt: p.updatedAt || now,
-    discoverySource: 'External Deep Research',
-    searchQuery: huntMetadata.searchQuery || domain || rawName,
-    huntId: huntMetadata.huntId || 'hunt-ext',
-    agentName: 'huntlyst-research',
-    duplicateStatus: 'Canonical (Unique)',
-    workflowOrigin: 'EXTERNAL',
-
-    rawRecord: p,
-  };
-}
-
-/**
  * Universal dispatcher: Converts any record type into UniversalExportRecord
  */
 export function normalizeAnyRecord(
@@ -1100,11 +923,6 @@ export function normalizeAnyRecord(
   // Already a UniversalExportRecord
   if (candidate.companyName && candidate.recordStatus && candidate.canonicalDomain !== undefined) {
     return candidate as UniversalExportRecord;
-  }
-
-  // CompanyResearchProfile
-  if (candidate.officialName && (candidate.canonicalDomain !== undefined || candidate.leadership !== undefined || candidate.funding !== undefined)) {
-    return normalizeCompanyResearchProfile(candidate as CompanyResearchProfile, defaultStage, huntMetadata);
   }
 
   // UnifiedLead
@@ -2261,9 +2079,3 @@ export function downloadCsvFile(companies: (CompanyRecord | UniversalExportRecor
   const records = companies.map(c => normalizeAnyRecord(c));
   downloadUniversalCsv(records, filename, options);
 }
-
-// ==========================================
-// 10. UNIVERSAL MARKDOWN & OBSIDIAN EXPORTS
-// ==========================================
-export * from './exportMarkdown';
-

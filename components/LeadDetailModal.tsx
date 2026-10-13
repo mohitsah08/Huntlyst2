@@ -2,7 +2,6 @@
 
 import { CompanyRecord } from '@/lib/types';
 import { calculateHuntScore } from '@/lib/rank';
-import { downloadSingleMarkdown } from '@/lib/export';
 
 interface LeadDetailModalProps {
   company: CompanyRecord | null;
@@ -784,18 +783,6 @@ export default function LeadDetailModal({
                 <span>📋</span> Copy Email
               </button>
             ) : null}
-
-            <button
-              type="button"
-              onClick={() => {
-                downloadSingleMarkdown(company);
-                onToast(`Exported "${company.name}" as Obsidian Markdown note! 📝`);
-              }}
-              className="sketch-btn px-4 py-2 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] rounded-xl border-2 border-[#1E1B18] shadow-sketch-sm flex items-center gap-1.5"
-              title="Export lead as Obsidian-compatible Markdown note (.md)"
-            >
-              <span>📝</span> Export Markdown
-            </button>
 
             {company.website && (
               <a
