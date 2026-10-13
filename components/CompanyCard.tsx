@@ -7,6 +7,7 @@ import {
   computeCardFieldStatuses,
   FieldResearchStatus,
 } from '@/lib/research/types';
+import { downloadSingleMarkdown } from '@/lib/export';
 
 interface CompanyCardProps {
   profile: CompanyResearchProfile;
@@ -195,6 +196,17 @@ export default function CompanyCard({
           >
             <span>🔍</span>
             <span>View Dossier</span>
+          </button>
+
+          {/* 📝 Quick Export Markdown Note (.md) */}
+          <button
+            type="button"
+            onClick={() => downloadSingleMarkdown(profile)}
+            className="sketch-btn px-2.5 py-1.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] border border-[#1E1B18] rounded-xl flex items-center gap-1 shadow-sketch-xs transition-colors"
+            title="Export single company dossier as Obsidian Markdown note (.md)"
+          >
+            <span>📝</span>
+            <span>Export MD</span>
           </button>
 
           {/* Quick Verify Button */}

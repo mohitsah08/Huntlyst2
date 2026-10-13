@@ -10,6 +10,8 @@ import ExportModal from './ExportModal';
 import ExternalResearchWorkflow from './ExternalResearchWorkflow';
 import { PipelineStageLabel, downloadCsvFile, downloadPdfFile, downloadXlsxFile } from '@/lib/export';
 import { extractCanonicalDomain, normalizeCompanyName } from '@/lib/deduplication';
+import { InternalPhase1Preview } from './InternalPhase1Preview';
+import { processPhase1File, Phase1ImportResult } from '@/lib/internal';
 
 function isSameCompanyIdentity(
   a: { name?: string; website?: string },
@@ -69,6 +71,8 @@ export default function StagedDiscoveryWorkflow({
   // Internal Stage State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [manualText, setManualText] = useState('');
+  const [phase1Result, setPhase1Result] = useState<Phase1ImportResult | null>(null);
+  const [isPhase1Parsing, setIsPhase1Parsing] = useState(false);
   const [internalResults, setInternalResults] = useState<CompanyVerificationResult[]>([]);
   const [internalApproved, setInternalApproved] = useState<Set<string>>(new Set());
   const [internalStats, setInternalStats] = useState<{
@@ -127,6 +131,7 @@ export default function StagedDiscoveryWorkflow({
       setWebProgress(null);
       setIsWebLogsExpanded(false);
       setSelectedFile(null);
+      setPhase1Result(null);
       setManualText('');
       setStatusMessage('');
       setErrorMessage(null);
@@ -134,10 +139,62 @@ export default function StagedDiscoveryWorkflow({
     }
   };
 
-  // --- INTERNAL STAGE HANDLERS ---
-  const handleInternalFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // --- INTERNAL STAGE HANDLERS (PHASE 1 IN-BROWSER PIPELINE) ---
+  const handleInternalFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      setIsPhase1Parsing(true);
+      setErrorMessage(null);
+      setStatusMessage(`Parsing "${file.name}" locally in browser...`);
+
+      try {
+        const result = await processPhase1File(file, file.name);
+        if (result.errors.length > 0 && result.companies.length === 0) {
+          setErrorMessage(result.errors[0].message);
+          setPhase1Result(null);
+          setStatusMessage('File import encountered an error.');
+        } else {
+          setPhase1Result(result);
+          setStatusMessage(`File "${file.name}" prepared: ${result.companies.length} companies extracted.`);
+        }
+      } catch (err: any) {
+        setErrorMessage(err.message || 'Failed to process file locally.');
+        setPhase1Result(null);
+        setStatusMessage('File processing failed.');
+      } finally {
+        setIsPhase1Parsing(false);
+      }
+    }
+  };
+
+  const handleParsePastedText = async () => {
+    if (!manualText.trim()) {
+      setErrorMessage('Please paste candidate text or table.');
+      return;
+    }
+    setIsPhase1Parsing(true);
+    setErrorMessage(null);
+    setStatusMessage('Parsing pasted candidates locally in browser...');
+
+    try {
+      const isMd = manualText.includes('|') || manualText.includes('#');
+      const filename = isMd ? 'pasted-candidates.md' : 'pasted-candidates.csv';
+      const result = await processPhase1File(manualText, filename);
+      if (result.errors.length > 0 && result.companies.length === 0) {
+        setErrorMessage(result.errors[0].message);
+        setPhase1Result(null);
+        setStatusMessage('Text parsing encountered an error.');
+      } else {
+        setPhase1Result(result);
+        setStatusMessage(`Pasted text prepared: ${result.companies.length} companies extracted.`);
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to parse text.');
+      setPhase1Result(null);
+      setStatusMessage('Text parsing failed.');
+    } finally {
+      setIsPhase1Parsing(false);
     }
   };
 
@@ -1038,35 +1095,51 @@ export default function StagedDiscoveryWorkflow({
                 <div className="text-3xl">📄</div>
                 <div>
                   <label htmlFor="file-upload" className="font-display font-bold text-sm text-[#FF6B35] hover:underline cursor-pointer">
-                    Choose a document to upload
+                    {isPhase1Parsing ? 'Parsing file in browser...' : 'Choose a file to prepare & preview'}
                   </label>
                   <input
                     id="file-upload"
                     type="file"
-                    accept=".csv,.xlsx,.xls,.pdf,.docx,.txt,.json"
+                    accept=".csv,.xlsx,.xls,.md,.markdown"
                     onChange={handleInternalFileChange}
+                    disabled={isPhase1Parsing}
                     className="hidden"
                   />
                   <p className="text-[11px] text-[#766E65] mt-1 font-mono">
-                    Supported: CSV, Excel (XLSX), PDF, DOCX, TXT, JSON (including Huntlyst exports)
+                    Phase 1 Supported: CSV (.csv), Excel (.xlsx, .xls), Markdown (.md tables)
                   </p>
                 </div>
                 {selectedFile && (
-                  <div className="p-2 bg-white rounded-lg border border-[#DCD6C9] text-xs font-mono font-bold text-[#1E1B18] truncate">
-                    Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                  <div className="p-2 bg-white rounded-lg border border-[#DCD6C9] text-xs font-mono font-bold text-[#1E1B18] truncate flex items-center justify-between">
+                    <span className="truncate">Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
+                    {isPhase1Parsing && (
+                      <span className="w-3 h-3 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin shrink-0 ml-2" />
+                    )}
                   </div>
                 )}
               </div>
 
               {/* Paste Text Fallback */}
               <div className="space-y-2">
-                <label className="text-xs font-mono font-bold text-[#1E1B18] block">
-                  Or Paste Candidate List (Names, URLs, Text):
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-mono font-bold text-[#1E1B18] block">
+                    Or Paste Candidate Data (CSV or Markdown Table):
+                  </label>
+                  {manualText.trim() && (
+                    <button
+                      type="button"
+                      disabled={isPhase1Parsing}
+                      onClick={handleParsePastedText}
+                      className="text-[11px] font-mono font-bold text-[#FF6B35] hover:underline"
+                    >
+                      Prepare & Preview ⚡
+                    </button>
+                  )}
+                </div>
                 <textarea
                   value={manualText}
                   onChange={(e) => setManualText(e.target.value)}
-                  placeholder="e.g.&#10;Synthesized - https://synthesized.io&#10;Mindfuel - https://mindfuel.ai&#10;Saporo - https://saporo.io"
+                  placeholder="e.g.&#10;| Company | Website | Industry | Country | Founding Year | Total Funding |&#10;| --- | --- | --- | --- | --- | --- |&#10;| Synthesized | https://synthesized.io | AI/ML | United Kingdom | 2018 | $4.2M |"
                   rows={4}
                   className="w-full p-3 text-xs font-mono border-2 border-[#1E1B18] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
                 />
@@ -1075,24 +1148,37 @@ export default function StagedDiscoveryWorkflow({
 
             {/* Action Bar */}
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <button
-                type="button"
-                disabled={isCurrentProcessing}
-                onClick={handleRunInternalDiscovery}
-                className="sketch-btn px-6 py-2.5 text-xs font-bold text-white bg-[#FF6B35] border-2 border-[#1E1B18] rounded-xl hover:bg-[#E55A2B] shadow-sketch-sm disabled:opacity-50 flex items-center gap-2"
-              >
-                {internalStatus === 'running' ? (
-                  <>
-                    <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Huntlyst is executing candidate pipeline...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>⚡</span>
-                    <span>Run Huntlyst Internal Verification</span>
-                  </>
+              <div className="flex items-center gap-2">
+                {manualText.trim() && !phase1Result && (
+                  <button
+                    type="button"
+                    disabled={isPhase1Parsing}
+                    onClick={handleParsePastedText}
+                    className="sketch-btn px-4 py-2 text-xs font-bold text-[#1E1B18] bg-white border-2 border-[#1E1B18] rounded-xl hover:bg-[#FAF6EE] shadow-sketch-xs flex items-center gap-1.5"
+                  >
+                    <span>📋</span>
+                    <span>Parse Pasted Candidates Locally</span>
+                  </button>
                 )}
-              </button>
+                <button
+                  type="button"
+                  disabled={isCurrentProcessing || (!selectedFile && !manualText.trim())}
+                  onClick={handleRunInternalDiscovery}
+                  className="sketch-btn px-6 py-2.5 text-xs font-bold text-white bg-[#FF6B35] border-2 border-[#1E1B18] rounded-xl hover:bg-[#E55A2B] shadow-sketch-sm disabled:opacity-50 flex items-center gap-2"
+                >
+                  {internalStatus === 'running' ? (
+                    <>
+                      <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Huntlyst is executing candidate pipeline...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>⚡</span>
+                      <span>Run Internal Verification Pipeline</span>
+                    </>
+                  )}
+                </button>
+              </div>
 
               {internalResults.length > 0 && (
                 <div className="text-xs font-mono text-[#766E65]">
@@ -1103,6 +1189,17 @@ export default function StagedDiscoveryWorkflow({
               )}
             </div>
           </div>
+
+          {/* Phase 1 Company Data Preparation & Availability Preview */}
+          {phase1Result && (
+            <InternalPhase1Preview
+              importResult={phase1Result}
+              onReset={() => {
+                setPhase1Result(null);
+                setSelectedFile(null);
+              }}
+            />
+          )}
 
           {/* Internal Results & Candidate Accounting Audit */}
           {internalResults.length > 0 && (
