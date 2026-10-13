@@ -1911,25 +1911,38 @@ import { parseFundingDetails } from './validation';
  * Converts a TargetProfile into a full HuntConfig for pipeline execution
  */
 export function targetProfileToHuntConfig(profile: TargetProfile): HuntConfig {
-  const targetLeads = profile.targetCount === 'Custom' ? (profile.customTargetCount || 15) : profile.targetCount;
+  const safeProfile = {
+    ...DEFAULT_TVB_TARGET_PROFILE,
+    ...profile,
+    regions: profile.regions || (((profile as any).geography) ? [(profile as any).geography] : ['Global']),
+    countries: profile.countries || [],
+    excludedCountries: profile.excludedCountries || [],
+    industries: profile.industries || [],
+    subIndustries: profile.subIndustries || [],
+    companyStages: profile.companyStages || ['Seed', 'Series A'],
+    contactPersonTypes: profile.contactPersonTypes || ['CEO', 'Founder'],
+    fundingCurrency: profile.fundingCurrency || 'USD',
+  };
+
+  const targetLeads = safeProfile.targetCount === 'Custom' ? (safeProfile.customTargetCount || 15) : (safeProfile.targetCount || 15);
 
   // Resolve numerical funding values if strings were provided (e.g. '₹50 Lakh' or '$1M')
-  let rawMin = typeof profile.fundingMin === 'number' ? profile.fundingMin : 1_000_000;
-  let rawMax = typeof profile.fundingMax === 'number' ? profile.fundingMax : 5_000_000;
-  if (typeof profile.fundingMin === 'string') {
-    const p = parseFundingDetails(profile.fundingMin);
-    if (p) rawMin = profile.fundingCurrency === 'INR' ? p.amountInr : p.amountUsd;
+  let rawMin = typeof safeProfile.fundingMin === 'number' ? safeProfile.fundingMin : 1_000_000;
+  let rawMax = typeof safeProfile.fundingMax === 'number' ? safeProfile.fundingMax : 5_000_000;
+  if (typeof safeProfile.fundingMin === 'string') {
+    const p = parseFundingDetails(safeProfile.fundingMin);
+    if (p) rawMin = safeProfile.fundingCurrency === 'INR' ? p.amountInr : p.amountUsd;
   }
-  if (typeof profile.fundingMax === 'string') {
-    const p = parseFundingDetails(profile.fundingMax);
-    if (p) rawMax = profile.fundingCurrency === 'INR' ? p.amountInr : p.amountUsd;
+  if (typeof safeProfile.fundingMax === 'string') {
+    const p = parseFundingDetails(safeProfile.fundingMax);
+    if (p) rawMax = safeProfile.fundingCurrency === 'INR' ? p.amountInr : p.amountUsd;
   }
 
   // Format preset text
   const formatAmt = (val: number, cur: string) => {
     if (cur === 'INR') {
       if (val >= 10_000_000) return `₹${(val / 10_000_000).toFixed(val % 10_000_000 === 0 ? 0 : 1)}Cr`;
-      if (val >= 100_000) return `₹${(val / 100_000).toFixed(val % 100_000 === 0 ? 0 : 1)}L`;
+      if (val >= 100_000) return `₹${(val / 100_000).toFixed(val % 10_000_000 === 0 ? 0 : 1)}L`;
       return `₹${val}`;
     }
     const sym = cur === 'EUR' ? '€' : cur === 'GBP' ? '£' : '$';
@@ -1939,75 +1952,75 @@ export function targetProfileToHuntConfig(profile: TargetProfile): HuntConfig {
     return `${sym}${val}`;
   };
 
-  const presetLabel = `${formatAmt(rawMin, profile.fundingCurrency)}–${formatAmt(rawMax, profile.fundingCurrency)}`;
+  const presetLabel = `${formatAmt(rawMin, safeProfile.fundingCurrency)}–${formatAmt(rawMax, safeProfile.fundingCurrency)}`;
 
   // Normalization to USD base values
   let usdMin = rawMin;
   let usdMax = rawMax;
-  if (profile.fundingCurrency === 'INR') {
+  if (safeProfile.fundingCurrency === 'INR') {
     usdMin = Math.round(rawMin / 85);
     usdMax = Math.round(rawMax / 85);
-  } else if (profile.fundingCurrency === 'EUR') {
+  } else if (safeProfile.fundingCurrency === 'EUR') {
     usdMin = Math.round(rawMin * 1.08);
     usdMax = Math.round(rawMax * 1.08);
-  } else if (profile.fundingCurrency === 'GBP') {
+  } else if (safeProfile.fundingCurrency === 'GBP') {
     usdMin = Math.round(rawMin * 1.28);
     usdMax = Math.round(rawMax * 1.28);
   }
 
   const isGlobalIndustries =
-    !profile.industries.length ||
-    profile.industries.includes('all') ||
-    profile.industries.includes('All Industries') ||
-    getGlobalSelectionState(profile.subIndustries || []) === 'all';
+    !safeProfile.industries.length ||
+    safeProfile.industries.includes('all') ||
+    safeProfile.industries.includes('All Industries') ||
+    getGlobalSelectionState(safeProfile.subIndustries || []) === 'all';
 
   const normalizedSectors = isGlobalIndustries
     ? ['all']
-    : Array.from(new Set(profile.industries.filter(s => s !== 'all' && s !== 'All Industries')));
+    : Array.from(new Set(safeProfile.industries.filter(s => s !== 'all' && s !== 'All Industries')));
 
-  const normalizedBusinessModels = profile.subIndustries && profile.subIndustries.length > 0
-    ? Array.from(new Set(profile.subIndustries))
+  const normalizedBusinessModels = safeProfile.subIndustries && safeProfile.subIndustries.length > 0
+    ? Array.from(new Set(safeProfile.subIndustries))
     : ['Platform', 'SaaS'];
 
-  const isTech = isGlobalIndustries || profile.industries.some(i => ['Technology', 'Software', 'SaaS', 'AI', 'Artificial Intelligence', 'Cybersecurity', 'DeepTech'].includes(i)) || (profile.subIndustries || []).some(s => ['SaaS', 'AI', 'Software', 'DevTools', 'Cloud Computing'].includes(s));
+  const isTech = isGlobalIndustries || safeProfile.industries.some(i => ['Technology', 'Software', 'SaaS', 'AI', 'Artificial Intelligence', 'Cybersecurity', 'DeepTech'].includes(i)) || (safeProfile.subIndustries || []).some(s => ['SaaS', 'AI', 'Software', 'DevTools', 'Cloud Computing'].includes(s));
 
   return {
-    id: profile.id || `hunt_${Date.now()}`,
-    name: profile.name || 'Custom Target Hunt',
+    id: safeProfile.id || `hunt_${Date.now()}`,
+    name: safeProfile.name || 'Custom Target Hunt',
     geography: {
-      mode: profile.regions.includes('Global') || (!profile.regions.length && !profile.countries.length)
+      mode: safeProfile.regions.includes('Global') || (!safeProfile.regions.length && !safeProfile.countries.length)
         ? 'global'
-        : (profile.countries.length > 0 && profile.regions.filter(r => r !== 'Global').length > 0
+        : (safeProfile.countries.length > 0 && safeProfile.regions.filter(r => r !== 'Global').length > 0
             ? 'union'
-            : (profile.countries.length > 0 ? 'countries' : 'continents')),
-      continents: profile.regions.filter(r => r !== 'Global'),
-      regions: profile.regions.filter(r => r !== 'Global'),
-      countries: profile.countries || [],
-      excludedCountries: profile.excludedCountries || [],
+            : (safeProfile.countries.length > 0 ? 'countries' : 'continents')),
+      continents: safeProfile.regions.filter(r => r !== 'Global'),
+      regions: safeProfile.regions.filter(r => r !== 'Global'),
+      countries: safeProfile.countries || [],
+      excludedCountries: safeProfile.excludedCountries || [],
       usPresence: 'any',
     },
     sectors: normalizedSectors,
     businessModels: normalizedBusinessModels,
-    stage: profile.companyStages.length > 0 ? profile.companyStages : ['Seed', 'Series A'],
+    stage: safeProfile.companyStages.length > 0 ? safeProfile.companyStages : ['Seed', 'Series A'],
     funding: {
       min: usdMin,
       max: usdMax,
-      mode: profile.financialMetric === 'funding' ? 'funding' : profile.financialMetric === 'revenue' ? 'revenue' : 'funding_or_revenue',
+      mode: safeProfile.financialMetric === 'funding' ? 'funding' : safeProfile.financialMetric === 'revenue' ? 'revenue' : 'funding_or_revenue',
       preset: presetLabel,
     },
-    companySize: profile.employeeCountPreset === 'Any' ? [] : [profile.employeeCountPreset],
+    companySize: safeProfile.employeeCountPreset === 'Any' ? [] : [safeProfile.employeeCountPreset],
     techProfile: isTech ? 'platform_required' : 'any_tech',
-    contactRequirement: profile.contactPersonTypes.some(t => t.includes('CEO') && t.includes('Founder'))
+    contactRequirement: safeProfile.contactPersonTypes.some(t => t.includes('CEO') && t.includes('Founder'))
       ? 'ceo_or_cofounder'
-      : profile.contactPersonTypes.some(t => t === 'CEO')
+      : safeProfile.contactPersonTypes.some(t => t === 'CEO')
       ? 'ceo_only'
-      : profile.contactPersonTypes.some(t => t === 'Founder' || t === 'Co-founder')
+      : safeProfile.contactPersonTypes.some(t => t === 'Founder' || t === 'Co-founder')
       ? 'cofounder_only'
       : 'any_executive',
-    emailVerification: profile.emailRequirement === 'Required' ? 'required' : profile.emailRequirement === 'Preferred' ? 'preferred' : 'none',
+    emailVerification: safeProfile.emailRequirement === 'Required' ? 'required' : safeProfile.emailRequirement === 'Preferred' ? 'preferred' : 'none',
     depth: targetLeads > 50 ? 'deep' : 'balanced',
     targetLeads,
-    targetProfile: profile,
+    targetProfile: safeProfile,
   };
 }
 

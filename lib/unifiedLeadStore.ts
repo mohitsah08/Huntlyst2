@@ -233,12 +233,12 @@ export class UnifiedLeadStore {
     const now = new Date().toISOString();
     const compName = extResult.company.name;
     const website = extResult.company.website || '';
-    const canonicalDomain = (extractCanonicalDomain(website) || '').toLowerCase();
+    const canonicalDomain = (extResult.company.canonicalDomain || extractCanonicalDomain(website) || '').toLowerCase();
 
     // Map external verificationStatus to the 4 final statuses:
-    // QUALIFIED -> VERIFIED, REVIEW -> REVIEW, REJECTED -> REJECTED, UNVERIFIED / PARTIALLY_VERIFIED / ERROR -> UNVERIFIED
+    // QUALIFIED / VERIFIED -> VERIFIED, REVIEW -> REVIEW, REJECTED -> REJECTED, UNVERIFIED / PARTIALLY_VERIFIED / ERROR -> UNVERIFIED
     let normalizedFinalStatus: FinalLeadStatus;
-    if (extResult.verificationStatus === 'QUALIFIED') {
+    if (extResult.verificationStatus === 'QUALIFIED' || extResult.verificationStatus === 'VERIFIED') {
       normalizedFinalStatus = 'VERIFIED';
     } else if (extResult.verificationStatus === 'REJECTED') {
       normalizedFinalStatus = 'REJECTED';
@@ -463,6 +463,15 @@ export class UnifiedLeadStore {
 
   public getLeadById(id: string): UnifiedLead | undefined {
     return this.leads.get(id);
+  }
+
+  public getLeadByDomain(domain: string): UnifiedLead | undefined {
+    if (this.leads.size === 0) {
+      this.hydrateFromDb();
+    }
+    const cleanDomain = domain.toLowerCase().trim();
+    const id = this.domainIndex.get(cleanDomain);
+    return id ? this.leads.get(id) : undefined;
   }
 
   public clearLeads(): void {
