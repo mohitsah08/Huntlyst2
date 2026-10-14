@@ -21,8 +21,11 @@
     "test:firecrawl": "npx -y tsx tests/firecrawl-provider.test.ts",
     "test:external-independent": "npx -y tsx tests/external-independent-workflows.test.ts",
     "test:ui-redesign": "npx -y tsx tests/external-ui-dossier-redesign.test.ts",
+    "test:obsidian": "npx -y tsx tests/obsidian-markdown-export.test.ts",
     "test:stage3-shared": "npx -y tsx tests/stage3-autonomous-shared-engine.test.ts",
-    "test": "npx -y tsx tests/target-profile.test.ts && npx -y tsx tests/canonical-qualification.test.ts && npx -y tsx tests/internal-workflow.test.ts && npx -y tsx tests/status-transitions.test.ts && npx -y tsx tests/unified-lead-store.test.ts && npx -y tsx tests/export-four-statuses.test.ts && npx -y tsx tests/export-system.test.ts && npx -y tsx tests/contact-enrichment.test.ts && npx -y tsx tests/regression-internal-qualification.test.ts && npx -y tsx tests/regression-external-research.test.ts && npx -y tsx tests/firecrawl-provider.test.ts && npx -y tsx tests/external-independent-workflows.test.ts && npx -y tsx tests/external-ui-dossier-redesign.test.ts && npx -y tsx tests/stage3-autonomous-shared-engine.test.ts"
+    "test:phase1": "npx -y tsx tests/internal-phase1-preview.test.ts",
+    "test:company-table": "npx -y tsx tests/company-records-table.test.ts",
+    "test": "npx -y tsx tests/target-profile.test.ts && npx -y tsx tests/canonical-qualification.test.ts && npx -y tsx tests/internal-workflow.test.ts && npx -y tsx tests/status-transitions.test.ts && npx -y tsx tests/unified-lead-store.test.ts && npx -y tsx tests/export-four-statuses.test.ts && npx -y tsx tests/export-system.test.ts && npx -y tsx tests/contact-enrichment.test.ts && npx -y tsx tests/regression-internal-qualification.test.ts && npx -y tsx tests/regression-external-research.test.ts && npx -y tsx tests/firecrawl-provider.test.ts && npx -y tsx tests/external-independent-workflows.test.ts && npx -y tsx tests/external-ui-dossier-redesign.test.ts && npx -y tsx tests/obsidian-markdown-export.test.ts && npx -y tsx tests/stage3-autonomous-shared-engine.test.ts && npx -y tsx tests/internal-phase1-preview.test.ts && npx -y tsx tests/company-records-table.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",
@@ -30,6 +33,7 @@
     "docx": "^9.7.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
+    "jszip": "^3.10.1",
     "next": "14.2.13",
     "pdf-parse": "^2.4.5",
     "react": "^18.3.1",
