@@ -74,11 +74,11 @@ export function parseOfflineAmount(value: unknown): number | null {
   if (!match) return null;
   const amount = Number(match[0]);
   if (!Number.isFinite(amount)) return null;
-  if (/\b(b|bn|billion|billions)\b/.test(raw)) return amount * 1_000_000_000;
-  if (/\b(m|mm|million|millions)\b/.test(raw)) return amount * 1_000_000;
-  if (/\b(k|thousand|thousands)\b/.test(raw)) return amount * 1_000;
-  if (/\b(lakh|lakhs|lac|lacs)\b/.test(raw)) return amount * 100_000;
-  if (/\b(crore|crores|cr)\b/.test(raw)) return amount * 10_000_000;
+  if (/(?:^|[^a-z])(b|bn|billion|billions)(?:$|[^a-z])/.test(raw)) return amount * 1_000_000_000;
+  if (/(?:^|[^a-z])(m|mm|million|millions)(?:$|[^a-z])/.test(raw)) return amount * 1_000_000;
+  if (/(?:^|[^a-z])(k|thousand|thousands)(?:$|[^a-z])/.test(raw)) return amount * 1_000;
+  if (/(?:^|[^a-z])(lakh|lakhs|lac|lacs)(?:$|[^a-z])/.test(raw)) return amount * 100_000;
+  if (/(?:^|[^a-z])(crore|crores|cr)(?:$|[^a-z])/.test(raw)) return amount * 10_000_000;
   return amount;
 }
 
