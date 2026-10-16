@@ -59,6 +59,7 @@ assert(evaluateInternalRecord(validInput({ totalFunding: '' }), cfg, 2026).statu
 assert(evaluateInternalRecord(validInput({ ambiguousFields: ['industry'] }), cfg, 2026).status === 'REVIEW', 'ambiguous imported fields are sent to REVIEW');
 assert(evaluateInternalRecord(validInput({ industry: 'Agriculture' }), cfg, 2026).status === 'REJECTED', 'definite mandatory industry mismatch is REJECTED');
 assert(evaluateInternalRecord(validInput({ totalFunding: '$20M' }), cfg, 2026).status === 'REJECTED', 'definite funding range failure is REJECTED');
+assert(evaluateInternalRecord(validInput({ totalFunding: '₹4.2M' }), cfg, 2026).status === 'REVIEW', 'non-USD funding currency is reviewed rather than compared against USD thresholds');
 
 const optionalCfg = settings();
 optionalCfg.targetProfile.mandatoryCriteria = ['funding', 'stage'];
