@@ -61,7 +61,7 @@ function matchesOneOf(value: unknown, targets: string[]): boolean {
   if (!actual) return false;
   return targets.some(target => {
     const expected = normalize(target);
-    return expected && (actual === expected || actual.includes(expected) || expected.includes(actual);
+    return expected && (actual === expected || actual.includes(expected) || expected.includes(actual));
   });
 }
 
@@ -186,7 +186,7 @@ export function evaluateInternalRecord(
 
   const revenueMin = target.revenueMin;
   const revenueMax = target.revenueMax;
-  if ((revenueMin !== null || revenueMax !== null) && mandatory.has('revenue')) {
+  if ((revenueMin != null || revenueMax != null) && mandatory.has('revenue')) {
     const revenue = parseOfflineAmount(input.revenue);
     if (revenue === null) missing('revenue', 'Annual revenue is required to evaluate the configured range.');
     else if ((revenueMin !== null && revenue < revenueMin) || (revenueMax !== null && revenue > revenueMax)) {
@@ -209,7 +209,7 @@ export function evaluateInternalRecord(
     else pass('stage', 'Company stage matches the configured target.');
   }
 
-  if ((target.minCompanyAge !== null || target.maxCompanyAge !== null) && mandatory.has('companyAge')) {
+  if ((target.minCompanyAge != null || target.maxCompanyAge != null) && mandatory.has('companyAge')) {
     const age = Number(companyAge);
     if (!Number.isFinite(age) || age < 0) missing('companyAge', 'Company age or founding year is needed for the configured age range.');
     else if ((target.minCompanyAge !== null && age < target.minCompanyAge) || (target.maxCompanyAge !== null && age > target.maxCompanyAge)) {
