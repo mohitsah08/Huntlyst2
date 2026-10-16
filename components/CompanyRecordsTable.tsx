@@ -58,9 +58,7 @@ interface CompanyRecordsTableProps {
   savedLeads?: any[];
   onToggleSave?: (company: any) => void;
   internalSettings?: InternalWorkflowSettings;
-  searchMode?: 'offline' | 'online';
   settingsOpenRequest?: number;
-  verificationRequest?: number;
   verificationResults?: Record<string, InternalVerificationOutcome> | null;
   onSettingsSaved?: (settings: InternalWorkflowSettings) => void;
 }
@@ -75,9 +73,7 @@ export default function CompanyRecordsTable({
   savedLeads = [],
   onToggleSave,
   internalSettings,
-  searchMode = 'offline',
   settingsOpenRequest = 0,
-  verificationRequest = 0,
   verificationResults,
   onSettingsSaved,
 }: CompanyRecordsTableProps) {
