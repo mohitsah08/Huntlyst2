@@ -4,10 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { InternalRecordDTO } from '@/app/api/discovery/internal/records/route';
 import InternalWorkflowSettingsModal from './InternalWorkflowSettingsModal';
 import InternalCompanyDossierModal from './InternalCompanyDossierModal';
-import {
-  InternalWorkflowSettings,
-  loadInternalSettings,
-} from '@/lib/internalSettings';
+import { InternalWorkflowSettings } from '@/lib/internalSettings';
 import {
   downloadCsvFile,
   downloadXlsxFile,
@@ -57,7 +54,6 @@ interface CompanyRecordsTableProps {
   onToast?: (msg: string) => void;
   savedLeads?: any[];
   onToggleSave?: (company: any) => void;
-  internalSettings?: InternalWorkflowSettings;
   settingsOpenRequest?: number;
   verificationResults?: Record<string, InternalVerificationOutcome> | null;
   onSettingsSaved?: (settings: InternalWorkflowSettings) => void;
@@ -72,7 +68,6 @@ export default function CompanyRecordsTable({
   onToast,
   savedLeads = [],
   onToggleSave,
-  internalSettings,
   settingsOpenRequest = 0,
   verificationResults,
   onSettingsSaved,
@@ -83,13 +78,7 @@ export default function CompanyRecordsTable({
   const hasFetchedRef = React.useRef(false);
   const prevPhase1Ref = React.useRef(phase1Result);
 
-  // Settings & Modes
-  const [settings, setSettings] = useState<InternalWorkflowSettings>(internalSettings || loadInternalSettings());
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-
-  useEffect(() => {
-    if (internalSettings) setSettings(internalSettings);
-  }, [internalSettings]);
 
   useEffect(() => {
     if (settingsOpenRequest > 0) setIsSettingsModalOpen(true);
@@ -616,7 +605,6 @@ export default function CompanyRecordsTable({
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
         onSaved={updatedSettings => {
-          setSettings(updatedSettings);
           onSettingsSaved?.(updatedSettings);
           if (onToast) onToast('Internal workflow settings updated!');
         }}
