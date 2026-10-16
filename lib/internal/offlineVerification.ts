@@ -94,6 +94,10 @@ function isEmail(value: unknown): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valueText(value));
 }
 
+function hasUnnormalizedCurrency(value: unknown): boolean {
+  return /₹|€|£|\bINR\b|\bEUR\b|\bGBP\b|rupees?|lakh|lakhs|lac|lacs|crore|crores|\bcr\b/i.test(valueText(value));
+}
+
 function inactiveStatus(value: unknown): boolean {
   const status = normalize(value);
   return ['inactive', 'closed', 'dissolved', 'bankrupt', 'shut down', 'ceased operations'].some(token => status.includes(token));
@@ -187,19 +191,27 @@ export function evaluateInternalRecord(
   const revenueMin = target.revenueMin;
   const revenueMax = target.revenueMax;
   if ((revenueMin != null || revenueMax != null) && mandatory.has('revenue')) {
-    const revenue = parseOfflineAmount(input.revenue);
-    if (revenue === null) missing('revenue', 'Annual revenue is required to evaluate the configured range.');
-    else if ((revenueMin !== null && revenue < revenueMin) || (revenueMax !== null && revenue > revenueMax)) {
-      fail('revenue', 'Annual revenue is outside the configured range (' + (revenueMin ?? 'no minimum') + ' to ' + (revenueMax ?? 'no maximum') + ' USD).');
-    } else pass('revenue', 'Annual revenue is within the configured range.');
+    if (hasUnnormalizedCurrency(input.revenue)) {
+      ambiguous('revenue', 'Revenue uses a non-USD or unclear currency; offline verification does not convert currencies.');
+    } else {
+      const revenue = parseOfflineAmount(input.revenue);
+      if (revenue === null) missing('revenue', 'Annual revenue is required to evaluate the configured range.');
+      else if ((revenueMin != null && revenue < revenueMin) || (revenueMax != null && revenue > revenueMax)) {
+        fail('revenue', 'Annual revenue is outside the configured range (' + (revenueMin ?? 'no minimum') + ' to ' + (revenueMax ?? 'no maximum') + ' USD).');
+      } else pass('revenue', 'Annual revenue is within the configured range.');
+    }
   }
 
   if (mandatory.has('funding')) {
-    const funding = parseOfflineAmount(fundingValue);
-    if (funding === null) missing('funding', requiredLabels.funding + ' is required to evaluate the configured range.');
-    else if (funding < target.fundingMin || funding > target.fundingMax) {
-      fail('funding', requiredLabels.funding + ' is outside the configured range (' + target.fundingMin + ' to ' + target.fundingMax + ' USD).');
-    } else pass('funding', requiredLabels.funding + ' is within the configured range.');
+    if (hasUnnormalizedCurrency(fundingValue)) {
+      ambiguous('funding', requiredLabels.funding + ' uses a non-USD or unclear currency; offline verification does not convert currencies.');
+    } else {
+      const funding = parseOfflineAmount(fundingValue);
+      if (funding === null) missing('funding', requiredLabels.funding + ' is required to evaluate the configured range.');
+      else if (funding < target.fundingMin || funding > target.fundingMax) {
+        fail('funding', requiredLabels.funding + ' is outside the configured range (' + target.fundingMin + ' to ' + target.fundingMax + ' USD).');
+      } else pass('funding', requiredLabels.funding + ' is within the configured range.');
+    }
   }
 
   const stages = (target.stages || []).filter(exists);
