@@ -13,7 +13,6 @@ interface InternalCompanyDossierModalProps {
   onNavigatePrev: () => void;
   onNavigateNext: () => void;
   onSaveToShortlist?: (company: InternalRecordDTO) => void;
-  onVerifyOnline?: (company: InternalRecordDTO) => Promise<void> | void;
 }
 
 type TabType = 'dossier' | 'raw' | 'evidence' | 'notes';
@@ -27,19 +26,15 @@ export default function InternalCompanyDossierModal({
   onNavigatePrev,
   onNavigateNext,
   onSaveToShortlist,
-  onVerifyOnline,
 }: InternalCompanyDossierModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('dossier');
   const [notes, setNotes] = useState('');
-  const [isVerifyingOnline, setIsVerifyingOnline] = useState(false);
-  const [onlineVerifiedState, setOnlineVerifiedState] = useState<string | null>(null);
   const [isShortlisted, setIsShortlisted] = useState(false);
 
   // Sync notes when company changes
   React.useEffect(() => {
     if (company) {
       setNotes(company.notes || '');
-      setOnlineVerifiedState(company.onlineStatus === 'Not run' ? null : company.onlineStatus);
       setIsShortlisted(false);
     }
   }, [company]);
@@ -72,23 +67,6 @@ export default function InternalCompanyDossierModal({
       downloadSingleMarkdown(mdContent, filename);
     } catch (err) {
       console.error('Markdown export error:', err);
-    }
-  };
-
-  const handleRunOnlineVerification = async () => {
-    setIsVerifyingOnline(true);
-    try {
-      if (onVerifyOnline) {
-        await onVerifyOnline(company);
-      } else {
-        // Fallback simulate live run
-        await new Promise(r => setTimeout(r, 1200));
-      }
-      setOnlineVerifiedState('Completed');
-    } catch (err) {
-      console.error('Online verification error:', err);
-    } finally {
-      setIsVerifyingOnline(false);
     }
   };
 
@@ -231,7 +209,7 @@ export default function InternalCompanyDossierModal({
           {activeTab === 'dossier' && (
             <div className="space-y-4">
               {/* 2-Column Info Box: Key Information vs Missing / Unverified */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 {/* Left: What We Found / Key Information */}
                 <div className="p-4 bg-white rounded-xl border border-[#DCD6C9] shadow-sm space-y-3">
                   <div className="flex items-center gap-2 border-b border-[#F0EAD8] pb-2">
@@ -386,43 +364,6 @@ export default function InternalCompanyDossierModal({
                   </div>
                 </div>
 
-                {/* Right Card: Online Verification */}
-                <div className="p-4 bg-white rounded-xl border border-[#DCD6C9] shadow-sm space-y-2 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#1E1B18]">
-                      <span>🌐</span> Online Verification
-                    </div>
-                    <p className="text-[11px] font-mono text-[#766E65] mt-1">
-                      Run online verification to check website, executive profiles, and social presence.
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-2 pt-2">
-                    <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-[#766E65]">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#BDBDBD]" />
-                      <span>{onlineVerifiedState || 'Not run'}</span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleRunOnlineVerification}
-                      disabled={isVerifyingOnline}
-                      className="px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white border border-[#1E1B18] rounded-lg hover:bg-[#FAF6EE] shadow-sketch-xs flex items-center gap-1.5 disabled:opacity-50"
-                    >
-                      {isVerifyingOnline ? (
-                        <>
-                          <span className="w-3 h-3 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
-                          <span>Verifying...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>👁️</span>
-                          <span>Verify Online</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
               </div>
             </div>
           )}
