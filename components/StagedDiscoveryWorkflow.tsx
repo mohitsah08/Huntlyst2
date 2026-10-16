@@ -1253,7 +1253,6 @@ export default function StagedDiscoveryWorkflow({
           <CompanyRecordsTable
             phase1Result={phase1Result}
             internalResults={internalResults}
-            internalSettings={internalSettings}
             settingsOpenRequest={settingsOpenRequest}
             verificationResults={verificationResults}
             onSettingsSaved={(updatedSettings) => {
