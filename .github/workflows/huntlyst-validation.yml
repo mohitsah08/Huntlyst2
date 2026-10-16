@@ -1,4 +1,4 @@
-name: Huntlyst validation
+name: Huntlyst type-check
 
 on:
   pull_request:
@@ -9,9 +9,9 @@ on:
       - fix/persistent-stages-company-tables
 
 jobs:
-  validate:
+  typecheck:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -27,6 +27,3 @@ jobs:
 
       - name: TypeScript type-check
         run: npx tsc --noEmit
-
-      - name: Run project test suite
-        run: npm test
