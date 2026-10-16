@@ -333,11 +333,20 @@ export default function StagedDiscoveryWorkflow({
   const handleInternalFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      const lowerName = file.name.toLowerCase();
+      if (!lowerName.endsWith('.csv') && !lowerName.endsWith('.xlsx')) {
+        setErrorMessage('Internal Workflow currently accepts only CSV (.csv) and Excel workbook (.xlsx) files.');
+        setStatusMessage('Unsupported file type. Choose a CSV or XLSX file.');
+        e.target.value = '';
+        return;
+      }
       setSelectedFile(file);
       setVerificationResults(null);
       setInternalResults([]);
       setInternalApproved(new Set());
       setInternalStats(null);
+      setInternalProgress(null);
+      setInternalStatus('idle');
       setIsPhase1Parsing(true);
       setErrorMessage(null);
       setStatusMessage(`Parsing "${file.name}" locally in browser...`);
@@ -371,6 +380,8 @@ export default function StagedDiscoveryWorkflow({
     setInternalResults([]);
     setInternalApproved(new Set());
     setInternalStats(null);
+    setInternalProgress(null);
+    setInternalStatus('idle');
     setIsPhase1Parsing(true);
     setErrorMessage(null);
     setStatusMessage('Parsing pasted candidates locally in browser...');
@@ -419,6 +430,7 @@ export default function StagedDiscoveryWorkflow({
 
     setIsRunningOfflineVerification(true);
     setErrorMessage(null);
+    setInternalProgress(null);
     setInternalStatus('running');
     setStatusMessage('Evaluating parsed company records against the saved Internal Target Profile offline...');
     await new Promise(resolve => setTimeout(resolve, 0));
@@ -986,7 +998,7 @@ export default function StagedDiscoveryWorkflow({
               ) : null}
             </div>
             <div className="font-display font-bold mt-1">Internal Discovery</div>
-            <div className="text-[10px] text-[#766E65] font-normal">PDF, CSV, XLSX, JSON uploads</div>
+            <div className="text-[10px] text-[#766E65] font-normal">CSV / XLSX upload</div>
           </div>
 
           {/* Step 2: External */}
