@@ -1131,7 +1131,6 @@ export default function StagedDiscoveryWorkflow({
             </div>
           )}
         </div>
-      </div>
 
       {/* ========================================================================= */}
       {/* STAGE 2: EXTERNAL DISCOVERY                                              */}
@@ -1178,7 +1177,6 @@ export default function StagedDiscoveryWorkflow({
             </button>
           </div>
         </div>
-      </div>
 
       {/* ========================================================================= */}
       {/* STAGE 3: HUNTLYST WEB DISCOVERY                                          */}
@@ -1492,7 +1490,6 @@ export default function StagedDiscoveryWorkflow({
             </div>
           </div>
         </div>
-      </div>
 
       {/* Target Configuration Modal */}
       {isConfigModalOpen && (
