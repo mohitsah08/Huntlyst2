@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { TargetProfile, DEFAULT_TVB_TARGET_PROFILE, formatTargetSummary } from '@/lib/targetProfileData';
-import { CompanyVerificationResult, PipelineStageName } from '@/providers/types';
+import { CompanyVerificationResult, CriterionResult, PipelineStageName } from '@/providers/types';
 import { CompanyRecord, RejectedCompanyRecord, HuntConfig, PipelineStreamEvent } from '@/lib/types';
 import HuntConfiguration from './HuntConfiguration';
 import ExportModal from './ExportModal';
@@ -10,6 +10,9 @@ import ExternalResearchWorkflow from './ExternalResearchWorkflow';
 import { PipelineStageLabel } from '@/lib/export';
 import { extractCanonicalDomain, normalizeCompanyName } from '@/lib/deduplication';
 import { processPhase1File, Phase1ImportResult } from '@/lib/internal';
+import type { Phase1CompanyRecord } from '@/lib/internal/phase1Types';
+import { evaluateInternalRecord, parseOfflineAmount, OfflineVerificationInput, InternalVerificationOutcome } from '@/lib/internal/offlineVerification';
+import { InternalWorkflowSettings, loadInternalSettings, saveInternalSettings } from '@/lib/internalSettings';
 import CompanyRecordsTable from './CompanyRecordsTable';
 import SharedCompanyTable, { SharedCompanyRow } from './SharedCompanyTable';
 
@@ -28,6 +31,137 @@ function isSameCompanyIdentity(
 
   if (!isGenericA && !isGenericB && nameA === nameB) return true;
   return false;
+}
+
+
+function rawFieldValue(raw: Record<string, any>, aliases: string[]): unknown {
+  const normalized = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const entries = Object.entries(raw || {});
+  for (const alias of aliases) {
+    const match = entries.find(([key, value]) => normalized(key) === normalized(alias) && value !== null && value !== undefined && String(value).trim() !== '');
+    if (match) return match[1];
+  }
+  return undefined;
+}
+
+function toOfflineVerificationInput(record: Phase1CompanyRecord): OfflineVerificationInput {
+  const raw = record.rawFields || {};
+  const fields = record.canonicalFields;
+  const website = fields.website.value || rawFieldValue(raw, ['Website', 'Company Website', 'URL', 'Website URL']);
+  const rawDomain = fields.canonicalDomain.value || rawFieldValue(raw, ['Domain', 'Company Domain', 'Website Domain']) || extractCanonicalDomain(String(website || ''));
+  const companyName = fields.companyName.value || rawFieldValue(raw, ['Company Name', 'Company', 'Name', 'Organization']);
+  const industry = fields.industry.value || rawFieldValue(raw, ['Industry', 'Sector']);
+  const geography = fields.geography.value || rawFieldValue(raw, ['Geography', 'Country', 'Headquarters', 'Location', 'City']);
+  const totalFunding = fields.totalFundingAmount.value || rawFieldValue(raw, ['Total Funding', 'Total Funding USD', 'Funding Amount (in USD)', 'Funding Amount', 'Funding']);
+  const latestRoundFunding = fields.latestFundingRoundAmount.value || rawFieldValue(raw, ['Latest Round Funding', 'Latest Funding Round Amount', 'Latest Round Amount']);
+  const companyStage = fields.companyStage.value || fields.fundingStage.value || rawFieldValue(raw, ['Company Stage', 'Funding Type', 'Funding Stage', 'Stage']);
+  const executiveNames = [
+    rawFieldValue(raw, ['CEO Name', 'Current CEO', 'Chief Executive Officer']),
+    rawFieldValue(raw, ['Founder Name', 'Founder', 'Founders']),
+    rawFieldValue(raw, ['Cofounder Name', 'Co-founder', 'Co-founder Name', 'CoFounders']),
+    rawFieldValue(raw, ['Executive Name', 'Decision Maker', 'Contact Name']),
+  ].filter(value => value !== undefined && String(value).trim() !== '');
+  const emails = [
+    rawFieldValue(raw, ['Company Email', 'Contact Email', 'Email']),
+    rawFieldValue(raw, ['CEO Email', 'Founder Email', 'Executive Email', 'Decision Maker Email']),
+  ].filter(value => value !== undefined && String(value).trim() !== '');
+  const ambiguousFields = Object.entries(fields)
+    .filter(([, detail]) => detail.status === 'INVALID' || detail.status === 'AMBIGUOUS')
+    .map(([key]) => key);
+
+  return {
+    id: record.companyId,
+    companyName,
+    domain: rawDomain,
+    website,
+    industry,
+    subIndustry: rawFieldValue(raw, ['Sub-industry', 'Sub Industry', 'Subsector', 'Sub-sector']),
+    geography,
+    revenue: rawFieldValue(raw, ['Annual Revenue', 'Revenue', 'Revenue USD', 'Annual Revenue USD']),
+    totalFunding,
+    latestRoundFunding,
+    companyStage,
+    foundingYear: fields.foundingYear.value || rawFieldValue(raw, ['Founding Year', 'Year Founded', 'Founded']),
+    companyAge: fields.companyAge.value || rawFieldValue(raw, ['Company Age', 'Operating Years', 'Years Operating']),
+    companyStatus: rawFieldValue(raw, ['Company Status', 'Operating Status', 'Business Status', 'Status']),
+    executiveNames,
+    emails,
+    ambiguousFields,
+  };
+}
+
+function toLocalCriterion(key: string, outcome: InternalVerificationOutcome, value: unknown): CriterionResult {
+  const status = outcome.passedCriteria.includes(key)
+    ? 'PASS'
+    : outcome.failedCriteria.includes(key)
+    ? 'FAIL'
+    : 'UNKNOWN';
+  const relatedReason = outcome.reasons.filter(reason => reason.toLowerCase().includes(key.toLowerCase())).join(' ');
+  return {
+    status,
+    value: value === null || value === undefined ? null : String(value),
+    reason: relatedReason || 'Evaluated against supplied file data and saved Internal settings.',
+    source: 'Uploaded file / offline rules',
+    verificationStage: 'QUALIFY',
+    timestamp: new Date().toISOString(),
+  };
+}
+
+function toLocalCompanyVerificationResult(
+  record: Phase1CompanyRecord,
+  input: OfflineVerificationInput,
+  outcome: InternalVerificationOutcome,
+): CompanyVerificationResult {
+  const raw = record.rawFields || {};
+  const companyName = String(input.companyName || '');
+  const website = String(input.website || (input.domain ? 'https://' + String(input.domain) : ''));
+  const company: CompanyRecord = {
+    id: record.companyId,
+    name: companyName,
+    website,
+    canonicalDomain: String(input.domain || ''),
+    description: String(raw.Description || '') || null,
+    industry: String(input.industry || '') || null,
+    fundingOrRevenue: String(input.totalFunding || input.revenue || '') || null,
+    totalFundingUsd: parseOfflineAmount(input.totalFunding),
+    latestRoundUsd: parseOfflineAmount(input.latestRoundFunding),
+    latestRound: String(input.companyStage || '') || null,
+    yearFounded: parseOfflineAmount(input.foundingYear),
+    founders: (input.executiveNames || []).map(value => String(value)),
+    sourceProvenance: 'Uploaded file; offline verification only',
+    discoveredAt: new Date().toISOString(),
+  };
+  const statusMap: Record<InternalVerificationOutcome['status'], CompanyVerificationResult['verificationStatus']> = {
+    VERIFIED: 'QUALIFIED',
+    REVIEW: 'PARTIALLY_VERIFIED',
+    UNVERIFIED: 'UNVERIFIED',
+    REJECTED: 'REJECTED',
+  };
+  const criterion = (key: string, value: unknown) => toLocalCriterion(key, outcome, value);
+  return {
+    company,
+    verificationStatus: statusMap[outcome.status],
+    criteria: {
+      funding: criterion('funding', input.totalFunding || input.latestRoundFunding),
+      industry: criterion('industry', input.industry),
+      companyAge: criterion('companyAge', input.companyAge || input.foundingYear),
+      geography: criterion('geography', input.geography),
+      usPresence: criterion('geography', input.geography),
+      companyStage: criterion('stage', input.companyStage),
+      founderOrCeo: criterion('executive', (input.executiveNames || []).join(', ')),
+      professionalEmail: criterion('email', (input.emails || []).join(', ')),
+    },
+    rejectionReason: outcome.status === 'REJECTED' ? outcome.reasons.join(' ') : undefined,
+    qualificationReason: outcome.status === 'VERIFIED' ? outcome.reasons.join(' ') : undefined,
+    partiallyVerifiedReason: outcome.status === 'REVIEW' ? outcome.reasons.join(' ') : undefined,
+    unverifiedReason: outcome.status === 'UNVERIFIED' ? outcome.reasons.join(' ') : undefined,
+    decisionExplanation: outcome.reasons.join(' '),
+    failedCriteria: outcome.failedCriteria,
+    passedCriteria: outcome.passedCriteria,
+    unknownCriteria: [...outcome.missingCriteria, ...outcome.ambiguousCriteria],
+    sources: ['Uploaded file (offline evaluation)'],
+    auditTimestamp: new Date().toISOString(),
+  };
 }
 
 interface StagedDiscoveryWorkflowProps {
@@ -73,6 +207,11 @@ export default function StagedDiscoveryWorkflow({
   const [isRetryingCandidate, setIsRetryingCandidate] = useState(false);
 
   // Internal Stage State
+  const [internalSettings, setInternalSettings] = useState<InternalWorkflowSettings>(() => loadInternalSettings());
+  const [settingsOpenRequest, setSettingsOpenRequest] = useState(0);
+  const [verificationResults, setVerificationResults] = useState<Record<string, InternalVerificationOutcome> | null>(null);
+  const [isRunningOfflineVerification, setIsRunningOfflineVerification] = useState(false);
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [manualText, setManualText] = useState('');
   const [phase1Result, setPhase1Result] = useState<Phase1ImportResult | null>(null);
@@ -194,7 +333,28 @@ export default function StagedDiscoveryWorkflow({
   const handleInternalFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      const lowerName = file.name.toLowerCase();
+      if (!lowerName.endsWith('.csv') && !lowerName.endsWith('.xlsx')) {
+        setSelectedFile(null);
+        setPhase1Result(null);
+        setVerificationResults(null);
+        setInternalResults([]);
+        setInternalApproved(new Set());
+        setInternalStats(null);
+        setInternalProgress(null);
+        setInternalStatus('idle');
+        setErrorMessage('Internal Workflow currently accepts only CSV (.csv) and Excel workbook (.xlsx) files.');
+        setStatusMessage('Unsupported file type. Choose a CSV or XLSX file.');
+        e.target.value = '';
+        return;
+      }
       setSelectedFile(file);
+      setVerificationResults(null);
+      setInternalResults([]);
+      setInternalApproved(new Set());
+      setInternalStats(null);
+      setInternalProgress(null);
+      setInternalStatus('idle');
       setIsPhase1Parsing(true);
       setErrorMessage(null);
       setStatusMessage(`Parsing "${file.name}" locally in browser...`);
@@ -224,6 +384,12 @@ export default function StagedDiscoveryWorkflow({
       setErrorMessage('Please paste candidate text or table.');
       return;
     }
+    setVerificationResults(null);
+    setInternalResults([]);
+    setInternalApproved(new Set());
+    setInternalStats(null);
+    setInternalProgress(null);
+    setInternalStatus('idle');
     setIsPhase1Parsing(true);
     setErrorMessage(null);
     setStatusMessage('Parsing pasted candidates locally in browser...');
@@ -249,129 +415,81 @@ export default function StagedDiscoveryWorkflow({
     }
   };
 
-  const handleRunInternalDiscovery = async () => {
-    if (!selectedFile && !manualText.trim()) {
-      setErrorMessage('Please upload a document (CSV, XLSX, PDF, DOCX, TXT, JSON) or paste candidate text.');
+  const handleInternalSearchModeChange = (mode: 'offline' | 'online') => {
+    const updated = { ...internalSettings, targetProfile: { ...internalSettings.targetProfile, searchMode: mode } };
+    setInternalSettings(updated);
+    // saveInternalSettings deliberately persists Offline as the next-session default.
+    saveInternalSettings(updated);
+    setStatusMessage(mode === 'offline'
+      ? 'Offline mode selected. Internal verification will use only uploaded data and saved rules.'
+      : 'Online mode is a placeholder and is not wired yet. No network verification will run.');
+  };
+
+  const handleRunInternalVerificationPipeline = async () => {
+    if (internalSettings.targetProfile.searchMode === 'online') {
+      setStatusMessage('Online verification is not wired yet. Switch to Offline to run Internal verification locally.');
+      return;
+    }
+    if (!phase1Result || phase1Result.companies.length === 0) {
+      setErrorMessage('Upload and parse a CSV or XLSX file before running Internal verification.');
+      setStatusMessage('No parsed company records are available to verify.');
       return;
     }
 
+    setIsRunningOfflineVerification(true);
     setErrorMessage(null);
-    setInternalStatus('running');
     setInternalProgress(null);
-    setStatusMessage('Parsing candidates and starting Huntlyst 6-stage verification...');
+    setInternalStatus('running');
+    setStatusMessage('Evaluating parsed company records against the saved Internal Target Profile offline...');
+    await new Promise(resolve => setTimeout(resolve, 0));
 
     try {
-      let response: Response;
-
-      if (selectedFile) {
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        formData.append('targetProfile', JSON.stringify(targetProfile));
-
-        setStatusMessage(`Processing "${selectedFile.name}" with Huntlyst Pipeline...`);
-        response = await fetch('/api/discovery/internal?stream=true', {
-          method: 'POST',
-          body: formData,
-        });
-      } else {
-        setStatusMessage('Processing candidate text with Huntlyst Pipeline...');
-        response = await fetch('/api/discovery/internal?stream=true', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ rawText: manualText, targetProfile }),
-        });
+      const outcomes: Record<string, InternalVerificationOutcome> = {};
+      const localResults: CompanyVerificationResult[] = [];
+      for (const company of phase1Result.companies) {
+        const input = toOfflineVerificationInput(company);
+        const outcome = evaluateInternalRecord(input, internalSettings);
+        outcomes[company.companyId] = outcome;
+        localResults.push(toLocalCompanyVerificationResult(company, input, outcome));
       }
 
-      if (!response.ok) {
-        const errJson = await response.json().catch(() => ({}));
-        throw new Error(errJson.error || `Internal discovery failed with status ${response.status}`);
-      }
-
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('text/event-stream') && response.body) {
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        let streamResults: CompanyVerificationResult[] = [];
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const events = buffer.split('\n\n');
-          buffer = events.pop() || '';
-
-          for (const evText of events) {
-            const trimmed = evText.trim();
-            if (!trimmed.startsWith('data: ')) continue;
-            try {
-              const event = JSON.parse(trimmed.slice(6));
-              if (event.type === 'start') {
-                setInternalProgress({ current: 0, total: event.totalReceived });
-                setStatusMessage(`Processing candidates... 0 / ${event.totalReceived}`);
-              } else if (event.type === 'progress') {
-                setInternalProgress({ current: event.current, total: event.total });
-                setStatusMessage(`Processing candidates... ${event.current} / ${event.total}`);
-                if (event.result) {
-                  streamResults = [...streamResults, event.result];
-                  setInternalResults([...streamResults]);
-                }
-                if (event.stats) {
-                  setInternalStats(event.stats);
-                }
-              } else if (event.type === 'complete') {
-                const finalResults = event.results || streamResults;
-                setInternalResults(finalResults);
-                setInternalProgress({ current: event.totalProcessed, total: event.totalReceived });
-                setStatusMessage(`${event.totalProcessed} / ${event.totalReceived} candidates fully verified`);
-                setInternalStats(event.stats);
-
-                const initialApproved = new Set<string>();
-                finalResults.forEach((r: CompanyVerificationResult) => {
-                  if (r.verificationStatus === 'QUALIFIED' || r.verificationStatus === 'PARTIALLY_VERIFIED') {
-                    initialApproved.add(r.company.name);
-                  }
-                });
-                setInternalApproved(initialApproved);
-                setInternalStatus('completed');
-              }
-            } catch (err) {
-              console.warn('[StreamParse]', err);
-            }
-          }
+      setVerificationResults(outcomes);
+      setInternalResults(localResults);
+      const approved = new Set<string>();
+      localResults.forEach(result => {
+        if (result.verificationStatus === 'QUALIFIED' || result.verificationStatus === 'PARTIALLY_VERIFIED') {
+          approved.add(result.company.name);
         }
-      } else {
-        const data = await response.json();
-        if (!data.success) {
-          throw new Error(data.error || 'Internal discovery failed');
-        }
-
-        const results = data.results || [];
-        setInternalResults(results);
-
-        const initialApproved = new Set<string>();
-        results.forEach((r: CompanyVerificationResult) => {
-          if (r.verificationStatus === 'QUALIFIED' || r.verificationStatus === 'PARTIALLY_VERIFIED') {
-            initialApproved.add(r.company.name);
-          }
-        });
-        setInternalApproved(initialApproved);
-        if (data.stats) setInternalStats(data.stats);
-        setInternalStatus('completed');
-        setStatusMessage(`${results.length} candidates fully verified`);
-      }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Error executing internal discovery');
+      });
+      setInternalApproved(approved);
+      const summary = Object.values(outcomes).reduce((acc, item) => {
+        acc[item.status] += 1;
+        return acc;
+      }, { VERIFIED: 0, REVIEW: 0, UNVERIFIED: 0, REJECTED: 0 } as Record<InternalVerificationOutcome['status'], number>);
+      setInternalStats({
+        totalReceived: localResults.length,
+        totalProcessed: localResults.length,
+        qualified: summary.VERIFIED,
+        rejected: summary.REJECTED,
+        partiallyVerified: summary.REVIEW,
+        review: summary.REVIEW,
+        unverified: summary.UNVERIFIED,
+        errors: 0,
+      });
+      setInternalProgress({ current: localResults.length, total: localResults.length });
+      setInternalStatus('completed');
+      setStatusMessage(
+        'Offline verification complete: ' + summary.VERIFIED + ' VERIFIED, ' +
+        summary.UNVERIFIED + ' UNVERIFIED, ' + summary.REVIEW + ' REVIEW, ' +
+        summary.REJECTED + ' REJECTED. No network calls were made.'
+      );
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Offline verification failed.');
       setInternalStatus('idle');
+      setStatusMessage('Offline verification failed; the imported records were not discarded.');
+    } finally {
+      setIsRunningOfflineVerification(false);
     }
-  };
-
-  const toggleInternalApproval = (name: string) => {
-    const next = new Set(internalApproved);
-    if (next.has(name)) next.delete(name);
-    else next.add(name);
-    setInternalApproved(next);
   };
 
   // APPROVAL GATE 1: Internal -> External
@@ -888,7 +1006,7 @@ export default function StagedDiscoveryWorkflow({
               ) : null}
             </div>
             <div className="font-display font-bold mt-1">Internal Discovery</div>
-            <div className="text-[10px] text-[#766E65] font-normal">PDF, CSV, XLSX, JSON uploads</div>
+            <div className="text-[10px] text-[#766E65] font-normal">CSV / XLSX upload</div>
           </div>
 
           {/* Step 2: External */}
@@ -1005,12 +1123,41 @@ export default function StagedDiscoveryWorkflow({
         <div className="space-y-5 animate-in fade-in">
           <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch-sm space-y-4">
             <div className="border-b border-[#F0EAD8] pb-3">
-              <h3 className="font-display text-lg font-bold text-[#1E1B18] flex items-center gap-2">
-                <span>📁</span> Stage 1: Internal Candidate Discovery & Verification
-              </h3>
-              <p className="text-xs text-[#766E65] mt-1 font-mono">
-                Upload your candidate list (CSV, XLSX, PDF, DOCX, TXT, JSON, or previously exported Huntlyst leads). Huntlyst parses every row without arbitrary caps, preserves existing verified evidence, and verifies criteria through deterministic stages.
-              </p>
+              <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
+                <div className="min-w-0">
+                  <h3 className="font-display text-lg font-bold text-[#1E1B18] flex items-center gap-2">
+                    <span>📁</span> Stage 1: Internal Candidate Discovery & Verification
+                  </h3>
+                  <p className="text-xs text-[#766E65] mt-1 font-mono">
+                    Upload a CSV (.csv) or Excel workbook (.xlsx), parse it locally, configure the Internal Target Profile, then run the offline verification pipeline. Online mode is currently a placeholder.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 xl:justify-end shrink-0">
+                  <button type="button" onClick={() => setSettingsOpenRequest(value => value + 1)}
+                    className="px-3 py-2 rounded-lg border-2 border-[#1E1B18] bg-white text-xs font-bold font-mono hover:bg-[#FAF6EE] shadow-sketch-xs">
+                    ⚙ Settings
+                  </button>
+                  <div className="inline-flex items-center p-0.5 rounded-lg border-2 border-[#1E1B18] bg-[#FAF6EE]">
+                    <button type="button" onClick={() => handleInternalSearchModeChange('offline')}
+                      className={internalSettings.targetProfile.searchMode === 'offline' ? 'px-3 py-2 rounded-md bg-[#1E1B18] text-white text-xs font-bold' : 'px-3 py-2 rounded-md text-[#766E65] text-xs font-bold'}>
+                      Offline
+                    </button>
+                    <button type="button" onClick={() => handleInternalSearchModeChange('online')}
+                      className={internalSettings.targetProfile.searchMode === 'online' ? 'px-3 py-2 rounded-md bg-[#FF6B35] text-white text-xs font-bold' : 'px-3 py-2 rounded-md text-[#766E65] text-xs font-bold'}>
+                      Online
+                    </button>
+                  </div>
+                  <button type="button" onClick={handleRunInternalVerificationPipeline}
+                    disabled={isRunningOfflineVerification || isPhase1Parsing || !phase1Result || phase1Result.companies.length === 0}
+                    className="sketch-btn px-4 py-2.5 text-xs font-bold text-white bg-[#FF6B35] border-2 border-[#1E1B18] rounded-xl hover:bg-[#E55A2B] shadow-sketch-sm disabled:opacity-50 flex items-center gap-2">
+                    {isRunningOfflineVerification ? (
+                      <><span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /><span>Verifying locally...</span></>
+                    ) : (
+                      <><span>✔</span><span>Run Internal Verification Pipeline</span></>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -1024,13 +1171,13 @@ export default function StagedDiscoveryWorkflow({
                   <input
                     id="file-upload"
                     type="file"
-                    accept=".csv,.xlsx,.xls,.md,.markdown"
+                    accept=".csv,.xlsx"
                     onChange={handleInternalFileChange}
                     disabled={isPhase1Parsing}
                     className="hidden"
                   />
                   <p className="text-[11px] text-[#766E65] mt-1 font-mono">
-                    Phase 1 Supported: CSV (.csv), Excel (.xlsx, .xls), Markdown (.md tables)
+                    Supported input: CSV (.csv) and Excel workbook (.xlsx)
                   </p>
                 </div>
                 {selectedFile && (
@@ -1097,24 +1244,7 @@ export default function StagedDiscoveryWorkflow({
                     <span>Parse Pasted Candidates Locally</span>
                   </button>
                 )}
-                <button
-                  type="button"
-                  disabled={isCurrentProcessing || (!selectedFile && !manualText.trim())}
-                  onClick={handleRunInternalDiscovery}
-                  className="sketch-btn px-6 py-2.5 text-xs font-bold text-white bg-[#FF6B35] border-2 border-[#1E1B18] rounded-xl hover:bg-[#E55A2B] shadow-sketch-sm disabled:opacity-50 flex items-center gap-2"
-                >
-                  {internalStatus === 'running' ? (
-                    <>
-                      <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Huntlyst is executing candidate pipeline...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>⚡</span>
-                      <span>Run Internal Verification Pipeline</span>
-                    </>
-                  )}
-                </button>
+
               </div>
 
               {internalResults.length > 0 && (
@@ -1131,6 +1261,12 @@ export default function StagedDiscoveryWorkflow({
           <CompanyRecordsTable
             phase1Result={phase1Result}
             internalResults={internalResults}
+            settingsOpenRequest={settingsOpenRequest}
+            verificationResults={verificationResults}
+            onSettingsSaved={(updatedSettings) => {
+              setInternalSettings(updatedSettings);
+              saveInternalSettings(updatedSettings);
+            }}
             onToast={(msg) => setStatusMessage(msg)}
             savedLeads={savedLeads}
             onToggleSave={onToggleSave}

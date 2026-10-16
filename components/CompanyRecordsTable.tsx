@@ -4,11 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { InternalRecordDTO } from '@/app/api/discovery/internal/records/route';
 import InternalWorkflowSettingsModal from './InternalWorkflowSettingsModal';
 import InternalCompanyDossierModal from './InternalCompanyDossierModal';
-import {
-  InternalWorkflowSettings,
-  loadInternalSettings,
-  saveInternalSettings,
-} from '@/lib/internalSettings';
+import { InternalWorkflowSettings } from '@/lib/internalSettings';
 import {
   downloadCsvFile,
   downloadXlsxFile,
@@ -25,6 +21,7 @@ import { CompanyVerificationResult } from '@/providers/types';
 import { getCompanyLeadKey } from '@/lib/deduplication';
 import { CompanyRecord } from '@/lib/types';
 import SharedCompanyTable, { SharedCompanyRow } from './SharedCompanyTable';
+import type { InternalVerificationOutcome } from '@/lib/internal/offlineVerification';
 
 function internalRecordToCompany(record: InternalRecordDTO): CompanyRecord {
   return {
@@ -57,6 +54,9 @@ interface CompanyRecordsTableProps {
   onToast?: (msg: string) => void;
   savedLeads?: any[];
   onToggleSave?: (company: any) => void;
+  settingsOpenRequest?: number;
+  verificationResults?: Record<string, InternalVerificationOutcome> | null;
+  onSettingsSaved?: (settings: InternalWorkflowSettings) => void;
 }
 
 const EMPTY_INITIAL_RECORDS: InternalRecordDTO[] = [];
@@ -68,6 +68,9 @@ export default function CompanyRecordsTable({
   onToast,
   savedLeads = [],
   onToggleSave,
+  settingsOpenRequest = 0,
+  verificationResults,
+  onSettingsSaved,
 }: CompanyRecordsTableProps) {
   // Records State
   const [records, setRecords] = useState<InternalRecordDTO[]>(initialRecords);
@@ -75,10 +78,35 @@ export default function CompanyRecordsTable({
   const hasFetchedRef = React.useRef(false);
   const prevPhase1Ref = React.useRef(phase1Result);
 
-  // Settings & Modes
-  const [settings, setSettings] = useState<InternalWorkflowSettings>(loadInternalSettings());
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [searchMode, setSearchMode] = useState<'offline' | 'online'>(settings.targetProfile?.searchMode || 'online');
+
+  useEffect(() => {
+    if (settingsOpenRequest > 0) setIsSettingsModalOpen(true);
+  }, [settingsOpenRequest]);
+
+  // Apply results produced by the Stage 1 local-only verification engine.
+  useEffect(() => {
+    if (!verificationResults) return;
+    setRecords(previous => previous.map(record => {
+      const outcome = verificationResults[record.id];
+      if (!outcome) return record;
+      const mapping = {
+        VERIFIED: { status: 'VERIFIED' as const, statusLabel: 'VERIFIED' as const },
+        REVIEW: { status: 'NEEDS_REVIEW' as const, statusLabel: 'REVIEW' as const },
+        UNVERIFIED: { status: 'UNVERIFIED' as const, statusLabel: 'UNVERIFIED' as const },
+        REJECTED: { status: 'MISSING' as const, statusLabel: 'REJECTED' as const },
+      };
+      const next = mapping[outcome.status];
+      return {
+        ...record,
+        status: next.status,
+        statusLabel: next.statusLabel,
+        offlineMatchScore: outcome.score,
+        offlineMatchExplanation: outcome.reasons.join(' '),
+        notes: outcome.reasons.join(' '),
+      };
+    }));
+  }, [verificationResults]);
 
   // Table Filter & Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -100,12 +128,66 @@ export default function CompanyRecordsTable({
   const [selectedCompany, setSelectedCompany] = useState<InternalRecordDTO | null>(null);
   const [isDossierOpen, setIsDossierOpen] = useState(false);
 
-  // Verification in Progress State
-  const [isVerifying, setIsVerifying] = useState(false);
 
   // Convert internalResults or phase1Result to InternalRecordDTO if available
   useEffect(() => {
-    if (internalResults && internalResults.length > 0) {
+    if (phase1Result && phase1Result.companies.length > 0) {
+
+      const converted: InternalRecordDTO[] = phase1Result.companies.map((c, idx) => {
+        const raw = c.rawFields || {};
+        const name = c.canonicalFields.companyName.value || raw.Name || `Company #${idx + 1}`;
+        const domain = c.canonicalFields.canonicalDomain.value || raw.Domain || '';
+        const website = c.canonicalFields.website.value || raw.URL || (domain ? `https://${domain}` : '');
+        const industry = c.canonicalFields.industry.value || raw.Industry || 'Not disclosed';
+        const geo = c.canonicalFields.geography.value || raw.Geography || raw.Country || raw.City || 'Not disclosed';
+        const founded = c.canonicalFields.foundingYear.value || raw['Founding Year'] || 'Not disclosed';
+        const funding = c.canonicalFields.totalFundingAmount.value || raw['Funding Amount (in USD)'] || 'Not disclosed';
+        const stage = c.canonicalFields.companyStage.value || raw['Funding Type'] || 'Not disclosed';
+
+        let status: InternalRecordDTO['status'] = 'UNVERIFIED';
+        let statusLabel: InternalRecordDTO['statusLabel'] = 'UNVERIFIED';
+
+        return {
+          id: c.companyId || `rec-${idx + 1}`,
+          index: idx + 1,
+          name,
+          domain,
+          website,
+          description: raw.Description || '',
+          industry,
+          geo,
+          city: raw.City || '',
+          country: raw.Country || '',
+          founded,
+          funding,
+          fundingAmount: 0,
+          stage,
+          status,
+          statusLabel,
+          companyEmail: raw['Contact Email'] || raw['Company Email'] || '',
+          companyEmailStatus: raw['Contact Email'] ? 'Found' : 'Not found',
+          ceoName: raw['CEO Name'] && raw['CEO Name'] !== 'UPGRADE TO UNLOCK' ? raw['CEO Name'] : '',
+          ceoStatus: raw['CEO Name'] && raw['CEO Name'] !== 'UPGRADE TO UNLOCK' ? 'Verified' : 'Not verified',
+          executiveEmail: raw['CEO Email'] && raw['CEO Email'] !== 'UPGRADE TO UNLOCK' ? raw['CEO Email'] : '',
+          companyPhone: raw.Phone || '',
+          companyLinkedin: raw.LinkedIn || '',
+          offlineMatchScore: 0,
+          offlineMatchExplanation: 'Imported file record pending verification pipeline run.',
+          onlineStatus: 'Not run',
+          rawFields: raw,
+          evidence: [
+            {
+              label: `Imported from ${phase1Result.fileName}`,
+              timestamp: new Date().toISOString(),
+              text: `Extracted ${c.summary.availableCount} available fields, ${c.summary.missingCount} missing.`,
+            },
+          ],
+          notes: '',
+        };
+      });
+      setRecords(converted);
+    } else if (internalResults && internalResults.length > 0) {
+
       const converted: InternalRecordDTO[] = internalResults.map((r, idx) => {
         const comp = r.company;
         const anyComp = comp as any;
@@ -178,14 +260,15 @@ export default function CompanyRecordsTable({
         };
       });
       setRecords(converted);
+      setRecords(converted);
     } else if (phase1Result && phase1Result.companies.length > 0) {
       const converted: InternalRecordDTO[] = phase1Result.companies.map((c, idx) => {
         const raw = c.rawFields || {};
         const name = c.canonicalFields.companyName.value || raw.Name || `Company #${idx + 1}`;
         const domain = c.canonicalFields.canonicalDomain.value || raw.Domain || '';
         const website = c.canonicalFields.website.value || raw.URL || (domain ? `https://${domain}` : '');
-        const industry = c.canonicalFields.industry.value || raw.Industry || 'Technology';
-        const geo = c.canonicalFields.geography.value || raw.Country || raw.City || 'Global';
+        const industry = c.canonicalFields.industry.value || raw.Industry || 'Not disclosed';
+        const geo = c.canonicalFields.geography.value || raw.Geography || raw.Country || raw.City || 'Not disclosed';
         const founded = c.canonicalFields.foundingYear.value || raw['Founding Year'] || 'Not disclosed';
         const funding = c.canonicalFields.totalFundingAmount.value || raw['Funding Amount (in USD)'] || 'Not disclosed';
         const stage = c.canonicalFields.companyStage.value || raw['Funding Type'] || 'Not disclosed';
@@ -199,7 +282,7 @@ export default function CompanyRecordsTable({
           name,
           domain,
           website,
-          description: raw.Description || `${name} provides specialized technology solutions.`,
+          description: raw.Description || '',
           industry,
           geo,
           city: raw.City || '',
@@ -210,7 +293,7 @@ export default function CompanyRecordsTable({
           stage,
           status,
           statusLabel,
-          companyEmail: raw['Contact Email'] || `info@${domain}`,
+          companyEmail: raw['Contact Email'] || raw['Company Email'] || '',
           companyEmailStatus: raw['Contact Email'] ? 'Found' : 'Not found',
           ceoName: raw['CEO Name'] && raw['CEO Name'] !== 'UPGRADE TO UNLOCK' ? raw['CEO Name'] : '',
           ceoStatus: raw['CEO Name'] && raw['CEO Name'] !== 'UPGRADE TO UNLOCK' ? 'Verified' : 'Not verified',
@@ -246,28 +329,6 @@ export default function CompanyRecordsTable({
     }
     prevPhase1Ref.current = phase1Result;
   }, [phase1Result, internalResults]);
-
-  // Keep searchMode synced with settings
-  useEffect(() => {
-    setSearchMode(settings.targetProfile.searchMode || 'online');
-  }, [settings.targetProfile.searchMode]);
-
-  // Handle Search Mode toggle from toolbar
-  const handleToggleSearchMode = (mode: 'offline' | 'online') => {
-    setSearchMode(mode);
-    const updated = {
-      ...settings,
-      targetProfile: {
-        ...settings.targetProfile,
-        searchMode: mode,
-      },
-    };
-    setSettings(updated);
-    saveInternalSettings(updated);
-    if (onToast) {
-      onToast(`Search mode switched to ${mode.toUpperCase()} (Internal Workflow)`);
-    }
-  };
 
   // Filtered & Searched Records
   const filteredRecords = useMemo(() => {
@@ -359,40 +420,6 @@ export default function CompanyRecordsTable({
   const handleDossierNext = () => {
     if (currentCompanyIndex < filteredRecords.length) {
       setSelectedCompany(filteredRecords[currentCompanyIndex]);
-    }
-  };
-
-  // Run Verify Toolbar Action
-  const handleRunVerify = async () => {
-    setIsVerifying(true);
-    if (onToast) {
-      onToast(
-        searchMode === 'offline'
-          ? 'Running local offline deterministic target evaluation...'
-          : 'Running online research & DNS verification...'
-      );
-    }
-
-    try {
-      if (searchMode === 'offline') {
-        // Evaluate all companies locally
-        await new Promise(r => setTimeout(r, 600));
-        setRecords(prev =>
-          prev.map((rec, i) => {
-            if (i === 4) {
-              return { ...rec, status: 'FOUND', statusLabel: 'FOUND', offlineMatchScore: 80 };
-            }
-            return rec;
-          })
-        );
-        if (onToast) onToast('Offline evaluation completed for 100 records! ✓');
-      } else {
-        // Online mode: verify current page records
-        await new Promise(r => setTimeout(r, 1000));
-        if (onToast) onToast('Online verification completed for active candidates! ✨');
-      }
-    } finally {
-      setIsVerifying(false);
     }
   };
 
@@ -513,62 +540,6 @@ export default function CompanyRecordsTable({
         onSearchChange={setSearchQuery}
         toolbarActions={
           <>
-            {/* Settings Button (Opens Internal Workflow Settings) */}
-            <button
-              type="button"
-              onClick={() => setIsSettingsModalOpen(true)}
-              className="px-3 py-1.5 rounded-lg border border-[#1E1B18] bg-white text-xs font-bold font-mono text-[#1E1B18] hover:bg-[#FAF6EE] flex items-center gap-1.5 shadow-sketch-xs transition-colors"
-            >
-              <span>⚙️</span>
-              <span>Settings</span>
-            </button>
-
-            {/* Offline / Online Toggle */}
-            <div className="inline-flex items-center p-0.5 rounded-lg border border-[#1E1B18] bg-[#FAF6EE] shadow-sketch-xs">
-              <button
-                type="button"
-                onClick={() => handleToggleSearchMode('offline')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold font-mono transition-all ${
-                  searchMode === 'offline'
-                    ? 'bg-[#1E1B18] text-white shadow-sm'
-                    : 'text-[#766E65] hover:text-[#1E1B18]'
-                }`}
-              >
-                Offline
-              </button>
-              <button
-                type="button"
-                onClick={() => handleToggleSearchMode('online')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold font-mono transition-all ${
-                  searchMode === 'online'
-                    ? 'bg-[#FF6B35] text-white shadow-sm'
-                    : 'text-[#766E65] hover:text-[#1E1B18]'
-                }`}
-              >
-                Online
-              </button>
-            </div>
-
-            {/* Verify Button */}
-            <button
-              type="button"
-              onClick={handleRunVerify}
-              disabled={isVerifying}
-              className="px-3.5 py-1.5 rounded-lg border border-[#1E1B18] bg-white text-xs font-bold font-mono text-[#1E1B18] hover:bg-[#FAF6EE] flex items-center gap-1.5 shadow-sketch-xs disabled:opacity-50 transition-colors"
-            >
-              {isVerifying ? (
-                <>
-                  <span className="w-3 h-3 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
-                  <span>Verifying...</span>
-                </>
-              ) : (
-                <>
-                  <span>✔</span>
-                  <span>Verify</span>
-                </>
-              )}
-            </button>
-
             {/* Export Dropdown */}
             <div className="relative">
               <button
@@ -634,8 +605,7 @@ export default function CompanyRecordsTable({
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
         onSaved={updatedSettings => {
-          setSettings(updatedSettings);
-          setSearchMode(updatedSettings.targetProfile.searchMode || 'online');
+          onSettingsSaved?.(updatedSettings);
           if (onToast) onToast('Internal workflow settings updated!');
         }}
       />
@@ -652,18 +622,7 @@ export default function CompanyRecordsTable({
         onSaveToShortlist={comp => {
           if (onToast) onToast(`Saved "${comp.name}" to shortlist! ⭐`);
         }}
-        onVerifyOnline={async comp => {
-          try {
-            const res = await fetch('/api/research', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ url: comp.website, name: comp.name }),
-            });
-            if (res.ok) {
-              if (onToast) onToast(`Online research verified for ${comp.name}! ✨`);
-            }
-          } catch {}
-        }}
+
       />
     </div>
   );

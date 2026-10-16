@@ -12,7 +12,22 @@
 export interface InternalTargetProfile {
   fundingMin: number;
   fundingMax: number;
+  /** Which funding figure the configured range applies to. */
+  fundingBasis?: 'total' | 'latestRound';
   industries: string[];
+  subIndustries?: string[];
+  geographies?: string[];
+  /** Annual revenue range in USD; null disables that range. */
+  revenueMin?: number | null;
+  revenueMax?: number | null;
+  /** Operating duration in years; null disables that range. */
+  minCompanyAge?: number | null;
+  maxCompanyAge?: number | null;
+  websiteRequirement?: 'Required' | 'Optional' | 'Not Required';
+  /** Fields whose presence is required before a record can be VERIFIED. */
+  requiredFields?: string[];
+  /** Configured matching criteria that are mandatory rather than preferences. */
+  mandatoryCriteria?: string[];
   stages: string[];
   executiveRequired: {
     ceo: boolean;
@@ -90,7 +105,17 @@ export const DEFAULT_INTERNAL_SETTINGS: InternalWorkflowSettings = {
   targetProfile: {
     fundingMin: 1_000_000,
     fundingMax: 5_000_000,
-    industries: ['Technology', 'Global'],
+    fundingBasis: 'total',
+    industries: ['Technology'],
+    subIndustries: [],
+    geographies: [],
+    revenueMin: null,
+    revenueMax: null,
+    minCompanyAge: null,
+    maxCompanyAge: null,
+    websiteRequirement: 'Optional',
+    requiredFields: ['companyName', 'domain'],
+    mandatoryCriteria: ['industry', 'funding', 'stage'],
     stages: ['Seed', 'Series A', 'Series B'],
     executiveRequired: {
       ceo: true,
@@ -99,7 +124,7 @@ export const DEFAULT_INTERNAL_SETTINGS: InternalWorkflowSettings = {
     },
     emailRequirement: 'Required',
     freshness: '30 days',
-    searchMode: 'online',
+    searchMode: 'offline',
   },
   searchSources: {
     localFile: true,
@@ -157,8 +182,28 @@ export function loadInternalSettings(): InternalWorkflowSettings {
     const raw = localStorage.getItem(INTERNAL_SETTINGS_STORAGE_KEY);
     if (!raw) return DEFAULT_INTERNAL_SETTINGS;
     const parsed = JSON.parse(raw);
+    const savedTarget = parsed.targetProfile || {};
+    const savedIndustries = Array.isArray(savedTarget.industries)
+      ? savedTarget.industries.filter((industry: unknown) => String(industry).trim().toLowerCase() !== 'global')
+      : DEFAULT_INTERNAL_SETTINGS.targetProfile.industries;
     return {
-      targetProfile: { ...DEFAULT_INTERNAL_SETTINGS.targetProfile, ...parsed.targetProfile },
+      targetProfile: {
+        ...DEFAULT_INTERNAL_SETTINGS.targetProfile,
+        ...savedTarget,
+        // Online verification is intentionally not wired yet. Every new/reloaded session starts offline.
+        searchMode: 'offline',
+        industries: savedIndustries.length ? savedIndustries : DEFAULT_INTERNAL_SETTINGS.targetProfile.industries,
+        subIndustries: Array.isArray(savedTarget.subIndustries) ? savedTarget.subIndustries : [],
+        geographies: Array.isArray(savedTarget.geographies) ? savedTarget.geographies : [],
+        revenueMin: savedTarget.revenueMin ?? null,
+        revenueMax: savedTarget.revenueMax ?? null,
+        minCompanyAge: savedTarget.minCompanyAge ?? null,
+        maxCompanyAge: savedTarget.maxCompanyAge ?? null,
+        websiteRequirement: savedTarget.websiteRequirement || 'Optional',
+        fundingBasis: savedTarget.fundingBasis || 'total',
+        requiredFields: Array.isArray(savedTarget.requiredFields) ? savedTarget.requiredFields : ['companyName', 'domain'],
+        mandatoryCriteria: Array.isArray(savedTarget.mandatoryCriteria) ? savedTarget.mandatoryCriteria : ['industry', 'funding', 'stage'],
+      },
       searchSources: { ...DEFAULT_INTERNAL_SETTINGS.searchSources, ...parsed.searchSources },
       verificationRules: { ...DEFAULT_INTERNAL_SETTINGS.verificationRules, ...parsed.verificationRules },
       fieldMapping: { ...DEFAULT_INTERNAL_SETTINGS.fieldMapping, ...parsed.fieldMapping },
@@ -174,7 +219,12 @@ export function loadInternalSettings(): InternalWorkflowSettings {
 export function saveInternalSettings(settings: InternalWorkflowSettings): void {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(INTERNAL_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    // Persist criteria, but never persist Online as the default while online verification is unwired.
+    const persisted: InternalWorkflowSettings = {
+      ...settings,
+      targetProfile: { ...settings.targetProfile, searchMode: 'offline' },
+    };
+    localStorage.setItem(INTERNAL_SETTINGS_STORAGE_KEY, JSON.stringify(persisted));
   } catch {}
 }
 
