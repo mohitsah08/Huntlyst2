@@ -365,6 +365,7 @@ export default function InternalWorkflowSettingsModal({
                   {/* Required information */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-[#1E1B18] block">Required Fields</label>
+                    <p className="text-[10px] text-[#766E65] font-mono">Company name and domain are always required. Executive, email, and active-status requirements use their dedicated settings.</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {[
                         { key: 'companyName', label: 'Company name', locked: true },
@@ -376,9 +377,6 @@ export default function InternalWorkflowSettingsModal({
                         { key: 'stage', label: 'Company stage' },
                         { key: 'companyAge', label: 'Founding year / company age' },
                         { key: 'website', label: 'Company website' },
-                        { key: 'companyStatus', label: 'Active company status' },
-                        { key: 'executive', label: 'Founder / CEO / decision-maker' },
-                        { key: 'email', label: 'Company / executive email' },
                       ].map(field => {
                         const checked = field.locked || (settings.targetProfile.requiredFields || []).includes(field.key);
                         return (
@@ -410,9 +408,6 @@ export default function InternalWorkflowSettingsModal({
                         { key: 'stage', label: 'Company stage' },
                         { key: 'companyAge', label: 'Company age' },
                         { key: 'website', label: 'Website requirement' },
-                        { key: 'companyStatus', label: 'Active company status' },
-                        { key: 'executive', label: 'Executive details' },
-                        { key: 'email', label: 'Email requirement' },
                       ].map(field => (
                         <label key={field.key} className="flex items-center gap-2 p-2 rounded-lg border border-[#E5E0D5] bg-white text-[11px] font-mono">
                           <input type="checkbox" checked={(settings.targetProfile.mandatoryCriteria || []).includes(field.key)}
