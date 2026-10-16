@@ -222,7 +222,7 @@ export function evaluateInternalRecord(
     else pass('website', 'Required company website is present.');
   }
 
-  if (settings.verificationRules.requireActiveStatus || mandatory.has('companyStatus')) {
+  if (settings.verificationRules.requireActiveStatus || requiredFields.has('companyStatus')) {
     if (!exists(input.companyStatus)) missing('companyStatus', 'Company status is needed to confirm it is active.');
     else if (inactiveStatus(input.companyStatus)) fail('companyStatus', 'Company is explicitly marked inactive or closed.');
     else if (!activeStatus(input.companyStatus)) ambiguous('companyStatus', 'Company status "' + valueText(input.companyStatus) + '" is not clearly active.');
