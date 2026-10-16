@@ -9,7 +9,7 @@ import {
   DEFAULT_TARGET_CRITERIA,
 } from '@/lib/research/types';
 import { CompanyVerificationResult } from '@/providers/types';
-import CompanyCard from './CompanyCard';
+import ExternalResearchTable from './ExternalResearchTable';
 import CompanyResearchDossierModal from './CompanyResearchDossierModal';
 import ExportModal from './ExportModal';
 import { downloadCombinedMarkdown, downloadObsidianVault } from '@/lib/export';
@@ -397,6 +397,18 @@ export default function ExternalResearchWorkflow({
   const selectedProfile = profiles.find((p) => p.id === selectedProfileId) || profiles[0] || null;
   const currentVerificationRun = selectedProfile ? verificationRuns[selectedProfile.id] : null;
 
+  const filteredProfiles = profiles.filter((profile) => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      profile.officialName.toLowerCase().includes(q) ||
+      profile.canonicalDomain.toLowerCase().includes(q) ||
+      (profile.primaryIndustry || '').toLowerCase().includes(q) ||
+      (profile.headquarters.city || '').toLowerCase().includes(q) ||
+      (profile.headquarters.country || '').toLowerCase().includes(q)
+    );
+  });
+
   return (
     <div className="space-y-6 animate-in fade-in">
       {/* HEADER & STAGE SUMMARY */}
@@ -615,74 +627,86 @@ export default function ExternalResearchWorkflow({
             )}
           </div>
 
-          {/* RESEARCH PROFILES LIST (COMPACT COMPANY CARD VIEW) */}
+          {/* RESEARCH RESULTS: shared table pattern with explicit dossier actions */}
           {profiles.length > 0 ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <h4 className="font-display text-base font-bold text-[#1E1B18]">
-                    Researched Leads ({profiles.length})
-                  </h4>
-                  <p className="text-xs font-mono text-[#766E65]">
-                    Compact list showing 14 key data fields & 9 verification indicators. Click 'View Dossier' or the search icon to open the full report.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (selectedForBatch.size === profiles.length) {
-                        setSelectedForBatch(new Set());
-                      } else {
-                        setSelectedForBatch(new Set(profiles.map((p) => p.id)));
-                      }
-                    }}
-                    className="text-xs font-mono text-[#766E65] hover:text-[#1E1B18] underline"
-                  >
-                    {selectedForBatch.size === profiles.length ? 'Deselect All' : 'Select All'}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={selectedForBatch.size === 0 || isVerifying}
-                    onClick={() => handleVerifyCompanies(Array.from(selectedForBatch))}
-                    className="sketch-btn px-3.5 py-1.5 text-xs font-bold text-white bg-[#2E7D32] hover:bg-[#1B5E20] border border-[#1E1B18] rounded-xl disabled:opacity-50 flex items-center gap-1.5 shadow-sketch-xs"
-                  >
-                    <span>⚡ Verify Selected ({selectedForBatch.size})</span>
-                  </button>
+            <div className="space-y-3">
+              <div className="paper-card bg-[#FFFDF9] rounded-xl border-2 border-[#1E1B18] shadow-sketch-sm p-4 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="font-display text-base font-bold text-[#1E1B18]">
+                      Company Records ({filteredProfiles.length})
+                    </h4>
+                    <p className="text-xs font-mono text-[#766E65]">
+                      Search results stay available when you move between workflow stages. Select rows for verification or open a full dossier.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="relative min-w-[220px] flex-1">
+                      <span className="absolute left-3 top-2.5 text-xs text-[#766E65]">⌕</span>
+                      <input
+                        type="search"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search companies..."
+                        className="w-full pl-8 pr-3 py-2 border border-[#1E1B18] rounded-lg text-xs font-mono bg-white"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const allVisibleSelected = filteredProfiles.length > 0 && filteredProfiles.every((p) => selectedForBatch.has(p.id));
+                        const next = new Set(selectedForBatch);
+                        filteredProfiles.forEach((p) => allVisibleSelected ? next.delete(p.id) : next.add(p.id));
+                        setSelectedForBatch(next);
+                      }}
+                      className="px-3 py-2 text-xs font-bold border border-[#1E1B18] rounded-lg bg-white hover:bg-[#FAF6EE]"
+                    >
+                      {filteredProfiles.length > 0 && filteredProfiles.every((p) => selectedForBatch.has(p.id)) ? 'Deselect All' : 'Select All'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={selectedForBatch.size === 0 || isVerifying}
+                      onClick={() => handleVerifyCompanies(Array.from(selectedForBatch))}
+                      className="px-3 py-2 text-xs font-bold border border-[#1E1B18] rounded-lg bg-[#FFE0B2] hover:bg-[#FFD39A] disabled:opacity-50"
+                    >
+                      {isVerifying ? 'Verifying…' : '✓ Verify Selected (' + selectedForBatch.size + ')'}
+                    </button>
+                  </div>
                 </div>
               </div>
-
-              <div className="space-y-3">
-                {profiles.map((p) => (
-                  <CompanyCard
-                    key={p.id}
-                    profile={p}
-                    verificationRun={verificationRuns[p.id]}
-                    isSelected={selectedForBatch.has(p.id)}
-                    onToggleSelect={(id) => {
-                      const next = new Set(selectedForBatch);
-                      if (next.has(id)) next.delete(id);
-                      else next.add(id);
-                      setSelectedForBatch(next);
-                    }}
-                    onOpenDossier={(prof) => setDossierProfile(prof)}
-                    onVerify={(id) => {
-                      setSelectedProfileId(id);
-                      handleVerifyCompanies([id]);
-                    }}
-                    isVerifying={isVerifying}
-                  />
-                ))}
-              </div>
+              <ExternalResearchTable
+                profiles={filteredProfiles}
+                verificationRuns={verificationRuns}
+                selectedIds={selectedForBatch}
+                isVerifying={isVerifying}
+                onToggleSelect={(id) => {
+                  const next = new Set(selectedForBatch);
+                  if (next.has(id)) next.delete(id);
+                  else next.add(id);
+                  setSelectedForBatch(next);
+                }}
+                onView={(profile) => {
+                  setSelectedProfileId(profile.id);
+                  setDossierProfile(profile);
+                }}
+                onVerify={(id) => {
+                  setSelectedProfileId(id);
+                  handleVerifyCompanies([id]);
+                }}
+              />
+              {filteredProfiles.length === 0 && (
+                <p className="text-xs font-mono text-[#766E65] text-center py-4">
+                  No company profiles matched "{searchQuery}".
+                  <button type="button" onClick={() => setSearchQuery('')} className="ml-2 text-[#FF6B35] underline">Clear search</button>
+                </p>
+              )}
             </div>
           ) : (
             <div className="paper-card bg-[#FFFDF9] rounded-2xl p-10 text-center border-2 border-[#1E1B18] shadow-sketch-sm space-y-2">
               <div className="text-2xl">🔬</div>
-              <h4 className="font-display text-lg font-bold text-[#1E1B18]">
-                No research results yet.
-              </h4>
+              <h4 className="font-display text-lg font-bold text-[#1E1B18]">No research results yet.</h4>
               <p className="text-xs font-mono text-[#766E65] max-w-md mx-auto">
-                No research results yet. Start a search or research operation to discover companies.
+                Start a company research operation above. Results will appear here after the search completes.
               </p>
             </div>
           )}
@@ -810,66 +834,42 @@ export default function ExternalResearchWorkflow({
             </div>
           </div>
 
-          {/* List of Company Cards */}
-          <div className="space-y-4">
-            {(() => {
-              const q = searchQuery.toLowerCase().trim();
-              const filtered = profiles.filter((p) => {
-                if (!q) return true;
-                return (
-                  p.officialName.toLowerCase().includes(q) ||
-                  p.canonicalDomain.toLowerCase().includes(q) ||
-                  (p.primaryIndustry && p.primaryIndustry.toLowerCase().includes(q)) ||
-                  (p.headquarters.country && p.headquarters.country.toLowerCase().includes(q))
-                );
-              });
-
-              if (profiles.length === 0) {
-                return (
-                  <div className="p-10 text-center bg-white rounded-2xl border border-[#EBE4D5] text-xs font-mono text-[#766E65] space-y-2">
-                    <p className="text-sm font-bold text-[#1E1B18]">No research results yet.</p>
-                    <p>Start a search or research operation to discover companies.</p>
-                  </div>
-                );
-              }
-
-              if (filtered.length === 0) {
-                return (
-                  <div className="p-8 text-center bg-white rounded-2xl border border-[#EBE4D5] text-xs font-mono text-[#766E65] space-y-2">
-                    <p>No company profiles matched "{searchQuery}".</p>
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery('')}
-                      className="text-[#FF6B35] font-bold underline"
-                    >
-                      Reset search filter
-                    </button>
-                  </div>
-                );
-              }
-
-              return (
-                <div className="space-y-3">
-                  {filtered.map((p) => (
-                    <CompanyCard
-                      key={p.id}
-                      profile={p}
-                      verificationRun={verificationRuns[p.id]}
-                      isSelected={selectedProfileId === p.id}
-                      onToggleSelect={(id) => {
-                        setSelectedProfileId(id);
-                      }}
-                      onOpenDossier={(prof) => setDossierProfile(prof)}
-                      onVerify={(id) => {
-                        setSelectedProfileId(id);
-                        handleVerifyCompanies([id]);
-                      }}
-                      isVerifying={isVerifying}
-                    />
-                  ))}
-                </div>
-              );
-            })()}
+          {/* Evidence-backed company records table */}
+          <div className="space-y-3">
+            {profiles.length === 0 ? (
+              <div className="p-10 text-center bg-white rounded-2xl border border-[#EBE4D5] text-xs font-mono text-[#766E65] space-y-2">
+                <p className="text-sm font-bold text-[#1E1B18]">No research results yet.</p>
+                <p>Start a company research operation to discover companies.</p>
+              </div>
+            ) : filteredProfiles.length === 0 ? (
+              <div className="p-8 text-center bg-white rounded-2xl border border-[#EBE4D5] text-xs font-mono text-[#766E65] space-y-2">
+                <p>No company profiles matched "{searchQuery}".</p>
+                <button type="button" onClick={() => setSearchQuery('')} className="text-[#FF6B35] font-bold underline">
+                  Reset search filter
+                </button>
+              </div>
+            ) : (
+              <ExternalResearchTable
+                profiles={filteredProfiles}
+                verificationRuns={verificationRuns}
+                selectedIds={selectedForBatch}
+                isVerifying={isVerifying}
+                onToggleSelect={(id) => {
+                  const next = new Set(selectedForBatch);
+                  if (next.has(id)) next.delete(id);
+                  else next.add(id);
+                  setSelectedForBatch(next);
+                }}
+                onView={(profile) => {
+                  setSelectedProfileId(profile.id);
+                  setDossierProfile(profile);
+                }}
+                onVerify={(id) => {
+                  setSelectedProfileId(id);
+                  handleVerifyCompanies([id]);
+                }}
+              />
+            )}
           </div>
         </div>
       )}
