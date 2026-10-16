@@ -634,18 +634,7 @@ export default function CompanyRecordsTable({
         onSaveToShortlist={comp => {
           if (onToast) onToast(`Saved "${comp.name}" to shortlist! ⭐`);
         }}
-        onVerifyOnline={async comp => {
-          try {
-            const res = await fetch('/api/research', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ url: comp.website, name: comp.name }),
-            });
-            if (res.ok) {
-              if (onToast) onToast(`Online research verified for ${comp.name}! ✨`);
-            }
-          } catch {}
-        }}
+
       />
     </div>
   );
