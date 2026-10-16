@@ -15,6 +15,7 @@ import { formatTargetSummary } from '@/lib/targetProfileData';
 import { loadSettings } from '@/lib/settings';
 import { calculateHuntScore } from '@/lib/rank';
 import { downloadCsvFile, downloadPdfFile, downloadDocxFile } from '@/lib/export';
+import { getCompanyLeadKey, extractCanonicalDomain } from '@/lib/deduplication';
 
 // Modular Subviews & Components
 import HuntlystLogo from '@/components/HuntlystLogo';
@@ -150,6 +151,7 @@ export default function HomePage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   // Splash Screen State (Session-guarded, defaults to true to prevent initial dashboard flash)
   const [showSplash, setShowSplash] = useState<boolean>(true);
@@ -189,31 +191,25 @@ export default function HomePage() {
     } catch {}
   };
 
-  // Load saved state on mount
+  // Load saved state on mount (only explicitly saved leads and run history - fresh sessions start empty)
   useEffect(() => {
     try {
-      // Saved leads
-      const savedRaw = localStorage.getItem('huntlyst_saved_companies') || localStorage.getItem('tvb_saved_companies');
+      // Saved leads (strictly scoped to official huntlyst key without legacy fallback)
+      const savedRaw = localStorage.getItem('huntlyst_saved_companies');
       if (savedRaw) {
         setSavedLeads(JSON.parse(savedRaw));
       }
 
       // Run History
-      const historyRaw = localStorage.getItem('huntlyst_run_history') || localStorage.getItem('tvb_run_history');
+      const historyRaw = localStorage.getItem('huntlyst_run_history');
       if (historyRaw) {
         setRunHistory(JSON.parse(historyRaw));
       }
 
       // Last Run
-      const lastRun = localStorage.getItem('huntlyst_last_run_timestamp') || localStorage.getItem('tvb_last_run_timestamp');
+      const lastRun = localStorage.getItem('huntlyst_last_run_timestamp');
       if (lastRun) {
         setLastRunTime(lastRun);
-      }
-
-      // Cached current run
-      const cachedRun = localStorage.getItem('huntlyst_current_run') || localStorage.getItem('tvb_current_run');
-      if (cachedRun) {
-        setResults(JSON.parse(cachedRun));
       }
 
       // Settings
@@ -250,12 +246,13 @@ export default function HomePage() {
     return 'Non-US Hub';
   };
 
-  // Toggle Save Lead
+  // Toggle Save Lead (uses collision-free unique keying)
   const handleToggleSave = (company: CompanyRecord) => {
-    const exists = savedLeads.some((c) => c.website === company.website || c.name === company.name);
+    const targetKey = getCompanyLeadKey(company);
+    const exists = savedLeads.some((c) => getCompanyLeadKey(c) === targetKey);
     let next: CompanyRecord[];
     if (exists) {
-      next = savedLeads.filter((c) => c.website !== company.website && c.name !== company.name);
+      next = savedLeads.filter((c) => getCompanyLeadKey(c) !== targetKey);
       showToast(`Removed "${company.name}" from your shortlist.`);
     } else {
       next = [...savedLeads, company];
@@ -267,13 +264,15 @@ export default function HomePage() {
     } catch {}
   };
 
-  const handleRemoveSavedLead = (name: string) => {
-    const next = savedLeads.filter((c) => c.name !== name);
+  const handleRemoveSavedLead = (nameOrKey: string) => {
+    const next = savedLeads.filter(
+      (c) => c.name !== nameOrKey && getCompanyLeadKey(c) !== nameOrKey
+    );
     setSavedLeads(next);
     try {
       localStorage.setItem('huntlyst_saved_companies', JSON.stringify(next));
     } catch {}
-    showToast(`Removed "${name}" from shortlist.`);
+    showToast(`Removed from shortlist.`);
   };
 
   // Start Real Discovery Pipeline (Section 8)
@@ -1153,6 +1152,8 @@ export default function HomePage() {
               onViewResults={() => setActiveNav('results')}
               onFinalizeStagedResults={handleFinalizeStagedResults}
               onOpenLeadModal={(comp) => setSelectedCompany(comp)}
+              savedLeads={savedLeads}
+              onToggleSave={handleToggleSave}
             />
           )}
 
@@ -1277,10 +1278,12 @@ export default function HomePage() {
                   </div>
                   <div className="space-y-1">
                     <h3 className="font-display text-2xl font-bold text-[#1E1B18]">
-                      No qualified companies found.
+                      {!results ? 'No research results yet.' : 'No qualified companies found.'}
                     </h3>
                     <p className="text-xs text-[#766E65] max-w-md mx-auto">
-                      Try widening your target profile or starting a new hunt from the Discover tab.
+                      {!results
+                        ? 'No research results yet. Start a search or research operation to discover companies.'
+                        : 'Try widening your target profile or starting a new hunt from the Discover tab.'}
                     </p>
                   </div>
                   <button
@@ -1515,33 +1518,33 @@ export default function HomePage() {
                                     title="Select all visible filtered companies"
                                   />
                                 </th>
-                                <th className="py-3 px-4">#</th>
+                                <th className="py-3 px-3 text-center">#</th>
                                 <th className="py-3 px-4">Company</th>
-                                <th className="py-3 px-4">Sector</th>
-                                <th className="py-3 px-4">Funding / Rev</th>
-                                <th className="py-3 px-4">Location</th>
-                                <th className="py-3 px-4">Leader</th>
-                                <th className="py-3 px-4">Verified Contact</th>
-                                <th className="py-3 px-4">Hunt Score</th>
+                                <th className="py-3 px-3">Domain</th>
+                                <th className="py-3 px-3">Industry</th>
+                                <th className="py-3 px-3">Geography</th>
+                                <th className="py-3 px-3">Founded</th>
+                                <th className="py-3 px-3">Funding</th>
+                                <th className="py-3 px-3">Stage</th>
+                                <th className="py-3 px-3">Status</th>
                                 <th className="py-3 px-4 text-right">Actions</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-[#F0EAD8]">
                               {filteredCompanies.map((company, idx) => {
                                 const { score } = calculateHuntScore(company);
-                                const isSaved = savedLeads.some((c) => c.name === company.name);
-                                const founder = company.founderOrCeoName || company.founder?.name || 'Executive';
-                                const email = company.founderOrCeoEmail || company.email?.address;
-                                const isEmailVerified = company.emailVerified || company.email?.status === 'verified';
-                                const rowId = `lead-${company.website ? company.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase() : company.name.toLowerCase().replace(/\s+/g, '-')}`;
+                                const isSaved = savedLeads.some((c) => getCompanyLeadKey(c) === getCompanyLeadKey(company));
+                                const domain = company.canonicalDomain || extractCanonicalDomain(company.website || '') || company.website || '—';
+                                const rowId = `lead-${domain !== '—' ? domain : company.name.toLowerCase().replace(/\s+/g, '-')}`;
                                 const isSelected = selectedRowIds.has(rowId);
+                                const isMenuOpen = activeMenuId === rowId;
 
                                 return (
                                   <tr
                                     key={company.name}
                                     className={`transition-colors ${isSelected ? 'bg-[#FFF3E0]' : 'hover:bg-[#FFF9F2]'}`}
                                   >
-                                    <td className="py-3.5 px-3 text-center">
+                                    <td className="py-3 px-3 text-center">
                                       <input
                                         type="checkbox"
                                         checked={isSelected}
@@ -1555,8 +1558,10 @@ export default function HomePage() {
                                         aria-label={`Select ${company.name}`}
                                       />
                                     </td>
-                                    <td className="py-3.5 px-4 font-mono text-[#766E65]">{idx + 1}</td>
-                                    <td className="py-3.5 px-4">
+                                    <td className="py-3 px-3 font-mono text-center text-[#766E65]">{idx + 1}</td>
+                                    
+                                    {/* 1. Company */}
+                                    <td className="py-3 px-4">
                                       <div className="font-bold text-[#1E1B18] text-sm flex items-center gap-1.5 flex-wrap">
                                         <span>{company.name}</span>
                                         {company.statusTag && (
@@ -1564,78 +1569,144 @@ export default function HomePage() {
                                             {company.statusTag}
                                           </span>
                                         )}
-                                        {company.website && (
-                                          <a
-                                            href={company.website}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-[#FF6B35] hover:underline text-[10px]"
-                                          >
-                                            ↗
-                                          </a>
-                                        )}
                                       </div>
                                       <div className="text-[11px] text-[#766E65] line-clamp-1 max-w-xs">
                                         {company.description || 'Verified enterprise candidate.'}
                                       </div>
                                     </td>
-                                    <td className="py-3.5 px-4">
+
+                                    {/* 2. Domain */}
+                                    <td className="py-3 px-3 font-mono text-xs">
+                                      {company.website ? (
+                                        <a
+                                          href={company.website}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-[#FF6B35] hover:underline"
+                                        >
+                                          {domain}
+                                        </a>
+                                      ) : (
+                                        <span className="text-[#8C847A]">—</span>
+                                      )}
+                                    </td>
+
+                                    {/* 3. Industry */}
+                                    <td className="py-3 px-3">
                                       <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-[#FAF6EE] text-[#1E1B18] border border-[#EBE4D5]">
                                         {company.industry || company.sector || 'Venture'}
                                       </span>
                                     </td>
-                                    <td className="py-3.5 px-4 font-mono font-bold text-[#1E1B18]">
-                                      {company.fundingOrRevenue || '$1M–$5M'}
+
+                                    {/* 4. Geography */}
+                                    <td className="py-3 px-3 font-mono text-[11px] text-[#5A544E] whitespace-nowrap">
+                                      📍 {company.country || company.location || company.headquarters || 'Non-US Hub'}
                                     </td>
-                                    <td className="py-3.5 px-4 font-mono text-[11px] text-[#5A544E]">
-                                      📍 {company.country || company.location || 'Non-US Hub'}
+
+                                    {/* 5. Founded */}
+                                    <td className="py-3 px-3 font-mono text-xs text-[#5A544E]">
+                                      {company.yearFounded || (company as any).founded || '—'}
                                     </td>
-                                    <td className="py-3.5 px-4">
-                                      <div className="font-bold text-[#1E1B18]">{founder}</div>
-                                      <span className="text-[10px] text-[#766E65] font-mono">CEO / Co-founder</span>
+
+                                    {/* 6. Funding */}
+                                    <td className="py-3 px-3 font-mono font-bold text-[#1E1B18]">
+                                      {company.fundingOrRevenue || company.latestRoundAmount || '—'}
                                     </td>
-                                    <td className="py-3.5 px-4">
-                                      {email ? (
-                                        <span
-                                          className={`inline-block font-mono text-[11px] font-bold px-2 py-0.5 rounded ${
-                                            isEmailVerified
-                                              ? 'bg-[#E8F5E9] text-[#2E7D32] border border-[#2E7D32]/30'
-                                              : 'bg-[#FAF6EE] text-[#8C847A]'
-                                          }`}
-                                        >
-                                          {email}
-                                        </span>
-                                      ) : (
-                                        <span className="text-[#8C847A] italic text-[11px]">Unverified</span>
-                                      )}
-                                    </td>
-                                    <td className="py-3.5 px-4">
-                                      <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-[#FFE7DC] text-[#FF6B35] border border-[#FF6B35]/30">
-                                        {score} / 100
+
+                                    {/* 7. Stage */}
+                                    <td className="py-3 px-3">
+                                      <span className="inline-block px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#E0F7FA] text-[#00838F] border border-[#00838F]/30 whitespace-nowrap">
+                                        {(company as any).stage || company.latestRoundType || company.latestRound || 'Seed'}
                                       </span>
                                     </td>
-                                    <td className="py-3.5 px-4 text-right">
+
+                                    {/* 8. Status */}
+                                    <td className="py-3 px-3">
+                                      <span className="inline-block px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#FFE7DC] text-[#FF6B35] border border-[#FF6B35]/30 whitespace-nowrap">
+                                        {score}/100 Match
+                                      </span>
+                                    </td>
+
+                                    {/* 9. Actions */}
+                                    <td className="py-3 px-4 text-right">
                                       <div className="flex items-center justify-end gap-1.5">
                                         <button
                                           type="button"
                                           onClick={() => setSelectedCompany(company)}
-                                          className="p-1.5 rounded-lg border border-[#D9D0C1] bg-white hover:bg-[#FAF6EE] text-xs"
-                                          title="View Details"
+                                          className="px-2 py-1 rounded text-xs font-bold text-[#1E1B18] bg-white border border-[#D9D0C1] hover:bg-[#FAF6EE] shadow-sketch-xs flex items-center gap-1 transition-colors"
+                                          title="View Company Dossier"
                                         >
-                                          🔍
+                                          <span>View</span>
+                                          <span>↗</span>
                                         </button>
                                         <button
                                           type="button"
                                           onClick={() => handleToggleSave(company)}
-                                          className={`p-1.5 rounded-lg border text-xs ${
+                                          className={`p-1.5 rounded-lg border text-xs transition-colors ${
                                             isSaved
                                               ? 'bg-[#FFE7DC] border-[#FF6B35] text-[#FF6B35]'
-                                              : 'bg-white border-[#D9D0C1] hover:bg-[#FAF6EE]'
+                                              : 'bg-white border-[#D9D0C1] text-[#766E65] hover:bg-[#FAF6EE]'
                                           }`}
                                           title={isSaved ? 'Remove from Shortlist' : 'Save to Shortlist'}
                                         >
                                           {isSaved ? '⭐' : '☆'}
                                         </button>
+                                        <div className="relative">
+                                          <button
+                                            type="button"
+                                            onClick={() => setActiveMenuId(isMenuOpen ? null : rowId)}
+                                            className="w-6 h-6 rounded flex items-center justify-center text-[#766E65] hover:text-[#1E1B18] hover:bg-white text-base"
+                                            title="More Actions"
+                                          >
+                                            ⋮
+                                          </button>
+                                          {isMenuOpen && (
+                                            <div className="absolute right-0 top-full mt-1 w-44 p-1 bg-white rounded-lg border border-[#1E1B18] shadow-sketch-md z-30 space-y-0.5 text-left animate-in zoom-in-95 duration-100">
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  navigator.clipboard.writeText(domain !== '—' ? domain : company.name);
+                                                  setActiveMenuId(null);
+                                                  showToast(`Copied ${domain !== '—' ? domain : company.name}! 📋`);
+                                                }}
+                                                className="w-full px-2 py-1 text-left text-[11px] font-mono hover:bg-[#FAF6EE] rounded text-[#1E1B18]"
+                                              >
+                                                Copy Domain
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  setActiveMenuId(null);
+                                                  setSelectedCompany(company);
+                                                }}
+                                                className="w-full px-2 py-1 text-left text-[11px] font-mono hover:bg-[#FAF6EE] rounded text-[#1E1B18]"
+                                              >
+                                                View Dossier
+                                              </button>
+                                              {company.website && (
+                                                <a
+                                                  href={company.website}
+                                                  target="_blank"
+                                                  rel="noreferrer"
+                                                  onClick={() => setActiveMenuId(null)}
+                                                  className="block w-full px-2 py-1 text-left text-[11px] font-mono hover:bg-[#FAF6EE] rounded text-[#1E1B18]"
+                                                >
+                                                  Visit Website ↗
+                                                </a>
+                                              )}
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  setActiveMenuId(null);
+                                                  handleToggleSave(company);
+                                                }}
+                                                className="w-full px-2 py-1 text-left text-[11px] font-mono hover:bg-[#FAF6EE] rounded text-[#1E1B18]"
+                                              >
+                                                {isSaved ? 'Remove from Shortlist' : 'Save to Shortlist'}
+                                              </button>
+                                            </div>
+                                          )}
+                                        </div>
                                       </div>
                                     </td>
                                   </tr>
@@ -1762,7 +1833,7 @@ export default function HomePage() {
           company={selectedCompany}
           onClose={() => setSelectedCompany(null)}
           onSaveToggle={handleToggleSave}
-          isSaved={savedLeads.some((c) => c.name === selectedCompany.name)}
+          isSaved={savedLeads.some((c) => getCompanyLeadKey(c) === getCompanyLeadKey(selectedCompany))}
           onToast={showToast}
         />
       )}

@@ -34,6 +34,8 @@ interface StagedDiscoveryWorkflowProps {
   initialTargetProfile?: TargetProfile;
   onFinalizeResults: (qualifiedCompanies: CompanyRecord[], rejectedCompanies: RejectedCompanyRecord[]) => void;
   onOpenLeadModal?: (company: CompanyRecord) => void;
+  savedLeads?: CompanyRecord[];
+  onToggleSave?: (company: CompanyRecord) => void;
 }
 
 type StageStep = 'internal' | 'external' | 'web_search';
@@ -43,6 +45,8 @@ export default function StagedDiscoveryWorkflow({
   initialTargetProfile = DEFAULT_TVB_TARGET_PROFILE,
   onFinalizeResults,
   onOpenLeadModal,
+  savedLeads,
+  onToggleSave,
 }: StagedDiscoveryWorkflowProps) {
   // Target Configuration State
   const [targetProfile, setTargetProfile] = useState<TargetProfile>(initialTargetProfile);
@@ -1078,6 +1082,8 @@ export default function StagedDiscoveryWorkflow({
             phase1Result={phase1Result}
             internalResults={internalResults}
             onToast={(msg) => setStatusMessage(msg)}
+            savedLeads={savedLeads}
+            onToggleSave={onToggleSave}
           />
 
           {/* 🛑 APPROVAL GATE 1 BANNER (Section 8 & 9) */}
@@ -1274,6 +1280,19 @@ export default function StagedDiscoveryWorkflow({
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Empty initial state before Web Search runs */}
+          {webStatus === 'idle' && webSearchResults.length === 0 && (
+            <div className="paper-card bg-[#FFFDF9] rounded-2xl p-10 text-center border-2 border-[#1E1B18] shadow-sketch-sm space-y-2">
+              <div className="text-2xl">🌐</div>
+              <h4 className="font-display text-lg font-bold text-[#1E1B18]">
+                No research results yet.
+              </h4>
+              <p className="text-xs font-mono text-[#766E65] max-w-md mx-auto">
+                No research results yet. Start a search or research operation to discover companies.
+              </p>
             </div>
           )}
 

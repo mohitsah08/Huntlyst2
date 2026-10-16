@@ -415,6 +415,24 @@ class HuntlystDatabaseStore {
       (a, b) => new Date(b.verifiedAt).getTime() - new Date(a.verifiedAt).getTime()
     );
   }
+
+  public removeVerificationRun(id: string): void {
+    delete this.state.verificationRuns[id];
+    this.scheduleSave();
+  }
+
+  public removeVerificationRunsForCompany(companyId: string): void {
+    let changed = false;
+    for (const [id, run] of Object.entries(this.state.verificationRuns)) {
+      if (run.companyId === companyId) {
+        delete this.state.verificationRuns[id];
+        changed = true;
+      }
+    }
+    if (changed) {
+      this.scheduleSave();
+    }
+  }
 }
 
 export const dbStore = HuntlystDatabaseStore.getInstance();

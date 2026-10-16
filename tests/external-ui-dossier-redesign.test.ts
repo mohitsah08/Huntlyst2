@@ -374,6 +374,7 @@ async function runTestSuite() {
     assert(networkCalls === 0, '[Test 11] Internal audit ran 100% offline with zero network calls');
   } finally {
     global.fetch = originalFetch;
+    dbStore.removeResearchProfile(sampleProfile.id);
   }
 
   // --------------------------------------------------------------------------

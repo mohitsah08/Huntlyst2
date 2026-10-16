@@ -55,9 +55,8 @@ export default function ExternalResearchWorkflow({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
-  // Load existing profiles & criteria on mount
+  // Load criteria & verification runs on mount (do not restore stale research on fresh load)
   useEffect(() => {
-    loadSavedProfiles();
     loadActiveCriteria();
     loadVerificationRuns();
   }, []);
@@ -616,13 +615,13 @@ export default function ExternalResearchWorkflow({
             )}
           </div>
 
-          {/* SAVED PROFILES LIST (COMPACT COMPANY CARD VIEW) */}
-          {profiles.length > 0 && (
+          {/* RESEARCH PROFILES LIST (COMPACT COMPANY CARD VIEW) */}
+          {profiles.length > 0 ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
                   <h4 className="font-display text-base font-bold text-[#1E1B18]">
-                    Saved Researched Leads ({profiles.length})
+                    Researched Leads ({profiles.length})
                   </h4>
                   <p className="text-xs font-mono text-[#766E65]">
                     Compact list showing 14 key data fields & 9 verification indicators. Click 'View Dossier' or the search icon to open the full report.
@@ -675,6 +674,16 @@ export default function ExternalResearchWorkflow({
                   />
                 ))}
               </div>
+            </div>
+          ) : (
+            <div className="paper-card bg-[#FFFDF9] rounded-2xl p-10 text-center border-2 border-[#1E1B18] shadow-sketch-sm space-y-2">
+              <div className="text-2xl">🔬</div>
+              <h4 className="font-display text-lg font-bold text-[#1E1B18]">
+                No research results yet.
+              </h4>
+              <p className="text-xs font-mono text-[#766E65] max-w-md mx-auto">
+                No research results yet. Start a search or research operation to discover companies.
+              </p>
             </div>
           )}
         </div>
@@ -814,6 +823,15 @@ export default function ExternalResearchWorkflow({
                   (p.headquarters.country && p.headquarters.country.toLowerCase().includes(q))
                 );
               });
+
+              if (profiles.length === 0) {
+                return (
+                  <div className="p-10 text-center bg-white rounded-2xl border border-[#EBE4D5] text-xs font-mono text-[#766E65] space-y-2">
+                    <p className="text-sm font-bold text-[#1E1B18]">No research results yet.</p>
+                    <p>Start a search or research operation to discover companies.</p>
+                  </div>
+                );
+              }
 
               if (filtered.length === 0) {
                 return (

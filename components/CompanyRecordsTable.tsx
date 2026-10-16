@@ -22,12 +22,40 @@ import {
 
 import { Phase1ImportResult } from '@/lib/internal/phase1Types';
 import { CompanyVerificationResult } from '@/providers/types';
+import { getCompanyLeadKey } from '@/lib/deduplication';
+import { CompanyRecord } from '@/lib/types';
+
+function internalRecordToCompany(record: InternalRecordDTO): CompanyRecord {
+  return {
+    id: record.id,
+    name: record.name,
+    website: record.website || (record.domain ? `https://${record.domain}` : ''),
+    canonicalDomain: record.domain,
+    industry: record.industry,
+    headquarters: record.geo || record.country || record.city || null,
+    country: record.country || record.geo || null,
+    founderOrCeoName: record.ceoName || null,
+    founderOrCeoEmail: record.executiveEmail || null,
+    fundingOrRevenue: record.funding || null,
+    latestRound: record.stage || null,
+    latestRoundType: record.stage || null,
+    description: record.description || null,
+    emailVerified: Boolean(record.executiveEmail),
+    companyEmail: record.companyEmail || null,
+    companyPhone: record.companyPhone || null,
+    companyLinkedinUrl: record.companyLinkedin || null,
+    confidenceScore: (record.offlineMatchScore || 0) / 100,
+    sourceType: 'INTERNAL_FILE',
+  };
+}
 
 interface CompanyRecordsTableProps {
   initialRecords?: InternalRecordDTO[];
   phase1Result?: Phase1ImportResult | null;
   internalResults?: CompanyVerificationResult[];
   onToast?: (msg: string) => void;
+  savedLeads?: any[];
+  onToggleSave?: (company: any) => void;
 }
 
 const EMPTY_INITIAL_RECORDS: InternalRecordDTO[] = [];
@@ -37,6 +65,8 @@ export default function CompanyRecordsTable({
   phase1Result,
   internalResults,
   onToast,
+  savedLeads = [],
+  onToggleSave,
 }: CompanyRecordsTableProps) {
   // Records State
   const [records, setRecords] = useState<InternalRecordDTO[]>(initialRecords);
@@ -161,16 +191,6 @@ export default function CompanyRecordsTable({
 
         let status: InternalRecordDTO['status'] = 'UNVERIFIED';
         let statusLabel: InternalRecordDTO['statusLabel'] = 'UNVERIFIED';
-        if (c.summary.readiness === 'READY') {
-          status = 'FOUND';
-          statusLabel = 'FOUND';
-        } else if (c.summary.readiness === 'ATTENTION_NEEDED') {
-          status = 'NEEDS_REVIEW';
-          statusLabel = 'NEEDS REVIEW';
-        } else {
-          status = 'MISSING';
-          statusLabel = 'MISSING';
-        }
 
         return {
           id: c.companyId || `rec-${idx + 1}`,
@@ -196,11 +216,8 @@ export default function CompanyRecordsTable({
           executiveEmail: raw['CEO Email'] && raw['CEO Email'] !== 'UPGRADE TO UNLOCK' ? raw['CEO Email'] : '',
           companyPhone: raw.Phone || '',
           companyLinkedin: raw.LinkedIn || '',
-          offlineMatchScore: c.summary.readiness === 'READY' ? 85 : c.summary.readiness === 'ATTENTION_NEEDED' ? 45 : 25,
-          offlineMatchExplanation:
-            c.summary.readiness === 'READY'
-              ? 'All required fields available.'
-              : 'Pending executive or funding verification.',
+          offlineMatchScore: 0,
+          offlineMatchExplanation: 'Imported file record pending verification pipeline run.',
           onlineStatus: 'Not run',
           rawFields: raw,
           evidence: [
@@ -216,43 +233,15 @@ export default function CompanyRecordsTable({
       setRecords(converted);
     } else if (initialRecords && initialRecords.length > 0) {
       setRecords(initialRecords);
-    } else if (!hasFetchedRef.current) {
-      hasFetchedRef.current = true;
-      setIsLoading(true);
-      fetch('/api/discovery/internal/records')
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && Array.isArray(data.records)) {
-            setRecords(data.records);
-          }
-        })
-        .catch(err => {
-          console.error('[CompanyRecordsTable] Fetch records error:', err);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+    } else {
+      setRecords([]);
     }
   }, [internalResults, phase1Result, initialRecords]);
 
   // Handle phase1Result reset (e.g. file removed)
   useEffect(() => {
     if (prevPhase1Ref.current && !phase1Result && (!internalResults || internalResults.length === 0)) {
-      hasFetchedRef.current = false;
-      setIsLoading(true);
-      fetch('/api/discovery/internal/records')
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && Array.isArray(data.records)) {
-            setRecords(data.records);
-          }
-        })
-        .catch(err => {
-          console.error('[CompanyRecordsTable] Fetch records error on reset:', err);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+      setRecords([]);
     }
     prevPhase1Ref.current = phase1Result;
   }, [phase1Result, internalResults]);
@@ -323,21 +312,20 @@ export default function CompanyRecordsTable({
   // Summary counts
   const summaryCounts = useMemo(() => {
     const total = records.length;
-    const verified = records.filter(r => r.status === 'FOUND' || r.status === 'VERIFIED').length;
-    const needsReview = records.filter(r => r.status === 'NEEDS_REVIEW').length;
-    const missing = records.filter(r => r.status === 'MISSING').length;
-    const unverified = records.filter(r => r.status === 'UNVERIFIED').length;
-
-    // If default 100 records and no custom file or internal results, show exact reference badge counts
-    if (total === 100 && !phase1Result && (!internalResults || internalResults.length === 0)) {
+    if (total === 0) {
       return {
-        total: 100,
-        unverified: 75,
-        needsReview: 25,
+        total: 0,
+        unverified: 0,
+        needsReview: 0,
         verified: 0,
         missing: 0,
       };
     }
+
+    const verified = records.filter(r => r.status === 'FOUND' || r.status === 'VERIFIED').length;
+    const needsReview = records.filter(r => r.status === 'NEEDS_REVIEW').length;
+    const missing = records.filter(r => r.status === 'MISSING').length;
+    const unverified = records.filter(r => r.status === 'UNVERIFIED').length;
 
     return {
       total,
@@ -346,7 +334,7 @@ export default function CompanyRecordsTable({
       verified,
       missing,
     };
-  }, [records, phase1Result, internalResults]);
+  }, [records]);
 
   // Open Dossier for selected company
   const handleOpenDossier = (company: InternalRecordDTO) => {
@@ -728,12 +716,12 @@ export default function CompanyRecordsTable({
                 <th className="py-2.5 px-3">Company</th>
                 <th className="py-2.5 px-3">Domain</th>
                 <th className="py-2.5 px-3">Industry</th>
-                <th className="py-2.5 px-3">Geo</th>
+                <th className="py-2.5 px-3">Geography</th>
                 <th className="py-2.5 px-3">Founded</th>
                 <th className="py-2.5 px-3">Funding</th>
                 <th className="py-2.5 px-3">Stage</th>
                 <th className="py-2.5 px-3">Status</th>
-                <th className="py-2.5 px-3 text-right">Action</th>
+                <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0EAD8]">
@@ -746,8 +734,19 @@ export default function CompanyRecordsTable({
                 </tr>
               ) : currentDisplayedRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-8 text-center text-xs font-mono text-[#766E65]">
-                    No company records matched your active filter or search query.
+                  <td colSpan={10} className="py-12 text-center text-xs font-mono text-[#766E65]">
+                    <div className="space-y-1">
+                      <div className="text-sm font-bold text-[#1E1B18]">
+                        {records.length === 0
+                          ? 'No company records yet. Upload a CSV or Excel file to begin.'
+                          : 'No company records matched your active filter or search query.'}
+                      </div>
+                      {records.length === 0 && (
+                        <div className="text-xs text-[#766E65]">
+                          Use the upload area above to parse and verify internal companies.
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -783,7 +782,7 @@ export default function CompanyRecordsTable({
                       {record.industry}
                     </td>
 
-                    {/* Geo */}
+                    {/* Geography */}
                     <td className="py-2.5 px-3 text-[#5A544E]">
                       {record.geo}
                     </td>
@@ -810,7 +809,7 @@ export default function CompanyRecordsTable({
                       {renderStatusBadge(record.statusLabel)}
                     </td>
 
-                    {/* Action (View ↗ + Context Menu) */}
+                    {/* Actions (View ↗ + Shortlist Star + Context Menu) */}
                     <td className="py-2.5 px-3 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
@@ -821,6 +820,27 @@ export default function CompanyRecordsTable({
                           <span>View</span>
                           <span>↗</span>
                         </button>
+
+                        {onToggleSave && (
+                          <button
+                            type="button"
+                            onClick={() => onToggleSave(internalRecordToCompany(record))}
+                            className={`p-1 rounded-md border text-xs transition-colors ${
+                              savedLeads.some((s: any) => getCompanyLeadKey(s) === getCompanyLeadKey(record))
+                                ? 'bg-[#FFE7DC] border-[#FF6B35] text-[#FF6B35]'
+                                : 'bg-white border-[#D9D0C1] text-[#766E65] hover:bg-[#FAF6EE]'
+                            }`}
+                            title={
+                              savedLeads.some((s: any) => getCompanyLeadKey(s) === getCompanyLeadKey(record))
+                                ? 'Remove from Shortlist'
+                                : 'Save to Shortlist'
+                            }
+                          >
+                            {savedLeads.some((s: any) => getCompanyLeadKey(s) === getCompanyLeadKey(record))
+                              ? '⭐'
+                              : '☆'}
+                          </button>
+                        )}
 
                         <div className="relative">
                           <button
@@ -834,7 +854,7 @@ export default function CompanyRecordsTable({
                           </button>
 
                           {activeMenuId === record.id && (
-                            <div className="absolute right-0 top-full mt-1 w-36 p-1 bg-white rounded-lg border border-[#1E1B18] shadow-sketch-md z-30 space-y-0.5 animate-in zoom-in-95 duration-100">
+                            <div className="absolute right-0 top-full mt-1 w-44 p-1 bg-white rounded-lg border border-[#1E1B18] shadow-sketch-md z-30 space-y-0.5 animate-in zoom-in-95 duration-100">
                               <button
                                 type="button"
                                 onClick={() => {
@@ -865,6 +885,20 @@ export default function CompanyRecordsTable({
                               >
                                 Visit Website ↗
                               </a>
+                              {onToggleSave && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveMenuId(null);
+                                    onToggleSave(internalRecordToCompany(record));
+                                  }}
+                                  className="w-full px-2 py-1 text-left text-[11px] font-mono hover:bg-[#FAF6EE] rounded text-[#1E1B18]"
+                                >
+                                  {savedLeads.some((s: any) => getCompanyLeadKey(s) === getCompanyLeadKey(record))
+                                    ? 'Unsave from Shortlist'
+                                    : 'Save to Shortlist ⭐'}
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>

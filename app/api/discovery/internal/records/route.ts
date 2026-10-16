@@ -96,6 +96,24 @@ function parseCSV(text: string): Record<string, string>[] {
 
 export async function GET(request: NextRequest) {
   try {
+    const url = new URL(request.url);
+    const includeSample = url.searchParams.get('sample') === 'true';
+
+    if (!includeSample) {
+      return NextResponse.json({
+        success: true,
+        total: 0,
+        stats: {
+          total: 0,
+          unverified: 0,
+          needsReview: 0,
+          verified: 0,
+          missing: 0,
+        },
+        records: [],
+      });
+    }
+
     const csvPath = path.resolve(process.cwd(), 'reference_data/growth_list_may_2024.csv');
     if (!fs.existsSync(csvPath)) {
       return NextResponse.json({ success: false, error: 'Reference dataset not found' }, { status: 404 });

@@ -373,6 +373,14 @@ async function runRegressionSuite() {
   const validStatuses = ['VERIFIED', 'REVIEW', 'UNVERIFIED', 'REJECTED'];
   assert(validStatuses.includes(internalQual.finalStatus), `Internal lead qualified with valid canonical 4-status: ${internalQual.finalStatus}`);
 
+  // Cleanup test artifacts so persistent store remains clean
+  dbStore.removeResearchProfile(testUniqueId);
+  dbStore.removeResearchProfile('batch_co_1');
+  dbStore.removeResearchProfile('batch_co_2');
+  dbStore.removeVerificationRunsForCompany(testUniqueId);
+  dbStore.removeVerificationRunsForCompany('batch_co_1');
+  dbStore.removeVerificationRunsForCompany('batch_co_2');
+
   console.log('\n================================================================');
   console.log(`REGRESSION TEST RESULTS: ${passed} PASSED, ${failed} FAILED`);
   console.log('================================================================');

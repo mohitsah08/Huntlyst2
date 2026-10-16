@@ -219,3 +219,26 @@ export function normalizePersonName(rawName: string): string {
   clean = clean.replace(/\s+[a-z]\.\s+/i, ' '); // remove middle initial
   return clean.replace(/\s+/g, ' ').trim();
 }
+
+/**
+ * Derives a reliable, collision-free unique key for saving and deduplicating company leads.
+ * Uses canonical domain if valid, falls back to normalized company name.
+ * Never causes collisions on blank/empty websites.
+ */
+export function getCompanyLeadKey(company: {
+  name?: string;
+  website?: string;
+  canonicalDomain?: string;
+  domain?: string;
+}): string {
+  const rawDomain = company.canonicalDomain || company.domain || company.website || '';
+  const domain = extractCanonicalDomain(rawDomain);
+  if (domain && isLikelyCompanyDomain(domain)) {
+    return `dom:${domain}`;
+  }
+  const normName = normalizeCompanyName(company.name || '');
+  if (normName) {
+    return `name:${normName}`;
+  }
+  return `raw:${(company.name || '').trim().toLowerCase()}`;
+}

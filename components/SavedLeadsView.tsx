@@ -279,10 +279,10 @@ export default function SavedLeadsView({
           </div>
           <div className="space-y-1">
             <h3 className="font-display text-2xl font-bold text-[#1E1B18]">
-              Your shortlist is empty.
+              No saved leads yet.
             </h3>
             <p className="text-sm text-[#5A544E] leading-relaxed">
-              Save companies worth coming back to from your discovery results.
+              No saved leads yet. Save a company using the star icon to find it here.
             </p>
           </div>
           <div className="pt-2">

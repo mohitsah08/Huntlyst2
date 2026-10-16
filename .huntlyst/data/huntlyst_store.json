@@ -920,6 +920,228 @@
       "stagnationCounter": 0,
       "createdAt": "2026-10-14T13:21:23.060Z",
       "updatedAt": "2026-10-14T13:21:23.366Z"
+    },
+    "hunt_web_mvaq3muf_btds": {
+      "id": "hunt_web_mvaq3muf_btds",
+      "status": "completed",
+      "target": {
+        "geography": {
+          "countries": [],
+          "regions": [],
+          "excludedCountries": [],
+          "usPresenceMode": "minimal_or_none"
+        },
+        "funding": {
+          "min": 1000000,
+          "max": 5000000,
+          "currency": "USD"
+        },
+        "industries": [
+          "FinTech"
+        ],
+        "subIndustries": [],
+        "companyStages": [],
+        "targetCount": 1
+      },
+      "targetLeads": 1,
+      "alreadyFoundCount": 14,
+      "qualifiedCount": 1,
+      "rejectedCount": 10,
+      "previouslySeenCount": 0,
+      "newCandidatesCount": 0,
+      "duplicatesRemovedCount": 2,
+      "sourcesSearched": [
+        "Venture Funding Wires",
+        "Curated Venture Directory"
+      ],
+      "stagnationCounter": 0,
+      "createdAt": "2026-10-16T08:46:03.881Z",
+      "updatedAt": "2026-10-16T08:46:09.641Z"
+    },
+    "hunt_web_mvaq3rau_11ll": {
+      "id": "hunt_web_mvaq3rau_11ll",
+      "status": "completed",
+      "target": {
+        "geography": {
+          "countries": [],
+          "regions": [],
+          "excludedCountries": [],
+          "usPresenceMode": "minimal_or_none"
+        },
+        "funding": {
+          "min": 1000000,
+          "max": 5000000,
+          "currency": "USD"
+        },
+        "industries": [
+          "FinTech"
+        ],
+        "subIndustries": [],
+        "companyStages": [],
+        "targetCount": 1
+      },
+      "targetLeads": 1,
+      "alreadyFoundCount": 14,
+      "qualifiedCount": 1,
+      "rejectedCount": 10,
+      "previouslySeenCount": 0,
+      "newCandidatesCount": 0,
+      "duplicatesRemovedCount": 2,
+      "sourcesSearched": [
+        "Venture Funding Wires",
+        "Curated Venture Directory"
+      ],
+      "stagnationCounter": 0,
+      "createdAt": "2026-10-16T08:46:09.657Z",
+      "updatedAt": "2026-10-16T08:46:09.678Z"
+    },
+    "hunt_web_mvaregc2_ywo8": {
+      "id": "hunt_web_mvaregc2_ywo8",
+      "status": "completed",
+      "target": {
+        "geography": {
+          "countries": [],
+          "regions": [],
+          "excludedCountries": [],
+          "usPresenceMode": "minimal_or_none"
+        },
+        "funding": {
+          "min": 1000000,
+          "max": 5000000,
+          "currency": "USD"
+        },
+        "industries": [
+          "FinTech"
+        ],
+        "subIndustries": [],
+        "companyStages": [],
+        "targetCount": 1
+      },
+      "targetLeads": 1,
+      "alreadyFoundCount": 14,
+      "qualifiedCount": 1,
+      "rejectedCount": 10,
+      "previouslySeenCount": 0,
+      "newCandidatesCount": 0,
+      "duplicatesRemovedCount": 2,
+      "sourcesSearched": [
+        "Venture Funding Wires",
+        "Curated Venture Directory"
+      ],
+      "stagnationCounter": 0,
+      "createdAt": "2026-10-16T09:22:28.276Z",
+      "updatedAt": "2026-10-16T09:22:30.546Z"
+    },
+    "hunt_web_mvarei40_dvwb": {
+      "id": "hunt_web_mvarei40_dvwb",
+      "status": "completed",
+      "target": {
+        "geography": {
+          "countries": [],
+          "regions": [],
+          "excludedCountries": [],
+          "usPresenceMode": "minimal_or_none"
+        },
+        "funding": {
+          "min": 1000000,
+          "max": 5000000,
+          "currency": "USD"
+        },
+        "industries": [
+          "FinTech"
+        ],
+        "subIndustries": [],
+        "companyStages": [],
+        "targetCount": 1
+      },
+      "targetLeads": 1,
+      "alreadyFoundCount": 14,
+      "qualifiedCount": 1,
+      "rejectedCount": 10,
+      "previouslySeenCount": 0,
+      "newCandidatesCount": 0,
+      "duplicatesRemovedCount": 2,
+      "sourcesSearched": [
+        "Venture Funding Wires",
+        "Curated Venture Directory"
+      ],
+      "stagnationCounter": 0,
+      "createdAt": "2026-10-16T09:22:30.578Z",
+      "updatedAt": "2026-10-16T09:22:30.632Z"
+    },
+    "hunt_web_mvascgv0_9n4q": {
+      "id": "hunt_web_mvascgv0_9n4q",
+      "status": "completed",
+      "target": {
+        "geography": {
+          "countries": [],
+          "regions": [],
+          "excludedCountries": [],
+          "usPresenceMode": "minimal_or_none"
+        },
+        "funding": {
+          "min": 1000000,
+          "max": 5000000,
+          "currency": "USD"
+        },
+        "industries": [
+          "FinTech"
+        ],
+        "subIndustries": [],
+        "companyStages": [],
+        "targetCount": 1
+      },
+      "targetLeads": 1,
+      "alreadyFoundCount": 14,
+      "qualifiedCount": 1,
+      "rejectedCount": 10,
+      "previouslySeenCount": 0,
+      "newCandidatesCount": 0,
+      "duplicatesRemovedCount": 2,
+      "sourcesSearched": [
+        "Venture Funding Wires",
+        "Curated Venture Directory"
+      ],
+      "stagnationCounter": 0,
+      "createdAt": "2026-10-16T09:48:55.263Z",
+      "updatedAt": "2026-10-16T09:49:00.494Z"
+    },
+    "hunt_web_mvasckx4_xb7n": {
+      "id": "hunt_web_mvasckx4_xb7n",
+      "status": "completed",
+      "target": {
+        "geography": {
+          "countries": [],
+          "regions": [],
+          "excludedCountries": [],
+          "usPresenceMode": "minimal_or_none"
+        },
+        "funding": {
+          "min": 1000000,
+          "max": 5000000,
+          "currency": "USD"
+        },
+        "industries": [
+          "FinTech"
+        ],
+        "subIndustries": [],
+        "companyStages": [],
+        "targetCount": 1
+      },
+      "targetLeads": 1,
+      "alreadyFoundCount": 14,
+      "qualifiedCount": 1,
+      "rejectedCount": 10,
+      "previouslySeenCount": 0,
+      "newCandidatesCount": 0,
+      "duplicatesRemovedCount": 2,
+      "sourcesSearched": [
+        "Venture Funding Wires",
+        "Curated Venture Directory"
+      ],
+      "stagnationCounter": 0,
+      "createdAt": "2026-10-16T09:49:00.523Z",
+      "updatedAt": "2026-10-16T09:49:00.563Z"
     }
   },
   "queries": [
@@ -5548,12 +5770,2226 @@
       "source": "Curated Venture Directory",
       "isNew": false,
       "discoveredAt": "2026-10-14T13:21:23.091Z"
+    },
+    {
+      "id": "res_1792140369533_o515",
+      "sessionId": "hunt_web_mvaq3muf_btds",
+      "rawUrl": "https://synthesized.io",
+      "canonicalDomain": "synthesized.io",
+      "normalizedName": "synthesized",
+      "fingerprint": "bc3a7250e14964e3",
+      "title": "Synthesized",
+      "snippet": "Synthesized raised $2.8M in seed funding to expand its synthetic data generation platform for enterprise ML and software testing. Headquartered in London, United Kingdom. Co-founded by Dr. Nicolai Baldin. [HQ: United Kingdom | Founder: Nicolai Baldin | Funding: raised $2.8M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.533Z"
+    },
+    {
+      "id": "res_1792140369533_ucsu",
+      "sessionId": "hunt_web_mvaq3muf_btds",
+      "rawUrl": "https://mindfuel.ai",
+      "canonicalDomain": "mindfuel.ai",
+      "normalizedName": "mindfuel",
+      "fingerprint": "10ddab1aec6f8677",
+      "title": "Mindfuel",
+      "snippet": "Munich-based B2B SaaS data product management platform Mindfuel raised €3.75M ($4.0M USD) in seed funding led by Project A Ventures. Headquartered in Munich, Germany. Founded by Nadiem von Heydebrand. [HQ: Germany | Founder: Nadiem von Heydebrand | Funding: raised $4.0M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.533Z"
+    },
+    {
+      "id": "res_1792140369533_vxrv",
+      "sessionId": "hunt_web_mvaq3muf_btds",
+      "rawUrl": "https://saporo.io",
+      "canonicalDomain": "saporo.io",
+      "normalizedName": "saporo",
+      "fingerprint": "e976bf9cd7b71457",
+      "title": "Saporo",
+      "snippet": "Swiss cybersecurity startup Saporo raised $2.7M in seed funding to expand its cloud attack surface reduction platform. Based in Lausanne, Switzerland. Co-founded by Olivier Eyries and Eric Blavier. [HQ: Switzerland | Founder: Olivier Eyries | Funding: raised $2.7M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.533Z"
+    },
+    {
+      "id": "res_1792140369534_rcgs",
+      "sessionId": "hunt_web_mvaq3muf_btds",
+      "rawUrl": "https://cyscale.com",
+      "canonicalDomain": "cyscale.com",
+      "normalizedName": "cyscale",
+      "fingerprint": "2fc7c056d398f311",
+      "title": "Cyscale",
+      "snippet": "Cluj-Napoca-based cloud cybersecurity automation platform Cyscale secured €3M ($3.2M USD) in seed funding led by Notion Capital. Headquartered in Romania, Europe. Founded by Manuela Ticudean and Ovidiu Cical. [HQ: Romania | Founder: Ovidiu Cical | Funding: secured $3.2M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.534Z"
+    },
+    {
+      "id": "res_1792140369534_3jfc",
+      "sessionId": "hunt_web_mvaq3muf_btds",
+      "rawUrl": "https://neatsy.ai",
+      "canonicalDomain": "neatsy.ai",
+      "normalizedName": "neatsy",
+      "fingerprint": "227fd93c7f84ed47",
+      "title": "Neatsy",
+      "snippet": "AI healthtech and 3D foot scanning software Neatsy raised $1.0M in seed funding from Cabra VC. Headquartered in London, United Kingdom. Founded by Artem Semyanov. [HQ: United Kingdom | Founder: Artem Semyanov | Funding: raised $1.0M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.534Z"
+    },
+    {
+      "id": "res_1792140369534_a9dx",
+      "sessionId": "hunt_web_mvaq3muf_btds",
+      "rawUrl": "https://carbonfact.com",
+      "canonicalDomain": "carbonfact.com",
+      "normalizedName": "carbonfact",
+      "fingerprint": "35eeb42ef798c990",
+      "title": "Carbonfact",
+      "snippet": "Paris-based carbon footprint software platform for apparel Carbonfact secured €1.9M ($2.1M USD) in seed funding from Alven. Headquartered in Paris, France. Founded by Martin Daniel and Marc Laurent. [HQ: France | Founder: Martin Daniel | Funding: secured $2.1M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.534Z"
+    },
+    {
+      "id": "res_1792140369534_0sv1",
+      "sessionId": "hunt_web_mvaq3muf_btds",
+      "rawUrl": "https://sprinto.com",
+      "canonicalDomain": "sprinto.com",
+      "normalizedName": "sprinto",
+      "fingerprint": "ba204fbda252811d",
+      "title": "Sprinto",
+      "snippet": "Bengaluru-based security compliance and automated audit platform Sprinto raised $3.5M in seed funding led by Elevation Capital. Headquartered in Bengaluru, India. Co-founded by Girish Redekar and Raghuveer Kancherla. [HQ: India | Founder: Girish Redekar | Funding: raised $3.5M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.534Z"
+    },
+    {
+      "id": "res_1792140369534_vzev",
+      "sessionId": "hunt_web_mvaq3muf_btds",
+      "rawUrl": "https://devtron.ai",
+      "canonicalDomain": "devtron.ai",
+      "normalizedName": "devtron",
+      "fingerprint": "72ee1276fea304bf",
+      "title": "Devtron",
+      "snippet": "Gurugram-based open source Kubernetes software delivery and deployment platform Devtron raised $3.0M in seed funding from Nexus Venture Partners. Headquartered in Gurugram, India. Co-founded by Prashant Ghildiyal. [HQ: India | Founder: Prashant Ghildiyal | Funding: raised $3.0M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.534Z"
+    },
+    {
+      "id": "res_1792140369535_sicl",
+      "sessionId": "hunt_web_mvaq3muf_btds",
+      "rawUrl": "https://bytebeam.io",
+      "canonicalDomain": "bytebeam.io",
+      "normalizedName": "bytebeam",
+      "fingerprint": "6ccdf8185eca6a9c",
+      "title": "Bytebeam",
+      "snippet": "Bengaluru-based IoT software architecture and edge device management platform Bytebeam raised $3.0M in seed funding led by Together Fund. Headquartered in Bengaluru, India. Founded by Gautam Dayal. [HQ: India | Founder: Gautam Dayal | Funding: raised $3.0M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.535Z"
+    },
+    {
+      "id": "res_1792140369535_xtfy",
+      "sessionId": "hunt_web_mvaq3muf_btds",
+      "rawUrl": "https://portkey.ai",
+      "canonicalDomain": "portkey.ai",
+      "normalizedName": "portkey",
+      "fingerprint": "5a86a66968410b18",
+      "title": "Portkey",
+      "snippet": "Bengaluru-based LLMOps and enterprise AI gateway platform Portkey raised $3.0M in seed funding from Lightspeed India. Headquartered in Bengaluru, India. Co-founded by Rohit Agarwal and Ayush Garg. [HQ: India | Founder: Rohit Agarwal | Funding: raised $3.0M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.535Z"
+    },
+    {
+      "id": "res_1792140369535_ey52",
+      "sessionId": "hunt_web_mvaq3muf_btds",
+      "rawUrl": "https://modus.trade",
+      "canonicalDomain": "modus.trade",
+      "normalizedName": "modus",
+      "fingerprint": "620308f5b959fb76",
+      "title": "Modus",
+      "snippet": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.535Z"
+    },
+    {
+      "id": "res_1792140369535_2iy2",
+      "sessionId": "hunt_web_mvaq3muf_btds",
+      "rawUrl": "https://finmo.net",
+      "canonicalDomain": "finmo.net",
+      "normalizedName": "finmo",
+      "fingerprint": "6076803c8ac25fe6",
+      "title": "Finmo",
+      "snippet": "Singapore-based treasury management and cross-border API payments platform Finmo raised $3.5M in seed funding led by Quona Capital. Headquartered in Singapore. Founded by David Hanna. [HQ: Singapore | Founder: David Hanna | Funding: raised $3.5M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.535Z"
+    },
+    {
+      "id": "res_1792140369661_u8rq",
+      "sessionId": "hunt_web_mvaq3rau_11ll",
+      "rawUrl": "https://synthesized.io",
+      "canonicalDomain": "synthesized.io",
+      "normalizedName": "synthesized",
+      "fingerprint": "bc3a7250e14964e3",
+      "title": "Synthesized",
+      "snippet": "Synthesized raised $2.8M in seed funding to expand its synthetic data generation platform for enterprise ML and software testing. Headquartered in London, United Kingdom. Co-founded by Dr. Nicolai Baldin. [HQ: United Kingdom | Founder: Nicolai Baldin | Funding: raised $2.8M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.661Z"
+    },
+    {
+      "id": "res_1792140369661_3sk5",
+      "sessionId": "hunt_web_mvaq3rau_11ll",
+      "rawUrl": "https://mindfuel.ai",
+      "canonicalDomain": "mindfuel.ai",
+      "normalizedName": "mindfuel",
+      "fingerprint": "10ddab1aec6f8677",
+      "title": "Mindfuel",
+      "snippet": "Munich-based B2B SaaS data product management platform Mindfuel raised €3.75M ($4.0M USD) in seed funding led by Project A Ventures. Headquartered in Munich, Germany. Founded by Nadiem von Heydebrand. [HQ: Germany | Founder: Nadiem von Heydebrand | Funding: raised $4.0M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.661Z"
+    },
+    {
+      "id": "res_1792140369662_jylb",
+      "sessionId": "hunt_web_mvaq3rau_11ll",
+      "rawUrl": "https://saporo.io",
+      "canonicalDomain": "saporo.io",
+      "normalizedName": "saporo",
+      "fingerprint": "e976bf9cd7b71457",
+      "title": "Saporo",
+      "snippet": "Swiss cybersecurity startup Saporo raised $2.7M in seed funding to expand its cloud attack surface reduction platform. Based in Lausanne, Switzerland. Co-founded by Olivier Eyries and Eric Blavier. [HQ: Switzerland | Founder: Olivier Eyries | Funding: raised $2.7M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.662Z"
+    },
+    {
+      "id": "res_1792140369662_tdeh",
+      "sessionId": "hunt_web_mvaq3rau_11ll",
+      "rawUrl": "https://cyscale.com",
+      "canonicalDomain": "cyscale.com",
+      "normalizedName": "cyscale",
+      "fingerprint": "2fc7c056d398f311",
+      "title": "Cyscale",
+      "snippet": "Cluj-Napoca-based cloud cybersecurity automation platform Cyscale secured €3M ($3.2M USD) in seed funding led by Notion Capital. Headquartered in Romania, Europe. Founded by Manuela Ticudean and Ovidiu Cical. [HQ: Romania | Founder: Ovidiu Cical | Funding: secured $3.2M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.662Z"
+    },
+    {
+      "id": "res_1792140369662_b6qc",
+      "sessionId": "hunt_web_mvaq3rau_11ll",
+      "rawUrl": "https://neatsy.ai",
+      "canonicalDomain": "neatsy.ai",
+      "normalizedName": "neatsy",
+      "fingerprint": "227fd93c7f84ed47",
+      "title": "Neatsy",
+      "snippet": "AI healthtech and 3D foot scanning software Neatsy raised $1.0M in seed funding from Cabra VC. Headquartered in London, United Kingdom. Founded by Artem Semyanov. [HQ: United Kingdom | Founder: Artem Semyanov | Funding: raised $1.0M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.662Z"
+    },
+    {
+      "id": "res_1792140369663_a1b7",
+      "sessionId": "hunt_web_mvaq3rau_11ll",
+      "rawUrl": "https://carbonfact.com",
+      "canonicalDomain": "carbonfact.com",
+      "normalizedName": "carbonfact",
+      "fingerprint": "35eeb42ef798c990",
+      "title": "Carbonfact",
+      "snippet": "Paris-based carbon footprint software platform for apparel Carbonfact secured €1.9M ($2.1M USD) in seed funding from Alven. Headquartered in Paris, France. Founded by Martin Daniel and Marc Laurent. [HQ: France | Founder: Martin Daniel | Funding: secured $2.1M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.663Z"
+    },
+    {
+      "id": "res_1792140369663_6wtw",
+      "sessionId": "hunt_web_mvaq3rau_11ll",
+      "rawUrl": "https://sprinto.com",
+      "canonicalDomain": "sprinto.com",
+      "normalizedName": "sprinto",
+      "fingerprint": "ba204fbda252811d",
+      "title": "Sprinto",
+      "snippet": "Bengaluru-based security compliance and automated audit platform Sprinto raised $3.5M in seed funding led by Elevation Capital. Headquartered in Bengaluru, India. Co-founded by Girish Redekar and Raghuveer Kancherla. [HQ: India | Founder: Girish Redekar | Funding: raised $3.5M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.663Z"
+    },
+    {
+      "id": "res_1792140369663_r7p5",
+      "sessionId": "hunt_web_mvaq3rau_11ll",
+      "rawUrl": "https://devtron.ai",
+      "canonicalDomain": "devtron.ai",
+      "normalizedName": "devtron",
+      "fingerprint": "72ee1276fea304bf",
+      "title": "Devtron",
+      "snippet": "Gurugram-based open source Kubernetes software delivery and deployment platform Devtron raised $3.0M in seed funding from Nexus Venture Partners. Headquartered in Gurugram, India. Co-founded by Prashant Ghildiyal. [HQ: India | Founder: Prashant Ghildiyal | Funding: raised $3.0M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.663Z"
+    },
+    {
+      "id": "res_1792140369663_w526",
+      "sessionId": "hunt_web_mvaq3rau_11ll",
+      "rawUrl": "https://bytebeam.io",
+      "canonicalDomain": "bytebeam.io",
+      "normalizedName": "bytebeam",
+      "fingerprint": "6ccdf8185eca6a9c",
+      "title": "Bytebeam",
+      "snippet": "Bengaluru-based IoT software architecture and edge device management platform Bytebeam raised $3.0M in seed funding led by Together Fund. Headquartered in Bengaluru, India. Founded by Gautam Dayal. [HQ: India | Founder: Gautam Dayal | Funding: raised $3.0M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.663Z"
+    },
+    {
+      "id": "res_1792140369663_cvdh",
+      "sessionId": "hunt_web_mvaq3rau_11ll",
+      "rawUrl": "https://portkey.ai",
+      "canonicalDomain": "portkey.ai",
+      "normalizedName": "portkey",
+      "fingerprint": "5a86a66968410b18",
+      "title": "Portkey",
+      "snippet": "Bengaluru-based LLMOps and enterprise AI gateway platform Portkey raised $3.0M in seed funding from Lightspeed India. Headquartered in Bengaluru, India. Co-founded by Rohit Agarwal and Ayush Garg. [HQ: India | Founder: Rohit Agarwal | Funding: raised $3.0M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.663Z"
+    },
+    {
+      "id": "res_1792140369664_34c2",
+      "sessionId": "hunt_web_mvaq3rau_11ll",
+      "rawUrl": "https://modus.trade",
+      "canonicalDomain": "modus.trade",
+      "normalizedName": "modus",
+      "fingerprint": "620308f5b959fb76",
+      "title": "Modus",
+      "snippet": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.664Z"
+    },
+    {
+      "id": "res_1792140369664_sqzj",
+      "sessionId": "hunt_web_mvaq3rau_11ll",
+      "rawUrl": "https://finmo.net",
+      "canonicalDomain": "finmo.net",
+      "normalizedName": "finmo",
+      "fingerprint": "6076803c8ac25fe6",
+      "title": "Finmo",
+      "snippet": "Singapore-based treasury management and cross-border API payments platform Finmo raised $3.5M in seed funding led by Quona Capital. Headquartered in Singapore. Founded by David Hanna. [HQ: Singapore | Founder: David Hanna | Funding: raised $3.5M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T08:46:09.664Z"
+    },
+    {
+      "id": "res_1792142550418_w7ys",
+      "sessionId": "hunt_web_mvaregc2_ywo8",
+      "rawUrl": "https://synthesized.io",
+      "canonicalDomain": "synthesized.io",
+      "normalizedName": "synthesized",
+      "fingerprint": "bc3a7250e14964e3",
+      "title": "Synthesized",
+      "snippet": "Synthesized raised $2.8M in seed funding to expand its synthetic data generation platform for enterprise ML and software testing. Headquartered in London, United Kingdom. Co-founded by Dr. Nicolai Baldin. [HQ: United Kingdom | Founder: Nicolai Baldin | Funding: raised $2.8M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.418Z"
+    },
+    {
+      "id": "res_1792142550418_fhve",
+      "sessionId": "hunt_web_mvaregc2_ywo8",
+      "rawUrl": "https://mindfuel.ai",
+      "canonicalDomain": "mindfuel.ai",
+      "normalizedName": "mindfuel",
+      "fingerprint": "10ddab1aec6f8677",
+      "title": "Mindfuel",
+      "snippet": "Munich-based B2B SaaS data product management platform Mindfuel raised €3.75M ($4.0M USD) in seed funding led by Project A Ventures. Headquartered in Munich, Germany. Founded by Nadiem von Heydebrand. [HQ: Germany | Founder: Nadiem von Heydebrand | Funding: raised $4.0M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.418Z"
+    },
+    {
+      "id": "res_1792142550419_53rr",
+      "sessionId": "hunt_web_mvaregc2_ywo8",
+      "rawUrl": "https://saporo.io",
+      "canonicalDomain": "saporo.io",
+      "normalizedName": "saporo",
+      "fingerprint": "e976bf9cd7b71457",
+      "title": "Saporo",
+      "snippet": "Swiss cybersecurity startup Saporo raised $2.7M in seed funding to expand its cloud attack surface reduction platform. Based in Lausanne, Switzerland. Co-founded by Olivier Eyries and Eric Blavier. [HQ: Switzerland | Founder: Olivier Eyries | Funding: raised $2.7M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.419Z"
+    },
+    {
+      "id": "res_1792142550419_jfh2",
+      "sessionId": "hunt_web_mvaregc2_ywo8",
+      "rawUrl": "https://cyscale.com",
+      "canonicalDomain": "cyscale.com",
+      "normalizedName": "cyscale",
+      "fingerprint": "2fc7c056d398f311",
+      "title": "Cyscale",
+      "snippet": "Cluj-Napoca-based cloud cybersecurity automation platform Cyscale secured €3M ($3.2M USD) in seed funding led by Notion Capital. Headquartered in Romania, Europe. Founded by Manuela Ticudean and Ovidiu Cical. [HQ: Romania | Founder: Ovidiu Cical | Funding: secured $3.2M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.419Z"
+    },
+    {
+      "id": "res_1792142550419_kqnr",
+      "sessionId": "hunt_web_mvaregc2_ywo8",
+      "rawUrl": "https://neatsy.ai",
+      "canonicalDomain": "neatsy.ai",
+      "normalizedName": "neatsy",
+      "fingerprint": "227fd93c7f84ed47",
+      "title": "Neatsy",
+      "snippet": "AI healthtech and 3D foot scanning software Neatsy raised $1.0M in seed funding from Cabra VC. Headquartered in London, United Kingdom. Founded by Artem Semyanov. [HQ: United Kingdom | Founder: Artem Semyanov | Funding: raised $1.0M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.419Z"
+    },
+    {
+      "id": "res_1792142550419_lbnt",
+      "sessionId": "hunt_web_mvaregc2_ywo8",
+      "rawUrl": "https://carbonfact.com",
+      "canonicalDomain": "carbonfact.com",
+      "normalizedName": "carbonfact",
+      "fingerprint": "35eeb42ef798c990",
+      "title": "Carbonfact",
+      "snippet": "Paris-based carbon footprint software platform for apparel Carbonfact secured €1.9M ($2.1M USD) in seed funding from Alven. Headquartered in Paris, France. Founded by Martin Daniel and Marc Laurent. [HQ: France | Founder: Martin Daniel | Funding: secured $2.1M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.419Z"
+    },
+    {
+      "id": "res_1792142550420_1a78",
+      "sessionId": "hunt_web_mvaregc2_ywo8",
+      "rawUrl": "https://sprinto.com",
+      "canonicalDomain": "sprinto.com",
+      "normalizedName": "sprinto",
+      "fingerprint": "ba204fbda252811d",
+      "title": "Sprinto",
+      "snippet": "Bengaluru-based security compliance and automated audit platform Sprinto raised $3.5M in seed funding led by Elevation Capital. Headquartered in Bengaluru, India. Co-founded by Girish Redekar and Raghuveer Kancherla. [HQ: India | Founder: Girish Redekar | Funding: raised $3.5M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.420Z"
+    },
+    {
+      "id": "res_1792142550420_tz3w",
+      "sessionId": "hunt_web_mvaregc2_ywo8",
+      "rawUrl": "https://devtron.ai",
+      "canonicalDomain": "devtron.ai",
+      "normalizedName": "devtron",
+      "fingerprint": "72ee1276fea304bf",
+      "title": "Devtron",
+      "snippet": "Gurugram-based open source Kubernetes software delivery and deployment platform Devtron raised $3.0M in seed funding from Nexus Venture Partners. Headquartered in Gurugram, India. Co-founded by Prashant Ghildiyal. [HQ: India | Founder: Prashant Ghildiyal | Funding: raised $3.0M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.420Z"
+    },
+    {
+      "id": "res_1792142550420_dbsy",
+      "sessionId": "hunt_web_mvaregc2_ywo8",
+      "rawUrl": "https://bytebeam.io",
+      "canonicalDomain": "bytebeam.io",
+      "normalizedName": "bytebeam",
+      "fingerprint": "6ccdf8185eca6a9c",
+      "title": "Bytebeam",
+      "snippet": "Bengaluru-based IoT software architecture and edge device management platform Bytebeam raised $3.0M in seed funding led by Together Fund. Headquartered in Bengaluru, India. Founded by Gautam Dayal. [HQ: India | Founder: Gautam Dayal | Funding: raised $3.0M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.420Z"
+    },
+    {
+      "id": "res_1792142550421_ea4p",
+      "sessionId": "hunt_web_mvaregc2_ywo8",
+      "rawUrl": "https://portkey.ai",
+      "canonicalDomain": "portkey.ai",
+      "normalizedName": "portkey",
+      "fingerprint": "5a86a66968410b18",
+      "title": "Portkey",
+      "snippet": "Bengaluru-based LLMOps and enterprise AI gateway platform Portkey raised $3.0M in seed funding from Lightspeed India. Headquartered in Bengaluru, India. Co-founded by Rohit Agarwal and Ayush Garg. [HQ: India | Founder: Rohit Agarwal | Funding: raised $3.0M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.421Z"
+    },
+    {
+      "id": "res_1792142550421_sqg1",
+      "sessionId": "hunt_web_mvaregc2_ywo8",
+      "rawUrl": "https://modus.trade",
+      "canonicalDomain": "modus.trade",
+      "normalizedName": "modus",
+      "fingerprint": "620308f5b959fb76",
+      "title": "Modus",
+      "snippet": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.421Z"
+    },
+    {
+      "id": "res_1792142550421_ktbc",
+      "sessionId": "hunt_web_mvaregc2_ywo8",
+      "rawUrl": "https://finmo.net",
+      "canonicalDomain": "finmo.net",
+      "normalizedName": "finmo",
+      "fingerprint": "6076803c8ac25fe6",
+      "title": "Finmo",
+      "snippet": "Singapore-based treasury management and cross-border API payments platform Finmo raised $3.5M in seed funding led by Quona Capital. Headquartered in Singapore. Founded by David Hanna. [HQ: Singapore | Founder: David Hanna | Funding: raised $3.5M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.421Z"
+    },
+    {
+      "id": "res_1792142550591_kw8z",
+      "sessionId": "hunt_web_mvarei40_dvwb",
+      "rawUrl": "https://synthesized.io",
+      "canonicalDomain": "synthesized.io",
+      "normalizedName": "synthesized",
+      "fingerprint": "bc3a7250e14964e3",
+      "title": "Synthesized",
+      "snippet": "Synthesized raised $2.8M in seed funding to expand its synthetic data generation platform for enterprise ML and software testing. Headquartered in London, United Kingdom. Co-founded by Dr. Nicolai Baldin. [HQ: United Kingdom | Founder: Nicolai Baldin | Funding: raised $2.8M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.591Z"
+    },
+    {
+      "id": "res_1792142550592_rnaw",
+      "sessionId": "hunt_web_mvarei40_dvwb",
+      "rawUrl": "https://mindfuel.ai",
+      "canonicalDomain": "mindfuel.ai",
+      "normalizedName": "mindfuel",
+      "fingerprint": "10ddab1aec6f8677",
+      "title": "Mindfuel",
+      "snippet": "Munich-based B2B SaaS data product management platform Mindfuel raised €3.75M ($4.0M USD) in seed funding led by Project A Ventures. Headquartered in Munich, Germany. Founded by Nadiem von Heydebrand. [HQ: Germany | Founder: Nadiem von Heydebrand | Funding: raised $4.0M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.592Z"
+    },
+    {
+      "id": "res_1792142550595_yxun",
+      "sessionId": "hunt_web_mvarei40_dvwb",
+      "rawUrl": "https://saporo.io",
+      "canonicalDomain": "saporo.io",
+      "normalizedName": "saporo",
+      "fingerprint": "e976bf9cd7b71457",
+      "title": "Saporo",
+      "snippet": "Swiss cybersecurity startup Saporo raised $2.7M in seed funding to expand its cloud attack surface reduction platform. Based in Lausanne, Switzerland. Co-founded by Olivier Eyries and Eric Blavier. [HQ: Switzerland | Founder: Olivier Eyries | Funding: raised $2.7M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.596Z"
+    },
+    {
+      "id": "res_1792142550597_5di6",
+      "sessionId": "hunt_web_mvarei40_dvwb",
+      "rawUrl": "https://cyscale.com",
+      "canonicalDomain": "cyscale.com",
+      "normalizedName": "cyscale",
+      "fingerprint": "2fc7c056d398f311",
+      "title": "Cyscale",
+      "snippet": "Cluj-Napoca-based cloud cybersecurity automation platform Cyscale secured €3M ($3.2M USD) in seed funding led by Notion Capital. Headquartered in Romania, Europe. Founded by Manuela Ticudean and Ovidiu Cical. [HQ: Romania | Founder: Ovidiu Cical | Funding: secured $3.2M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.597Z"
+    },
+    {
+      "id": "res_1792142550597_50kg",
+      "sessionId": "hunt_web_mvarei40_dvwb",
+      "rawUrl": "https://neatsy.ai",
+      "canonicalDomain": "neatsy.ai",
+      "normalizedName": "neatsy",
+      "fingerprint": "227fd93c7f84ed47",
+      "title": "Neatsy",
+      "snippet": "AI healthtech and 3D foot scanning software Neatsy raised $1.0M in seed funding from Cabra VC. Headquartered in London, United Kingdom. Founded by Artem Semyanov. [HQ: United Kingdom | Founder: Artem Semyanov | Funding: raised $1.0M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.597Z"
+    },
+    {
+      "id": "res_1792142550598_oiny",
+      "sessionId": "hunt_web_mvarei40_dvwb",
+      "rawUrl": "https://carbonfact.com",
+      "canonicalDomain": "carbonfact.com",
+      "normalizedName": "carbonfact",
+      "fingerprint": "35eeb42ef798c990",
+      "title": "Carbonfact",
+      "snippet": "Paris-based carbon footprint software platform for apparel Carbonfact secured €1.9M ($2.1M USD) in seed funding from Alven. Headquartered in Paris, France. Founded by Martin Daniel and Marc Laurent. [HQ: France | Founder: Martin Daniel | Funding: secured $2.1M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.598Z"
+    },
+    {
+      "id": "res_1792142550598_diq1",
+      "sessionId": "hunt_web_mvarei40_dvwb",
+      "rawUrl": "https://sprinto.com",
+      "canonicalDomain": "sprinto.com",
+      "normalizedName": "sprinto",
+      "fingerprint": "ba204fbda252811d",
+      "title": "Sprinto",
+      "snippet": "Bengaluru-based security compliance and automated audit platform Sprinto raised $3.5M in seed funding led by Elevation Capital. Headquartered in Bengaluru, India. Co-founded by Girish Redekar and Raghuveer Kancherla. [HQ: India | Founder: Girish Redekar | Funding: raised $3.5M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.598Z"
+    },
+    {
+      "id": "res_1792142550607_x5e0",
+      "sessionId": "hunt_web_mvarei40_dvwb",
+      "rawUrl": "https://devtron.ai",
+      "canonicalDomain": "devtron.ai",
+      "normalizedName": "devtron",
+      "fingerprint": "72ee1276fea304bf",
+      "title": "Devtron",
+      "snippet": "Gurugram-based open source Kubernetes software delivery and deployment platform Devtron raised $3.0M in seed funding from Nexus Venture Partners. Headquartered in Gurugram, India. Co-founded by Prashant Ghildiyal. [HQ: India | Founder: Prashant Ghildiyal | Funding: raised $3.0M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.607Z"
+    },
+    {
+      "id": "res_1792142550608_8yfx",
+      "sessionId": "hunt_web_mvarei40_dvwb",
+      "rawUrl": "https://bytebeam.io",
+      "canonicalDomain": "bytebeam.io",
+      "normalizedName": "bytebeam",
+      "fingerprint": "6ccdf8185eca6a9c",
+      "title": "Bytebeam",
+      "snippet": "Bengaluru-based IoT software architecture and edge device management platform Bytebeam raised $3.0M in seed funding led by Together Fund. Headquartered in Bengaluru, India. Founded by Gautam Dayal. [HQ: India | Founder: Gautam Dayal | Funding: raised $3.0M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.608Z"
+    },
+    {
+      "id": "res_1792142550610_9dgt",
+      "sessionId": "hunt_web_mvarei40_dvwb",
+      "rawUrl": "https://portkey.ai",
+      "canonicalDomain": "portkey.ai",
+      "normalizedName": "portkey",
+      "fingerprint": "5a86a66968410b18",
+      "title": "Portkey",
+      "snippet": "Bengaluru-based LLMOps and enterprise AI gateway platform Portkey raised $3.0M in seed funding from Lightspeed India. Headquartered in Bengaluru, India. Co-founded by Rohit Agarwal and Ayush Garg. [HQ: India | Founder: Rohit Agarwal | Funding: raised $3.0M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.610Z"
+    },
+    {
+      "id": "res_1792142550611_u9x7",
+      "sessionId": "hunt_web_mvarei40_dvwb",
+      "rawUrl": "https://modus.trade",
+      "canonicalDomain": "modus.trade",
+      "normalizedName": "modus",
+      "fingerprint": "620308f5b959fb76",
+      "title": "Modus",
+      "snippet": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.611Z"
+    },
+    {
+      "id": "res_1792142550611_61jc",
+      "sessionId": "hunt_web_mvarei40_dvwb",
+      "rawUrl": "https://finmo.net",
+      "canonicalDomain": "finmo.net",
+      "normalizedName": "finmo",
+      "fingerprint": "6076803c8ac25fe6",
+      "title": "Finmo",
+      "snippet": "Singapore-based treasury management and cross-border API payments platform Finmo raised $3.5M in seed funding led by Quona Capital. Headquartered in Singapore. Founded by David Hanna. [HQ: Singapore | Founder: David Hanna | Funding: raised $3.5M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:22:30.611Z"
+    },
+    {
+      "id": "res_1792144140374_bqg8",
+      "sessionId": "hunt_web_mvascgv0_9n4q",
+      "rawUrl": "https://synthesized.io",
+      "canonicalDomain": "synthesized.io",
+      "normalizedName": "synthesized",
+      "fingerprint": "bc3a7250e14964e3",
+      "title": "Synthesized",
+      "snippet": "Synthesized raised $2.8M in seed funding to expand its synthetic data generation platform for enterprise ML and software testing. Headquartered in London, United Kingdom. Co-founded by Dr. Nicolai Baldin. [HQ: United Kingdom | Founder: Nicolai Baldin | Funding: raised $2.8M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.374Z"
+    },
+    {
+      "id": "res_1792144140375_00er",
+      "sessionId": "hunt_web_mvascgv0_9n4q",
+      "rawUrl": "https://mindfuel.ai",
+      "canonicalDomain": "mindfuel.ai",
+      "normalizedName": "mindfuel",
+      "fingerprint": "10ddab1aec6f8677",
+      "title": "Mindfuel",
+      "snippet": "Munich-based B2B SaaS data product management platform Mindfuel raised €3.75M ($4.0M USD) in seed funding led by Project A Ventures. Headquartered in Munich, Germany. Founded by Nadiem von Heydebrand. [HQ: Germany | Founder: Nadiem von Heydebrand | Funding: raised $4.0M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.375Z"
+    },
+    {
+      "id": "res_1792144140376_g98u",
+      "sessionId": "hunt_web_mvascgv0_9n4q",
+      "rawUrl": "https://saporo.io",
+      "canonicalDomain": "saporo.io",
+      "normalizedName": "saporo",
+      "fingerprint": "e976bf9cd7b71457",
+      "title": "Saporo",
+      "snippet": "Swiss cybersecurity startup Saporo raised $2.7M in seed funding to expand its cloud attack surface reduction platform. Based in Lausanne, Switzerland. Co-founded by Olivier Eyries and Eric Blavier. [HQ: Switzerland | Founder: Olivier Eyries | Funding: raised $2.7M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.376Z"
+    },
+    {
+      "id": "res_1792144140376_fsrl",
+      "sessionId": "hunt_web_mvascgv0_9n4q",
+      "rawUrl": "https://cyscale.com",
+      "canonicalDomain": "cyscale.com",
+      "normalizedName": "cyscale",
+      "fingerprint": "2fc7c056d398f311",
+      "title": "Cyscale",
+      "snippet": "Cluj-Napoca-based cloud cybersecurity automation platform Cyscale secured €3M ($3.2M USD) in seed funding led by Notion Capital. Headquartered in Romania, Europe. Founded by Manuela Ticudean and Ovidiu Cical. [HQ: Romania | Founder: Ovidiu Cical | Funding: secured $3.2M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.376Z"
+    },
+    {
+      "id": "res_1792144140377_lavf",
+      "sessionId": "hunt_web_mvascgv0_9n4q",
+      "rawUrl": "https://neatsy.ai",
+      "canonicalDomain": "neatsy.ai",
+      "normalizedName": "neatsy",
+      "fingerprint": "227fd93c7f84ed47",
+      "title": "Neatsy",
+      "snippet": "AI healthtech and 3D foot scanning software Neatsy raised $1.0M in seed funding from Cabra VC. Headquartered in London, United Kingdom. Founded by Artem Semyanov. [HQ: United Kingdom | Founder: Artem Semyanov | Funding: raised $1.0M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.377Z"
+    },
+    {
+      "id": "res_1792144140378_85of",
+      "sessionId": "hunt_web_mvascgv0_9n4q",
+      "rawUrl": "https://carbonfact.com",
+      "canonicalDomain": "carbonfact.com",
+      "normalizedName": "carbonfact",
+      "fingerprint": "35eeb42ef798c990",
+      "title": "Carbonfact",
+      "snippet": "Paris-based carbon footprint software platform for apparel Carbonfact secured €1.9M ($2.1M USD) in seed funding from Alven. Headquartered in Paris, France. Founded by Martin Daniel and Marc Laurent. [HQ: France | Founder: Martin Daniel | Funding: secured $2.1M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.378Z"
+    },
+    {
+      "id": "res_1792144140378_rwkq",
+      "sessionId": "hunt_web_mvascgv0_9n4q",
+      "rawUrl": "https://sprinto.com",
+      "canonicalDomain": "sprinto.com",
+      "normalizedName": "sprinto",
+      "fingerprint": "ba204fbda252811d",
+      "title": "Sprinto",
+      "snippet": "Bengaluru-based security compliance and automated audit platform Sprinto raised $3.5M in seed funding led by Elevation Capital. Headquartered in Bengaluru, India. Co-founded by Girish Redekar and Raghuveer Kancherla. [HQ: India | Founder: Girish Redekar | Funding: raised $3.5M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.378Z"
+    },
+    {
+      "id": "res_1792144140380_mc1v",
+      "sessionId": "hunt_web_mvascgv0_9n4q",
+      "rawUrl": "https://devtron.ai",
+      "canonicalDomain": "devtron.ai",
+      "normalizedName": "devtron",
+      "fingerprint": "72ee1276fea304bf",
+      "title": "Devtron",
+      "snippet": "Gurugram-based open source Kubernetes software delivery and deployment platform Devtron raised $3.0M in seed funding from Nexus Venture Partners. Headquartered in Gurugram, India. Co-founded by Prashant Ghildiyal. [HQ: India | Founder: Prashant Ghildiyal | Funding: raised $3.0M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.380Z"
+    },
+    {
+      "id": "res_1792144140381_wcu5",
+      "sessionId": "hunt_web_mvascgv0_9n4q",
+      "rawUrl": "https://bytebeam.io",
+      "canonicalDomain": "bytebeam.io",
+      "normalizedName": "bytebeam",
+      "fingerprint": "6ccdf8185eca6a9c",
+      "title": "Bytebeam",
+      "snippet": "Bengaluru-based IoT software architecture and edge device management platform Bytebeam raised $3.0M in seed funding led by Together Fund. Headquartered in Bengaluru, India. Founded by Gautam Dayal. [HQ: India | Founder: Gautam Dayal | Funding: raised $3.0M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.381Z"
+    },
+    {
+      "id": "res_1792144140381_b8ga",
+      "sessionId": "hunt_web_mvascgv0_9n4q",
+      "rawUrl": "https://portkey.ai",
+      "canonicalDomain": "portkey.ai",
+      "normalizedName": "portkey",
+      "fingerprint": "5a86a66968410b18",
+      "title": "Portkey",
+      "snippet": "Bengaluru-based LLMOps and enterprise AI gateway platform Portkey raised $3.0M in seed funding from Lightspeed India. Headquartered in Bengaluru, India. Co-founded by Rohit Agarwal and Ayush Garg. [HQ: India | Founder: Rohit Agarwal | Funding: raised $3.0M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.381Z"
+    },
+    {
+      "id": "res_1792144140382_dgqa",
+      "sessionId": "hunt_web_mvascgv0_9n4q",
+      "rawUrl": "https://modus.trade",
+      "canonicalDomain": "modus.trade",
+      "normalizedName": "modus",
+      "fingerprint": "620308f5b959fb76",
+      "title": "Modus",
+      "snippet": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.382Z"
+    },
+    {
+      "id": "res_1792144140382_gwv7",
+      "sessionId": "hunt_web_mvascgv0_9n4q",
+      "rawUrl": "https://finmo.net",
+      "canonicalDomain": "finmo.net",
+      "normalizedName": "finmo",
+      "fingerprint": "6076803c8ac25fe6",
+      "title": "Finmo",
+      "snippet": "Singapore-based treasury management and cross-border API payments platform Finmo raised $3.5M in seed funding led by Quona Capital. Headquartered in Singapore. Founded by David Hanna. [HQ: Singapore | Founder: David Hanna | Funding: raised $3.5M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.382Z"
+    },
+    {
+      "id": "res_1792144140530_yuhe",
+      "sessionId": "hunt_web_mvasckx4_xb7n",
+      "rawUrl": "https://synthesized.io",
+      "canonicalDomain": "synthesized.io",
+      "normalizedName": "synthesized",
+      "fingerprint": "bc3a7250e14964e3",
+      "title": "Synthesized",
+      "snippet": "Synthesized raised $2.8M in seed funding to expand its synthetic data generation platform for enterprise ML and software testing. Headquartered in London, United Kingdom. Co-founded by Dr. Nicolai Baldin. [HQ: United Kingdom | Founder: Nicolai Baldin | Funding: raised $2.8M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.530Z"
+    },
+    {
+      "id": "res_1792144140531_y7e5",
+      "sessionId": "hunt_web_mvasckx4_xb7n",
+      "rawUrl": "https://mindfuel.ai",
+      "canonicalDomain": "mindfuel.ai",
+      "normalizedName": "mindfuel",
+      "fingerprint": "10ddab1aec6f8677",
+      "title": "Mindfuel",
+      "snippet": "Munich-based B2B SaaS data product management platform Mindfuel raised €3.75M ($4.0M USD) in seed funding led by Project A Ventures. Headquartered in Munich, Germany. Founded by Nadiem von Heydebrand. [HQ: Germany | Founder: Nadiem von Heydebrand | Funding: raised $4.0M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.531Z"
+    },
+    {
+      "id": "res_1792144140531_8pe6",
+      "sessionId": "hunt_web_mvasckx4_xb7n",
+      "rawUrl": "https://saporo.io",
+      "canonicalDomain": "saporo.io",
+      "normalizedName": "saporo",
+      "fingerprint": "e976bf9cd7b71457",
+      "title": "Saporo",
+      "snippet": "Swiss cybersecurity startup Saporo raised $2.7M in seed funding to expand its cloud attack surface reduction platform. Based in Lausanne, Switzerland. Co-founded by Olivier Eyries and Eric Blavier. [HQ: Switzerland | Founder: Olivier Eyries | Funding: raised $2.7M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.531Z"
+    },
+    {
+      "id": "res_1792144140531_2x3r",
+      "sessionId": "hunt_web_mvasckx4_xb7n",
+      "rawUrl": "https://cyscale.com",
+      "canonicalDomain": "cyscale.com",
+      "normalizedName": "cyscale",
+      "fingerprint": "2fc7c056d398f311",
+      "title": "Cyscale",
+      "snippet": "Cluj-Napoca-based cloud cybersecurity automation platform Cyscale secured €3M ($3.2M USD) in seed funding led by Notion Capital. Headquartered in Romania, Europe. Founded by Manuela Ticudean and Ovidiu Cical. [HQ: Romania | Founder: Ovidiu Cical | Funding: secured $3.2M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.531Z"
+    },
+    {
+      "id": "res_1792144140532_gfdr",
+      "sessionId": "hunt_web_mvasckx4_xb7n",
+      "rawUrl": "https://neatsy.ai",
+      "canonicalDomain": "neatsy.ai",
+      "normalizedName": "neatsy",
+      "fingerprint": "227fd93c7f84ed47",
+      "title": "Neatsy",
+      "snippet": "AI healthtech and 3D foot scanning software Neatsy raised $1.0M in seed funding from Cabra VC. Headquartered in London, United Kingdom. Founded by Artem Semyanov. [HQ: United Kingdom | Founder: Artem Semyanov | Funding: raised $1.0M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.532Z"
+    },
+    {
+      "id": "res_1792144140532_x7vp",
+      "sessionId": "hunt_web_mvasckx4_xb7n",
+      "rawUrl": "https://carbonfact.com",
+      "canonicalDomain": "carbonfact.com",
+      "normalizedName": "carbonfact",
+      "fingerprint": "35eeb42ef798c990",
+      "title": "Carbonfact",
+      "snippet": "Paris-based carbon footprint software platform for apparel Carbonfact secured €1.9M ($2.1M USD) in seed funding from Alven. Headquartered in Paris, France. Founded by Martin Daniel and Marc Laurent. [HQ: France | Founder: Martin Daniel | Funding: secured $2.1M seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.532Z"
+    },
+    {
+      "id": "res_1792144140533_mmph",
+      "sessionId": "hunt_web_mvasckx4_xb7n",
+      "rawUrl": "https://sprinto.com",
+      "canonicalDomain": "sprinto.com",
+      "normalizedName": "sprinto",
+      "fingerprint": "ba204fbda252811d",
+      "title": "Sprinto",
+      "snippet": "Bengaluru-based security compliance and automated audit platform Sprinto raised $3.5M in seed funding led by Elevation Capital. Headquartered in Bengaluru, India. Co-founded by Girish Redekar and Raghuveer Kancherla. [HQ: India | Founder: Girish Redekar | Funding: raised $3.5M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.533Z"
+    },
+    {
+      "id": "res_1792144140533_h6gc",
+      "sessionId": "hunt_web_mvasckx4_xb7n",
+      "rawUrl": "https://devtron.ai",
+      "canonicalDomain": "devtron.ai",
+      "normalizedName": "devtron",
+      "fingerprint": "72ee1276fea304bf",
+      "title": "Devtron",
+      "snippet": "Gurugram-based open source Kubernetes software delivery and deployment platform Devtron raised $3.0M in seed funding from Nexus Venture Partners. Headquartered in Gurugram, India. Co-founded by Prashant Ghildiyal. [HQ: India | Founder: Prashant Ghildiyal | Funding: raised $3.0M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.533Z"
+    },
+    {
+      "id": "res_1792144140533_3vuf",
+      "sessionId": "hunt_web_mvasckx4_xb7n",
+      "rawUrl": "https://bytebeam.io",
+      "canonicalDomain": "bytebeam.io",
+      "normalizedName": "bytebeam",
+      "fingerprint": "6ccdf8185eca6a9c",
+      "title": "Bytebeam",
+      "snippet": "Bengaluru-based IoT software architecture and edge device management platform Bytebeam raised $3.0M in seed funding led by Together Fund. Headquartered in Bengaluru, India. Founded by Gautam Dayal. [HQ: India | Founder: Gautam Dayal | Funding: raised $3.0M seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.533Z"
+    },
+    {
+      "id": "res_1792144140534_u2nr",
+      "sessionId": "hunt_web_mvasckx4_xb7n",
+      "rawUrl": "https://portkey.ai",
+      "canonicalDomain": "portkey.ai",
+      "normalizedName": "portkey",
+      "fingerprint": "5a86a66968410b18",
+      "title": "Portkey",
+      "snippet": "Bengaluru-based LLMOps and enterprise AI gateway platform Portkey raised $3.0M in seed funding from Lightspeed India. Headquartered in Bengaluru, India. Co-founded by Rohit Agarwal and Ayush Garg. [HQ: India | Founder: Rohit Agarwal | Funding: raised $3.0M in seed funding]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.534Z"
+    },
+    {
+      "id": "res_1792144140535_ukuf",
+      "sessionId": "hunt_web_mvasckx4_xb7n",
+      "rawUrl": "https://modus.trade",
+      "canonicalDomain": "modus.trade",
+      "normalizedName": "modus",
+      "fingerprint": "620308f5b959fb76",
+      "title": "Modus",
+      "snippet": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.535Z"
+    },
+    {
+      "id": "res_1792144140536_76xs",
+      "sessionId": "hunt_web_mvasckx4_xb7n",
+      "rawUrl": "https://finmo.net",
+      "canonicalDomain": "finmo.net",
+      "normalizedName": "finmo",
+      "fingerprint": "6076803c8ac25fe6",
+      "title": "Finmo",
+      "snippet": "Singapore-based treasury management and cross-border API payments platform Finmo raised $3.5M in seed funding led by Quona Capital. Headquartered in Singapore. Founded by David Hanna. [HQ: Singapore | Founder: David Hanna | Funding: raised $3.5M in seed round]",
+      "source": "Curated Venture Directory",
+      "isNew": false,
+      "discoveredAt": "2026-10-16T09:49:00.536Z"
     }
   ],
   "companies": {},
   "evidence": [],
   "savedLeads": {},
   "history": [
+    {
+      "id": "hist_hunt_web_mvasckx4_xb7n",
+      "sessionId": "hunt_web_mvasckx4_xb7n",
+      "timestamp": "2026-10-16T09:49:00.563Z",
+      "targetSummary": "FinTech in Global",
+      "targetLeads": 1,
+      "qualifiedCount": 1,
+      "rejectedCount": 10,
+      "durationSeconds": 0,
+      "status": "Completed",
+      "companies": [
+        {
+          "name": "Modus",
+          "website": "https://modus.trade",
+          "description": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+          "industry": "FinTech",
+          "fundingOrRevenue": "raised $2.3M in seed round",
+          "usPresence": true,
+          "founderOrCeoName": "Patrick Murphy",
+          "founderOrCeoEmail": "patrick.murphy@modus.trade",
+          "emailVerified": true,
+          "contactVerificationStatus": "VERIFIED",
+          "contactVerificationReason": "Founder professional email — verified",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Singapore",
+          "headquarters": "Singapore",
+          "linkedinUrl": null,
+          "companyLinkedinUrl": null,
+          "sourceUrls": [
+            "https://modus.trade"
+          ],
+          "statusTag": "PREVIOUSLY_DISCOVERED",
+          "firstDiscoveredAt": "2026-10-16T09:49:00.547Z",
+          "lastSeenAt": "2026-10-16T09:49:00.547Z",
+          "lastVerifiedAt": "2026-10-16T09:49:00.547Z",
+          "contactProfile": {
+            "company_name": {
+              "value": "Modus",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_profile",
+              "checked_at": "2026-10-16T09:49:00.545Z",
+              "confidence": 95
+            },
+            "website": {
+              "value": "https://modus.trade",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:49:00.545Z",
+              "confidence": 95
+            },
+            "company_description": {
+              "value": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "company_profile",
+              "checked_at": "2026-10-16T09:49:00.545Z",
+              "confidence": 90
+            },
+            "company_industry": {
+              "value": "FinTech",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "company_profile",
+              "checked_at": "2026-10-16T09:49:00.545Z",
+              "confidence": 85
+            },
+            "company_city": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "location_registry",
+              "checked_at": "2026-10-16T09:49:00.545Z",
+              "confidence": 0
+            },
+            "company_country": {
+              "value": "Singapore",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "location_registry",
+              "checked_at": "2026-10-16T09:49:00.545Z",
+              "confidence": 85
+            },
+            "company_linkedin": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:49:00.545Z",
+              "confidence": 0
+            },
+            "company_twitter_x": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:49:00.545Z",
+              "confidence": 0
+            },
+            "company_email": {
+              "value": "contact@modus.trade",
+              "verification_status": "VERIFIED",
+              "source": "Standard Corporate Route",
+              "source_url": "https://modus.trade",
+              "source_type": "synthesized_role",
+              "checked_at": "2026-10-16T09:49:00.545Z",
+              "confidence": 90,
+              "original_input_value": null
+            },
+            "company_phone": {
+              "value": null,
+              "verification_status": "UNAVAILABLE",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:49:00.545Z",
+              "confidence": 0
+            },
+            "company_contact_page": {
+              "value": "https://modus.trade/contact",
+              "verification_status": "UNVERIFIED",
+              "source": "Standard Web Pattern",
+              "source_url": "https://modus.trade/contact",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:49:00.545Z",
+              "confidence": 70
+            },
+            "best_contact_path": {
+              "method": "Verified Professional Email",
+              "explanation": "Founder professional email — verified",
+              "value": "patrick.murphy@modus.trade",
+              "target": "decision_maker",
+              "alternative": {
+                "method": "Company Email",
+                "explanation": "Company email — verified",
+                "value": "contact@modus.trade"
+              },
+              "company_fallback": {
+                "method": "Company Email",
+                "explanation": "Company email — verified",
+                "value": "contact@modus.trade"
+              }
+            },
+            "contact_completeness": {
+              "score": 3,
+              "maxScore": 6,
+              "percentage": 50,
+              "label": "3 / 6 core contact fields (50%)",
+              "details": {
+                "decisionMakerFound": true,
+                "professionalEmailVerified": true,
+                "publicLinkedInVerified": false,
+                "companyLinkedInVerified": false,
+                "companyEmailVerified": true,
+                "publicXAvailable": false,
+                "publicPersonalEmailStatus": "not_disclosed"
+              }
+            },
+            "primary_contact": {
+              "full_name": "Patrick Murphy",
+              "first_name": "Patrick",
+              "last_name": "Murphy",
+              "current_role": "Founder",
+              "company_relationship": "Identified in venture disclosures for Modus",
+              "linkedin_url": null,
+              "linkedin_status": "NOT_FOUND",
+              "twitter_x_url": null,
+              "twitter_x_status": "NOT_FOUND",
+              "professional_email": "patrick.murphy@modus.trade",
+              "professional_email_status": "VALID",
+              "professional_email_provider": "Direct DNS MX",
+              "public_personal_email": null,
+              "public_personal_email_status": "NOT_DISCLOSED",
+              "source_url": "https://modus.trade",
+              "source": "Company Disclosures",
+              "verified_at": "2026-10-16T09:49:00.545Z",
+              "confidence": 85,
+              "verification_status": "VERIFIED",
+              "is_primary": true
+            },
+            "secondary_contacts": []
+          },
+          "evidence": {
+            "fundingSource": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+            "techEvidence": "Verified platform: FinTech",
+            "geoEvidence": "Global coverage — all countries allowed (no geographic restrictions) (Informational — no penalty)",
+            "founderSource": "Identified in venture disclosures for Modus",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://modus.trade"
+            ]
+          },
+          "huntScore": 82,
+          "scoreBreakdown": {
+            "funding": 18,
+            "technology": 17,
+            "geography": 8,
+            "founder": 19,
+            "contact": 20
+          }
+        }
+      ]
+    },
+    {
+      "id": "hist_hunt_web_mvascgv0_9n4q",
+      "sessionId": "hunt_web_mvascgv0_9n4q",
+      "timestamp": "2026-10-16T09:49:00.494Z",
+      "targetSummary": "FinTech in Global",
+      "targetLeads": 1,
+      "qualifiedCount": 1,
+      "rejectedCount": 10,
+      "durationSeconds": 5,
+      "status": "Completed",
+      "companies": [
+        {
+          "name": "Modus",
+          "website": "https://modus.trade",
+          "description": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+          "industry": "FinTech",
+          "fundingOrRevenue": "raised $2.3M in seed round",
+          "usPresence": true,
+          "founderOrCeoName": "Patrick Murphy",
+          "founderOrCeoEmail": "patrick.murphy@modus.trade",
+          "emailVerified": true,
+          "contactVerificationStatus": "VERIFIED",
+          "contactVerificationReason": "Founder professional email — verified",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Singapore",
+          "headquarters": "Singapore",
+          "linkedinUrl": null,
+          "companyLinkedinUrl": null,
+          "sourceUrls": [
+            "https://modus.trade"
+          ],
+          "statusTag": "PREVIOUSLY_DISCOVERED",
+          "firstDiscoveredAt": "2026-10-16T09:49:00.492Z",
+          "lastSeenAt": "2026-10-16T09:49:00.492Z",
+          "lastVerifiedAt": "2026-10-16T09:49:00.492Z",
+          "contactProfile": {
+            "company_name": {
+              "value": "Modus",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_profile",
+              "checked_at": "2026-10-16T09:49:00.448Z",
+              "confidence": 95
+            },
+            "website": {
+              "value": "https://modus.trade",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:49:00.448Z",
+              "confidence": 95
+            },
+            "company_description": {
+              "value": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "company_profile",
+              "checked_at": "2026-10-16T09:49:00.448Z",
+              "confidence": 90
+            },
+            "company_industry": {
+              "value": "FinTech",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "company_profile",
+              "checked_at": "2026-10-16T09:49:00.448Z",
+              "confidence": 85
+            },
+            "company_city": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "location_registry",
+              "checked_at": "2026-10-16T09:49:00.448Z",
+              "confidence": 0
+            },
+            "company_country": {
+              "value": "Singapore",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "location_registry",
+              "checked_at": "2026-10-16T09:49:00.448Z",
+              "confidence": 85
+            },
+            "company_linkedin": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:49:00.448Z",
+              "confidence": 0
+            },
+            "company_twitter_x": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:49:00.448Z",
+              "confidence": 0
+            },
+            "company_email": {
+              "value": "contact@modus.trade",
+              "verification_status": "VERIFIED",
+              "source": "Standard Corporate Route",
+              "source_url": "https://modus.trade",
+              "source_type": "synthesized_role",
+              "checked_at": "2026-10-16T09:49:00.448Z",
+              "confidence": 90,
+              "original_input_value": null
+            },
+            "company_phone": {
+              "value": null,
+              "verification_status": "UNAVAILABLE",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:49:00.448Z",
+              "confidence": 0
+            },
+            "company_contact_page": {
+              "value": "https://modus.trade/contact",
+              "verification_status": "UNVERIFIED",
+              "source": "Standard Web Pattern",
+              "source_url": "https://modus.trade/contact",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:49:00.448Z",
+              "confidence": 70
+            },
+            "best_contact_path": {
+              "method": "Verified Professional Email",
+              "explanation": "Founder professional email — verified",
+              "value": "patrick.murphy@modus.trade",
+              "target": "decision_maker",
+              "alternative": {
+                "method": "Company Email",
+                "explanation": "Company email — verified",
+                "value": "contact@modus.trade"
+              },
+              "company_fallback": {
+                "method": "Company Email",
+                "explanation": "Company email — verified",
+                "value": "contact@modus.trade"
+              }
+            },
+            "contact_completeness": {
+              "score": 3,
+              "maxScore": 6,
+              "percentage": 50,
+              "label": "3 / 6 core contact fields (50%)",
+              "details": {
+                "decisionMakerFound": true,
+                "professionalEmailVerified": true,
+                "publicLinkedInVerified": false,
+                "companyLinkedInVerified": false,
+                "companyEmailVerified": true,
+                "publicXAvailable": false,
+                "publicPersonalEmailStatus": "not_disclosed"
+              }
+            },
+            "primary_contact": {
+              "full_name": "Patrick Murphy",
+              "first_name": "Patrick",
+              "last_name": "Murphy",
+              "current_role": "Founder",
+              "company_relationship": "Identified in venture disclosures for Modus",
+              "linkedin_url": null,
+              "linkedin_status": "NOT_FOUND",
+              "twitter_x_url": null,
+              "twitter_x_status": "NOT_FOUND",
+              "professional_email": "patrick.murphy@modus.trade",
+              "professional_email_status": "VALID",
+              "professional_email_provider": "Direct DNS MX",
+              "public_personal_email": null,
+              "public_personal_email_status": "NOT_DISCLOSED",
+              "source_url": "https://modus.trade",
+              "source": "Company Disclosures",
+              "verified_at": "2026-10-16T09:49:00.448Z",
+              "confidence": 85,
+              "verification_status": "VERIFIED",
+              "is_primary": true
+            },
+            "secondary_contacts": []
+          },
+          "evidence": {
+            "fundingSource": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+            "techEvidence": "Verified platform: FinTech",
+            "geoEvidence": "Global coverage — all countries allowed (no geographic restrictions) (Informational — no penalty)",
+            "founderSource": "Identified in venture disclosures for Modus",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://modus.trade"
+            ]
+          },
+          "huntScore": 82,
+          "scoreBreakdown": {
+            "funding": 18,
+            "technology": 17,
+            "geography": 8,
+            "founder": 19,
+            "contact": 20
+          }
+        }
+      ]
+    },
+    {
+      "id": "hist_hunt_web_mvarei40_dvwb",
+      "sessionId": "hunt_web_mvarei40_dvwb",
+      "timestamp": "2026-10-16T09:22:30.632Z",
+      "targetSummary": "FinTech in Global",
+      "targetLeads": 1,
+      "qualifiedCount": 1,
+      "rejectedCount": 10,
+      "durationSeconds": 0,
+      "status": "Completed",
+      "companies": [
+        {
+          "name": "Modus",
+          "website": "https://modus.trade",
+          "description": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+          "industry": "FinTech",
+          "fundingOrRevenue": "raised $2.3M in seed round",
+          "usPresence": true,
+          "founderOrCeoName": "Patrick Murphy",
+          "founderOrCeoEmail": "patrick.murphy@modus.trade",
+          "emailVerified": true,
+          "contactVerificationStatus": "VERIFIED",
+          "contactVerificationReason": "Founder professional email — verified",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Singapore",
+          "headquarters": "Singapore",
+          "linkedinUrl": null,
+          "companyLinkedinUrl": null,
+          "sourceUrls": [
+            "https://modus.trade"
+          ],
+          "statusTag": "PREVIOUSLY_DISCOVERED",
+          "firstDiscoveredAt": "2026-10-16T09:22:30.619Z",
+          "lastSeenAt": "2026-10-16T09:22:30.619Z",
+          "lastVerifiedAt": "2026-10-16T09:22:30.619Z",
+          "contactProfile": {
+            "company_name": {
+              "value": "Modus",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_profile",
+              "checked_at": "2026-10-16T09:22:30.618Z",
+              "confidence": 95
+            },
+            "website": {
+              "value": "https://modus.trade",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:22:30.618Z",
+              "confidence": 95
+            },
+            "company_description": {
+              "value": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "company_profile",
+              "checked_at": "2026-10-16T09:22:30.618Z",
+              "confidence": 90
+            },
+            "company_industry": {
+              "value": "FinTech",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "company_profile",
+              "checked_at": "2026-10-16T09:22:30.618Z",
+              "confidence": 85
+            },
+            "company_city": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "location_registry",
+              "checked_at": "2026-10-16T09:22:30.618Z",
+              "confidence": 0
+            },
+            "company_country": {
+              "value": "Singapore",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "location_registry",
+              "checked_at": "2026-10-16T09:22:30.618Z",
+              "confidence": 85
+            },
+            "company_linkedin": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:22:30.618Z",
+              "confidence": 0
+            },
+            "company_twitter_x": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:22:30.618Z",
+              "confidence": 0
+            },
+            "company_email": {
+              "value": "contact@modus.trade",
+              "verification_status": "VERIFIED",
+              "source": "Standard Corporate Route",
+              "source_url": "https://modus.trade",
+              "source_type": "synthesized_role",
+              "checked_at": "2026-10-16T09:22:30.618Z",
+              "confidence": 90,
+              "original_input_value": null
+            },
+            "company_phone": {
+              "value": null,
+              "verification_status": "UNAVAILABLE",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:22:30.618Z",
+              "confidence": 0
+            },
+            "company_contact_page": {
+              "value": "https://modus.trade/contact",
+              "verification_status": "UNVERIFIED",
+              "source": "Standard Web Pattern",
+              "source_url": "https://modus.trade/contact",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:22:30.618Z",
+              "confidence": 70
+            },
+            "best_contact_path": {
+              "method": "Verified Professional Email",
+              "explanation": "Founder professional email — verified",
+              "value": "patrick.murphy@modus.trade",
+              "target": "decision_maker",
+              "alternative": {
+                "method": "Company Email",
+                "explanation": "Company email — verified",
+                "value": "contact@modus.trade"
+              },
+              "company_fallback": {
+                "method": "Company Email",
+                "explanation": "Company email — verified",
+                "value": "contact@modus.trade"
+              }
+            },
+            "contact_completeness": {
+              "score": 3,
+              "maxScore": 6,
+              "percentage": 50,
+              "label": "3 / 6 core contact fields (50%)",
+              "details": {
+                "decisionMakerFound": true,
+                "professionalEmailVerified": true,
+                "publicLinkedInVerified": false,
+                "companyLinkedInVerified": false,
+                "companyEmailVerified": true,
+                "publicXAvailable": false,
+                "publicPersonalEmailStatus": "not_disclosed"
+              }
+            },
+            "primary_contact": {
+              "full_name": "Patrick Murphy",
+              "first_name": "Patrick",
+              "last_name": "Murphy",
+              "current_role": "Founder",
+              "company_relationship": "Identified in venture disclosures for Modus",
+              "linkedin_url": null,
+              "linkedin_status": "NOT_FOUND",
+              "twitter_x_url": null,
+              "twitter_x_status": "NOT_FOUND",
+              "professional_email": "patrick.murphy@modus.trade",
+              "professional_email_status": "VALID",
+              "professional_email_provider": "Direct DNS MX",
+              "public_personal_email": null,
+              "public_personal_email_status": "NOT_DISCLOSED",
+              "source_url": "https://modus.trade",
+              "source": "Company Disclosures",
+              "verified_at": "2026-10-16T09:22:30.618Z",
+              "confidence": 85,
+              "verification_status": "VERIFIED",
+              "is_primary": true
+            },
+            "secondary_contacts": []
+          },
+          "evidence": {
+            "fundingSource": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+            "techEvidence": "Verified platform: FinTech",
+            "geoEvidence": "Global coverage — all countries allowed (no geographic restrictions) (Informational — no penalty)",
+            "founderSource": "Identified in venture disclosures for Modus",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://modus.trade"
+            ]
+          },
+          "huntScore": 82,
+          "scoreBreakdown": {
+            "funding": 18,
+            "technology": 17,
+            "geography": 8,
+            "founder": 19,
+            "contact": 20
+          }
+        }
+      ]
+    },
+    {
+      "id": "hist_hunt_web_mvaregc2_ywo8",
+      "sessionId": "hunt_web_mvaregc2_ywo8",
+      "timestamp": "2026-10-16T09:22:30.546Z",
+      "targetSummary": "FinTech in Global",
+      "targetLeads": 1,
+      "qualifiedCount": 1,
+      "rejectedCount": 10,
+      "durationSeconds": 2,
+      "status": "Completed",
+      "companies": [
+        {
+          "name": "Modus",
+          "website": "https://modus.trade",
+          "description": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+          "industry": "FinTech",
+          "fundingOrRevenue": "raised $2.3M in seed round",
+          "usPresence": true,
+          "founderOrCeoName": "Patrick Murphy",
+          "founderOrCeoEmail": "patrick.murphy@modus.trade",
+          "emailVerified": true,
+          "contactVerificationStatus": "VERIFIED",
+          "contactVerificationReason": "Founder professional email — verified",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Singapore",
+          "headquarters": "Singapore",
+          "linkedinUrl": null,
+          "companyLinkedinUrl": null,
+          "sourceUrls": [
+            "https://modus.trade"
+          ],
+          "statusTag": "PREVIOUSLY_DISCOVERED",
+          "firstDiscoveredAt": "2026-10-16T09:22:30.545Z",
+          "lastSeenAt": "2026-10-16T09:22:30.545Z",
+          "lastVerifiedAt": "2026-10-16T09:22:30.545Z",
+          "contactProfile": {
+            "company_name": {
+              "value": "Modus",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_profile",
+              "checked_at": "2026-10-16T09:22:30.456Z",
+              "confidence": 95
+            },
+            "website": {
+              "value": "https://modus.trade",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:22:30.456Z",
+              "confidence": 95
+            },
+            "company_description": {
+              "value": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "company_profile",
+              "checked_at": "2026-10-16T09:22:30.456Z",
+              "confidence": 90
+            },
+            "company_industry": {
+              "value": "FinTech",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "company_profile",
+              "checked_at": "2026-10-16T09:22:30.456Z",
+              "confidence": 85
+            },
+            "company_city": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "location_registry",
+              "checked_at": "2026-10-16T09:22:30.456Z",
+              "confidence": 0
+            },
+            "company_country": {
+              "value": "Singapore",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "location_registry",
+              "checked_at": "2026-10-16T09:22:30.456Z",
+              "confidence": 85
+            },
+            "company_linkedin": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:22:30.456Z",
+              "confidence": 0
+            },
+            "company_twitter_x": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:22:30.456Z",
+              "confidence": 0
+            },
+            "company_email": {
+              "value": "contact@modus.trade",
+              "verification_status": "VERIFIED",
+              "source": "Standard Corporate Route",
+              "source_url": "https://modus.trade",
+              "source_type": "synthesized_role",
+              "checked_at": "2026-10-16T09:22:30.456Z",
+              "confidence": 90,
+              "original_input_value": null
+            },
+            "company_phone": {
+              "value": null,
+              "verification_status": "UNAVAILABLE",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:22:30.456Z",
+              "confidence": 0
+            },
+            "company_contact_page": {
+              "value": "https://modus.trade/contact",
+              "verification_status": "UNVERIFIED",
+              "source": "Standard Web Pattern",
+              "source_url": "https://modus.trade/contact",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T09:22:30.456Z",
+              "confidence": 70
+            },
+            "best_contact_path": {
+              "method": "Verified Professional Email",
+              "explanation": "Founder professional email — verified",
+              "value": "patrick.murphy@modus.trade",
+              "target": "decision_maker",
+              "alternative": {
+                "method": "Company Email",
+                "explanation": "Company email — verified",
+                "value": "contact@modus.trade"
+              },
+              "company_fallback": {
+                "method": "Company Email",
+                "explanation": "Company email — verified",
+                "value": "contact@modus.trade"
+              }
+            },
+            "contact_completeness": {
+              "score": 3,
+              "maxScore": 6,
+              "percentage": 50,
+              "label": "3 / 6 core contact fields (50%)",
+              "details": {
+                "decisionMakerFound": true,
+                "professionalEmailVerified": true,
+                "publicLinkedInVerified": false,
+                "companyLinkedInVerified": false,
+                "companyEmailVerified": true,
+                "publicXAvailable": false,
+                "publicPersonalEmailStatus": "not_disclosed"
+              }
+            },
+            "primary_contact": {
+              "full_name": "Patrick Murphy",
+              "first_name": "Patrick",
+              "last_name": "Murphy",
+              "current_role": "Founder",
+              "company_relationship": "Identified in venture disclosures for Modus",
+              "linkedin_url": null,
+              "linkedin_status": "NOT_FOUND",
+              "twitter_x_url": null,
+              "twitter_x_status": "NOT_FOUND",
+              "professional_email": "patrick.murphy@modus.trade",
+              "professional_email_status": "VALID",
+              "professional_email_provider": "Direct DNS MX",
+              "public_personal_email": null,
+              "public_personal_email_status": "NOT_DISCLOSED",
+              "source_url": "https://modus.trade",
+              "source": "Company Disclosures",
+              "verified_at": "2026-10-16T09:22:30.456Z",
+              "confidence": 85,
+              "verification_status": "VERIFIED",
+              "is_primary": true
+            },
+            "secondary_contacts": []
+          },
+          "evidence": {
+            "fundingSource": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+            "techEvidence": "Verified platform: FinTech",
+            "geoEvidence": "Global coverage — all countries allowed (no geographic restrictions) (Informational — no penalty)",
+            "founderSource": "Identified in venture disclosures for Modus",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://modus.trade"
+            ]
+          },
+          "huntScore": 82,
+          "scoreBreakdown": {
+            "funding": 18,
+            "technology": 17,
+            "geography": 8,
+            "founder": 19,
+            "contact": 20
+          }
+        }
+      ]
+    },
+    {
+      "id": "hist_hunt_web_mvaq3rau_11ll",
+      "sessionId": "hunt_web_mvaq3rau_11ll",
+      "timestamp": "2026-10-16T08:46:09.678Z",
+      "targetSummary": "FinTech in Global",
+      "targetLeads": 1,
+      "qualifiedCount": 1,
+      "rejectedCount": 10,
+      "durationSeconds": 0,
+      "status": "Completed",
+      "companies": [
+        {
+          "name": "Modus",
+          "website": "https://modus.trade",
+          "description": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+          "industry": "FinTech",
+          "fundingOrRevenue": "raised $2.3M in seed round",
+          "usPresence": true,
+          "founderOrCeoName": "Patrick Murphy",
+          "founderOrCeoEmail": "patrick.murphy@modus.trade",
+          "emailVerified": true,
+          "contactVerificationStatus": "VERIFIED",
+          "contactVerificationReason": "Founder professional email — verified",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Singapore",
+          "headquarters": "Singapore",
+          "linkedinUrl": null,
+          "companyLinkedinUrl": null,
+          "sourceUrls": [
+            "https://modus.trade"
+          ],
+          "statusTag": "PREVIOUSLY_DISCOVERED",
+          "firstDiscoveredAt": "2026-10-16T08:46:09.669Z",
+          "lastSeenAt": "2026-10-16T08:46:09.669Z",
+          "lastVerifiedAt": "2026-10-16T08:46:09.669Z",
+          "contactProfile": {
+            "company_name": {
+              "value": "Modus",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_profile",
+              "checked_at": "2026-10-16T08:46:09.668Z",
+              "confidence": 95
+            },
+            "website": {
+              "value": "https://modus.trade",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T08:46:09.668Z",
+              "confidence": 95
+            },
+            "company_description": {
+              "value": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "company_profile",
+              "checked_at": "2026-10-16T08:46:09.668Z",
+              "confidence": 90
+            },
+            "company_industry": {
+              "value": "FinTech",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "company_profile",
+              "checked_at": "2026-10-16T08:46:09.668Z",
+              "confidence": 85
+            },
+            "company_city": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "location_registry",
+              "checked_at": "2026-10-16T08:46:09.668Z",
+              "confidence": 0
+            },
+            "company_country": {
+              "value": "Singapore",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "location_registry",
+              "checked_at": "2026-10-16T08:46:09.668Z",
+              "confidence": 85
+            },
+            "company_linkedin": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T08:46:09.668Z",
+              "confidence": 0
+            },
+            "company_twitter_x": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T08:46:09.668Z",
+              "confidence": 0
+            },
+            "company_email": {
+              "value": "contact@modus.trade",
+              "verification_status": "VERIFIED",
+              "source": "Standard Corporate Route",
+              "source_url": "https://modus.trade",
+              "source_type": "synthesized_role",
+              "checked_at": "2026-10-16T08:46:09.668Z",
+              "confidence": 90,
+              "original_input_value": null
+            },
+            "company_phone": {
+              "value": null,
+              "verification_status": "UNAVAILABLE",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T08:46:09.668Z",
+              "confidence": 0
+            },
+            "company_contact_page": {
+              "value": "https://modus.trade/contact",
+              "verification_status": "UNVERIFIED",
+              "source": "Standard Web Pattern",
+              "source_url": "https://modus.trade/contact",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T08:46:09.668Z",
+              "confidence": 70
+            },
+            "best_contact_path": {
+              "method": "Verified Professional Email",
+              "explanation": "Founder professional email — verified",
+              "value": "patrick.murphy@modus.trade",
+              "target": "decision_maker",
+              "alternative": {
+                "method": "Company Email",
+                "explanation": "Company email — verified",
+                "value": "contact@modus.trade"
+              },
+              "company_fallback": {
+                "method": "Company Email",
+                "explanation": "Company email — verified",
+                "value": "contact@modus.trade"
+              }
+            },
+            "contact_completeness": {
+              "score": 3,
+              "maxScore": 6,
+              "percentage": 50,
+              "label": "3 / 6 core contact fields (50%)",
+              "details": {
+                "decisionMakerFound": true,
+                "professionalEmailVerified": true,
+                "publicLinkedInVerified": false,
+                "companyLinkedInVerified": false,
+                "companyEmailVerified": true,
+                "publicXAvailable": false,
+                "publicPersonalEmailStatus": "not_disclosed"
+              }
+            },
+            "primary_contact": {
+              "full_name": "Patrick Murphy",
+              "first_name": "Patrick",
+              "last_name": "Murphy",
+              "current_role": "Founder",
+              "company_relationship": "Identified in venture disclosures for Modus",
+              "linkedin_url": null,
+              "linkedin_status": "NOT_FOUND",
+              "twitter_x_url": null,
+              "twitter_x_status": "NOT_FOUND",
+              "professional_email": "patrick.murphy@modus.trade",
+              "professional_email_status": "VALID",
+              "professional_email_provider": "Direct DNS MX",
+              "public_personal_email": null,
+              "public_personal_email_status": "NOT_DISCLOSED",
+              "source_url": "https://modus.trade",
+              "source": "Company Disclosures",
+              "verified_at": "2026-10-16T08:46:09.668Z",
+              "confidence": 85,
+              "verification_status": "VERIFIED",
+              "is_primary": true
+            },
+            "secondary_contacts": []
+          },
+          "evidence": {
+            "fundingSource": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+            "techEvidence": "Verified platform: FinTech",
+            "geoEvidence": "Global coverage — all countries allowed (no geographic restrictions) (Informational — no penalty)",
+            "founderSource": "Identified in venture disclosures for Modus",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://modus.trade"
+            ]
+          },
+          "huntScore": 82,
+          "scoreBreakdown": {
+            "funding": 18,
+            "technology": 17,
+            "geography": 8,
+            "founder": 19,
+            "contact": 20
+          }
+        }
+      ]
+    },
+    {
+      "id": "hist_hunt_web_mvaq3muf_btds",
+      "sessionId": "hunt_web_mvaq3muf_btds",
+      "timestamp": "2026-10-16T08:46:09.641Z",
+      "targetSummary": "FinTech in Global",
+      "targetLeads": 1,
+      "qualifiedCount": 1,
+      "rejectedCount": 10,
+      "durationSeconds": 6,
+      "status": "Completed",
+      "companies": [
+        {
+          "name": "Modus",
+          "website": "https://modus.trade",
+          "description": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+          "industry": "FinTech",
+          "fundingOrRevenue": "raised $2.3M in seed round",
+          "usPresence": true,
+          "founderOrCeoName": "Patrick Murphy",
+          "founderOrCeoEmail": "patrick.murphy@modus.trade",
+          "emailVerified": true,
+          "contactVerificationStatus": "VERIFIED",
+          "contactVerificationReason": "Founder professional email — verified",
+          "confidenceScore": 85,
+          "sourceType": "Curated Venture Directory",
+          "country": "Singapore",
+          "headquarters": "Singapore",
+          "linkedinUrl": null,
+          "companyLinkedinUrl": null,
+          "sourceUrls": [
+            "https://modus.trade"
+          ],
+          "statusTag": "PREVIOUSLY_DISCOVERED",
+          "firstDiscoveredAt": "2026-10-16T08:46:09.639Z",
+          "lastSeenAt": "2026-10-16T08:46:09.639Z",
+          "lastVerifiedAt": "2026-10-16T08:46:09.639Z",
+          "contactProfile": {
+            "company_name": {
+              "value": "Modus",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_profile",
+              "checked_at": "2026-10-16T08:46:09.568Z",
+              "confidence": 95
+            },
+            "website": {
+              "value": "https://modus.trade",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T08:46:09.568Z",
+              "confidence": 95
+            },
+            "company_description": {
+              "value": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "company_profile",
+              "checked_at": "2026-10-16T08:46:09.568Z",
+              "confidence": 90
+            },
+            "company_industry": {
+              "value": "FinTech",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "company_profile",
+              "checked_at": "2026-10-16T08:46:09.568Z",
+              "confidence": 85
+            },
+            "company_city": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "location_registry",
+              "checked_at": "2026-10-16T08:46:09.568Z",
+              "confidence": 0
+            },
+            "company_country": {
+              "value": "Singapore",
+              "verification_status": "VERIFIED",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "location_registry",
+              "checked_at": "2026-10-16T08:46:09.568Z",
+              "confidence": 85
+            },
+            "company_linkedin": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T08:46:09.568Z",
+              "confidence": 0
+            },
+            "company_twitter_x": {
+              "value": null,
+              "verification_status": "NOT_FOUND",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T08:46:09.568Z",
+              "confidence": 0
+            },
+            "company_email": {
+              "value": "contact@modus.trade",
+              "verification_status": "VERIFIED",
+              "source": "Standard Corporate Route",
+              "source_url": "https://modus.trade",
+              "source_type": "synthesized_role",
+              "checked_at": "2026-10-16T08:46:09.568Z",
+              "confidence": 90,
+              "original_input_value": null
+            },
+            "company_phone": {
+              "value": null,
+              "verification_status": "UNAVAILABLE",
+              "source": "https://modus.trade",
+              "source_url": "https://modus.trade",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T08:46:09.568Z",
+              "confidence": 0
+            },
+            "company_contact_page": {
+              "value": "https://modus.trade/contact",
+              "verification_status": "UNVERIFIED",
+              "source": "Standard Web Pattern",
+              "source_url": "https://modus.trade/contact",
+              "source_type": "official_website",
+              "checked_at": "2026-10-16T08:46:09.568Z",
+              "confidence": 70
+            },
+            "best_contact_path": {
+              "method": "Verified Professional Email",
+              "explanation": "Founder professional email — verified",
+              "value": "patrick.murphy@modus.trade",
+              "target": "decision_maker",
+              "alternative": {
+                "method": "Company Email",
+                "explanation": "Company email — verified",
+                "value": "contact@modus.trade"
+              },
+              "company_fallback": {
+                "method": "Company Email",
+                "explanation": "Company email — verified",
+                "value": "contact@modus.trade"
+              }
+            },
+            "contact_completeness": {
+              "score": 3,
+              "maxScore": 6,
+              "percentage": 50,
+              "label": "3 / 6 core contact fields (50%)",
+              "details": {
+                "decisionMakerFound": true,
+                "professionalEmailVerified": true,
+                "publicLinkedInVerified": false,
+                "companyLinkedInVerified": false,
+                "companyEmailVerified": true,
+                "publicXAvailable": false,
+                "publicPersonalEmailStatus": "not_disclosed"
+              }
+            },
+            "primary_contact": {
+              "full_name": "Patrick Murphy",
+              "first_name": "Patrick",
+              "last_name": "Murphy",
+              "current_role": "Founder",
+              "company_relationship": "Identified in venture disclosures for Modus",
+              "linkedin_url": null,
+              "linkedin_status": "NOT_FOUND",
+              "twitter_x_url": null,
+              "twitter_x_status": "NOT_FOUND",
+              "professional_email": "patrick.murphy@modus.trade",
+              "professional_email_status": "VALID",
+              "professional_email_provider": "Direct DNS MX",
+              "public_personal_email": null,
+              "public_personal_email_status": "NOT_DISCLOSED",
+              "source_url": "https://modus.trade",
+              "source": "Company Disclosures",
+              "verified_at": "2026-10-16T08:46:09.568Z",
+              "confidence": 85,
+              "verification_status": "VERIFIED",
+              "is_primary": true
+            },
+            "secondary_contacts": []
+          },
+          "evidence": {
+            "fundingSource": "Singapore-based B2B cross-border payments & fx API platform Modus raised $2.3M in seed round led by Wavemaker Partners. Headquartered in Singapore. Founded by Patrick Murphy. [HQ: Singapore | Founder: Patrick Murphy | Funding: raised $2.3M in seed round]",
+            "techEvidence": "Verified platform: FinTech",
+            "geoEvidence": "Global coverage — all countries allowed (no geographic restrictions) (Informational — no penalty)",
+            "founderSource": "Identified in venture disclosures for Modus",
+            "emailVerificationDetail": "Domain mail exchange active (aspmx.l.google.com); Individual mailbox deliverability unverified (Verification provider unavailable)",
+            "sources": [
+              "https://modus.trade"
+            ]
+          },
+          "huntScore": 82,
+          "scoreBreakdown": {
+            "funding": 18,
+            "technology": 17,
+            "geography": 8,
+            "founder": 19,
+            "contact": 20
+          }
+        }
+      ]
+    },
     {
       "id": "hist_hunt_web_mv851zsd_g0yz",
       "sessionId": "hunt_web_mv851zsd_g0yz",
@@ -13392,16 +15828,16 @@
   ],
   "seenDomains": {
     "testdomain-12345.com": 2,
-    "synthesized.io": 34,
-    "mindfuel.ai": 34,
-    "saporo.io": 30,
-    "cyscale.com": 30,
-    "neatsy.ai": 34,
-    "carbonfact.com": 34,
-    "sprinto.com": 30,
-    "devtron.ai": 30,
-    "bytebeam.io": 30,
-    "portkey.ai": 30,
+    "synthesized.io": 46,
+    "mindfuel.ai": 46,
+    "saporo.io": 42,
+    "cyscale.com": 42,
+    "neatsy.ai": 46,
+    "carbonfact.com": 46,
+    "sprinto.com": 42,
+    "devtron.ai": 42,
+    "bytebeam.io": 42,
+    "portkey.ai": 42,
     "zhipuai.cn": 16,
     "autify.com": 14,
     "tech.eu": 2,
@@ -13413,8 +15849,8 @@
     "climeworks.com": 16,
     "zetwerk.com": 2,
     "sennder.com": 2,
-    "modus.trade": 34,
-    "finmo.net": 34,
+    "modus.trade": 46,
+    "finmo.net": 46,
     "bukukas.io": 16,
     "moonshot.cn": 14,
     "techcrunch.com": 2,
@@ -13431,11 +15867,11 @@
     "ecozensolutions.com": 16,
     "inprime.in": 16,
     "agrevolution.in": 14,
-    "testco.io": 8,
-    "co1.com": 8,
-    "co2.com": 8,
+    "testco.io": 11,
+    "co1.com": 11,
+    "co2.com": 11,
     "blaize.com": 3,
-    "nordicai.io": 4,
+    "nordicai.io": 7,
     "thehub.io": 2,
     "langdock.com": 2,
     "seedblink.com": 2,
@@ -13449,20 +15885,21 @@
     "coreangels.com": 2,
     "eufundingportal.eu": 2,
     "leadmagic.io": 2,
-    "scalingeurope.co.uk": 2
+    "scalingeurope.co.uk": 2,
+    "temp-audit.com": 2
   },
   "seenFingerprints": {
     "fp_test_123": "2026-09-29T11:10:08.431Z",
-    "bc3a7250e14964e3": "2026-10-14T13:21:23.082Z",
-    "10ddab1aec6f8677": "2026-10-14T13:21:23.083Z",
-    "e976bf9cd7b71457": "2026-10-14T13:21:23.084Z",
-    "2fc7c056d398f311": "2026-10-14T13:21:23.084Z",
-    "227fd93c7f84ed47": "2026-10-14T13:21:23.085Z",
-    "35eeb42ef798c990": "2026-10-14T13:21:23.085Z",
-    "ba204fbda252811d": "2026-10-14T13:21:23.086Z",
-    "72ee1276fea304bf": "2026-10-14T13:21:23.086Z",
-    "6ccdf8185eca6a9c": "2026-10-14T13:21:23.087Z",
-    "5a86a66968410b18": "2026-10-14T13:21:23.089Z",
+    "bc3a7250e14964e3": "2026-10-16T09:49:00.530Z",
+    "10ddab1aec6f8677": "2026-10-16T09:49:00.531Z",
+    "e976bf9cd7b71457": "2026-10-16T09:49:00.531Z",
+    "2fc7c056d398f311": "2026-10-16T09:49:00.531Z",
+    "227fd93c7f84ed47": "2026-10-16T09:49:00.532Z",
+    "35eeb42ef798c990": "2026-10-16T09:49:00.532Z",
+    "ba204fbda252811d": "2026-10-16T09:49:00.533Z",
+    "72ee1276fea304bf": "2026-10-16T09:49:00.533Z",
+    "6ccdf8185eca6a9c": "2026-10-16T09:49:00.533Z",
+    "5a86a66968410b18": "2026-10-16T09:49:00.534Z",
     "86d0f2bc4d7c3f4d": "2026-10-01T11:56:39.357Z",
     "9004178bc62211f8": "2026-09-29T12:28:20.051Z",
     "bc6e61be720cfd71": "2026-09-29T11:31:52.980Z",
@@ -13474,8 +15911,8 @@
     "9fee6123255e12bc": "2026-10-01T11:56:39.356Z",
     "3d4a9044a1a94be6": "2026-09-29T11:31:56.991Z",
     "31fa88fb56565f45": "2026-09-29T11:31:56.991Z",
-    "620308f5b959fb76": "2026-10-14T13:21:23.090Z",
-    "6076803c8ac25fe6": "2026-10-14T13:21:23.091Z",
+    "620308f5b959fb76": "2026-10-16T09:49:00.535Z",
+    "6076803c8ac25fe6": "2026-10-16T09:49:00.536Z",
     "3cfe0d600d813765": "2026-10-01T11:56:39.357Z",
     "fb4a2286f83741b0": "2026-09-29T12:28:20.050Z",
     "4e1cecc1ef24e279": "2026-09-29T11:31:56.991Z",
@@ -13616,11 +16053,11 @@
           {
             "status": "VERIFIED",
             "source": "INTERNAL_AUTO",
-            "timestamp": "2026-10-14T13:17:50.528Z",
+            "timestamp": "2026-10-16T09:46:46.476Z",
             "reason": "All active required Target Profile criteria satisfied by uploaded record."
           }
         ],
-        "evaluated_at": "2026-10-14T13:17:50.528Z"
+        "evaluated_at": "2026-10-16T09:46:46.476Z"
       },
       "currentStatus": "REVIEW",
       "qualification": {
@@ -13724,19 +16161,19 @@
         {
           "status": "VERIFIED",
           "source": "INTERNAL_AUTO",
-          "timestamp": "2026-10-14T13:17:50.528Z",
+          "timestamp": "2026-10-16T09:46:46.476Z",
           "reason": "All active required Target Profile criteria satisfied by uploaded record."
         },
         {
           "status": "REVIEW",
           "source": "EXTERNAL_AUTO",
-          "timestamp": "2026-10-14T13:17:50.592Z",
+          "timestamp": "2026-10-16T09:46:46.543Z",
           "reason": "External research & qualification completed"
         }
       ],
-      "createdAt": "2026-10-14T13:17:50.528Z",
-      "updatedAt": "2026-10-14T13:17:50.592Z",
-      "lastVerifiedAt": "2026-10-14T13:17:50.592Z",
+      "createdAt": "2026-10-16T09:46:46.476Z",
+      "updatedAt": "2026-10-16T09:46:46.543Z",
+      "lastVerifiedAt": "2026-10-16T09:46:46.543Z",
       "external": {
         "researched": true,
         "current_data": {
@@ -13762,11 +16199,11 @@
           {
             "status": "REVIEW",
             "source": "EXTERNAL_AUTO",
-            "timestamp": "2026-10-14T13:17:50.592Z",
+            "timestamp": "2026-10-16T09:46:46.543Z",
             "reason": "External research & qualification completed"
           }
         ],
-        "researched_at": "2026-10-14T13:17:50.592Z",
+        "researched_at": "2026-10-16T09:46:46.543Z",
         "sources": [
           "https://abctechnologies.com",
           "https://techcrunch.com/funding-round"
@@ -13847,7 +16284,7 @@
           ],
           "confidenceScore": 92,
           "sourceProvenance": "web_discovery:serpapi",
-          "discoveredAt": "2026-10-14T13:21:05.938Z"
+          "discoveredAt": "2026-10-16T09:48:55.222Z"
         },
         "evidence": {
           "sources": [
@@ -13860,11 +16297,11 @@
           {
             "status": "VERIFIED",
             "source": "EXTERNAL_AUTO",
-            "timestamp": "2026-10-14T13:21:06.081Z",
+            "timestamp": "2026-10-16T09:48:55.230Z",
             "reason": "Autonomous multi-source research confirmed corporate profile, technology platform, leadership, and contact deliverability."
           }
         ],
-        "researched_at": "2026-10-14T13:21:06.081Z",
+        "researched_at": "2026-10-16T09:48:55.230Z",
         "sources": [
           "https://cognitivescale.eu/about",
           "https://techcrunch.com/2023/04/12/cognitivescale-eu-series-a"
@@ -13984,13 +16421,13 @@
         {
           "status": "VERIFIED",
           "source": "EXTERNAL_AUTO",
-          "timestamp": "2026-10-14T13:21:06.081Z",
+          "timestamp": "2026-10-16T09:48:55.230Z",
           "reason": "Autonomous multi-source research confirmed corporate profile, technology platform, leadership, and contact deliverability."
         }
       ],
-      "createdAt": "2026-10-14T13:21:06.081Z",
-      "updatedAt": "2026-10-14T13:21:06.081Z",
-      "lastVerifiedAt": "2026-10-14T13:21:06.081Z"
+      "createdAt": "2026-10-16T09:48:55.230Z",
+      "updatedAt": "2026-10-16T09:48:55.230Z",
+      "lastVerifiedAt": "2026-10-16T09:48:55.230Z"
     },
     {
       "id": "lead_modus.trade",
@@ -14027,9 +16464,9 @@
             "https://modus.trade"
           ],
           "statusTag": "PREVIOUSLY_DISCOVERED",
-          "firstDiscoveredAt": "2026-10-14T13:21:23.141Z",
-          "lastSeenAt": "2026-10-14T13:21:23.141Z",
-          "lastVerifiedAt": "2026-10-14T13:21:23.141Z",
+          "firstDiscoveredAt": "2026-10-16T09:49:00.547Z",
+          "lastSeenAt": "2026-10-16T09:49:00.547Z",
+          "lastVerifiedAt": "2026-10-16T09:49:00.547Z",
           "contactProfile": {
             "company_name": {
               "value": "Modus",
@@ -14037,7 +16474,7 @@
               "source": "https://modus.trade",
               "source_url": "https://modus.trade",
               "source_type": "official_profile",
-              "checked_at": "2026-10-14T13:21:23.135Z",
+              "checked_at": "2026-10-16T09:49:00.545Z",
               "confidence": 95
             },
             "website": {
@@ -14046,7 +16483,7 @@
               "source": "https://modus.trade",
               "source_url": "https://modus.trade",
               "source_type": "official_website",
-              "checked_at": "2026-10-14T13:21:23.135Z",
+              "checked_at": "2026-10-16T09:49:00.545Z",
               "confidence": 95
             },
             "company_description": {
@@ -14055,7 +16492,7 @@
               "source": "https://modus.trade",
               "source_url": "https://modus.trade",
               "source_type": "company_profile",
-              "checked_at": "2026-10-14T13:21:23.135Z",
+              "checked_at": "2026-10-16T09:49:00.545Z",
               "confidence": 90
             },
             "company_industry": {
@@ -14064,7 +16501,7 @@
               "source": "https://modus.trade",
               "source_url": "https://modus.trade",
               "source_type": "company_profile",
-              "checked_at": "2026-10-14T13:21:23.135Z",
+              "checked_at": "2026-10-16T09:49:00.545Z",
               "confidence": 85
             },
             "company_city": {
@@ -14073,7 +16510,7 @@
               "source": "https://modus.trade",
               "source_url": "https://modus.trade",
               "source_type": "location_registry",
-              "checked_at": "2026-10-14T13:21:23.135Z",
+              "checked_at": "2026-10-16T09:49:00.545Z",
               "confidence": 0
             },
             "company_country": {
@@ -14082,7 +16519,7 @@
               "source": "https://modus.trade",
               "source_url": "https://modus.trade",
               "source_type": "location_registry",
-              "checked_at": "2026-10-14T13:21:23.135Z",
+              "checked_at": "2026-10-16T09:49:00.545Z",
               "confidence": 85
             },
             "company_linkedin": {
@@ -14091,7 +16528,7 @@
               "source": "https://modus.trade",
               "source_url": "https://modus.trade",
               "source_type": "official_website",
-              "checked_at": "2026-10-14T13:21:23.135Z",
+              "checked_at": "2026-10-16T09:49:00.545Z",
               "confidence": 0
             },
             "company_twitter_x": {
@@ -14100,7 +16537,7 @@
               "source": "https://modus.trade",
               "source_url": "https://modus.trade",
               "source_type": "official_website",
-              "checked_at": "2026-10-14T13:21:23.135Z",
+              "checked_at": "2026-10-16T09:49:00.545Z",
               "confidence": 0
             },
             "company_email": {
@@ -14109,7 +16546,7 @@
               "source": "Standard Corporate Route",
               "source_url": "https://modus.trade",
               "source_type": "synthesized_role",
-              "checked_at": "2026-10-14T13:21:23.135Z",
+              "checked_at": "2026-10-16T09:49:00.545Z",
               "confidence": 90,
               "original_input_value": null
             },
@@ -14119,7 +16556,7 @@
               "source": "https://modus.trade",
               "source_url": "https://modus.trade",
               "source_type": "official_website",
-              "checked_at": "2026-10-14T13:21:23.135Z",
+              "checked_at": "2026-10-16T09:49:00.545Z",
               "confidence": 0
             },
             "company_contact_page": {
@@ -14128,7 +16565,7 @@
               "source": "Standard Web Pattern",
               "source_url": "https://modus.trade/contact",
               "source_type": "official_website",
-              "checked_at": "2026-10-14T13:21:23.135Z",
+              "checked_at": "2026-10-16T09:49:00.545Z",
               "confidence": 70
             },
             "best_contact_path": {
@@ -14179,7 +16616,7 @@
               "public_personal_email_status": "NOT_DISCLOSED",
               "source_url": "https://modus.trade",
               "source": "Company Disclosures",
-              "verified_at": "2026-10-14T13:21:23.135Z",
+              "verified_at": "2026-10-16T09:49:00.545Z",
               "confidence": 85,
               "verification_status": "VERIFIED",
               "is_primary": true
@@ -14215,23 +16652,23 @@
           {
             "status": "VERIFIED",
             "source": "EXTERNAL_AUTO",
-            "timestamp": "2026-10-14T13:21:23.007Z",
+            "timestamp": "2026-10-16T09:49:00.495Z",
             "reason": "Founder professional email — verified"
           },
           {
             "status": "VERIFIED",
             "source": "EXTERNAL_AUTO",
-            "timestamp": "2026-10-14T13:21:23.154Z",
+            "timestamp": "2026-10-16T09:49:00.548Z",
             "reason": "Founder professional email — verified"
           },
           {
             "status": "VERIFIED",
             "source": "EXTERNAL_AUTO",
-            "timestamp": "2026-10-14T13:21:23.368Z",
+            "timestamp": "2026-10-16T09:49:00.564Z",
             "reason": "Founder professional email — verified"
           }
         ],
-        "researched_at": "2026-10-14T13:21:23.368Z",
+        "researched_at": "2026-10-16T09:49:00.564Z",
         "sources": [
           "https://modus.trade"
         ]
@@ -14351,1874 +16788,28 @@
         {
           "status": "VERIFIED",
           "source": "EXTERNAL_AUTO",
-          "timestamp": "2026-10-14T13:21:23.007Z",
+          "timestamp": "2026-10-16T09:49:00.495Z",
           "reason": "Founder professional email — verified"
         },
         {
           "status": "VERIFIED",
           "source": "EXTERNAL_AUTO",
-          "timestamp": "2026-10-14T13:21:23.154Z",
+          "timestamp": "2026-10-16T09:49:00.548Z",
           "reason": "Founder professional email — verified"
         },
         {
           "status": "VERIFIED",
           "source": "EXTERNAL_AUTO",
-          "timestamp": "2026-10-14T13:21:23.368Z",
+          "timestamp": "2026-10-16T09:49:00.564Z",
           "reason": "Founder professional email — verified"
         }
       ],
-      "createdAt": "2026-10-14T13:21:23.007Z",
-      "updatedAt": "2026-10-14T13:21:23.368Z",
-      "lastVerifiedAt": "2026-10-14T13:21:23.368Z"
+      "createdAt": "2026-10-16T09:49:00.495Z",
+      "updatedAt": "2026-10-16T09:49:00.564Z",
+      "lastVerifiedAt": "2026-10-16T09:49:00.564Z"
     }
   ],
-  "researchProfiles": {
-    "comp_test_co_1": {
-      "id": "comp_test_co_1",
-      "canonicalDomain": "testco.io",
-      "website": "https://testco.io",
-      "officialName": "TestCo Systems",
-      "description": "Enterprise AI analytics platform",
-      "foundedYear": 2021,
-      "foundingDate": "2021-04-01",
-      "companyAgeYears": 5,
-      "primaryIndustry": "AI & Machine Learning",
-      "subIndustry": "Enterprise Analytics",
-      "productsAndServices": [
-        "Analytics Engine"
-      ],
-      "businessModel": "B2B SaaS",
-      "headquarters": {
-        "city": "London",
-        "stateOrRegion": "Greater London",
-        "country": "United Kingdom",
-        "address": "10 Tech City, London"
-      },
-      "operatingCountries": [
-        "United Kingdom"
-      ],
-      "usPresence": false,
-      "leadership": {
-        "ceo": {
-          "name": "Sarah Connor",
-          "title": "CEO",
-          "role": "CEO",
-          "isCurrent": true,
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about",
-          "confidence": 95
-        },
-        "founders": [
-          {
-            "name": "Sarah Connor",
-            "title": "Founder & CEO",
-            "role": "Founder",
-            "isCurrent": true,
-            "evidence": "Sarah Connor founded TestCo.",
-            "sourceUrl": "https://testco.io/about",
-            "confidence": 90
-          }
-        ],
-        "coFounders": [],
-        "cto": null,
-        "cfo": null,
-        "seniorExecutives": [],
-        "formerExecutives": []
-      },
-      "funding": {
-        "totalFundingUsd": null,
-        "latestRoundUsd": null,
-        "latestRoundType": null,
-        "latestRoundDate": null,
-        "investors": [],
-        "rounds": []
-      },
-      "contacts": {
-        "generalEmail": "hello@testco.io",
-        "phone": null,
-        "contactPageUrl": "https://testco.io/contact",
-        "executiveEmails": [],
-        "companyLinkedInUrl": "https://linkedin.com/company/testco",
-        "companyXUrl": null
-      },
-      "fieldEvidence": {
-        "headquarters.country": {
-          "field": "headquarters.country",
-          "value": "United Kingdom",
-          "sourceUrl": "https://testco.io/contact",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Headquartered in London, United Kingdom",
-          "dateRetrieved": "2026-10-12T11:20:11.512Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 95
-        }
-      },
-      "sources": [
-        {
-          "url": "https://testco.io",
-          "title": "TestCo Systems",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-12T11:20:11.513Z"
-        }
-      ],
-      "researchStatus": "completed",
-      "researchCompletenessScore": 80,
-      "createdAt": "2026-10-12T11:20:11.513Z",
-      "updatedAt": "2026-10-12T11:20:11.513Z"
-    },
-    "batch_co_1": {
-      "id": "batch_co_1",
-      "canonicalDomain": "co1.com",
-      "website": "https://testco.io",
-      "officialName": "TestCo Systems",
-      "description": "Enterprise AI analytics platform",
-      "foundedYear": 2021,
-      "foundingDate": "2021-04-01",
-      "companyAgeYears": 5,
-      "primaryIndustry": "AI & Machine Learning",
-      "subIndustry": "Enterprise Analytics",
-      "productsAndServices": [
-        "Analytics Engine"
-      ],
-      "businessModel": "B2B SaaS",
-      "headquarters": {
-        "city": "London",
-        "stateOrRegion": "Greater London",
-        "country": "United Kingdom",
-        "address": "10 Tech City, London"
-      },
-      "operatingCountries": [
-        "United Kingdom"
-      ],
-      "usPresence": false,
-      "leadership": {
-        "ceo": {
-          "name": "Sarah Connor",
-          "title": "CEO",
-          "role": "CEO",
-          "isCurrent": true,
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about",
-          "confidence": 95
-        },
-        "founders": [
-          {
-            "name": "Sarah Connor",
-            "title": "Founder & CEO",
-            "role": "Founder",
-            "isCurrent": true,
-            "evidence": "Sarah Connor founded TestCo.",
-            "sourceUrl": "https://testco.io/about",
-            "confidence": 90
-          }
-        ],
-        "coFounders": [],
-        "cto": null,
-        "cfo": null,
-        "seniorExecutives": [],
-        "formerExecutives": []
-      },
-      "funding": {
-        "totalFundingUsd": 5500000,
-        "latestRoundUsd": 5500000,
-        "latestRoundType": "Series A",
-        "latestRoundDate": null,
-        "investors": [],
-        "rounds": []
-      },
-      "contacts": {
-        "generalEmail": "hello@testco.io",
-        "phone": null,
-        "contactPageUrl": "https://testco.io/contact",
-        "executiveEmails": [],
-        "companyLinkedInUrl": "https://linkedin.com/company/testco",
-        "companyXUrl": null
-      },
-      "fieldEvidence": {
-        "headquarters.country": {
-          "field": "headquarters.country",
-          "value": "United Kingdom",
-          "sourceUrl": "https://testco.io/contact",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Headquartered in London, United Kingdom",
-          "dateRetrieved": "2026-10-14T13:20:36.551Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 95
-        },
-        "funding.totalFundingUsd": {
-          "field": "funding.totalFundingUsd",
-          "value": 5500000,
-          "sourceUrl": "https://testco.io/press/series-a",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "TestCo closes $5.5M Series A round",
-          "dateRetrieved": "2026-10-14T13:20:36.603Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 95
-        }
-      },
-      "sources": [
-        {
-          "url": "https://testco.io",
-          "title": "TestCo Systems",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-14T13:20:36.552Z"
-        }
-      ],
-      "researchStatus": "completed",
-      "researchCompletenessScore": 80,
-      "createdAt": "2026-10-14T13:20:36.552Z",
-      "updatedAt": "2026-10-14T13:20:36.552Z"
-    },
-    "batch_co_2": {
-      "id": "batch_co_2",
-      "canonicalDomain": "co2.com",
-      "website": "https://testco.io",
-      "officialName": "TestCo Systems",
-      "description": "Enterprise AI analytics platform",
-      "foundedYear": 2021,
-      "foundingDate": "2021-04-01",
-      "companyAgeYears": 5,
-      "primaryIndustry": "AI & Machine Learning",
-      "subIndustry": "Enterprise Analytics",
-      "productsAndServices": [
-        "Analytics Engine"
-      ],
-      "businessModel": "B2B SaaS",
-      "headquarters": {
-        "city": "London",
-        "stateOrRegion": "Greater London",
-        "country": "United Kingdom",
-        "address": "10 Tech City, London"
-      },
-      "operatingCountries": [
-        "United Kingdom"
-      ],
-      "usPresence": false,
-      "leadership": {
-        "ceo": {
-          "name": "Sarah Connor",
-          "title": "CEO",
-          "role": "CEO",
-          "isCurrent": true,
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about",
-          "confidence": 95
-        },
-        "founders": [
-          {
-            "name": "Sarah Connor",
-            "title": "Founder & CEO",
-            "role": "Founder",
-            "isCurrent": true,
-            "evidence": "Sarah Connor founded TestCo.",
-            "sourceUrl": "https://testco.io/about",
-            "confidence": 90
-          }
-        ],
-        "coFounders": [],
-        "cto": null,
-        "cfo": null,
-        "seniorExecutives": [],
-        "formerExecutives": []
-      },
-      "funding": {
-        "totalFundingUsd": 5500000,
-        "latestRoundUsd": 5500000,
-        "latestRoundType": "Series A",
-        "latestRoundDate": null,
-        "investors": [],
-        "rounds": []
-      },
-      "contacts": {
-        "generalEmail": "hello@testco.io",
-        "phone": null,
-        "contactPageUrl": "https://testco.io/contact",
-        "executiveEmails": [],
-        "companyLinkedInUrl": "https://linkedin.com/company/testco",
-        "companyXUrl": null
-      },
-      "fieldEvidence": {
-        "headquarters.country": {
-          "field": "headquarters.country",
-          "value": "United Kingdom",
-          "sourceUrl": "https://testco.io/contact",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Headquartered in London, United Kingdom",
-          "dateRetrieved": "2026-10-14T13:20:36.551Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 95
-        },
-        "funding.totalFundingUsd": {
-          "field": "funding.totalFundingUsd",
-          "value": 5500000,
-          "sourceUrl": "https://testco.io/press/series-a",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "TestCo closes $5.5M Series A round",
-          "dateRetrieved": "2026-10-14T13:20:36.603Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 95
-        }
-      },
-      "sources": [
-        {
-          "url": "https://testco.io",
-          "title": "TestCo Systems",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-14T13:20:36.552Z"
-        }
-      ],
-      "researchStatus": "completed",
-      "researchCompletenessScore": 80,
-      "createdAt": "2026-10-14T13:20:36.552Z",
-      "updatedAt": "2026-10-14T13:20:36.552Z"
-    },
-    "comp_test_co_1791804155263": {
-      "id": "comp_test_co_1791804155263",
-      "canonicalDomain": "testco.io",
-      "website": "https://testco.io",
-      "officialName": "TestCo Systems",
-      "description": "Enterprise AI analytics platform",
-      "foundedYear": 2021,
-      "foundingDate": "2021-04-01",
-      "companyAgeYears": 5,
-      "primaryIndustry": "AI & Machine Learning",
-      "subIndustry": "Enterprise Analytics",
-      "productsAndServices": [
-        "Analytics Engine"
-      ],
-      "businessModel": "B2B SaaS",
-      "headquarters": {
-        "city": "London",
-        "stateOrRegion": "Greater London",
-        "country": "United Kingdom",
-        "address": "10 Tech City, London"
-      },
-      "operatingCountries": [
-        "United Kingdom"
-      ],
-      "usPresence": false,
-      "leadership": {
-        "ceo": {
-          "name": "Sarah Connor",
-          "title": "CEO",
-          "role": "CEO",
-          "isCurrent": true,
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about",
-          "confidence": 95
-        },
-        "founders": [
-          {
-            "name": "Sarah Connor",
-            "title": "Founder & CEO",
-            "role": "Founder",
-            "isCurrent": true,
-            "evidence": "Sarah Connor founded TestCo.",
-            "sourceUrl": "https://testco.io/about",
-            "confidence": 90
-          }
-        ],
-        "coFounders": [],
-        "cto": null,
-        "cfo": null,
-        "seniorExecutives": [],
-        "formerExecutives": []
-      },
-      "funding": {
-        "totalFundingUsd": null,
-        "latestRoundUsd": null,
-        "latestRoundType": null,
-        "latestRoundDate": null,
-        "investors": [],
-        "rounds": []
-      },
-      "contacts": {
-        "generalEmail": "hello@testco.io",
-        "phone": null,
-        "contactPageUrl": "https://testco.io/contact",
-        "executiveEmails": [],
-        "companyLinkedInUrl": "https://linkedin.com/company/testco",
-        "companyXUrl": null
-      },
-      "fieldEvidence": {
-        "headquarters.country": {
-          "field": "headquarters.country",
-          "value": "United Kingdom",
-          "sourceUrl": "https://testco.io/contact",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Headquartered in London, United Kingdom",
-          "dateRetrieved": "2026-10-12T11:22:35.263Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 95
-        }
-      },
-      "sources": [
-        {
-          "url": "https://testco.io",
-          "title": "TestCo Systems",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-12T11:22:35.264Z"
-        }
-      ],
-      "researchStatus": "completed",
-      "researchCompletenessScore": 80,
-      "createdAt": "2026-10-12T11:22:35.264Z",
-      "updatedAt": "2026-10-12T11:22:35.264Z"
-    },
-    "comp_blaize_com": {
-      "id": "comp_blaize_com",
-      "canonicalDomain": "blaize.com",
-      "website": "https://www.blaize.com",
-      "officialName": "Blaize",
-      "description": null,
-      "foundedYear": null,
-      "foundingDate": null,
-      "companyAgeYears": null,
-      "primaryIndustry": "AI & Machine Learning",
-      "subIndustry": "Edge AI Processors & Computing",
-      "productsAndServices": [],
-      "businessModel": "Hardware & Embedded Software",
-      "headquarters": {
-        "city": "El Dorado Hills",
-        "stateOrRegion": "CA",
-        "country": "United States",
-        "address": null
-      },
-      "operatingCountries": [
-        "United Kingdom",
-        "India",
-        "Japan",
-        "United States"
-      ],
-      "usPresence": true,
-      "leadership": {
-        "ceo": {
-          "name": "Dinakar Munagala",
-          "title": "Chief Executive Officer",
-          "role": "CEO",
-          "isCurrent": true,
-          "evidence": "Dinakar Munagala co-founded Blaize® and serves as CEO",
-          "sourceUrl": "https://www.blaize.com/company",
-          "confidence": 95
-        },
-        "founders": [
-          {
-            "name": "Dinakar Munagala",
-            "title": "Co-Founder",
-            "role": "Co-Founder",
-            "isCurrent": true,
-            "evidence": "Dinakar Munagala co-founded",
-            "sourceUrl": "https://www.blaize.com/company",
-            "confidence": 90
-          },
-          {
-            "name": "Satyaki Koneru",
-            "title": "Co-Founder",
-            "role": "Co-Founder",
-            "isCurrent": true,
-            "evidence": "Satyaki Koneru co-founded",
-            "sourceUrl": "https://www.blaize.com/company",
-            "confidence": 90
-          },
-          {
-            "name": "Ke Yin",
-            "title": "Co-Founder",
-            "role": "Co-Founder",
-            "isCurrent": true,
-            "evidence": "Ke Yin co-founded",
-            "sourceUrl": "https://www.blaize.com/company",
-            "confidence": 90
-          }
-        ],
-        "coFounders": [
-          {
-            "name": "Dinakar Munagala",
-            "title": "Co-Founder",
-            "role": "Co-Founder",
-            "isCurrent": true,
-            "evidence": "Dinakar Munagala co-founded",
-            "sourceUrl": "https://www.blaize.com/company",
-            "confidence": 90
-          },
-          {
-            "name": "Satyaki Koneru",
-            "title": "Co-Founder",
-            "role": "Co-Founder",
-            "isCurrent": true,
-            "evidence": "Satyaki Koneru co-founded",
-            "sourceUrl": "https://www.blaize.com/company",
-            "confidence": 90
-          },
-          {
-            "name": "Ke Yin",
-            "title": "Co-Founder",
-            "role": "Co-Founder",
-            "isCurrent": true,
-            "evidence": "Ke Yin co-founded",
-            "sourceUrl": "https://www.blaize.com/company",
-            "confidence": 90
-          }
-        ],
-        "cto": {
-          "name": "Satyaki Koneru",
-          "title": "Chief Technology Officer",
-          "role": "CTO",
-          "isCurrent": true,
-          "evidence": "Satyaki Koneru co-founded Blaize® and serves as Chief Technology Officer",
-          "sourceUrl": "https://www.blaize.com/company",
-          "confidence": 95
-        },
-        "cfo": null,
-        "seniorExecutives": [],
-        "formerExecutives": []
-      },
-      "funding": {
-        "totalFundingUsd": null,
-        "latestRoundUsd": null,
-        "latestRoundType": null,
-        "latestRoundDate": null,
-        "investors": [],
-        "rounds": []
-      },
-      "contacts": {
-        "generalEmail": "info@blaize.com",
-        "phone": "+9163470050",
-        "contactPageUrl": "https://www.blaize.com/contact",
-        "executiveEmails": [],
-        "companyLinkedInUrl": "https://www.linkedin.com/company/blaize-ai",
-        "companyXUrl": "https://twitter.com/blaizeinc"
-      },
-      "fieldEvidence": {
-        "contacts.companyLinkedInUrl": {
-          "field": "contacts.companyLinkedInUrl",
-          "value": "https://www.linkedin.com/company/blaize-ai",
-          "sourceUrl": "https://www.blaize.com",
-          "sourceTitle": "Intelligence at the edge of everywhere. | Blaize",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "LinkedIn link on https://www.blaize.com",
-          "dateRetrieved": "2026-10-12T11:25:54.332Z",
-          "extractionMethod": "meta_tags",
-          "confidence": 95
-        },
-        "contacts.companyXUrl": {
-          "field": "contacts.companyXUrl",
-          "value": "https://twitter.com/blaizeinc",
-          "sourceUrl": "https://www.blaize.com",
-          "sourceTitle": "Intelligence at the edge of everywhere. | Blaize",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "X link on https://www.blaize.com",
-          "dateRetrieved": "2026-10-12T11:25:54.332Z",
-          "extractionMethod": "meta_tags",
-          "confidence": 95
-        },
-        "officialName": {
-          "field": "officialName",
-          "value": "Blaize",
-          "sourceUrl": "https://www.blaize.com",
-          "sourceTitle": "Intelligence at the edge of everywhere. | Blaize",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Brand title from Intelligence at the edge of everywhere. | Blaize",
-          "dateRetrieved": "2026-10-12T11:25:54.332Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 95
-        },
-        "website": {
-          "field": "website",
-          "value": "https://www.blaize.com",
-          "sourceUrl": "https://www.blaize.com",
-          "sourceTitle": "Intelligence at the edge of everywhere. | Blaize",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "https://www.blaize.com",
-          "dateRetrieved": "2026-10-12T11:25:54.332Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 100
-        },
-        "leadership.ceo": {
-          "field": "leadership.ceo",
-          "value": "Dinakar Munagala (CEO)",
-          "sourceUrl": "https://www.blaize.com/company",
-          "sourceTitle": "AI Edge Company - Artificial Intelligence Software Company - Blaize",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Dinakar Munagala co-founded Blaize® and serves as CEO",
-          "dateRetrieved": "2026-10-12T11:25:54.332Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 95
-        },
-        "leadership.cto": {
-          "field": "leadership.cto",
-          "value": "Satyaki Koneru (CTO)",
-          "sourceUrl": "https://www.blaize.com/company",
-          "sourceTitle": "AI Edge Company - Artificial Intelligence Software Company - Blaize",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Satyaki Koneru co-founded Blaize® and serves as Chief Technology Officer",
-          "dateRetrieved": "2026-10-12T11:25:54.332Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 95
-        },
-        "contacts.contactPageUrl": {
-          "field": "contacts.contactPageUrl",
-          "value": "https://www.blaize.com/contact",
-          "sourceUrl": "https://www.blaize.com/contact",
-          "sourceTitle": "Get In Touch with Blaize - Contact Us",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Official contact page: https://www.blaize.com/contact",
-          "dateRetrieved": "2026-10-12T11:25:54.332Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 100
-        },
-        "contacts.generalEmail": {
-          "field": "contacts.generalEmail",
-          "value": "info@blaize.com",
-          "sourceUrl": "https://www.blaize.com/contact",
-          "sourceTitle": "Get In Touch with Blaize - Contact Us",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Publicly listed email on https://www.blaize.com/contact",
-          "dateRetrieved": "2026-10-12T11:25:54.332Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 90
-        },
-        "contacts.phone": {
-          "field": "contacts.phone",
-          "value": "+9163470050",
-          "sourceUrl": "https://www.blaize.com/contact",
-          "sourceTitle": "Get In Touch with Blaize - Contact Us",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "tel link on https://www.blaize.com/contact",
-          "dateRetrieved": "2026-10-12T11:25:54.332Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 95
-        },
-        "headquarters.country": {
-          "field": "headquarters.country",
-          "value": "United States",
-          "sourceUrl": "https://startuptalky.com/global-startups-funding-investors-data-2019/",
-          "sourceTitle": "Global Startup Funding & Investors Data | 2019 Updated",
-          "sourceTier": "TIER_2_AUTHORITATIVE",
-          "excerpt": "El Dorado Hills, CA",
-          "dateRetrieved": "2026-10-12T11:25:54.332Z",
-          "extractionMethod": "firecrawl_search",
-          "confidence": 90
-        },
-        "usPresence": {
-          "field": "usPresence",
-          "value": true,
-          "sourceUrl": "https://startuptalky.com/global-startups-funding-investors-data-2019/",
-          "sourceTitle": "Global Startup Funding & Investors Data | 2019 Updated",
-          "sourceTier": "TIER_2_AUTHORITATIVE",
-          "excerpt": "Headquarters verified from sources: El Dorado Hills, CA",
-          "dateRetrieved": "2026-10-12T11:25:54.332Z",
-          "extractionMethod": "firecrawl_search",
-          "confidence": 90
-        },
-        "primaryIndustry": {
-          "field": "primaryIndustry",
-          "value": "AI & Machine Learning",
-          "sourceUrl": "https://www.blaize.com",
-          "sourceTitle": "Intelligence at the edge of everywhere. | Blaize",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Extracted industry taxonomy: AI & Machine Learning (Edge AI Processors & Computing)",
-          "dateRetrieved": "2026-10-12T11:25:54.332Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 90
-        },
-        "leadership.founders": {
-          "field": "leadership.founders",
-          "value": "Dinakar Munagala, Satyaki Koneru, Ke Yin",
-          "sourceUrl": "https://www.blaize.com",
-          "sourceTitle": "Intelligence at the edge of everywhere. | Blaize",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Co-founders documented: Dinakar Munagala, Satyaki Koneru, Ke Yin",
-          "dateRetrieved": "2026-10-12T11:25:54.332Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 90
-        }
-      },
-      "sources": [
-        {
-          "url": "https://www.blaize.com",
-          "title": "Intelligence at the edge of everywhere. | Blaize",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-12T11:25:54.332Z"
-        },
-        {
-          "url": "https://www.blaize.com/company",
-          "title": "AI Edge Company - Artificial Intelligence Software Company - Blaize",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-12T11:25:54.332Z"
-        },
-        {
-          "url": "https://www.blaize.com/contact",
-          "title": "Get In Touch with Blaize - Contact Us",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-12T11:25:54.332Z"
-        },
-        {
-          "url": "https://www.blaize.com/news",
-          "title": "Blaize - AI Computing Startup News & Events",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-12T11:25:54.332Z"
-        },
-        {
-          "url": "https://www.blaize.com/press/blaize-announces-planned-launch-of-blaize-ai-services-to-turn-ai-infrastructure-into-production-ready-apis",
-          "title": "Blaize Announces Planned Launch of Blaize AI Services to Turn AI Infrastructure into Production-Ready APIs - Blaize",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-12T11:25:54.332Z"
-        }
-      ],
-      "researchStatus": "completed",
-      "statusReason": "Factual web extraction completed with authoritative evidence",
-      "researchCompletenessScore": 70,
-      "createdAt": "2026-10-12T11:25:54.332Z",
-      "updatedAt": "2026-10-12T11:25:54.332Z"
-    },
-    "comp_test_co_1791804435599": {
-      "id": "comp_test_co_1791804435599",
-      "canonicalDomain": "testco.io",
-      "website": "https://testco.io",
-      "officialName": "TestCo Systems",
-      "description": "Enterprise AI analytics platform",
-      "foundedYear": 2021,
-      "foundingDate": "2021-04-01",
-      "companyAgeYears": 5,
-      "primaryIndustry": "AI & Machine Learning",
-      "subIndustry": "Enterprise Analytics",
-      "productsAndServices": [
-        "Analytics Engine"
-      ],
-      "businessModel": "B2B SaaS",
-      "headquarters": {
-        "city": "London",
-        "stateOrRegion": "Greater London",
-        "country": "United Kingdom",
-        "address": "10 Tech City, London"
-      },
-      "operatingCountries": [
-        "United Kingdom"
-      ],
-      "usPresence": false,
-      "leadership": {
-        "ceo": {
-          "name": "Sarah Connor",
-          "title": "CEO",
-          "role": "CEO",
-          "isCurrent": true,
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about",
-          "confidence": 95
-        },
-        "founders": [
-          {
-            "name": "Sarah Connor",
-            "title": "Founder & CEO",
-            "role": "Founder",
-            "isCurrent": true,
-            "evidence": "Sarah Connor founded TestCo.",
-            "sourceUrl": "https://testco.io/about",
-            "confidence": 90
-          }
-        ],
-        "coFounders": [],
-        "cto": null,
-        "cfo": null,
-        "seniorExecutives": [],
-        "formerExecutives": []
-      },
-      "funding": {
-        "totalFundingUsd": null,
-        "latestRoundUsd": null,
-        "latestRoundType": null,
-        "latestRoundDate": null,
-        "investors": [],
-        "rounds": []
-      },
-      "contacts": {
-        "generalEmail": "hello@testco.io",
-        "phone": null,
-        "contactPageUrl": "https://testco.io/contact",
-        "executiveEmails": [],
-        "companyLinkedInUrl": "https://linkedin.com/company/testco",
-        "companyXUrl": null
-      },
-      "fieldEvidence": {
-        "headquarters.country": {
-          "field": "headquarters.country",
-          "value": "United Kingdom",
-          "sourceUrl": "https://testco.io/contact",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Headquartered in London, United Kingdom",
-          "dateRetrieved": "2026-10-12T11:27:15.599Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 95
-        }
-      },
-      "sources": [
-        {
-          "url": "https://testco.io",
-          "title": "TestCo Systems",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-12T11:27:15.600Z"
-        }
-      ],
-      "researchStatus": "completed",
-      "researchCompletenessScore": 80,
-      "createdAt": "2026-10-12T11:27:15.600Z",
-      "updatedAt": "2026-10-12T11:27:15.600Z"
-    },
-    "comp_test_co_1791804515441": {
-      "id": "comp_test_co_1791804515441",
-      "canonicalDomain": "testco.io",
-      "website": "https://testco.io",
-      "officialName": "TestCo Systems",
-      "description": "Enterprise AI analytics platform",
-      "foundedYear": 2021,
-      "foundingDate": "2021-04-01",
-      "companyAgeYears": 5,
-      "primaryIndustry": "AI & Machine Learning",
-      "subIndustry": "Enterprise Analytics",
-      "productsAndServices": [
-        "Analytics Engine"
-      ],
-      "businessModel": "B2B SaaS",
-      "headquarters": {
-        "city": "London",
-        "stateOrRegion": "Greater London",
-        "country": "United Kingdom",
-        "address": "10 Tech City, London"
-      },
-      "operatingCountries": [
-        "United Kingdom"
-      ],
-      "usPresence": false,
-      "leadership": {
-        "ceo": {
-          "name": "Sarah Connor",
-          "title": "CEO",
-          "role": "CEO",
-          "isCurrent": true,
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about",
-          "confidence": 95
-        },
-        "founders": [
-          {
-            "name": "Sarah Connor",
-            "title": "Founder & CEO",
-            "role": "Founder",
-            "isCurrent": true,
-            "evidence": "Sarah Connor founded TestCo.",
-            "sourceUrl": "https://testco.io/about",
-            "confidence": 90
-          }
-        ],
-        "coFounders": [],
-        "cto": null,
-        "cfo": null,
-        "seniorExecutives": [],
-        "formerExecutives": []
-      },
-      "funding": {
-        "totalFundingUsd": null,
-        "latestRoundUsd": null,
-        "latestRoundType": null,
-        "latestRoundDate": null,
-        "investors": [],
-        "rounds": []
-      },
-      "contacts": {
-        "generalEmail": "hello@testco.io",
-        "phone": null,
-        "contactPageUrl": "https://testco.io/contact",
-        "executiveEmails": [],
-        "companyLinkedInUrl": "https://linkedin.com/company/testco",
-        "companyXUrl": null
-      },
-      "fieldEvidence": {
-        "headquarters.country": {
-          "field": "headquarters.country",
-          "value": "United Kingdom",
-          "sourceUrl": "https://testco.io/contact",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Headquartered in London, United Kingdom",
-          "dateRetrieved": "2026-10-12T11:28:35.441Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 95
-        }
-      },
-      "sources": [
-        {
-          "url": "https://testco.io",
-          "title": "TestCo Systems",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-12T11:28:35.441Z"
-        }
-      ],
-      "researchStatus": "completed",
-      "researchCompletenessScore": 80,
-      "createdAt": "2026-10-12T11:28:35.441Z",
-      "updatedAt": "2026-10-12T11:28:35.441Z"
-    },
-    "comp_test_co_1791978394147": {
-      "id": "comp_test_co_1791978394147",
-      "canonicalDomain": "testco.io",
-      "website": "https://testco.io",
-      "officialName": "TestCo Systems",
-      "description": "Enterprise AI analytics platform",
-      "foundedYear": 2021,
-      "foundingDate": "2021-04-01",
-      "companyAgeYears": 5,
-      "primaryIndustry": "AI & Machine Learning",
-      "subIndustry": "Enterprise Analytics",
-      "productsAndServices": [
-        "Analytics Engine"
-      ],
-      "businessModel": "B2B SaaS",
-      "headquarters": {
-        "city": "London",
-        "stateOrRegion": "Greater London",
-        "country": "United Kingdom",
-        "address": "10 Tech City, London"
-      },
-      "operatingCountries": [
-        "United Kingdom"
-      ],
-      "usPresence": false,
-      "leadership": {
-        "ceo": {
-          "name": "Sarah Connor",
-          "title": "CEO",
-          "role": "CEO",
-          "isCurrent": true,
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about",
-          "confidence": 95
-        },
-        "founders": [
-          {
-            "name": "Sarah Connor",
-            "title": "Founder & CEO",
-            "role": "Founder",
-            "isCurrent": true,
-            "evidence": "Sarah Connor founded TestCo.",
-            "sourceUrl": "https://testco.io/about",
-            "confidence": 90
-          }
-        ],
-        "coFounders": [],
-        "cto": null,
-        "cfo": null,
-        "seniorExecutives": [],
-        "formerExecutives": []
-      },
-      "funding": {
-        "totalFundingUsd": null,
-        "latestRoundUsd": null,
-        "latestRoundType": null,
-        "latestRoundDate": null,
-        "investors": [],
-        "rounds": []
-      },
-      "contacts": {
-        "generalEmail": "hello@testco.io",
-        "phone": null,
-        "contactPageUrl": "https://testco.io/contact",
-        "executiveEmails": [],
-        "companyLinkedInUrl": "https://linkedin.com/company/testco",
-        "companyXUrl": null
-      },
-      "fieldEvidence": {
-        "headquarters.country": {
-          "field": "headquarters.country",
-          "value": "United Kingdom",
-          "sourceUrl": "https://testco.io/contact",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Headquartered in London, United Kingdom",
-          "dateRetrieved": "2026-10-14T11:46:34.147Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 95
-        }
-      },
-      "sources": [
-        {
-          "url": "https://testco.io",
-          "title": "TestCo Systems",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-14T11:46:34.149Z"
-        }
-      ],
-      "researchStatus": "completed",
-      "researchCompletenessScore": 80,
-      "createdAt": "2026-10-14T11:46:34.149Z",
-      "updatedAt": "2026-10-14T11:46:34.149Z"
-    },
-    "sample-profile-1": {
-      "id": "sample-profile-1",
-      "officialName": "Nordic AI Solutions",
-      "canonicalDomain": "nordicai.io",
-      "website": "https://nordicai.io",
-      "description": "Autonomous edge computer vision for industrial robotics.",
-      "primaryIndustry": "AI & Machine Learning",
-      "subIndustry": "Industrial Automation",
-      "businessModel": "B2B Enterprise",
-      "productsAndServices": [
-        "Edge Vision SDK",
-        "Camera Hardware"
-      ],
-      "headquarters": {
-        "city": "Stockholm",
-        "stateOrRegion": "Stockholm County",
-        "country": "Sweden",
-        "isNonUs": true
-      },
-      "foundedYear": 2021,
-      "foundingDate": "2021-04-15",
-      "companyAgeYears": 5,
-      "usPresence": false,
-      "operatingCountries": [
-        "Sweden",
-        "Germany"
-      ],
-      "funding": {
-        "totalFundingUsd": 12000000,
-        "latestRoundUsd": 8000000,
-        "latestRoundType": "Series A",
-        "latestRoundDate": "2024-03-01",
-        "investors": [
-          "Creandum",
-          "EQT Ventures"
-        ],
-        "sourceConfidence": "HIGH",
-        "isSelfReported": false
-      },
-      "leadership": {
-        "ceo": {
-          "name": "Astrid Lindgren",
-          "title": "CEO & Co-Founder",
-          "isCurrent": true,
-          "sourceConfidence": "HIGH",
-          "publicEmail": "astrid.l@nordicai.io",
-          "linkedInUrl": "https://www.linkedin.com/in/astrid-lindgren-ceo"
-        },
-        "founders": [
-          {
-            "name": "Astrid Lindgren",
-            "title": "CEO & Co-Founder",
-            "isCurrent": true,
-            "sourceConfidence": "HIGH"
-          },
-          {
-            "name": "Erik Bergman",
-            "title": "CTO & Co-Founder",
-            "isCurrent": true,
-            "sourceConfidence": "HIGH"
-          }
-        ],
-        "otherExecutives": []
-      },
-      "contacts": {
-        "generalEmail": "info@nordicai.io",
-        "phone": "+46 8 123 4567",
-        "contactPageUrl": "https://nordicai.io/contact",
-        "companyLinkedInUrl": "https://www.linkedin.com/company/nordic-ai",
-        "executiveEmails": [
-          {
-            "name": "Astrid Lindgren",
-            "role": "CEO",
-            "email": "astrid.l@nordicai.io",
-            "sourceUrl": "https://nordicai.io/about"
-          }
-        ]
-      },
-      "fieldEvidence": {
-        "funding": {
-          "field": "funding",
-          "claimedValue": "$12.0M Total Series A",
-          "sourceUrl": "https://techcrunch.com/2024/03/nordic-ai-series-a",
-          "sourceTitle": "TechCrunch",
-          "sourceTier": "TIER_2_PRESS",
-          "excerpt": "Stockholm-based Nordic AI Solutions raised $8M in Series A bringing total to $12M.",
-          "dateRetrieved": "2026-10-12"
-        },
-        "geography": {
-          "field": "geography",
-          "claimedValue": "Stockholm, Sweden",
-          "sourceUrl": "https://nordicai.io/contact",
-          "sourceTitle": "Nordic AI Contact",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Headquartered in Stockholm, Sweden.",
-          "dateRetrieved": "2026-10-12"
-        }
-      },
-      "sources": [
-        {
-          "url": "https://nordicai.io",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-12"
-        },
-        {
-          "url": "https://nordicai.io/about",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-12"
-        },
-        {
-          "url": "https://techcrunch.com/2024/03/nordic-ai-series-a",
-          "tier": "TIER_2_PRESS",
-          "retrievedAt": "2026-10-12"
-        },
-        {
-          "url": "https://www.linkedin.com/company/nordic-ai",
-          "tier": "TIER_2_PRESS",
-          "retrievedAt": "2026-10-12"
-        }
-      ],
-      "researchStatus": "completed",
-      "completenessScore": 100,
-      "researchedAt": "2026-10-14T13:20:42.513Z"
-    },
-    "comp_test_co_1791981382792": {
-      "id": "comp_test_co_1791981382792",
-      "canonicalDomain": "testco.io",
-      "website": "https://testco.io",
-      "officialName": "TestCo Systems",
-      "description": "Enterprise AI analytics platform",
-      "foundedYear": 2021,
-      "foundingDate": "2021-04-01",
-      "companyAgeYears": 5,
-      "primaryIndustry": "AI & Machine Learning",
-      "subIndustry": "Enterprise Analytics",
-      "productsAndServices": [
-        "Analytics Engine"
-      ],
-      "businessModel": "B2B SaaS",
-      "headquarters": {
-        "city": "London",
-        "stateOrRegion": "Greater London",
-        "country": "United Kingdom",
-        "address": "10 Tech City, London"
-      },
-      "operatingCountries": [
-        "United Kingdom"
-      ],
-      "usPresence": false,
-      "leadership": {
-        "ceo": {
-          "name": "Sarah Connor",
-          "title": "CEO",
-          "role": "CEO",
-          "isCurrent": true,
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about",
-          "confidence": 95
-        },
-        "founders": [
-          {
-            "name": "Sarah Connor",
-            "title": "Founder & CEO",
-            "role": "Founder",
-            "isCurrent": true,
-            "evidence": "Sarah Connor founded TestCo.",
-            "sourceUrl": "https://testco.io/about",
-            "confidence": 90
-          }
-        ],
-        "coFounders": [],
-        "cto": null,
-        "cfo": null,
-        "seniorExecutives": [],
-        "formerExecutives": []
-      },
-      "funding": {
-        "totalFundingUsd": null,
-        "latestRoundUsd": null,
-        "latestRoundType": null,
-        "latestRoundDate": null,
-        "investors": [],
-        "rounds": []
-      },
-      "contacts": {
-        "generalEmail": "hello@testco.io",
-        "phone": null,
-        "contactPageUrl": "https://testco.io/contact",
-        "executiveEmails": [],
-        "companyLinkedInUrl": "https://linkedin.com/company/testco",
-        "companyXUrl": null
-      },
-      "fieldEvidence": {
-        "headquarters.country": {
-          "field": "headquarters.country",
-          "value": "United Kingdom",
-          "sourceUrl": "https://testco.io/contact",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Headquartered in London, United Kingdom",
-          "dateRetrieved": "2026-10-14T12:36:22.792Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 95
-        }
-      },
-      "sources": [
-        {
-          "url": "https://testco.io",
-          "title": "TestCo Systems",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-14T12:36:22.792Z"
-        }
-      ],
-      "researchStatus": "completed",
-      "researchCompletenessScore": 80,
-      "createdAt": "2026-10-14T12:36:22.792Z",
-      "updatedAt": "2026-10-14T12:36:22.792Z"
-    },
-    "comp_test_co_1791982859053": {
-      "id": "comp_test_co_1791982859053",
-      "canonicalDomain": "testco.io",
-      "website": "https://testco.io",
-      "officialName": "TestCo Systems",
-      "description": "Enterprise AI analytics platform",
-      "foundedYear": 2021,
-      "foundingDate": "2021-04-01",
-      "companyAgeYears": 5,
-      "primaryIndustry": "AI & Machine Learning",
-      "subIndustry": "Enterprise Analytics",
-      "productsAndServices": [
-        "Analytics Engine"
-      ],
-      "businessModel": "B2B SaaS",
-      "headquarters": {
-        "city": "London",
-        "stateOrRegion": "Greater London",
-        "country": "United Kingdom",
-        "address": "10 Tech City, London"
-      },
-      "operatingCountries": [
-        "United Kingdom"
-      ],
-      "usPresence": false,
-      "leadership": {
-        "ceo": {
-          "name": "Sarah Connor",
-          "title": "CEO",
-          "role": "CEO",
-          "isCurrent": true,
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about",
-          "confidence": 95
-        },
-        "founders": [
-          {
-            "name": "Sarah Connor",
-            "title": "Founder & CEO",
-            "role": "Founder",
-            "isCurrent": true,
-            "evidence": "Sarah Connor founded TestCo.",
-            "sourceUrl": "https://testco.io/about",
-            "confidence": 90
-          }
-        ],
-        "coFounders": [],
-        "cto": null,
-        "cfo": null,
-        "seniorExecutives": [],
-        "formerExecutives": []
-      },
-      "funding": {
-        "totalFundingUsd": null,
-        "latestRoundUsd": null,
-        "latestRoundType": null,
-        "latestRoundDate": null,
-        "investors": [],
-        "rounds": []
-      },
-      "contacts": {
-        "generalEmail": "hello@testco.io",
-        "phone": null,
-        "contactPageUrl": "https://testco.io/contact",
-        "executiveEmails": [],
-        "companyLinkedInUrl": "https://linkedin.com/company/testco",
-        "companyXUrl": null
-      },
-      "fieldEvidence": {
-        "headquarters.country": {
-          "field": "headquarters.country",
-          "value": "United Kingdom",
-          "sourceUrl": "https://testco.io/contact",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Headquartered in London, United Kingdom",
-          "dateRetrieved": "2026-10-14T13:00:59.054Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 95
-        }
-      },
-      "sources": [
-        {
-          "url": "https://testco.io",
-          "title": "TestCo Systems",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-14T13:00:59.056Z"
-        }
-      ],
-      "researchStatus": "completed",
-      "researchCompletenessScore": 80,
-      "createdAt": "2026-10-14T13:00:59.056Z",
-      "updatedAt": "2026-10-14T13:00:59.056Z"
-    },
-    "comp_test_co_1791984036551": {
-      "id": "comp_test_co_1791984036551",
-      "canonicalDomain": "testco.io",
-      "website": "https://testco.io",
-      "officialName": "TestCo Systems",
-      "description": "Enterprise AI analytics platform",
-      "foundedYear": 2021,
-      "foundingDate": "2021-04-01",
-      "companyAgeYears": 5,
-      "primaryIndustry": "AI & Machine Learning",
-      "subIndustry": "Enterprise Analytics",
-      "productsAndServices": [
-        "Analytics Engine"
-      ],
-      "businessModel": "B2B SaaS",
-      "headquarters": {
-        "city": "London",
-        "stateOrRegion": "Greater London",
-        "country": "United Kingdom",
-        "address": "10 Tech City, London"
-      },
-      "operatingCountries": [
-        "United Kingdom"
-      ],
-      "usPresence": false,
-      "leadership": {
-        "ceo": {
-          "name": "Sarah Connor",
-          "title": "CEO",
-          "role": "CEO",
-          "isCurrent": true,
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about",
-          "confidence": 95
-        },
-        "founders": [
-          {
-            "name": "Sarah Connor",
-            "title": "Founder & CEO",
-            "role": "Founder",
-            "isCurrent": true,
-            "evidence": "Sarah Connor founded TestCo.",
-            "sourceUrl": "https://testco.io/about",
-            "confidence": 90
-          }
-        ],
-        "coFounders": [],
-        "cto": null,
-        "cfo": null,
-        "seniorExecutives": [],
-        "formerExecutives": []
-      },
-      "funding": {
-        "totalFundingUsd": null,
-        "latestRoundUsd": null,
-        "latestRoundType": null,
-        "latestRoundDate": null,
-        "investors": [],
-        "rounds": []
-      },
-      "contacts": {
-        "generalEmail": "hello@testco.io",
-        "phone": null,
-        "contactPageUrl": "https://testco.io/contact",
-        "executiveEmails": [],
-        "companyLinkedInUrl": "https://linkedin.com/company/testco",
-        "companyXUrl": null
-      },
-      "fieldEvidence": {
-        "headquarters.country": {
-          "field": "headquarters.country",
-          "value": "United Kingdom",
-          "sourceUrl": "https://testco.io/contact",
-          "sourceTier": "TIER_1_OFFICIAL",
-          "excerpt": "Headquartered in London, United Kingdom",
-          "dateRetrieved": "2026-10-14T13:20:36.551Z",
-          "extractionMethod": "firecrawl_scrape",
-          "confidence": 95
-        }
-      },
-      "sources": [
-        {
-          "url": "https://testco.io",
-          "title": "TestCo Systems",
-          "tier": "TIER_1_OFFICIAL",
-          "retrievedAt": "2026-10-14T13:20:36.552Z"
-        }
-      ],
-      "researchStatus": "completed",
-      "researchCompletenessScore": 80,
-      "createdAt": "2026-10-14T13:20:36.552Z",
-      "updatedAt": "2026-10-14T13:20:36.552Z"
-    }
-  },
+  "researchProfiles": {},
   "targetCriteria": {},
-  "verificationRuns": {
-    "verif_comp_test_co_1_1791804011533": {
-      "id": "verif_comp_test_co_1_1791804011533",
-      "companyId": "comp_test_co_1",
-      "canonicalDomain": "testco.io",
-      "targetCriteriaId": "test_criteria_5m_6m",
-      "targetCriteriaVersion": 1,
-      "targetCriteriaName": "Standard TVB Target Criteria",
-      "overallStatus": "UNVERIFIED",
-      "qualificationScore": 75,
-      "summaryReason": "Missing required evidence for: Funding Range",
-      "criteria": {
-        "funding": {
-          "criterionKey": "funding",
-          "name": "Funding Range",
-          "status": "UNKNOWN",
-          "required": "$5,000,000 – $6,000,000 USD",
-          "actual": "Undisclosed / Unknown",
-          "reason": "No verifiable venture funding or financial round documented in public sources",
-          "evidence": null,
-          "sourceUrl": null
-        },
-        "geography": {
-          "criterionKey": "geography",
-          "name": "Headquarters Geography",
-          "status": "PASS",
-          "required": "Countries: United Kingdom",
-          "actual": "United Kingdom",
-          "reason": "Headquarters matches required country: United Kingdom",
-          "evidence": "Headquartered in London, United Kingdom",
-          "sourceUrl": "https://testco.io/contact"
-        },
-        "industry": {
-          "criterionKey": "industry",
-          "name": "Industry Taxonomy",
-          "status": "PASS",
-          "required": "Allowed: AI & Machine Learning, B2B SaaS, FinTech, HealthTech, Enterprise Software, Hardware & Semiconductors",
-          "actual": "AI & Machine Learning / Enterprise Analytics",
-          "reason": "Industry classification matches target profile: AI & Machine Learning",
-          "evidence": null,
-          "sourceUrl": null
-        },
-        "ceo": {
-          "criterionKey": "ceo",
-          "name": "CEO Identification",
-          "status": "PASS",
-          "required": "Verified current CEO",
-          "actual": "Sarah Connor (CEO)",
-          "reason": "Current CEO verified from official or authoritative sources: Sarah Connor",
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about"
-        }
-      },
-      "passedCount": 3,
-      "failedCount": 0,
-      "unknownCount": 1,
-      "verifiedAt": "2026-10-12T11:20:11.514Z",
-      "isOutdated": false
-    },
-    "verif_comp_test_co_1791804155263_1791804155283": {
-      "id": "verif_comp_test_co_1791804155263_1791804155283",
-      "companyId": "comp_test_co_1791804155263",
-      "canonicalDomain": "testco.io",
-      "targetCriteriaId": "test_criteria_5m_6m",
-      "targetCriteriaVersion": 1,
-      "targetCriteriaName": "Standard TVB Target Criteria",
-      "overallStatus": "UNVERIFIED",
-      "qualificationScore": 75,
-      "summaryReason": "Missing required evidence for: Funding Range",
-      "criteria": {
-        "funding": {
-          "criterionKey": "funding",
-          "name": "Funding Range",
-          "status": "UNKNOWN",
-          "required": "$5,000,000 – $6,000,000 USD",
-          "actual": "Undisclosed / Unknown",
-          "reason": "No verifiable venture funding or financial round documented in public sources",
-          "evidence": null,
-          "sourceUrl": null
-        },
-        "geography": {
-          "criterionKey": "geography",
-          "name": "Headquarters Geography",
-          "status": "PASS",
-          "required": "Countries: United Kingdom",
-          "actual": "United Kingdom",
-          "reason": "Headquarters matches required country: United Kingdom",
-          "evidence": "Headquartered in London, United Kingdom",
-          "sourceUrl": "https://testco.io/contact"
-        },
-        "industry": {
-          "criterionKey": "industry",
-          "name": "Industry Taxonomy",
-          "status": "PASS",
-          "required": "Allowed: AI & Machine Learning, B2B SaaS, FinTech, HealthTech, Enterprise Software, Hardware & Semiconductors",
-          "actual": "AI & Machine Learning / Enterprise Analytics",
-          "reason": "Industry classification matches target profile: AI & Machine Learning",
-          "evidence": null,
-          "sourceUrl": null
-        },
-        "ceo": {
-          "criterionKey": "ceo",
-          "name": "CEO Identification",
-          "status": "PASS",
-          "required": "Verified current CEO",
-          "actual": "Sarah Connor (CEO)",
-          "reason": "Current CEO verified from official or authoritative sources: Sarah Connor",
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about"
-        }
-      },
-      "passedCount": 3,
-      "failedCount": 0,
-      "unknownCount": 1,
-      "verifiedAt": "2026-10-12T11:22:35.265Z",
-      "isOutdated": false
-    },
-    "verif_comp_test_co_1791804435599_1791804435631": {
-      "id": "verif_comp_test_co_1791804435599_1791804435631",
-      "companyId": "comp_test_co_1791804435599",
-      "canonicalDomain": "testco.io",
-      "targetCriteriaId": "test_criteria_5m_6m",
-      "targetCriteriaVersion": 1,
-      "targetCriteriaName": "Standard TVB Target Criteria",
-      "overallStatus": "UNVERIFIED",
-      "qualificationScore": 75,
-      "summaryReason": "Missing required evidence for: Funding Range",
-      "criteria": {
-        "funding": {
-          "criterionKey": "funding",
-          "name": "Funding Range",
-          "status": "UNKNOWN",
-          "required": "$5,000,000 – $6,000,000 USD",
-          "actual": "Undisclosed / Unknown",
-          "reason": "No verifiable venture funding or financial round documented in public sources",
-          "evidence": null,
-          "sourceUrl": null
-        },
-        "geography": {
-          "criterionKey": "geography",
-          "name": "Headquarters Geography",
-          "status": "PASS",
-          "required": "Countries: United Kingdom",
-          "actual": "United Kingdom",
-          "reason": "Headquarters matches required country: United Kingdom",
-          "evidence": "Headquartered in London, United Kingdom",
-          "sourceUrl": "https://testco.io/contact"
-        },
-        "industry": {
-          "criterionKey": "industry",
-          "name": "Industry Taxonomy",
-          "status": "PASS",
-          "required": "Allowed: AI & Machine Learning, B2B SaaS, FinTech, HealthTech, Enterprise Software, Hardware & Semiconductors",
-          "actual": "AI & Machine Learning / Enterprise Analytics",
-          "reason": "Industry classification matches target profile: AI & Machine Learning",
-          "evidence": null,
-          "sourceUrl": null
-        },
-        "ceo": {
-          "criterionKey": "ceo",
-          "name": "CEO Identification",
-          "status": "PASS",
-          "required": "Verified current CEO",
-          "actual": "Sarah Connor (CEO)",
-          "reason": "Current CEO verified from official or authoritative sources: Sarah Connor",
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about"
-        }
-      },
-      "passedCount": 3,
-      "failedCount": 0,
-      "unknownCount": 1,
-      "verifiedAt": "2026-10-12T11:27:15.601Z",
-      "isOutdated": false
-    },
-    "verif_comp_test_co_1791804515441_1791804515459": {
-      "id": "verif_comp_test_co_1791804515441_1791804515459",
-      "companyId": "comp_test_co_1791804515441",
-      "canonicalDomain": "testco.io",
-      "targetCriteriaId": "test_criteria_5m_6m",
-      "targetCriteriaVersion": 1,
-      "targetCriteriaName": "Standard TVB Target Criteria",
-      "overallStatus": "UNVERIFIED",
-      "qualificationScore": 75,
-      "summaryReason": "Missing required evidence for: Funding Range",
-      "criteria": {
-        "funding": {
-          "criterionKey": "funding",
-          "name": "Funding Range",
-          "status": "UNKNOWN",
-          "required": "$5,000,000 – $6,000,000 USD",
-          "actual": "Undisclosed / Unknown",
-          "reason": "No verifiable venture funding or financial round documented in public sources",
-          "evidence": null,
-          "sourceUrl": null
-        },
-        "geography": {
-          "criterionKey": "geography",
-          "name": "Headquarters Geography",
-          "status": "PASS",
-          "required": "Countries: United Kingdom",
-          "actual": "United Kingdom",
-          "reason": "Headquarters matches required country: United Kingdom",
-          "evidence": "Headquartered in London, United Kingdom",
-          "sourceUrl": "https://testco.io/contact"
-        },
-        "industry": {
-          "criterionKey": "industry",
-          "name": "Industry Taxonomy",
-          "status": "PASS",
-          "required": "Allowed: AI & Machine Learning, B2B SaaS, FinTech, HealthTech, Enterprise Software, Hardware & Semiconductors",
-          "actual": "AI & Machine Learning / Enterprise Analytics",
-          "reason": "Industry classification matches target profile: AI & Machine Learning",
-          "evidence": null,
-          "sourceUrl": null
-        },
-        "ceo": {
-          "criterionKey": "ceo",
-          "name": "CEO Identification",
-          "status": "PASS",
-          "required": "Verified current CEO",
-          "actual": "Sarah Connor (CEO)",
-          "reason": "Current CEO verified from official or authoritative sources: Sarah Connor",
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about"
-        }
-      },
-      "passedCount": 3,
-      "failedCount": 0,
-      "unknownCount": 1,
-      "verifiedAt": "2026-10-12T11:28:35.442Z",
-      "isOutdated": false
-    },
-    "verif_comp_test_co_1791978394147_1791978394181": {
-      "id": "verif_comp_test_co_1791978394147_1791978394181",
-      "companyId": "comp_test_co_1791978394147",
-      "canonicalDomain": "testco.io",
-      "targetCriteriaId": "test_criteria_5m_6m",
-      "targetCriteriaVersion": 1,
-      "targetCriteriaName": "Standard TVB Target Criteria",
-      "overallStatus": "UNVERIFIED",
-      "qualificationScore": 75,
-      "summaryReason": "Missing required evidence for: Funding Range",
-      "criteria": {
-        "funding": {
-          "criterionKey": "funding",
-          "name": "Funding Range",
-          "status": "UNKNOWN",
-          "required": "$5,000,000 – $6,000,000 USD",
-          "actual": "Undisclosed / Unknown",
-          "reason": "No verifiable venture funding or financial round documented in public sources",
-          "evidence": null,
-          "sourceUrl": null
-        },
-        "geography": {
-          "criterionKey": "geography",
-          "name": "Headquarters Geography",
-          "status": "PASS",
-          "required": "Countries: United Kingdom",
-          "actual": "United Kingdom",
-          "reason": "Headquarters matches required country: United Kingdom",
-          "evidence": "Headquartered in London, United Kingdom",
-          "sourceUrl": "https://testco.io/contact"
-        },
-        "industry": {
-          "criterionKey": "industry",
-          "name": "Industry Taxonomy",
-          "status": "PASS",
-          "required": "Allowed: AI & Machine Learning, B2B SaaS, FinTech, HealthTech, Enterprise Software, Hardware & Semiconductors",
-          "actual": "AI & Machine Learning / Enterprise Analytics",
-          "reason": "Industry classification matches target profile: AI & Machine Learning",
-          "evidence": null,
-          "sourceUrl": null
-        },
-        "ceo": {
-          "criterionKey": "ceo",
-          "name": "CEO Identification",
-          "status": "PASS",
-          "required": "Verified current CEO",
-          "actual": "Sarah Connor (CEO)",
-          "reason": "Current CEO verified from official or authoritative sources: Sarah Connor",
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about"
-        }
-      },
-      "passedCount": 3,
-      "failedCount": 0,
-      "unknownCount": 1,
-      "verifiedAt": "2026-10-14T11:46:34.151Z",
-      "isOutdated": false
-    },
-    "verif_comp_test_co_1791981382792_1791981382996": {
-      "id": "verif_comp_test_co_1791981382792_1791981382996",
-      "companyId": "comp_test_co_1791981382792",
-      "canonicalDomain": "testco.io",
-      "targetCriteriaId": "test_criteria_5m_6m",
-      "targetCriteriaVersion": 1,
-      "targetCriteriaName": "Standard TVB Target Criteria",
-      "overallStatus": "UNVERIFIED",
-      "qualificationScore": 75,
-      "summaryReason": "Missing required evidence for: Funding Range",
-      "criteria": {
-        "funding": {
-          "criterionKey": "funding",
-          "name": "Funding Range",
-          "status": "UNKNOWN",
-          "required": "$5,000,000 – $6,000,000 USD",
-          "actual": "Undisclosed / Unknown",
-          "reason": "No verifiable venture funding or financial round documented in public sources",
-          "evidence": null,
-          "sourceUrl": null
-        },
-        "geography": {
-          "criterionKey": "geography",
-          "name": "Headquarters Geography",
-          "status": "PASS",
-          "required": "Countries: United Kingdom",
-          "actual": "United Kingdom",
-          "reason": "Headquarters matches required country: United Kingdom",
-          "evidence": "Headquartered in London, United Kingdom",
-          "sourceUrl": "https://testco.io/contact"
-        },
-        "industry": {
-          "criterionKey": "industry",
-          "name": "Industry Taxonomy",
-          "status": "PASS",
-          "required": "Allowed: AI & Machine Learning, B2B SaaS, FinTech, HealthTech, Enterprise Software, Hardware & Semiconductors",
-          "actual": "AI & Machine Learning / Enterprise Analytics",
-          "reason": "Industry classification matches target profile: AI & Machine Learning",
-          "evidence": null,
-          "sourceUrl": null
-        },
-        "ceo": {
-          "criterionKey": "ceo",
-          "name": "CEO Identification",
-          "status": "PASS",
-          "required": "Verified current CEO",
-          "actual": "Sarah Connor (CEO)",
-          "reason": "Current CEO verified from official or authoritative sources: Sarah Connor",
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about"
-        }
-      },
-      "passedCount": 3,
-      "failedCount": 0,
-      "unknownCount": 1,
-      "verifiedAt": "2026-10-14T12:36:22.796Z",
-      "isOutdated": false
-    },
-    "verif_comp_test_co_1791982859053_1791982859291": {
-      "id": "verif_comp_test_co_1791982859053_1791982859291",
-      "companyId": "comp_test_co_1791982859053",
-      "canonicalDomain": "testco.io",
-      "targetCriteriaId": "test_criteria_5m_6m",
-      "targetCriteriaVersion": 1,
-      "targetCriteriaName": "Standard TVB Target Criteria",
-      "overallStatus": "UNVERIFIED",
-      "qualificationScore": 75,
-      "summaryReason": "Missing required evidence for: Funding Range",
-      "criteria": {
-        "funding": {
-          "criterionKey": "funding",
-          "name": "Funding Range",
-          "status": "UNKNOWN",
-          "required": "$5,000,000 – $6,000,000 USD",
-          "actual": "Undisclosed / Unknown",
-          "reason": "No verifiable venture funding or financial round documented in public sources",
-          "evidence": null,
-          "sourceUrl": null
-        },
-        "geography": {
-          "criterionKey": "geography",
-          "name": "Headquarters Geography",
-          "status": "PASS",
-          "required": "Countries: United Kingdom",
-          "actual": "United Kingdom",
-          "reason": "Headquarters matches required country: United Kingdom",
-          "evidence": "Headquartered in London, United Kingdom",
-          "sourceUrl": "https://testco.io/contact"
-        },
-        "industry": {
-          "criterionKey": "industry",
-          "name": "Industry Taxonomy",
-          "status": "PASS",
-          "required": "Allowed: AI & Machine Learning, B2B SaaS, FinTech, HealthTech, Enterprise Software, Hardware & Semiconductors",
-          "actual": "AI & Machine Learning / Enterprise Analytics",
-          "reason": "Industry classification matches target profile: AI & Machine Learning",
-          "evidence": null,
-          "sourceUrl": null
-        },
-        "ceo": {
-          "criterionKey": "ceo",
-          "name": "CEO Identification",
-          "status": "PASS",
-          "required": "Verified current CEO",
-          "actual": "Sarah Connor (CEO)",
-          "reason": "Current CEO verified from official or authoritative sources: Sarah Connor",
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about"
-        }
-      },
-      "passedCount": 3,
-      "failedCount": 0,
-      "unknownCount": 1,
-      "verifiedAt": "2026-10-14T13:00:59.061Z",
-      "isOutdated": false
-    },
-    "verif_comp_test_co_1791984036551_1791984036601": {
-      "id": "verif_comp_test_co_1791984036551_1791984036601",
-      "companyId": "comp_test_co_1791984036551",
-      "canonicalDomain": "testco.io",
-      "targetCriteriaId": "test_criteria_5m_6m",
-      "targetCriteriaVersion": 1,
-      "targetCriteriaName": "Standard TVB Target Criteria",
-      "overallStatus": "UNVERIFIED",
-      "qualificationScore": 75,
-      "summaryReason": "Missing required evidence for: Funding Range",
-      "criteria": {
-        "funding": {
-          "criterionKey": "funding",
-          "name": "Funding Range",
-          "status": "UNKNOWN",
-          "required": "$5,000,000 – $6,000,000 USD",
-          "actual": "Undisclosed / Unknown",
-          "reason": "No verifiable venture funding or financial round documented in public sources",
-          "evidence": null,
-          "sourceUrl": null
-        },
-        "geography": {
-          "criterionKey": "geography",
-          "name": "Headquarters Geography",
-          "status": "PASS",
-          "required": "Countries: United Kingdom",
-          "actual": "United Kingdom",
-          "reason": "Headquarters matches required country: United Kingdom",
-          "evidence": "Headquartered in London, United Kingdom",
-          "sourceUrl": "https://testco.io/contact"
-        },
-        "industry": {
-          "criterionKey": "industry",
-          "name": "Industry Taxonomy",
-          "status": "PASS",
-          "required": "Allowed: AI & Machine Learning, B2B SaaS, FinTech, HealthTech, Enterprise Software, Hardware & Semiconductors",
-          "actual": "AI & Machine Learning / Enterprise Analytics",
-          "reason": "Industry classification matches target profile: AI & Machine Learning",
-          "evidence": null,
-          "sourceUrl": null
-        },
-        "ceo": {
-          "criterionKey": "ceo",
-          "name": "CEO Identification",
-          "status": "PASS",
-          "required": "Verified current CEO",
-          "actual": "Sarah Connor (CEO)",
-          "reason": "Current CEO verified from official or authoritative sources: Sarah Connor",
-          "evidence": "Sarah Connor serves as CEO of TestCo.",
-          "sourceUrl": "https://testco.io/about"
-        }
-      },
-      "passedCount": 3,
-      "failedCount": 0,
-      "unknownCount": 1,
-      "verifiedAt": "2026-10-14T13:20:36.558Z",
-      "isOutdated": false
-    }
-  }
+  "verificationRuns": {}
 }

@@ -18,6 +18,8 @@ interface DiscoverViewProps {
   onViewResults: () => void;
   onFinalizeStagedResults?: (qualified: CompanyRecord[], rejected: RejectedCompanyRecord[]) => void;
   onOpenLeadModal?: (company: CompanyRecord) => void;
+  savedLeads?: CompanyRecord[];
+  onToggleSave?: (company: CompanyRecord) => void;
 }
 
 export default function DiscoverView({
@@ -32,6 +34,8 @@ export default function DiscoverView({
   onViewResults,
   onFinalizeStagedResults,
   onOpenLeadModal,
+  savedLeads,
+  onToggleSave,
 }: DiscoverViewProps) {
   const [activeConfig, setActiveConfig] = useState<HuntConfig>(TVB_EVALUATION_CONFIG);
   const [discoveryMode, setDiscoveryMode] = useState<'staged' | 'autonomous'>('staged');
@@ -91,6 +95,8 @@ export default function DiscoverView({
           initialTargetProfile={activeConfig.targetProfile}
           onFinalizeResults={handleStagedFinalize}
           onOpenLeadModal={onOpenLeadModal}
+          savedLeads={savedLeads}
+          onToggleSave={onToggleSave}
         />
       ) : isRunning ? (
         <div className="space-y-6">
