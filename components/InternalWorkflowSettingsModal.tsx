@@ -370,13 +370,13 @@ export default function InternalWorkflowSettingsModal({
                       {[
                         { key: 'companyName', label: 'Company name', locked: true },
                         { key: 'domain', label: 'Company domain', locked: true },
-                        { key: 'industry', label: 'Industry' },
-                        { key: 'geography', label: 'Geography' },
-                        { key: 'revenue', label: 'Annual revenue' },
-                        { key: 'funding', label: 'Funding amount' },
-                        { key: 'stage', label: 'Company stage' },
-                        { key: 'companyAge', label: 'Founding year / company age' },
-                        { key: 'website', label: 'Company website' },
+                        { key: 'industry', label: 'Industry', locked: false },
+                        { key: 'geography', label: 'Geography', locked: false },
+                        { key: 'revenue', label: 'Annual revenue', locked: false },
+                        { key: 'funding', label: 'Funding amount', locked: false },
+                        { key: 'stage', label: 'Company stage', locked: false },
+                        { key: 'companyAge', label: 'Founding year / company age', locked: false },
+                        { key: 'website', label: 'Company website', locked: false },
                       ].map(field => {
                         const checked = field.locked || (settings.targetProfile.requiredFields || []).includes(field.key);
                         return (
