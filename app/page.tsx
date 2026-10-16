@@ -1138,8 +1138,8 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* VIEW 2: DISCOVER PAGE (Sections 9 & 10) */}
-          {activeNav === 'discover' && (
+          {/* VIEW 2: DISCOVER PAGE (Sections 9 & 10) - Kept mounted in-memory to preserve discovery session state */}
+          <div className={activeNav === 'discover' ? 'block' : 'hidden'}>
             <DiscoverView
               config={settings}
               isRunning={status === 'running'}
@@ -1155,7 +1155,7 @@ export default function HomePage() {
               savedLeads={savedLeads}
               onToggleSave={handleToggleSave}
             />
-          )}
+          </div>
 
           {/* VIEW 3: HUNT RESULTS (Section 11) */}
           {activeNav === 'results' && (

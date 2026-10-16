@@ -9,15 +9,17 @@ import {
   DEFAULT_TARGET_CRITERIA,
 } from '@/lib/research/types';
 import { CompanyVerificationResult } from '@/providers/types';
-import CompanyCard from './CompanyCard';
 import CompanyResearchDossierModal from './CompanyResearchDossierModal';
 import ExportModal from './ExportModal';
 import { downloadCombinedMarkdown, downloadObsidianVault } from '@/lib/export';
+import SharedCompanyTable, { SharedCompanyRow } from './SharedCompanyTable';
 
 interface ExternalResearchWorkflowProps {
   carriedCandidates?: Array<{ name?: string; website?: string }>;
   onUpdateResults?: (results: CompanyVerificationResult[]) => void;
   onOpenLeadModal?: (company: any) => void;
+  savedLeads?: any[];
+  onToggleSave?: (company: any) => void;
 }
 
 type ExternalTab = 'research' | 'profile' | 'criteria' | 'verify';
@@ -26,6 +28,8 @@ export default function ExternalResearchWorkflow({
   carriedCandidates = [],
   onUpdateResults,
   onOpenLeadModal,
+  savedLeads = [],
+  onToggleSave,
 }: ExternalResearchWorkflowProps) {
   const [activeTab, setActiveTab] = useState<ExternalTab>('research');
 
@@ -54,6 +58,55 @@ export default function ExternalResearchWorkflow({
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
+  // Unified shared table row adapter for External Research profiles
+  const externalSharedRows: SharedCompanyRow[] = React.useMemo(() => {
+    return profiles.map((p, idx) => {
+      const run = verificationRuns[p.id];
+      const fundingUsd = p.funding?.totalFundingUsd;
+      const latestRoundUsd = p.funding?.latestRoundUsd;
+      let fundingStr = 'Not disclosed';
+      if (fundingUsd) {
+        fundingStr =
+          fundingUsd >= 1e6
+            ? `$${(fundingUsd / 1e6).toFixed(1)}M`
+            : `$${fundingUsd.toLocaleString()}`;
+      } else if (latestRoundUsd) {
+        fundingStr =
+          latestRoundUsd >= 1e6
+            ? `$${(latestRoundUsd / 1e6).toFixed(1)}M`
+            : `$${latestRoundUsd.toLocaleString()}`;
+      }
+
+      const status = run ? run.overallStatus : 'UNVERIFIED';
+      const statusLabel = run ? run.overallStatus : 'UNVERIFIED';
+
+      const geoParts = [
+        p.headquarters?.city,
+        p.headquarters?.stateOrRegion,
+        p.headquarters?.country,
+      ].filter(Boolean);
+
+      return {
+        id: p.id,
+        index: idx + 1,
+        name: p.officialName,
+        description: p.description || null,
+        domain:
+          p.canonicalDomain ||
+          (p.website ? p.website.replace(/^https?:\/\//, '').replace(/\/.*$/, '') : ''),
+        website: p.website || (p.canonicalDomain ? `https://${p.canonicalDomain}` : ''),
+        industry: p.primaryIndustry || 'Not disclosed',
+        geography: geoParts.length > 0 ? geoParts.join(', ') : 'Not disclosed',
+        founded: p.foundedYear ? String(p.foundedYear) : 'Not disclosed',
+        funding: fundingStr,
+        stage: p.funding?.latestRoundType || 'Not disclosed',
+        status,
+        statusLabel,
+        raw: p,
+      };
+    });
+  }, [profiles, verificationRuns]);
 
   // Load criteria & verification runs on mount (do not restore stale research on fresh load)
   useEffect(() => {
@@ -615,77 +668,77 @@ export default function ExternalResearchWorkflow({
             )}
           </div>
 
-          {/* RESEARCH PROFILES LIST (COMPACT COMPANY CARD VIEW) */}
-          {profiles.length > 0 ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <h4 className="font-display text-base font-bold text-[#1E1B18]">
-                    Researched Leads ({profiles.length})
-                  </h4>
-                  <p className="text-xs font-mono text-[#766E65]">
-                    Compact list showing 14 key data fields & 9 verification indicators. Click 'View Dossier' or the search icon to open the full report.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (selectedForBatch.size === profiles.length) {
-                        setSelectedForBatch(new Set());
-                      } else {
-                        setSelectedForBatch(new Set(profiles.map((p) => p.id)));
-                      }
-                    }}
-                    className="text-xs font-mono text-[#766E65] hover:text-[#1E1B18] underline"
-                  >
-                    {selectedForBatch.size === profiles.length ? 'Deselect All' : 'Select All'}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={selectedForBatch.size === 0 || isVerifying}
-                    onClick={() => handleVerifyCompanies(Array.from(selectedForBatch))}
-                    className="sketch-btn px-3.5 py-1.5 text-xs font-bold text-white bg-[#2E7D32] hover:bg-[#1B5E20] border border-[#1E1B18] rounded-xl disabled:opacity-50 flex items-center gap-1.5 shadow-sketch-xs"
-                  >
-                    <span>⚡ Verify Selected ({selectedForBatch.size})</span>
-                  </button>
-                </div>
-              </div>
+          {/* RESEARCH PROFILES LIST (UNIFIED SHARED TABLE VIEW) */}
+          <SharedCompanyTable
+            title="Researched Leads"
+            icon="🔬"
+            subtitle={`${profiles.length} external candidates researched • ${selectedForBatch.size} selected for verification`}
+            rows={externalSharedRows}
+            isLoading={isResearching}
+            emptyTitle="No research results yet."
+            emptySubtitle="No research results yet. Start a search or research operation to discover companies."
+            selectable={true}
+            selectedIds={selectedForBatch}
+            onToggleSelect={(id) => {
+              const next = new Set(selectedForBatch);
+              if (next.has(id)) next.delete(id);
+              else next.add(id);
+              setSelectedForBatch(next);
+            }}
+            onSelectAll={() => setSelectedForBatch(new Set(profiles.map((p) => p.id)))}
+            onDeselectAll={() => setSelectedForBatch(new Set())}
+            onView={(row) => {
+              setSelectedProfileId(row.id);
+              setDossierProfile(row.raw);
+            }}
+            savedLeads={savedLeads}
+            onToggleSave={onToggleSave}
+            onToast={(msg) => setStatusMessage(msg)}
+            toolbarActions={
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={selectedForBatch.size === 0 || isVerifying}
+                  onClick={() => handleVerifyCompanies(Array.from(selectedForBatch))}
+                  className="sketch-btn px-3.5 py-1.5 text-xs font-bold text-white bg-[#2E7D32] hover:bg-[#1B5E20] border border-[#1E1B18] rounded-xl disabled:opacity-50 flex items-center gap-1.5 shadow-sketch-xs"
+                >
+                  {isVerifying ? (
+                    <>
+                      <span className="animate-spin">⏳</span>
+                      <span>Evaluating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>⚡</span>
+                      <span>Verify Selected ({selectedForBatch.size})</span>
+                    </>
+                  )}
+                </button>
 
-              <div className="space-y-3">
-                {profiles.map((p) => (
-                  <CompanyCard
-                    key={p.id}
-                    profile={p}
-                    verificationRun={verificationRuns[p.id]}
-                    isSelected={selectedForBatch.has(p.id)}
-                    onToggleSelect={(id) => {
-                      const next = new Set(selectedForBatch);
-                      if (next.has(id)) next.delete(id);
-                      else next.add(id);
-                      setSelectedForBatch(next);
-                    }}
-                    onOpenDossier={(prof) => setDossierProfile(prof)}
-                    onVerify={(id) => {
-                      setSelectedProfileId(id);
-                      handleVerifyCompanies([id]);
-                    }}
-                    isVerifying={isVerifying}
-                  />
-                ))}
+                <button
+                  type="button"
+                  onClick={() => setIsExportModalOpen(true)}
+                  className="px-3 py-1.5 rounded-lg border border-[#1E1B18] bg-white text-xs font-bold font-mono text-[#1E1B18] hover:bg-[#FAF6EE] flex items-center gap-1.5 shadow-sketch-xs transition-colors"
+                >
+                  <span>📦</span>
+                  <span>Export</span>
+                </button>
               </div>
-            </div>
-          ) : (
-            <div className="paper-card bg-[#FFFDF9] rounded-2xl p-10 text-center border-2 border-[#1E1B18] shadow-sketch-sm space-y-2">
-              <div className="text-2xl">🔬</div>
-              <h4 className="font-display text-lg font-bold text-[#1E1B18]">
-                No research results yet.
-              </h4>
-              <p className="text-xs font-mono text-[#766E65] max-w-md mx-auto">
-                No research results yet. Start a search or research operation to discover companies.
-              </p>
-            </div>
-          )}
+            }
+            extraRowActions={(row, closeMenu) => (
+              <button
+                type="button"
+                onClick={() => {
+                  closeMenu();
+                  setSelectedProfileId(row.id);
+                  handleVerifyCompanies([row.id]);
+                }}
+                className="w-full px-2 py-1 text-left text-[11px] font-mono hover:bg-[#FAF6EE] rounded text-[#2E7D32] font-bold"
+              >
+                ⚡ Verify Candidate
+              </button>
+            )}
+          />
         </div>
       )}
 
@@ -694,183 +747,113 @@ export default function ExternalResearchWorkflow({
       {/* ========================================================================= */}
       {activeTab === 'profile' && (
         <div className="space-y-6 animate-in fade-in">
-          {/* Top Bar: Search Filter & Batch Actions */}
-          <div className="paper-card bg-[#FFFDF9] rounded-2xl p-5 border-2 border-[#1E1B18] shadow-sketch space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#F0EAD8] pb-3">
-              <div>
-                <h4 className="font-display text-base sm:text-lg font-bold text-[#1E1B18] flex items-center gap-2">
-                  <span>📑</span> Company Research Profiles & Evidence Dossiers ({profiles.length})
-                </h4>
-                <p className="text-xs font-mono text-[#766E65] mt-0.5">
-                  Full evidence-backed dossiers with zero fabricated claims. Click 'View Dossier' on any card to inspect all 7 sections and grouped source citations.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap">
-                {selectedProfile && (
-                  <button
-                    type="button"
-                    onClick={() => setDossierProfile(selectedProfile)}
-                    className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-[#FFE0B2] hover:bg-[#FFD54F] border-2 border-[#1E1B18] rounded-xl flex items-center gap-1.5 shadow-sketch-xs"
-                  >
-                    <span>🔍 Open Dossier ({selectedProfile.officialName})</span>
-                  </button>
-                )}
-
-                {profiles.length > 0 && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const targetProfiles = profiles.filter((p) => {
-                          if (!searchQuery.trim()) return true;
-                          const q = searchQuery.toLowerCase();
-                          return (
-                            p.officialName.toLowerCase().includes(q) ||
-                            p.canonicalDomain.toLowerCase().includes(q)
-                          );
-                        });
-                        downloadObsidianVault(
-                          {
-                            vaultName: 'Huntlyst-External-Vault',
-                            externalRecords: targetProfiles,
-                          },
-                          `huntlyst-external-vault-${new Date().toISOString().split('T')[0]}.zip`
-                        );
-                        setStatusMessage(`Exported ${targetProfiles.length} dossiers to Obsidian Vault! 🗂️`);
-                      }}
-                      className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-[#EDE7F6] hover:bg-[#D1C4E9] border-2 border-[#1E1B18] rounded-xl flex items-center gap-1 shadow-sketch-xs"
-                      title="Export all external dossiers as Obsidian Vault (.zip)"
-                    >
-                      <span>🗂️</span>
-                      <span>Vault (.zip)</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const targetProfiles = profiles.filter((p) => {
-                          if (!searchQuery.trim()) return true;
-                          const q = searchQuery.toLowerCase();
-                          return (
-                            p.officialName.toLowerCase().includes(q) ||
-                            p.canonicalDomain.toLowerCase().includes(q)
-                          );
-                        });
-                        downloadCombinedMarkdown(
-                          targetProfiles,
-                          `huntlyst-external-research-${new Date().toISOString().split('T')[0]}.md`,
-                          { notes: 'External Research Intelligence Report' }
-                        );
-                        setStatusMessage(`Exported ${targetProfiles.length} dossiers to combined Markdown! 📝`);
-                      }}
-                      className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] border-2 border-[#1E1B18] rounded-xl flex items-center gap-1 shadow-sketch-xs"
-                      title="Export as combined Markdown report (.md)"
-                    >
-                      <span>📝</span>
-                      <span>Markdown (.md)</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setIsExportModalOpen(true)}
-                      className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] border-2 border-[#1E1B18] rounded-xl flex items-center gap-1 shadow-sketch-xs"
-                      title="Open full Export Menu"
-                    >
-                      <span>📦</span>
-                      <span>Export Menu</span>
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Search Input */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="relative flex-1 min-w-[240px]">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Filter profiles by name, domain, industry, or country..."
-                  className="w-full pl-9 pr-3 py-2 border border-[#1E1B18] rounded-xl text-xs font-mono bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
-                />
-                <span className="absolute left-3 top-2.5 text-xs text-[#766E65]">🔍</span>
-              </div>
-
-              {searchQuery && (
+          <SharedCompanyTable
+            title="Company Research Profiles & Evidence Dossiers"
+            icon="📑"
+            subtitle={`${profiles.length} external candidates researched • Full evidence dossiers with zero fabricated claims.`}
+            rows={externalSharedRows}
+            isLoading={isResearching}
+            emptyTitle="No research results yet."
+            emptySubtitle="No research results yet. Start a search or research operation to discover companies."
+            selectable={true}
+            selectedIds={selectedForBatch}
+            onToggleSelect={(id) => {
+              const next = new Set(selectedForBatch);
+              if (next.has(id)) next.delete(id);
+              else next.add(id);
+              setSelectedForBatch(next);
+            }}
+            onSelectAll={() => setSelectedForBatch(new Set(profiles.map((p) => p.id)))}
+            onDeselectAll={() => setSelectedForBatch(new Set())}
+            onView={(row) => {
+              setSelectedProfileId(row.id);
+              setDossierProfile(row.raw);
+            }}
+            savedLeads={savedLeads}
+            onToggleSave={onToggleSave}
+            onToast={(msg) => setStatusMessage(msg)}
+            toolbarActions={
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="text-xs font-mono text-[#766E65] hover:text-[#1E1B18] underline"
+                  disabled={selectedForBatch.size === 0 || isVerifying}
+                  onClick={() => handleVerifyCompanies(Array.from(selectedForBatch))}
+                  className="sketch-btn px-3.5 py-1.5 text-xs font-bold text-white bg-[#2E7D32] hover:bg-[#1B5E20] border border-[#1E1B18] rounded-xl disabled:opacity-50 flex items-center gap-1.5 shadow-sketch-xs"
                 >
-                  Clear Filter
+                  {isVerifying ? (
+                    <>
+                      <span className="animate-spin">⏳</span>
+                      <span>Evaluating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>⚡</span>
+                      <span>Verify Selected ({selectedForBatch.size})</span>
+                    </>
+                  )}
                 </button>
-              )}
-            </div>
-          </div>
 
-          {/* List of Company Cards */}
-          <div className="space-y-4">
-            {(() => {
-              const q = searchQuery.toLowerCase().trim();
-              const filtered = profiles.filter((p) => {
-                if (!q) return true;
-                return (
-                  p.officialName.toLowerCase().includes(q) ||
-                  p.canonicalDomain.toLowerCase().includes(q) ||
-                  (p.primaryIndustry && p.primaryIndustry.toLowerCase().includes(q)) ||
-                  (p.headquarters.country && p.headquarters.country.toLowerCase().includes(q))
-                );
-              });
+                <button
+                  type="button"
+                  onClick={() => {
+                    downloadObsidianVault(
+                      {
+                        vaultName: 'Huntlyst-External-Vault',
+                        externalRecords: profiles,
+                      },
+                      `huntlyst-external-vault-${new Date().toISOString().split('T')[0]}.zip`
+                    );
+                    setStatusMessage(`Exported ${profiles.length} dossiers to Obsidian Vault! 🗂️`);
+                  }}
+                  className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-[#EDE7F6] hover:bg-[#D1C4E9] border-2 border-[#1E1B18] rounded-xl flex items-center gap-1 shadow-sketch-xs"
+                  title="Export all external dossiers as Obsidian Vault (.zip)"
+                >
+                  <span>🗂️</span>
+                  <span>Vault (.zip)</span>
+                </button>
 
-              if (profiles.length === 0) {
-                return (
-                  <div className="p-10 text-center bg-white rounded-2xl border border-[#EBE4D5] text-xs font-mono text-[#766E65] space-y-2">
-                    <p className="text-sm font-bold text-[#1E1B18]">No research results yet.</p>
-                    <p>Start a search or research operation to discover companies.</p>
-                  </div>
-                );
-              }
+                <button
+                  type="button"
+                  onClick={() => {
+                    downloadCombinedMarkdown(
+                      profiles,
+                      `huntlyst-external-research-${new Date().toISOString().split('T')[0]}.md`,
+                      { notes: 'External Research Intelligence Report' }
+                    );
+                    setStatusMessage(`Exported ${profiles.length} dossiers to combined Markdown! 📝`);
+                  }}
+                  className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] border-2 border-[#1E1B18] rounded-xl flex items-center gap-1 shadow-sketch-xs"
+                  title="Export as combined Markdown report (.md)"
+                >
+                  <span>📝</span>
+                  <span>Markdown (.md)</span>
+                </button>
 
-              if (filtered.length === 0) {
-                return (
-                  <div className="p-8 text-center bg-white rounded-2xl border border-[#EBE4D5] text-xs font-mono text-[#766E65] space-y-2">
-                    <p>No company profiles matched "{searchQuery}".</p>
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery('')}
-                      className="text-[#FF6B35] font-bold underline"
-                    >
-                      Reset search filter
-                    </button>
-                  </div>
-                );
-              }
-
-              return (
-                <div className="space-y-3">
-                  {filtered.map((p) => (
-                    <CompanyCard
-                      key={p.id}
-                      profile={p}
-                      verificationRun={verificationRuns[p.id]}
-                      isSelected={selectedProfileId === p.id}
-                      onToggleSelect={(id) => {
-                        setSelectedProfileId(id);
-                      }}
-                      onOpenDossier={(prof) => setDossierProfile(prof)}
-                      onVerify={(id) => {
-                        setSelectedProfileId(id);
-                        handleVerifyCompanies([id]);
-                      }}
-                      isVerifying={isVerifying}
-                    />
-                  ))}
-                </div>
-              );
-            })()}
-          </div>
+                <button
+                  type="button"
+                  onClick={() => setIsExportModalOpen(true)}
+                  className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] border-2 border-[#1E1B18] rounded-xl flex items-center gap-1 shadow-sketch-xs"
+                  title="Open full Export Menu"
+                >
+                  <span>📦</span>
+                  <span>Export Menu</span>
+                </button>
+              </div>
+            }
+            extraRowActions={(row, closeMenu) => (
+              <button
+                type="button"
+                onClick={() => {
+                  closeMenu();
+                  setSelectedProfileId(row.id);
+                  handleVerifyCompanies([row.id]);
+                }}
+                className="w-full px-2 py-1 text-left text-[11px] font-mono hover:bg-[#FAF6EE] rounded text-[#2E7D32] font-bold"
+              >
+                ⚡ Verify Candidate
+              </button>
+            )}
+          />
         </div>
       )}
 
@@ -1095,13 +1078,31 @@ export default function ExternalResearchWorkflow({
 
           {selectedProfile && (
             <div className="mb-4">
-              <CompanyCard
-                profile={selectedProfile}
-                verificationRun={currentVerificationRun}
-                isSelected={true}
-                onOpenDossier={(prof) => setDossierProfile(prof)}
-                onVerify={(id) => handleVerifyCompanies([id])}
-                isVerifying={isVerifying}
+              <SharedCompanyTable
+                title={`Company Under Verification: ${selectedProfile.officialName}`}
+                subtitle="Live deterministic verification audit and source evidence breakdown."
+                icon={<span>🔬</span>}
+                rows={externalSharedRows.filter((r) => r.id === selectedProfile.id)}
+                onView={(row) => {
+                  setSelectedProfileId(row.id);
+                  setDossierProfile(row.raw);
+                }}
+                savedLeads={savedLeads}
+                onToggleSave={onToggleSave}
+                extraRowActions={(row, closeMenu) => (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMenu();
+                      handleVerifyCompanies([row.id]);
+                    }}
+                    disabled={isVerifying}
+                    className="w-full text-left px-3 py-1.5 text-xs font-mono hover:bg-[#FAF6EE] text-[#1E1B18] flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <span>⚡</span>
+                    <span>Re-Verify Company</span>
+                  </button>
+                )}
               />
             </div>
           )}

@@ -90,15 +90,26 @@ export default function DiscoverView({
       )}
 
       {/* Render Active View */}
-      {discoveryMode === 'staged' && !isRunning ? (
-        <StagedDiscoveryWorkflow
-          initialTargetProfile={activeConfig.targetProfile}
-          onFinalizeResults={handleStagedFinalize}
-          onOpenLeadModal={onOpenLeadModal}
-          savedLeads={savedLeads}
-          onToggleSave={onToggleSave}
-        />
-      ) : isRunning ? (
+      {!isRunning ? (
+        <>
+          <div className={discoveryMode === 'staged' ? 'block' : 'hidden'}>
+            <StagedDiscoveryWorkflow
+              initialTargetProfile={activeConfig.targetProfile}
+              onFinalizeResults={handleStagedFinalize}
+              onOpenLeadModal={onOpenLeadModal}
+              savedLeads={savedLeads}
+              onToggleSave={onToggleSave}
+            />
+          </div>
+          <div className={discoveryMode === 'autonomous' ? 'block' : 'hidden'}>
+            <HuntConfiguration
+              initialConfig={activeConfig}
+              isRunning={isRunning}
+              onLaunchHunt={handleLaunch}
+            />
+          </div>
+        </>
+      ) : (
         <div className="space-y-6">
           <HuntLoadingScreen
             config={activeConfig}
@@ -131,13 +142,6 @@ export default function DiscoverView({
             )}
           </div>
         </div>
-      ) : (
-        /* Interactive Hunt Configuration Desk */
-        <HuntConfiguration
-          initialConfig={activeConfig}
-          isRunning={isRunning}
-          onLaunchHunt={handleLaunch}
-        />
       )}
     </div>
   );

@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { TargetProfile, DEFAULT_TVB_TARGET_PROFILE, formatTargetSummary } from '@/lib/targetProfileData';
 import { CompanyVerificationResult, PipelineStageName } from '@/providers/types';
 import { CompanyRecord, RejectedCompanyRecord, HuntConfig, PipelineStreamEvent } from '@/lib/types';
-import CandidateVerificationCard from './CandidateVerificationCard';
 import HuntConfiguration from './HuntConfiguration';
 import ExportModal from './ExportModal';
 import ExternalResearchWorkflow from './ExternalResearchWorkflow';
@@ -12,6 +11,7 @@ import { PipelineStageLabel } from '@/lib/export';
 import { extractCanonicalDomain, normalizeCompanyName } from '@/lib/deduplication';
 import { processPhase1File, Phase1ImportResult } from '@/lib/internal';
 import CompanyRecordsTable from './CompanyRecordsTable';
+import SharedCompanyTable, { SharedCompanyRow } from './SharedCompanyTable';
 
 function isSameCompanyIdentity(
   a: { name?: string; website?: string },
@@ -104,6 +104,56 @@ export default function StagedDiscoveryWorkflow({
   const [webProgress, setWebProgress] = useState<{ current: number; total: number; strategy?: string; discovered?: number } | null>(null);
   const [isWebLogsExpanded, setIsWebLogsExpanded] = useState(false);
 
+  // Shared Table row adapter for Web Search stage
+  const webSearchSharedRows: SharedCompanyRow[] = React.useMemo(() => {
+    const statusMap: Record<string, { status: string; label: string }> = {
+      VERIFIED: { status: 'FOUND', label: 'VERIFIED' },
+      QUALIFIED: { status: 'FOUND', label: 'VERIFIED' },
+      REVIEW: { status: 'NEEDS_REVIEW', label: 'NEEDS REVIEW' },
+      PARTIALLY_VERIFIED: { status: 'NEEDS_REVIEW', label: 'NEEDS REVIEW' },
+      UNVERIFIED: { status: 'UNVERIFIED', label: 'UNVERIFIED' },
+      REJECTED: { status: 'MISSING', label: 'REJECTED' },
+    };
+
+    return webSearchResults.map((res, idx) => {
+      const comp = res.company;
+      const anyComp = comp as any;
+      const domain =
+        comp.canonicalDomain ||
+        (comp.website ? comp.website.replace(/^https?:\/\//, '').replace(/\/.*$/, '') : '');
+      const website = comp.website || (domain ? `https://${domain}` : '');
+      const canonical = statusMap[res.verificationStatus] || {
+        status: 'UNVERIFIED',
+        label: res.verificationStatus || 'UNVERIFIED',
+      };
+
+      const founded = anyComp.foundedYear || anyComp.yearFounded || 'Not disclosed';
+      const funding =
+        anyComp.totalFunding ||
+        comp.fundingOrRevenue ||
+        (comp.totalFundingDisclosed ? `$${comp.totalFundingDisclosed}M` : 'Not disclosed');
+      const stage = anyComp.fundingStage || comp.latestRound || anyComp.fundingType || 'Not disclosed';
+      const geo =
+        anyComp.geography || comp.headquarters || comp.country || comp.city || 'Not disclosed';
+
+      return {
+        id: comp.name,
+        index: idx + 1,
+        name: comp.name,
+        description: comp.description || null,
+        domain,
+        website,
+        industry: comp.industry || 'Not disclosed',
+        geography: geo,
+        founded: String(founded),
+        funding: String(funding),
+        stage: String(stage),
+        status: canonical.status,
+        statusLabel: canonical.label,
+        raw: res,
+      };
+    });
+  }, [webSearchResults]);
 
   // Stage & Live Export Modal State (Sections 44, 52, 53)
   const [exportModalConfig, setExportModalConfig] = useState<{
@@ -951,7 +1001,7 @@ export default function StagedDiscoveryWorkflow({
       {/* ========================================================================= */}
       {/* STAGE 1: INTERNAL DISCOVERY                                              */}
       {/* ========================================================================= */}
-      {currentStep === 'internal' && (
+      <div className={currentStep === 'internal' ? 'block' : 'hidden'}>
         <div className="space-y-5 animate-in fade-in">
           <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch-sm space-y-4">
             <div className="border-b border-[#F0EAD8] pb-3">
@@ -1112,12 +1162,12 @@ export default function StagedDiscoveryWorkflow({
             </div>
           )}
         </div>
-      )}
+      </div>
 
       {/* ========================================================================= */}
       {/* STAGE 2: EXTERNAL DISCOVERY                                              */}
       {/* ========================================================================= */}
-      {currentStep === 'external' && (
+      <div className={currentStep === 'external' ? 'block' : 'hidden'}>
         <div className="space-y-5 animate-in fade-in">
           <ExternalResearchWorkflow
             carriedCandidates={internalResults
@@ -1134,6 +1184,8 @@ export default function StagedDiscoveryWorkflow({
               setExternalApproved(nextApproved);
             }}
             onOpenLeadModal={onOpenLeadModal}
+            savedLeads={savedLeads}
+            onToggleSave={onToggleSave}
           />
 
           {/* 🛑 APPROVAL GATE 2 BANNER */}
@@ -1160,12 +1212,12 @@ export default function StagedDiscoveryWorkflow({
             </button>
           </div>
         </div>
-      )}
+      </div>
 
       {/* ========================================================================= */}
       {/* STAGE 3: HUNTLYST WEB DISCOVERY                                          */}
       {/* ========================================================================= */}
-      {currentStep === 'web_search' && (
+      <div className={currentStep === 'web_search' ? 'block' : 'hidden'}>
         <div className="space-y-5 animate-in fade-in">
           <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch-sm space-y-4">
             <div className="border-b border-[#F0EAD8] pb-3">
@@ -1308,47 +1360,70 @@ export default function StagedDiscoveryWorkflow({
             </div>
           )}
 
-          {/* Web Search Results */}
+          {/* Web Search Results Table */}
           {webSearchResults.length > 0 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <h4 className="font-display font-bold text-base text-[#1E1B18]">
-                  Web Search Candidates Verified ({webSearchResults.length})
-                </h4>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setExportModalConfig({
-                      isOpen: true,
-                      stage: 'Stage 3: Research / Enrichment',
-                      stagedResults: webSearchResults,
-                      title: 'Export Stage 3: Web Discovery & Research',
-                      subtitle: `${webSearchResults.length} web search candidates evaluated against target profile.`,
-                    })}
-                    className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] rounded-lg border border-[#1E1B18] shadow-sketch-xs flex items-center gap-1.5 transition-colors"
-                  >
-                    <span>📦</span>
-                    <span>Export Stage 3 ({webSearchResults.length})</span>
-                  </button>
-                  <span className="text-xs font-mono text-[#2E7D32] font-bold">
-                    Approved: {webSearchApproved.size}
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {webSearchResults.map((res) => (
-                  <CandidateVerificationCard
-                    key={res.company.name + res.company.website}
-                    result={res}
-                    isSelected={webSearchApproved.has(res.company.name)}
-                    onToggleSelect={toggleWebSearchApproval}
-                    onOpenDetails={() => onOpenLeadModal?.(res.company)}
-                    onRetryStage={handleRetryCandidateStage}
-                    isRetrying={isRetryingCandidate}
-                  />
-                ))}
-              </div>
+              <SharedCompanyTable
+                title="Web Search Candidates Verified"
+                subtitle="Live venture search results evaluated against your deterministic criteria."
+                icon={<span>🌐</span>}
+                rows={webSearchSharedRows}
+                selectable={true}
+                selectedIds={webSearchApproved}
+                onToggleSelect={(id) => toggleWebSearchApproval(id)}
+                onSelectAll={() => {
+                  if (webSearchApproved.size === webSearchResults.length) {
+                    setWebSearchApproved(new Set());
+                  } else {
+                    setWebSearchApproved(new Set(webSearchResults.map((r) => r.company.name)));
+                  }
+                }}
+                onDeselectAll={() => setWebSearchApproved(new Set())}
+                onView={(row) => onOpenLeadModal?.(row.raw.company)}
+                savedLeads={savedLeads}
+                onToggleSave={onToggleSave}
+                onToast={(msg) => setStatusMessage(msg)}
+                toolbarActions={
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExportModalConfig({
+                          isOpen: true,
+                          stage: 'Stage 3: Research / Enrichment',
+                          stagedResults: webSearchResults,
+                          title: 'Export Stage 3: Web Discovery & Research',
+                          subtitle: `${webSearchResults.length} web search candidates evaluated against target profile.`,
+                        })
+                      }
+                      className="sketch-btn px-3 py-1.5 text-xs font-bold text-[#1E1B18] bg-white hover:bg-[#FAF6EE] rounded-lg border border-[#1E1B18] shadow-sketch-xs flex items-center gap-1.5 transition-colors"
+                    >
+                      <span>📦</span>
+                      <span>Export Stage 3 ({webSearchResults.length})</span>
+                    </button>
+                    <span className="text-xs font-mono text-[#2E7D32] font-bold px-2 py-1 bg-[#E8F5E9] rounded-lg border border-[#C8E6C9]">
+                      Approved: {webSearchApproved.size} / {webSearchResults.length}
+                    </span>
+                  </div>
+                }
+                extraRowActions={(row, closeMenu) => {
+                  const res = row.raw as CompanyVerificationResult;
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        closeMenu();
+                        handleRetryCandidateStage(res, 'RESEARCH');
+                      }}
+                      disabled={isRetryingCandidate}
+                      className="w-full text-left px-3 py-1.5 text-xs font-mono hover:bg-[#FAF6EE] text-[#1E1B18] flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <span>🔄</span>
+                      <span>Retry Verification</span>
+                    </button>
+                  );
+                }}
+              />
             </div>
           )}
 
@@ -1392,7 +1467,7 @@ export default function StagedDiscoveryWorkflow({
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Target Configuration Modal */}
       {isConfigModalOpen && (

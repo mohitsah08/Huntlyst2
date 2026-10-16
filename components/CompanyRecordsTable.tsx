@@ -24,6 +24,7 @@ import { Phase1ImportResult } from '@/lib/internal/phase1Types';
 import { CompanyVerificationResult } from '@/providers/types';
 import { getCompanyLeadKey } from '@/lib/deduplication';
 import { CompanyRecord } from '@/lib/types';
+import SharedCompanyTable, { SharedCompanyRow } from './SharedCompanyTable';
 
 function internalRecordToCompany(record: InternalRecordDTO): CompanyRecord {
   return {
@@ -113,9 +114,9 @@ export default function CompanyRecordsTable({
         const website = comp.website || (domain ? `https://${domain}` : '');
         const industry = comp.industry || 'Technology';
         const geo = anyComp.geography || comp.headquarters || comp.country || comp.city || 'Global';
-        const founded = anyComp.foundedYear || comp.yearFounded || 2020;
-        const funding = anyComp.totalFunding || comp.fundingOrRevenue || (comp.totalFundingDisclosed ? `$${comp.totalFundingDisclosed}M` : '$3M');
-        const stage = anyComp.fundingStage || comp.latestRound || comp.fundingType || 'Series A';
+        const founded = anyComp.foundedYear || comp.yearFounded || 'Not disclosed';
+        const funding = anyComp.totalFunding || comp.fundingOrRevenue || (comp.totalFundingDisclosed ? `$${comp.totalFundingDisclosed}M` : 'Not disclosed');
+        const stage = anyComp.fundingStage || comp.latestRound || comp.fundingType || 'Not disclosed';
 
         const statusMap: Record<string, { status: InternalRecordDTO['status']; label: InternalRecordDTO['statusLabel'] }> = {
           VERIFIED: { status: 'FOUND', label: 'FOUND' },
@@ -185,9 +186,9 @@ export default function CompanyRecordsTable({
         const website = c.canonicalFields.website.value || raw.URL || (domain ? `https://${domain}` : '');
         const industry = c.canonicalFields.industry.value || raw.Industry || 'Technology';
         const geo = c.canonicalFields.geography.value || raw.Country || raw.City || 'Global';
-        const founded = c.canonicalFields.foundingYear.value || raw['Founding Year'] || 2020;
-        const funding = c.canonicalFields.totalFundingAmount.value || raw['Funding Amount (in USD)'] || '$3M';
-        const stage = c.canonicalFields.companyStage.value || raw['Funding Type'] || 'Series A';
+        const founded = c.canonicalFields.foundingYear.value || raw['Founding Year'] || 'Not disclosed';
+        const funding = c.canonicalFields.totalFundingAmount.value || raw['Funding Amount (in USD)'] || 'Not disclosed';
+        const stage = c.canonicalFields.companyStage.value || raw['Funding Type'] || 'Not disclosed';
 
         let status: InternalRecordDTO['status'] = 'UNVERIFIED';
         let statusLabel: InternalRecordDTO['statusLabel'] = 'UNVERIFIED';
@@ -468,130 +469,51 @@ export default function CompanyRecordsTable({
     }
   };
 
+  const sharedRows: SharedCompanyRow[] = useMemo(() => {
+    return records.map(r => ({
+      id: r.id,
+      index: r.index,
+      name: r.name,
+      description: r.description,
+      domain: r.domain,
+      website: r.website,
+      industry: r.industry,
+      geography: r.geo,
+      founded: r.founded,
+      funding: r.funding,
+      stage: r.stage,
+      status: r.status,
+      statusLabel: r.statusLabel,
+      raw: r,
+    }));
+  }, [records]);
+
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
-      {/* Company Records Card */}
-      <div className="paper-card bg-[#FFFDF9] rounded-2xl border-2 border-[#1E1B18] shadow-sketch-sm overflow-hidden">
-        {/* Card Header & Toolbar */}
-        <div className="p-4 sm:p-5 border-b border-[#E5E0D5] flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#FAF6EE]">
-          {/* Title & Badge */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#FF6B35] text-white flex items-center justify-center text-base shrink-0 shadow-sketch-xs">
-              📊
-            </div>
-            <div>
-              <h3 className="font-display text-base sm:text-lg font-bold text-[#1E1B18] leading-tight">
-                Company Records ({totalRecords})
-              </h3>
-              <p className="text-[11px] font-mono text-[#766E65] mt-0.5">
-                {summaryCounts.total} total rows • {summaryCounts.unverified} unverified • {summaryCounts.needsReview} needs review • {summaryCounts.verified} verified
-              </p>
-            </div>
-          </div>
-
-          {/* Toolbar Controls */}
-          <div className="flex flex-wrap items-center gap-2 self-start lg:self-auto">
-            {/* 1. Search */}
-            <div className="relative min-w-[170px] sm:min-w-[200px]">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[#766E65]">
-                🔍
-              </span>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search companies..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs font-mono rounded-lg border border-[#1E1B18] bg-white focus:outline-none focus:ring-1 focus:ring-[#FF6B35] shadow-sketch-xs"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-[#766E65] hover:text-[#1E1B18]"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            {/* 2. Filter Button */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`px-3 py-1.5 rounded-lg border border-[#1E1B18] text-xs font-bold font-mono flex items-center gap-1.5 transition-colors shadow-sketch-xs ${
-                  statusFilter !== 'ALL' || stageFilter !== 'ALL'
-                    ? 'bg-[#1E1B18] text-white'
-                    : 'bg-white text-[#1E1B18] hover:bg-[#FAF6EE]'
-                }`}
-              >
-                <span>∇</span>
-                <span>Filter</span>
-                {(statusFilter !== 'ALL' || stageFilter !== 'ALL') && (
-                  <span className="w-2 h-2 rounded-full bg-[#FF6B35]" />
-                )}
-              </button>
-
-              {/* Filter Popover */}
-              {isFilterOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 p-3 bg-white rounded-xl border-2 border-[#1E1B18] shadow-sketch-md z-30 space-y-3 animate-in zoom-in-95 duration-150">
-                  <div className="flex items-center justify-between border-b border-[#F0EAD8] pb-1.5">
-                    <span className="text-xs font-bold text-[#1E1B18]">Filter Records</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setStatusFilter('ALL');
-                        setStageFilter('ALL');
-                      }}
-                      className="text-[10px] font-mono text-[#FF6B35] hover:underline"
-                    >
-                      Reset
-                    </button>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-[#766E65] block">Status</label>
-                    <select
-                      value={statusFilter}
-                      onChange={e => setStatusFilter(e.target.value as any)}
-                      className="w-full p-1.5 text-xs font-mono rounded border border-[#DCD6C9] bg-white"
-                    >
-                      <option value="ALL">All Statuses</option>
-                      <option value="NEEDS_REVIEW">Needs Review</option>
-                      <option value="MISSING">Missing</option>
-                      <option value="FOUND">Found / Verified</option>
-                      <option value="UNVERIFIED">Unverified</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-[#766E65] block">Stage</label>
-                    <select
-                      value={stageFilter}
-                      onChange={e => setStageFilter(e.target.value)}
-                      className="w-full p-1.5 text-xs font-mono rounded border border-[#DCD6C9] bg-white"
-                    >
-                      <option value="ALL">All Stages</option>
-                      <option value="Seed">Seed</option>
-                      <option value="Series A">Series A</option>
-                      <option value="Series B">Series B</option>
-                      <option value="Series C">Series C</option>
-                      <option value="Series D">Series D</option>
-                    </select>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsFilterOpen(false)}
-                    className="w-full py-1 text-xs font-bold text-white bg-[#1E1B18] rounded-lg hover:bg-[#333]"
-                  >
-                    Done
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* 3. Settings Button (Opens Internal Workflow Settings) */}
+      <SharedCompanyTable
+        title="Company Records"
+        icon="📊"
+        rows={sharedRows}
+        isLoading={isLoading}
+        emptyTitle={
+          records.length === 0
+            ? 'No company records yet. Upload a CSV or Excel file to begin.'
+            : 'No company records matched your active filter or search query.'
+        }
+        emptySubtitle={
+          records.length === 0
+            ? 'Use the upload area above to parse and verify internal companies.'
+            : undefined
+        }
+        onView={row => handleOpenDossier(row.raw)}
+        savedLeads={savedLeads}
+        onToggleSave={onToggleSave}
+        onToast={onToast}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        toolbarActions={
+          <>
+            {/* Settings Button (Opens Internal Workflow Settings) */}
             <button
               type="button"
               onClick={() => setIsSettingsModalOpen(true)}
@@ -601,7 +523,7 @@ export default function CompanyRecordsTable({
               <span>Settings</span>
             </button>
 
-            {/* 4. Offline / Online Toggle */}
+            {/* Offline / Online Toggle */}
             <div className="inline-flex items-center p-0.5 rounded-lg border border-[#1E1B18] bg-[#FAF6EE] shadow-sketch-xs">
               <button
                 type="button"
@@ -627,7 +549,7 @@ export default function CompanyRecordsTable({
               </button>
             </div>
 
-            {/* 5. Verify Button */}
+            {/* Verify Button */}
             <button
               type="button"
               onClick={handleRunVerify}
@@ -647,7 +569,7 @@ export default function CompanyRecordsTable({
               )}
             </button>
 
-            {/* 6. Export Dropdown */}
+            {/* Export Dropdown */}
             <div className="relative">
               <button
                 type="button"
@@ -658,9 +580,8 @@ export default function CompanyRecordsTable({
                 <span className="text-[10px]">∨</span>
               </button>
 
-              {/* Export Menu */}
               {isExportMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 p-1.5 bg-white rounded-xl border-2 border-[#1E1B18] shadow-sketch-md z-30 space-y-1 animate-in zoom-in-95 duration-150">
+                <div className="absolute right-0 top-full mt-2 w-48 p-1.5 bg-white rounded-xl border-2 border-[#1E1B18] shadow-sketch-md z-30 space-y-1 animate-in zoom-in-95 duration-150 text-left">
                   <button
                     type="button"
                     onClick={() => handleExport('CSV')}
@@ -704,302 +625,9 @@ export default function CompanyRecordsTable({
                 </div>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* Table View */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs font-mono border-collapse text-left">
-            <thead>
-              <tr className="border-b border-[#E5E0D5] bg-[#FAF6EE] text-[#766E65] text-[11px] font-bold">
-                <th className="py-2.5 px-3 w-10 text-center">#</th>
-                <th className="py-2.5 px-3">Company</th>
-                <th className="py-2.5 px-3">Domain</th>
-                <th className="py-2.5 px-3">Industry</th>
-                <th className="py-2.5 px-3">Geography</th>
-                <th className="py-2.5 px-3">Founded</th>
-                <th className="py-2.5 px-3">Funding</th>
-                <th className="py-2.5 px-3">Stage</th>
-                <th className="py-2.5 px-3">Status</th>
-                <th className="py-2.5 px-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#F0EAD8]">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={10} className="py-8 text-center text-xs font-mono text-[#766E65]">
-                    <span className="w-4 h-4 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin inline-block mr-2" />
-                    Loading company records...
-                  </td>
-                </tr>
-              ) : currentDisplayedRecords.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="py-12 text-center text-xs font-mono text-[#766E65]">
-                    <div className="space-y-1">
-                      <div className="text-sm font-bold text-[#1E1B18]">
-                        {records.length === 0
-                          ? 'No company records yet. Upload a CSV or Excel file to begin.'
-                          : 'No company records matched your active filter or search query.'}
-                      </div>
-                      {records.length === 0 && (
-                        <div className="text-xs text-[#766E65]">
-                          Use the upload area above to parse and verify internal companies.
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                currentDisplayedRecords.map(record => (
-                  <tr
-                    key={record.id}
-                    className="hover:bg-[#FFF8EE] transition-colors group cursor-default"
-                  >
-                    {/* # */}
-                    <td className="py-2.5 px-3 text-center text-[#766E65] font-bold">
-                      {record.index}
-                    </td>
-
-                    {/* Company */}
-                    <td className="py-2.5 px-3 font-bold text-[#1E1B18] font-sans">
-                      {record.name}
-                    </td>
-
-                    {/* Domain */}
-                    <td className="py-2.5 px-3 text-[#FF6B35] hover:underline cursor-pointer">
-                      <a
-                        href={record.website || `https://${record.domain}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={e => e.stopPropagation()}
-                      >
-                        {record.domain}
-                      </a>
-                    </td>
-
-                    {/* Industry */}
-                    <td className="py-2.5 px-3 text-[#5A544E]">
-                      {record.industry}
-                    </td>
-
-                    {/* Geography */}
-                    <td className="py-2.5 px-3 text-[#5A544E]">
-                      {record.geo}
-                    </td>
-
-                    {/* Founded */}
-                    <td className="py-2.5 px-3 text-[#5A544E]">
-                      {record.founded}
-                    </td>
-
-                    {/* Funding */}
-                    <td className="py-2.5 px-3 font-bold text-[#1E1B18]">
-                      {record.funding}
-                    </td>
-
-                    {/* Stage (Cyan Pill) */}
-                    <td className="py-2.5 px-3">
-                      <span className="inline-block px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#E0F7FA] text-[#00838F] border border-[#00838F]/30 whitespace-nowrap">
-                        {record.stage}
-                      </span>
-                    </td>
-
-                    {/* Status Badge */}
-                    <td className="py-2.5 px-3">
-                      {renderStatusBadge(record.statusLabel)}
-                    </td>
-
-                    {/* Actions (View ↗ + Shortlist Star + Context Menu) */}
-                    <td className="py-2.5 px-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenDossier(record)}
-                          className="px-2.5 py-1 rounded-md text-[11px] font-bold text-[#1E1B18] bg-white border border-[#1E1B18] hover:bg-[#FAF6EE] shadow-sketch-xs flex items-center gap-1 transition-colors"
-                        >
-                          <span>View</span>
-                          <span>↗</span>
-                        </button>
-
-                        {onToggleSave && (
-                          <button
-                            type="button"
-                            onClick={() => onToggleSave(internalRecordToCompany(record))}
-                            className={`p-1 rounded-md border text-xs transition-colors ${
-                              savedLeads.some((s: any) => getCompanyLeadKey(s) === getCompanyLeadKey(record))
-                                ? 'bg-[#FFE7DC] border-[#FF6B35] text-[#FF6B35]'
-                                : 'bg-white border-[#D9D0C1] text-[#766E65] hover:bg-[#FAF6EE]'
-                            }`}
-                            title={
-                              savedLeads.some((s: any) => getCompanyLeadKey(s) === getCompanyLeadKey(record))
-                                ? 'Remove from Shortlist'
-                                : 'Save to Shortlist'
-                            }
-                          >
-                            {savedLeads.some((s: any) => getCompanyLeadKey(s) === getCompanyLeadKey(record))
-                              ? '⭐'
-                              : '☆'}
-                          </button>
-                        )}
-
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setActiveMenuId(activeMenuId === record.id ? null : record.id)
-                            }
-                            className="w-6 h-6 rounded flex items-center justify-center text-[#766E65] hover:text-[#1E1B18] hover:bg-white text-base"
-                          >
-                            ⋮
-                          </button>
-
-                          {activeMenuId === record.id && (
-                            <div className="absolute right-0 top-full mt-1 w-44 p-1 bg-white rounded-lg border border-[#1E1B18] shadow-sketch-md z-30 space-y-0.5 animate-in zoom-in-95 duration-100">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(record.domain);
-                                  setActiveMenuId(null);
-                                  if (onToast) onToast(`Copied ${record.domain}! 📋`);
-                                }}
-                                className="w-full px-2 py-1 text-left text-[11px] font-mono hover:bg-[#FAF6EE] rounded text-[#1E1B18]"
-                              >
-                                Copy Domain
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveMenuId(null);
-                                  handleOpenDossier(record);
-                                }}
-                                className="w-full px-2 py-1 text-left text-[11px] font-mono hover:bg-[#FAF6EE] rounded text-[#1E1B18]"
-                              >
-                                View Dossier
-                              </button>
-                              <a
-                                href={record.website || `https://${record.domain}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={() => setActiveMenuId(null)}
-                                className="block w-full px-2 py-1 text-left text-[11px] font-mono hover:bg-[#FAF6EE] rounded text-[#1E1B18]"
-                              >
-                                Visit Website ↗
-                              </a>
-                              {onToggleSave && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActiveMenuId(null);
-                                    onToggleSave(internalRecordToCompany(record));
-                                  }}
-                                  className="w-full px-2 py-1 text-left text-[11px] font-mono hover:bg-[#FAF6EE] rounded text-[#1E1B18]"
-                                >
-                                  {savedLeads.some((s: any) => getCompanyLeadKey(s) === getCompanyLeadKey(record))
-                                    ? 'Unsave from Shortlist'
-                                    : 'Save to Shortlist ⭐'}
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination Footer — STRICT: default 10 per page */}
-        <div className="p-3 sm:p-4 border-t border-[#E5E0D5] bg-[#FAF6EE] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono font-bold text-[#766E65]">
-          {/* Rows per page */}
-          <div className="flex items-center gap-2">
-            <span>Rows per page</span>
-            <select
-              value={rowsPerPage}
-              onChange={e => {
-                const val = Number(e.target.value);
-                setRowsPerPage(val);
-                setCurrentPage(1);
-              }}
-              className="px-2 py-1 rounded border border-[#1E1B18] bg-white text-[#1E1B18] focus:outline-none shadow-sketch-xs"
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-          </div>
-
-          {/* Current Range and Total */}
-          <div>
-            {totalRecords > 0 ? (
-              <span>
-                {startIndex + 1}–{endIndex} of {totalRecords} rows
-              </span>
-            ) : (
-              <span>0 of 0 rows</span>
-            )}
-          </div>
-
-          {/* Pager Navigation Controls (< [1] [2] [3] ... [10] >) */}
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              disabled={currentPage <= 1}
-              onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-              className="w-7 h-7 rounded border border-[#1E1B18] bg-white text-[#1E1B18] hover:bg-[#FAF6EE] disabled:opacity-30 flex items-center justify-center text-xs shadow-sketch-xs"
-            >
-              &lt;
-            </button>
-
-            {/* Dynamic Page Buttons */}
-            {Array.from({ length: totalPages }).map((_, i) => {
-              const pNum = i + 1;
-              if (
-                totalPages > 6 &&
-                pNum > 3 &&
-                pNum < totalPages - 1 &&
-                Math.abs(pNum - currentPage) > 1
-              ) {
-                if (pNum === 4 || pNum === totalPages - 2) {
-                  return (
-                    <span key={pNum} className="px-1 text-[#766E65]">
-                      ...
-                    </span>
-                  );
-                }
-                return null;
-              }
-
-              return (
-                <button
-                  key={pNum}
-                  type="button"
-                  onClick={() => setCurrentPage(pNum)}
-                  className={`w-7 h-7 rounded text-xs font-bold font-mono transition-all ${
-                    currentPage === pNum
-                      ? 'bg-[#FF6B35] text-white border border-[#1E1B18] shadow-sketch-xs'
-                      : 'bg-white text-[#1E1B18] border border-[#DCD6C9] hover:bg-[#FAF6EE]'
-                  }`}
-                >
-                  {pNum}
-                </button>
-              );
-            })}
-
-            <button
-              type="button"
-              disabled={currentPage >= totalPages}
-              onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-              className="w-7 h-7 rounded border border-[#1E1B18] bg-white text-[#1E1B18] hover:bg-[#FAF6EE] disabled:opacity-30 flex items-center justify-center text-xs shadow-sketch-xs"
-            >
-              &gt;
-            </button>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Internal Workflow Settings Modal */}
       <InternalWorkflowSettingsModal
