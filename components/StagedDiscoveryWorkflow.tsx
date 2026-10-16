@@ -335,6 +335,14 @@ export default function StagedDiscoveryWorkflow({
       const file = e.target.files[0];
       const lowerName = file.name.toLowerCase();
       if (!lowerName.endsWith('.csv') && !lowerName.endsWith('.xlsx')) {
+        setSelectedFile(null);
+        setPhase1Result(null);
+        setVerificationResults(null);
+        setInternalResults([]);
+        setInternalApproved(new Set());
+        setInternalStats(null);
+        setInternalProgress(null);
+        setInternalStatus('idle');
         setErrorMessage('Internal Workflow currently accepts only CSV (.csv) and Excel workbook (.xlsx) files.');
         setStatusMessage('Unsupported file type. Choose a CSV or XLSX file.');
         e.target.value = '';
