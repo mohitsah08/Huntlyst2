@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { TargetProfile, DEFAULT_TVB_TARGET_PROFILE, formatTargetSummary } from '@/lib/targetProfileData';
 import { CompanyVerificationResult, PipelineStageName } from '@/providers/types';
 import { CompanyRecord, RejectedCompanyRecord, HuntConfig, PipelineStreamEvent } from '@/lib/types';
-import CandidateVerificationCard from './CandidateVerificationCard';
 import HuntConfiguration from './HuntConfiguration';
 import ExportModal from './ExportModal';
 import ExternalResearchWorkflow from './ExternalResearchWorkflow';
@@ -99,6 +98,7 @@ export default function StagedDiscoveryWorkflow({
 
   // Web Search Stage State
   const [webSearchResults, setWebSearchResults] = useState<CompanyVerificationResult[]>([]);
+  const [webSearchQuery, setWebSearchQuery] = useState('');
   const [webSearchApproved, setWebSearchApproved] = useState<Set<string>>(new Set());
   const [webLogs, setWebLogs] = useState<{ time: string; text: string; stage?: string }[]>([]);
   const [webProgress, setWebProgress] = useState<{ current: number; total: number; strategy?: string; discovered?: number } | null>(null);
@@ -127,6 +127,7 @@ export default function StagedDiscoveryWorkflow({
       setExternalResults([]);
       setExternalApproved(new Set());
       setWebSearchResults([]);
+      setWebSearchQuery('');
       setWebSearchApproved(new Set());
       setWebLogs([]);
       setWebProgress(null);
@@ -709,6 +710,25 @@ export default function StagedDiscoveryWorkflow({
     (currentStep === 'web_search' && webStatus === 'running') ||
     isRetryingCandidate;
 
+  const filteredWebSearchResults = webSearchResults.filter((result) => {
+    const query = webSearchQuery.toLowerCase().trim();
+    if (!query) return true;
+    const company = result.company as any;
+    return [
+      company.name,
+      company.website,
+      company.canonicalDomain,
+      company.industry,
+      company.sector,
+      company.headquarters,
+      company.geography,
+      company.country,
+      company.fundingOrRevenue,
+      company.latestRoundType,
+      company.latestRound,
+    ].some((value) => typeof value === 'string' && value.toLowerCase().includes(query));
+  });
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-16 animate-in fade-in duration-200">
       {/* 🎯 Target Profile Header & Customization Ribbon */}
@@ -951,8 +971,7 @@ export default function StagedDiscoveryWorkflow({
       {/* ========================================================================= */}
       {/* STAGE 1: INTERNAL DISCOVERY                                              */}
       {/* ========================================================================= */}
-      {currentStep === 'internal' && (
-        <div className="space-y-5 animate-in fade-in">
+      <div className={currentStep === 'internal' ? 'space-y-5 animate-in fade-in' : 'hidden'}>
           <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch-sm space-y-4">
             <div className="border-b border-[#F0EAD8] pb-3">
               <h3 className="font-display text-lg font-bold text-[#1E1B18] flex items-center gap-2">
@@ -1112,13 +1131,12 @@ export default function StagedDiscoveryWorkflow({
             </div>
           )}
         </div>
-      )}
+      </div>
 
       {/* ========================================================================= */}
       {/* STAGE 2: EXTERNAL DISCOVERY                                              */}
       {/* ========================================================================= */}
-      {currentStep === 'external' && (
-        <div className="space-y-5 animate-in fade-in">
+      <div className={currentStep === 'external' ? 'space-y-5 animate-in fade-in' : 'hidden'}>
           <ExternalResearchWorkflow
             carriedCandidates={internalResults
               .filter((r) => internalApproved.has(r.company.name))
@@ -1160,13 +1178,12 @@ export default function StagedDiscoveryWorkflow({
             </button>
           </div>
         </div>
-      )}
+      </div>
 
       {/* ========================================================================= */}
       {/* STAGE 3: HUNTLYST WEB DISCOVERY                                          */}
       {/* ========================================================================= */}
-      {currentStep === 'web_search' && (
-        <div className="space-y-5 animate-in fade-in">
+      <div className={currentStep === 'web_search' ? 'space-y-5 animate-in fade-in' : 'hidden'}>
           <div className="paper-card bg-[#FFFDF9] rounded-2xl p-6 border-2 border-[#1E1B18] shadow-sketch-sm space-y-4">
             <div className="border-b border-[#F0EAD8] pb-3">
               <h3 className="font-display text-lg font-bold text-[#1E1B18] flex items-center gap-2">
@@ -1315,7 +1332,15 @@ export default function StagedDiscoveryWorkflow({
                 <h4 className="font-display font-bold text-base text-[#1E1B18]">
                   Web Search Candidates Verified ({webSearchResults.length})
                 </h4>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <input
+                    type="search"
+                    value={webSearchQuery}
+                    onChange={(e) => setWebSearchQuery(e.target.value)}
+                    placeholder="Search companies..."
+                    aria-label="Search web discovery results"
+                    className="px-3 py-2 text-xs font-mono border border-[#1E1B18] rounded-lg bg-white min-w-[190px]"
+                  />
                   <button
                     type="button"
                     onClick={() => setExportModalConfig({
@@ -1336,18 +1361,93 @@ export default function StagedDiscoveryWorkflow({
                 </div>
               </div>
 
-              <div className="space-y-3">
-                {webSearchResults.map((res) => (
-                  <CandidateVerificationCard
-                    key={res.company.name + res.company.website}
-                    result={res}
-                    isSelected={webSearchApproved.has(res.company.name)}
-                    onToggleSelect={toggleWebSearchApproval}
-                    onOpenDetails={() => onOpenLeadModal?.(res.company)}
-                    onRetryStage={handleRetryCandidateStage}
-                    isRetrying={isRetryingCandidate}
-                  />
-                ))}
+              <div className="overflow-x-auto rounded-xl border-2 border-[#1E1B18] bg-[#FFFDF9] shadow-sketch-sm">
+                <table className="min-w-[1120px] w-full text-left text-xs font-mono">
+                  <thead className="bg-[#FAF6EE] border-b border-[#E5DED0] text-[#766E65]">
+                    <tr>
+                      <th className="py-3 px-3 text-center w-12">#</th>
+                      <th className="py-3 px-3">Company</th>
+                      <th className="py-3 px-3">Domain</th>
+                      <th className="py-3 px-3">Industry</th>
+                      <th className="py-3 px-3">Geography</th>
+                      <th className="py-3 px-3">Founded</th>
+                      <th className="py-3 px-3">Funding</th>
+                      <th className="py-3 px-3">Stage</th>
+                      <th className="py-3 px-3">Status</th>
+                      <th className="py-3 px-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#F0EAD8]">
+                    {filteredWebSearchResults.length === 0 ? (
+                      <tr>
+                        <td colSpan={10} className="py-10 px-4 text-center text-[#766E65]">
+                          No web discovery companies matched "{webSearchQuery}".
+                          {webSearchQuery && (
+                            <button type="button" onClick={() => setWebSearchQuery('')} className="ml-2 text-[#FF6B35] underline">Clear search</button>
+                          )}
+                        </td>
+                      </tr>
+                    ) : filteredWebSearchResults.map((res, index) => {
+                      const company = res.company as any;
+                      const domain = company.canonicalDomain || (company.website || '').replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+                      const geography = company.geography || company.headquarters || [company.city, company.state, company.country].filter(Boolean).join(', ') || 'Undisclosed';
+                      const founded = company.foundedYear || company.yearFounded || company.founded || '—';
+                      const funding = company.fundingOrRevenue || (company.totalFundingUsd != null ? '$' + Math.round(company.totalFundingUsd).toLocaleString('en-US') : company.totalFunding || 'Undisclosed');
+                      const stage = company.latestRoundType || company.latestRound || company.fundingType || company.fundingStage || 'Unknown';
+                      const status = String(res.verificationStatus || 'UNVERIFIED');
+                      const statusClass = status === 'VERIFIED' || status === 'QUALIFIED'
+                        ? 'bg-[#E8F5E9] text-[#2E7D32] border-[#A5D6A7]'
+                        : status === 'REVIEW' || status === 'PARTIALLY_VERIFIED'
+                        ? 'bg-[#FFF8E1] text-[#8A4B08] border-[#FFD180]'
+                        : status === 'REJECTED'
+                        ? 'bg-[#FFEBEE] text-[#C62828] border-[#FFCDD2]'
+                        : 'bg-[#FFF3E0] text-[#C2410C] border-[#FDBA74]';
+                      return (
+                        <tr key={(company.name || 'company') + (company.website || '')} className="hover:bg-[#FFF8EE] transition-colors">
+                          <td className="py-3 px-3 text-center text-[#766E65]">{index + 1}</td>
+                          <td className="py-3 px-3">
+                            <div className="flex items-center gap-2 min-w-[160px]">
+                              <input
+                                type="checkbox"
+                                checked={webSearchApproved.has(company.name)}
+                                onChange={() => toggleWebSearchApproval(company.name)}
+                                aria-label={'Approve ' + company.name}
+                                className="accent-[#FF6B35]"
+                              />
+                              <span className="font-bold text-[#1E1B18]">{company.name || 'Unknown company'}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-3 text-[#FF6B35]">
+                            {company.website ? (
+                              <a href={company.website.startsWith('http') ? company.website : 'https://' + company.website} target="_blank" rel="noreferrer" className="hover:underline">{domain || company.website}</a>
+                            ) : domain || 'Not found'}
+                          </td>
+                          <td className="py-3 px-3 text-[#5A544E]">{company.industry || company.sector || 'Undisclosed'}</td>
+                          <td className="py-3 px-3 text-[#5A544E] max-w-[180px]">{geography}</td>
+                          <td className="py-3 px-3 text-[#5A544E]">{founded}</td>
+                          <td className="py-3 px-3 font-bold text-[#1E1B18]">{funding}</td>
+                          <td className="py-3 px-3">
+                            <span className="inline-block px-2 py-1 rounded-md border border-[#9ADBE4] bg-[#E5F8FB] text-[#007F91] whitespace-nowrap">{stage}</span>
+                          </td>
+                          <td className="py-3 px-3">
+                            <span className={'inline-block px-2 py-1 rounded-md border text-[10px] font-bold whitespace-nowrap ' + statusClass}>{status}</span>
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            <button
+                              type="button"
+                              onClick={() => onOpenLeadModal?.(res.company)}
+                              disabled={!onOpenLeadModal}
+                              className="px-3 py-1.5 rounded-lg border border-[#1E1B18] bg-white text-[#1E1B18] font-bold hover:bg-[#FAF6EE] disabled:opacity-50 whitespace-nowrap"
+                              title="Open full company details"
+                            >
+                              View ↗
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -1392,7 +1492,7 @@ export default function StagedDiscoveryWorkflow({
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Target Configuration Modal */}
       {isConfigModalOpen && (
