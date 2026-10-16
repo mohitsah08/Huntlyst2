@@ -79,6 +79,50 @@ export default function InternalWorkflowSettingsModal({
     }));
   };
 
+  const removeSubIndustry = (value: string) => {
+    setSettings(prev => ({
+      ...prev,
+      targetProfile: {
+        ...prev.targetProfile,
+        subIndustries: (prev.targetProfile.subIndustries || []).filter(item => item !== value),
+      },
+    }));
+  };
+
+  const addSubIndustry = (value: string) => {
+    const cleaned = value.trim();
+    if (!cleaned || (settings.targetProfile.subIndustries || []).includes(cleaned)) return;
+    setSettings(prev => ({
+      ...prev,
+      targetProfile: {
+        ...prev.targetProfile,
+        subIndustries: [...(prev.targetProfile.subIndustries || []), cleaned],
+      },
+    }));
+  };
+
+  const removeGeography = (value: string) => {
+    setSettings(prev => ({
+      ...prev,
+      targetProfile: {
+        ...prev.targetProfile,
+        geographies: (prev.targetProfile.geographies || []).filter(item => item !== value),
+      },
+    }));
+  };
+
+  const addGeography = (value: string) => {
+    const cleaned = value.trim();
+    if (!cleaned || (settings.targetProfile.geographies || []).includes(cleaned)) return;
+    setSettings(prev => ({
+      ...prev,
+      targetProfile: {
+        ...prev.targetProfile,
+        geographies: [...(prev.targetProfile.geographies || []), cleaned],
+      },
+    }));
+  };
+
   const removeStage = (st: string) => {
     setSettings(prev => ({
       ...prev,
@@ -180,49 +224,6 @@ export default function InternalWorkflowSettingsModal({
                       </div>
                     </div>
 
-                    {/* Search Mode Toggle (Offline / Online) */}
-                    <div className="text-right">
-                      <div className="text-[10px] font-bold text-[#766E65] mb-1">
-                        Search Mode
-                      </div>
-                      <div className="inline-flex items-center p-0.5 rounded-lg border border-[#1E1B18] bg-[#FAF6EE]">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSettings(prev => ({
-                              ...prev,
-                              targetProfile: { ...prev.targetProfile, searchMode: 'offline' },
-                            }))
-                          }
-                          className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
-                            settings.targetProfile.searchMode === 'offline'
-                              ? 'bg-[#1E1B18] text-white shadow-sm'
-                              : 'text-[#766E65] hover:text-[#1E1B18]'
-                          }`}
-                        >
-                          Offline
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSettings(prev => ({
-                              ...prev,
-                              targetProfile: { ...prev.targetProfile, searchMode: 'online' },
-                            }))
-                          }
-                          className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
-                            settings.targetProfile.searchMode === 'online'
-                              ? 'bg-[#FF6B35] text-white shadow-sm'
-                              : 'text-[#766E65] hover:text-[#1E1B18]'
-                          }`}
-                        >
-                          Online
-                        </button>
-                      </div>
-                      <p className="text-[9px] text-[#766E65] font-mono mt-0.5 max-w-[140px] text-right">
-                        Online mode uses web sources (e.g. Firecrawl, etc.)
-                      </p>
-                    </div>
                   </div>
 
                   {/* Funding Range */}
@@ -249,6 +250,7 @@ export default function InternalWorkflowSettingsModal({
                         <option value={1_000_000}>1.0M</option>
                         <option value={2_000_000}>2.0M</option>
                         <option value={5_000_000}>5.0M</option>
+                        <option value={10_000_000}>10.0M</option>
                       </select>
                       <span className="text-xs font-bold text-[#766E65]">to</span>
                       <select
@@ -269,7 +271,160 @@ export default function InternalWorkflowSettingsModal({
                         <option value={5_000_000}>5.0M</option>
                         <option value={10_000_000}>10.0M</option>
                         <option value={50_000_000}>50.0M</option>
+                        <option value={100_000_000}>100.0M</option>
                       </select>
+                    </div>
+                  </div>
+
+
+                  {/* Funding basis: configured range applies to the selected funding measure. */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#1E1B18] block">Funding Range Applies To</label>
+                    <select
+                      value={settings.targetProfile.fundingBasis || 'total'}
+                      onChange={e => setSettings(prev => ({ ...prev, targetProfile: { ...prev.targetProfile, fundingBasis: e.target.value as 'total' | 'latestRound' } }))}
+                      className="w-full px-3 py-2 rounded-lg border border-[#1E1B18] bg-white text-xs font-mono"
+                    >
+                      <option value="total">Total funding raised</option>
+                      <option value="latestRound">Latest funding round</option>
+                    </select>
+                  </div>
+
+                  {/* Annual Revenue */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#1E1B18] block">Annual Revenue Range (USD, optional)</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <input type="number" min="0" value={settings.targetProfile.revenueMin ?? ''} placeholder="Minimum"
+                        onChange={e => setSettings(prev => ({ ...prev, targetProfile: { ...prev.targetProfile, revenueMin: e.target.value === '' ? null : Number(e.target.value) } }))}
+                        className="w-full px-3 py-2 rounded-lg border border-[#1E1B18] bg-white text-xs font-mono" />
+                      <input type="number" min="0" value={settings.targetProfile.revenueMax ?? ''} placeholder="Maximum"
+                        onChange={e => setSettings(prev => ({ ...prev, targetProfile: { ...prev.targetProfile, revenueMax: e.target.value === '' ? null : Number(e.target.value) } }))}
+                        className="w-full px-3 py-2 rounded-lg border border-[#1E1B18] bg-white text-xs font-mono" />
+                    </div>
+                    <p className="text-[10px] text-[#766E65] font-mono">Leave both fields blank to skip revenue matching.</p>
+                  </div>
+
+                  {/* Sub-industry */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#1E1B18] block">Sub-industry</label>
+                    <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-[#DCD6C9] bg-[#FAF6EE] min-h-[38px]">
+                      {(settings.targetProfile.subIndustries || []).map(ind => (
+                        <span key={ind} className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold bg-white text-[#1E1B18] border border-[#1E1B18]">
+                          <span>{ind}</span>
+                          <button type="button" onClick={() => removeSubIndustry(ind)} className="text-[#766E65] hover:text-[#C62828] text-xs font-bold">✕</button>
+                        </span>
+                      ))}
+                      <input type="text" placeholder="+ Add sub-industry..."
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSubIndustry((e.target as HTMLInputElement).value); (e.target as HTMLInputElement).value = ''; } }}
+                        className="bg-transparent text-xs font-mono outline-none px-1 flex-1 min-w-[120px]" />
+                    </div>
+                  </div>
+
+                  {/* Geography */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#1E1B18] block">Target Geography</label>
+                    <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-[#DCD6C9] bg-[#FAF6EE] min-h-[38px]">
+                      {(settings.targetProfile.geographies || []).map(place => (
+                        <span key={place} className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold bg-white text-[#1E1B18] border border-[#1E1B18]">
+                          <span>{place}</span>
+                          <button type="button" onClick={() => removeGeography(place)} className="text-[#766E65] hover:text-[#C62828] text-xs font-bold">✕</button>
+                        </span>
+                      ))}
+                      <input type="text" placeholder="+ Add country, group, or continent..."
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addGeography((e.target as HTMLInputElement).value); (e.target as HTMLInputElement).value = ''; } }}
+                        className="bg-transparent text-xs font-mono outline-none px-1 flex-1 min-w-[150px]" />
+                    </div>
+                    <p className="text-[10px] text-[#766E65] font-mono">No geography filter is applied while this list is empty.</p>
+                  </div>
+
+                  {/* Company age */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#1E1B18] block">Company Age (years, optional)</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <input type="number" min="0" value={settings.targetProfile.minCompanyAge ?? ''} placeholder="Minimum years"
+                        onChange={e => setSettings(prev => ({ ...prev, targetProfile: { ...prev.targetProfile, minCompanyAge: e.target.value === '' ? null : Number(e.target.value) } }))}
+                        className="w-full px-3 py-2 rounded-lg border border-[#1E1B18] bg-white text-xs font-mono" />
+                      <input type="number" min="0" value={settings.targetProfile.maxCompanyAge ?? ''} placeholder="Maximum years"
+                        onChange={e => setSettings(prev => ({ ...prev, targetProfile: { ...prev.targetProfile, maxCompanyAge: e.target.value === '' ? null : Number(e.target.value) } }))}
+                        className="w-full px-3 py-2 rounded-lg border border-[#1E1B18] bg-white text-xs font-mono" />
+                    </div>
+                  </div>
+
+                  {/* Website Requirement */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#1E1B18] block">Company Website</label>
+                    <select value={settings.targetProfile.websiteRequirement || 'Optional'}
+                      onChange={e => setSettings(prev => ({ ...prev, targetProfile: { ...prev.targetProfile, websiteRequirement: e.target.value as 'Required' | 'Optional' | 'Not Required' } }))}
+                      className="w-full px-3 py-2 rounded-lg border border-[#1E1B18] bg-white text-xs font-mono">
+                      <option value="Required">Required</option>
+                      <option value="Optional">Optional</option>
+                      <option value="Not Required">Not required</option>
+                    </select>
+                  </div>
+
+                  {/* Required information */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-[#1E1B18] block">Required Fields</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {[
+                        { key: 'companyName', label: 'Company name', locked: true },
+                        { key: 'domain', label: 'Company domain', locked: true },
+                        { key: 'industry', label: 'Industry' },
+                        { key: 'geography', label: 'Geography' },
+                        { key: 'revenue', label: 'Annual revenue' },
+                        { key: 'funding', label: 'Funding amount' },
+                        { key: 'stage', label: 'Company stage' },
+                        { key: 'companyAge', label: 'Founding year / company age' },
+                        { key: 'website', label: 'Company website' },
+                        { key: 'companyStatus', label: 'Active company status' },
+                        { key: 'executive', label: 'Founder / CEO / decision-maker' },
+                        { key: 'email', label: 'Company / executive email' },
+                      ].map(field => {
+                        const checked = field.locked || (settings.targetProfile.requiredFields || []).includes(field.key);
+                        return (
+                          <label key={field.key} className="flex items-center gap-2 p-2 rounded-lg border border-[#E5E0D5] bg-[#FAF6EE] text-[11px] font-mono">
+                            <input type="checkbox" checked={checked} disabled={field.locked}
+                              onChange={e => setSettings(prev => {
+                                const current = prev.targetProfile.requiredFields || [];
+                                const next = e.target.checked ? Array.from(new Set([...current, field.key])) : current.filter(value => value !== field.key);
+                                return { ...prev, targetProfile: { ...prev.targetProfile, requiredFields: next } };
+                              })}
+                              className="accent-[#FF6B35]" />
+                            <span>{field.label}{field.locked ? ' (always required)' : ''}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Mandatory vs optional matching criteria */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-[#1E1B18] block">Mandatory Matching Rules</label>
+                    <p className="text-[10px] text-[#766E65] font-mono">A definite mismatch rejects only when that criterion is marked mandatory. Missing required values become UNVERIFIED; ambiguity becomes REVIEW.</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {[
+                        { key: 'industry', label: 'Industry match' },
+                        { key: 'geography', label: 'Geography match' },
+                        { key: 'revenue', label: 'Revenue range' },
+                        { key: 'funding', label: 'Funding range' },
+                        { key: 'stage', label: 'Company stage' },
+                        { key: 'companyAge', label: 'Company age' },
+                        { key: 'website', label: 'Website requirement' },
+                        { key: 'companyStatus', label: 'Active company status' },
+                        { key: 'executive', label: 'Executive details' },
+                        { key: 'email', label: 'Email requirement' },
+                      ].map(field => (
+                        <label key={field.key} className="flex items-center gap-2 p-2 rounded-lg border border-[#E5E0D5] bg-white text-[11px] font-mono">
+                          <input type="checkbox" checked={(settings.targetProfile.mandatoryCriteria || []).includes(field.key)}
+                            onChange={e => setSettings(prev => {
+                              const current = prev.targetProfile.mandatoryCriteria || [];
+                              const next = e.target.checked ? Array.from(new Set([...current, field.key])) : current.filter(value => value !== field.key);
+                              return { ...prev, targetProfile: { ...prev.targetProfile, mandatoryCriteria: next } };
+                            })}
+                            className="accent-[#FF6B35]" />
+                          <span>{field.label}</span>
+                        </label>
+                      ))}
                     </div>
                   </div>
 
