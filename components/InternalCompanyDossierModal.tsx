@@ -88,15 +88,23 @@ export default function InternalCompanyDossierModal({
           </span>
         );
       case 'MISSING':
+      case 'REJECTED':
         return (
           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#FFEBEE] text-[#C62828] border border-[#C62828]/40">
             {statusLabel}
           </span>
         );
       case 'NEEDS REVIEW':
-      default:
+      case 'REVIEW':
         return (
           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#FFF3E0] text-[#E65100] border border-[#FFB74D]">
+            {statusLabel}
+          </span>
+        );
+      case 'UNVERIFIED':
+      default:
+        return (
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#FAF6EE] text-[#766E65] border border-[#DCD6C9]">
             {statusLabel}
           </span>
         );
