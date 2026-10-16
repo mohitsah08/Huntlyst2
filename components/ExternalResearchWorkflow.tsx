@@ -9,6 +9,7 @@ import {
   DEFAULT_TARGET_CRITERIA,
 } from '@/lib/research/types';
 import { CompanyVerificationResult } from '@/providers/types';
+import CompanyCard from './CompanyCard';
 import ExternalResearchTable from './ExternalResearchTable';
 import CompanyResearchDossierModal from './CompanyResearchDossierModal';
 import ExportModal from './ExportModal';
