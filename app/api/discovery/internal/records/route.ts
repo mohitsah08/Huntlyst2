@@ -22,7 +22,7 @@ export interface InternalRecordDTO {
   fundingAmount: number;
   stage: string;
   status: 'NEEDS_REVIEW' | 'MISSING' | 'FOUND' | 'VERIFIED' | 'UNVERIFIED';
-  statusLabel: 'NEEDS REVIEW' | 'MISSING' | 'FOUND' | 'VERIFIED' | 'UNVERIFIED';
+  statusLabel: 'NEEDS REVIEW' | 'REVIEW' | 'MISSING' | 'REJECTED' | 'FOUND' | 'VERIFIED' | 'UNVERIFIED';
   companyEmail: string;
   companyEmailStatus: 'Found' | 'Not found';
   ceoName: string;
